@@ -14,13 +14,15 @@ c = ROOT.TCanvas("Waveforms", "Waveforms") # this is what we draw on
 dt = 0.1 # guessing, in ns
 
 # loop over entries
-for e in range(0, 10): #t.GetEntries()):
+for e in range(0, 1): #t.GetEntries()):
     t.GetEntry(e)
     
     # loop over the channels and draw them
     channelCounter = 0
     graphs = {} # empty dictionary holding the graph objects if needed later
-    for chan in [t.chan0, t.chan1, t.chan2, t.chan3, t.chan4, t.chan5, t.chan6, t.chan7]:
+    
+    # for chan in [t.chan0, t.chan1, t.chan2, t.chan3, t.chan4, t.chan5, t.chan6, t.chan7]:
+    for chan in [t.chan3]:
         
         # create a graph for this channel and set its colors
         graphs[channelCounter] = ROOT.TGraph(len(t.chan0))
@@ -42,4 +44,4 @@ for e in range(0, 10): #t.GetEntries()):
 
     c.Update()
     c.Print("Waveforms_entry%d.pdf" % e)
-    c.WaitPrimitive()
+    #c.WaitPrimitive()

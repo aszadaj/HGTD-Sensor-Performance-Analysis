@@ -36,6 +36,7 @@ for e in range(1,100): #t.GetEntries()):
         # if all(abs(chan_np) < 0.03): # Fix this to investigate the noise before the pulse, not delete the whole channel
      
         # Consider all points before the pulse, i.e below 30 mV. When reaching the pulse, skip resting information
+        
         for point in chan_np:
             if abs(point) < 20:
                 data[channelCounter] = np.append(data[channelCounter],point)
