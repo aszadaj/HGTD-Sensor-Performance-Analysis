@@ -22,7 +22,7 @@ dt = 0.1
 data = []
 
 # loop over entries
-for e in range(1,500): #t.GetEntries()
+for e in range(1,t.GetEntries()): #t.GetEntries()
     
     data.append([])
     t.GetEntry(e-1)
