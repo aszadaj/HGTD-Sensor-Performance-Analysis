@@ -31,7 +31,7 @@ for event in data:
     for chan in channels:
         #print np.sum(abs(event[chan])<25*0.001) #no of elements for the condition
         pulse_compatible_samples = event[chan]<-25*0.001
-        max_index = np.where(pulse_compatible_samples)[0][0] - 3 if len( np.where(pulse_compatible_samples)[0] ) else 1002
+        max_index = np.where(pulse_compatible_samples)[0][0] - 3 if len( np.where(pulse_compatible_samples)[0] ) else 999
         chan_average = np.average(event[chan][0:max_index])*1000
         chan_std = np.std(event[chan][0:max_index])*1000
         pedestals[chan].Fill(chan_average)
@@ -74,10 +74,10 @@ for chan in channels:
     noise[chan].Draw()
     canvas.Update()
     canvas2.Update()
-    file_name = "pedestal_per_channel_2/distribution_pedestal_"+chan+".pdf"
+    file_name = "pedestal_per_channel_alex/distribution_pedestal_"+chan+".pdf"
     canvas.Print(file_name)
-    file_name2 = "pedestal_per_channel_2/distribution_noise_"+chan+".pdf"
-    canvas2.Print(file_name2)
+    file_name2 = "pedestal_per_channel_alex/distribution_noise_"+chan+".pdf"
+#canvas2.Print(file_name2)
 
 
 
