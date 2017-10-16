@@ -14,3 +14,5 @@ Folder  ```Waveform - Original``` contain graphs for all channels with pulses, f
 if nothing is wrong.
 
 Folder  ```old_files``` are saved code which has been modified since before.
+
+Update: 16.10.2017

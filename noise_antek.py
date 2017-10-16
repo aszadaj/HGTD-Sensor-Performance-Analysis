@@ -28,11 +28,6 @@ for e in range(0,entries):
     data.append([])
     t.GetEntry(e)
     
-    ####################
-    channelCounter = 0
-    graphs = {}
-    ####################
-    
     # Loop over all channels
     for chan in [t.chan0, t.chan1, t.chan2, t.chan3, t.chan4, t.chan5, t.chan6, t.chan7]:
         # Convert ROOT-array to numpy-array and set in mV
@@ -52,52 +47,32 @@ for e in range(0,entries):
         # check per entry pedestal values if they change
     
         # Removing three points to make the collection smoother, could be a problem
-        data[e].append(points_condition[:-3])
-        
-################### PRINT TGRAPH ###########################
+        if len (points_condition) == 1002:
+            data[e].append(points_condition)
+        else:
+            data[e].append(points_condition[:-3])
 
-        # create a graph for this channel and set its colors
-        graphs[channelCounter] = ROOT.TGraph(len(data[e][channelCounter]))
-        graphs[channelCounter].SetLineColor(channelCounter+1)
-        graphs[channelCounter].SetMarkerColor(channelCounter+1)
-
-        # loop over the sample points and fill the TGraph to see the oscilloscope waveform
-        for i in range(0,len(data[e][channelCounter])):
-            graphs[channelCounter].SetPoint(i, i*dt, data[e][channelCounter][i])
-        
-        drawOpt = "LP" # draw with Line and Points
-        if channelCounter == 0:
-            drawOpt += "A" # also draw Axes if first to be drawn
-        graphs[channelCounter].Draw(drawOpt)
-        graphs[channelCounter].GetYaxis().SetRangeUser(-300, 50)
-        graphs[channelCounter].Draw(drawOpt)
-        channelCounter += 1
-    c_waveforms.Update()
-    c_waveforms.Print("check_antek/Waveforms_entry%d.pdf" % e)
-
-########################################################
 
 pedestal = [[] for _ in range(8)]
 bins = 100 # Convention to see a better resolution
 
-histogram = ROOT.TH1D("Histograms","Histograms",100,-1,1)
+histogram = dict()
 
 for entry in data:
     channelCounter = 0
     for channel in entry:
             
         # Defining structure of histogram
-        min_bin = min(channel)*0.9
-        max_bin = max(channel)*1.1
-        histogram.SetBins(bins,min_bin,max_bin)
+        min_bin = -10
+        max_bin = 10
+        histogram[channelCounter] = ROOT.TH1D("Hist"+str(channelCounter),"hist"+str(channelCounter),bins,min_bin,max_bin)
 
         # Sorting the channel-list to use the distribution function
-        channel.sort()
         for i in channel:
-            histogram.Fill(i)
+            histogram[channelCounter].Fill(i)
         
-        pedestal[channelCounter].append(histogram.GetMean())
-        histogram.Reset("ICE")
+        pedestal[channelCounter].append(histogram[channelCounter].GetMean())
+        histogram[channelCounter].Reset("ICE")
         channelCounter += 1
 
 
@@ -108,8 +83,10 @@ channelCounter = 0
 for channel in pedestal:
 
     # Define attributes for the histogram
-    min_bin = -0.7
-    max_bin = -0.65
+#    min_bin = min(channel)*0.9
+#    max_bin = max(channel)*1.1
+    min_bin = -5
+    max_bin = 5
     histogram = ROOT.TH1D("Pedestal","Pedestal",bins,min_bin,max_bin)
     histogram.SetLineColor(1)
     histogram.SetMarkerColor(1)
@@ -119,13 +96,13 @@ for channel in pedestal:
     histogram.SetTitle(setTitleAboveGraph)
 
     # Sort and fill TH1D - histogram
-    channel.sort()
+    #channel.sort()
     for i in channel:
         histogram.Fill(i)
 
     # Draw and fit with a Gauss curve
     histogram.Draw()
-    histogram.Fit("gaus")
+#histogram.Fit("gaus")
 # check Fit in ROOT documentation for more variables
     pedestal_per_channel = histogram.GetMean()
     pedestal_std_channel = histogram.GetStdDev()
