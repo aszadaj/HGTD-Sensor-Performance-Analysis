@@ -8,7 +8,9 @@ def main():
     
     pedestals,noise,data,channels = setUpData(fileName,end)
     filterData(pedestals,noise,data)
-    noise_info = getPedestalStd(pedestals,noise,channels)
+    pedestal_final, noise_final = getPedestalStd(pedestals,noise,channels)
+    print pedestal_final
+    print noise_final
 
 
 def setUpData(dataFileName,end):
@@ -54,7 +56,8 @@ def getPedestalStd(pedestals,noise,channels):
     
     canvas_pedestal = ROOT.TCanvas("Pedestal per Channel", "Pedestal per Channel")
     canvas_noise = ROOT.TCanvas("Noise per Channel", "Noise per Channel")
-
+    pedestal_final = dict()
+    noise_final = dict()
     for chan in channels:
         
         titleAbove = "Distribution of pedestal mean value for each entry, for " + chan
@@ -68,10 +71,14 @@ def getPedestalStd(pedestals,noise,channels):
         setGraphAttributes(noise[chan],titleAbove,xAxisTitle,yAxisTitle)
         
         fileName = "pedestal_channel/distribution_pedestal_"+chan+".pdf"
-        exportGraph(pedestals[chan],canvas_pedestal,fileName)
+        pedestal_final[chan] = exportGraph(pedestals[chan],canvas_pedestal,fileName)
         
         fileName = "pedestal_channel/distribution_noise_"+chan+".pdf"
-        exportGraph(noise[chan],canvas_noise,fileName)
+        noise_final[chan] = exportGraph(noise[chan],canvas_noise,fileName)
+
+    return pedestal_final, noise_final
+
+
 # FILL IN RETURN VALUES FOR PEDESTAL AND NOISE FOR EACH FINAL CHANNEL
 
 
@@ -92,8 +99,7 @@ def exportGraph(graphList,canvas,fileName):
     graphList.Draw()
     canvas.Update()
     canvas.Print(fileName)
-
-
+    return graphList.GetMean()
 
 main()
 
