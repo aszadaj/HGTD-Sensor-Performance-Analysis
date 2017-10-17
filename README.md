@@ -1,18 +1,10 @@
 # Noise analysis from oscilloscope data
 
-For now, there are two files which are being under test, one file which Alex created and the other one of me:
-```noise_alex.py```
-```noise_antek.py```
-both of them reads a ROOT file (just one to begin with) and determines the pedestal and the noise which are
-shown as distributions for each channel (for all entries), these are put in the folder ```pedestal_per_channel_alex```
-and   ```pedestal_per_channel_antek``` .
+The input file is a ROOT file with a chosen timestamp for a specific run in TB 2017. The code translates  oscilloscope data, to obtain noise and analyse impulses. To do so, the code calculates the distributions in each channel for all entries. The data points are selected in such way to have information only until each pulse for each entry. The output of this code is in form of plots for each channel (all entries) with a histogram for mean values from each entry, to see how they change over each entry and have value for each channel's pedestal.
 
-Both files produces different distribution plots. For this reason a test of plotting waveforms is done, which plots the noises for all channels in one plot, for ten entries , and the results of those are put in the folder ```check_alex``` and
-```check_antek```, to compare if the results are the same.
 
-Folder  ```Waveform - Original``` contain graphs for all channels with pulses, for the purpose to compare
-if nothing is wrong.
+Before running ```noise.py``` check inside the file which file it is referencing. The code will give outputs in form of distribution plots inside folder ```pedestal_channel```.
 
-Folder  ```old_files``` are saved code which has been modified since before.
+Reads a ROOT file organized in TTree with leafs with 8 channels, labeled tchan0, tchan 1,...,tchan7
 
-Update: 16.10.2017
+
