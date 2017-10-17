@@ -11,7 +11,7 @@ def pulse():
     pedestal,noise = importInfo(pulsePropertiesFileName)
 
 
-def filterData(data):
+def findAmplitudeForPulse(data):
     
     for event in data:
         
@@ -19,7 +19,7 @@ def filterData(data):
             
             pulse_compatible_samples = event[chan]<-25*0.001
             max_index = np.where(pulse_compatible_samples)[0][0] - 3 if len( np.where(pulse_compatible_samples)[0] ) else 1002
-            
+            if 
             
 
 def setUpData(dataFileName,end):

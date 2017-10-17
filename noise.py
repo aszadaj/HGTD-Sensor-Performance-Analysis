@@ -67,20 +67,20 @@ def getPedestalStd(pedestals,noise,channels):
     noise_final = dict()
     for chan in channels:
         
-        titleAbove = "Distribution of pedestal mean value for each entry, for " + chan
+        titleAbove = "Distribution of mean values (pedestal) for each entry, for " + chan
         xAxisTitle = "Pedestal mean value (mV)"
-        yAxisTitle = "Number (N)"
+        yAxisTitle = "Number of entries (N)"
         setGraphAttributes(pedestals[chan],titleAbove,xAxisTitle,yAxisTitle)
         
-        titleAbove = "Distribution of pedestal standard deviation values for each entry, for " + chan
-        xAxisTitle = "Standard distribution (mV)"
-        yAxisTitle = "Number (N)"
+        titleAbove = "Distribution of standard deviation values (noise amplitude) for each entry, for " + chan
+        xAxisTitle = "Standard deviation (mV)"
+        yAxisTitle = "Number of entrie (N)"
         setGraphAttributes(noise[chan],titleAbove,xAxisTitle,yAxisTitle)
         
-        fileName = "plots_distributions/distribution_pedestal_"+chan+".pdf"
+        fileName = "plots_distributions/pedestal_"+chan+".pdf"
         pedestal_final[chan] = exportGraph(pedestals[chan],canvas_pedestal,fileName)
         
-        fileName = "plots_distributions/distribution_noise_"+chan+".pdf"
+        fileName = "plots_distributions/noise_"+chan+".pdf"
         noise_final[chan] = exportGraph(noise[chan],canvas_noise,fileName)
 
     return pedestal_final, noise_final
