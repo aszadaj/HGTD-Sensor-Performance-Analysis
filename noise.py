@@ -3,7 +3,7 @@ import numpy as np
 import root_numpy as rnm
 import json
 
-def noise():
+def main():
     end = raw_input ("Until which entry? (0-200 000) or m as max: ")
     fileName = "~/cernbox/oscilloscope_data/data_1504818689.tree.root"
     
@@ -118,4 +118,4 @@ def exportInfo(pedestal,noise):
         json.dump(data,f)
 
 
-noise()
+main()
