@@ -9,10 +9,10 @@ def main():
     pedestals,noise,data,channels = setUpData(fileName,end)
     filterData(pedestals,noise,data)
     pedestal_final, noise_final = getPedestalStd(pedestals,noise,channels)
-    print pedestal_final
-    print noise_final
 
-
+# Import ROOT file(s), set up TH1 objects for each channel
+# Input: file name and until which entry to read in
+# Output: two dictionaries with TH1 objects for pedestals and noises, and channel name types
 def setUpData(dataFileName,end):
     
     data = ""
@@ -32,10 +32,12 @@ def setUpData(dataFileName,end):
         
         pedestals[channel] = ROOT.TH1D("Pedestal "+channel,"Pedestal "+channel,100,-10,10)
         noise[channel] = ROOT.TH1D("Noise "+channel,"Noise "+channel,100,0,10)
-    
+
+
     return pedestals,noise,data,channels
 
-
+# Select data wrt to condition for less than 25 mV and fill histograms for pedestals and noises
+# Input: TH1-objects for pedestals and noises for each channel, and data points
 def filterData(pedestals,noise,data):
     
     for event in data:
@@ -51,7 +53,9 @@ def filterData(pedestals,noise,data):
             pedestals[chan].Fill(chan_average)
             noise[chan].Fill(chan_std)
 
-
+# Create histograms and get pedestal and noise value for each channel
+# Input: TH1-objects for pedestals and noises for each channel, and channel name types
+# Output: pedestal and noise value for each channel. 8 values for each dictionary
 def getPedestalStd(pedestals,noise,channels):
     
     canvas_pedestal = ROOT.TCanvas("Pedestal per Channel", "Pedestal per Channel")
@@ -78,10 +82,8 @@ def getPedestalStd(pedestals,noise,channels):
 
     return pedestal_final, noise_final
 
-
-# FILL IN RETURN VALUES FOR PEDESTAL AND NOISE FOR EACH FINAL CHANNEL
-
-
+# Define the setup for graphs
+# Input: dictionary with TH1 objects, and title information for the graph
 def setGraphAttributes(graphList,titleAbove,xAxisTitle,yAxisTitle):
     
     graphList.SetLineColor(1)
@@ -92,7 +94,9 @@ def setGraphAttributes(graphList,titleAbove,xAxisTitle,yAxisTitle):
     setTitleAboveGraph = titleAbove
     graphList.SetTitle(setTitleAboveGraph)
 
-
+# Produce PDF file for selected channel
+# Input: dictionary with TH1 objects, TCanvas object and filename for the produced file
+# Output: mean value for selected dictionary and channel
 def exportGraph(graphList,canvas,fileName):
     
     canvas.cd()
