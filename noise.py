@@ -1,14 +1,17 @@
 import ROOT
 import numpy as np
 import root_numpy as rnm
+import json
 
-def main():
+def noise():
     end = raw_input ("Until which entry? (0-200 000) or m as max: ")
     fileName = "~/cernbox/oscilloscope_data/data_1504818689.tree.root"
     
     pedestals,noise,data,channels = setUpData(fileName,end)
     filterData(pedestals,noise,data)
     pedestal_final, noise_final = getPedestalStd(pedestals,noise,channels)
+    exportInfo(pedestal_final,noise_final)
+
 
 # Import ROOT file(s), set up TH1 objects for each channel
 # Input: file name and until which entry to read in
@@ -105,5 +108,14 @@ def exportGraph(graphList,canvas,fileName):
     canvas.Print(fileName)
     return graphList.GetMean()
 
-main()
+# Unused function to export the pedestal and noise information
+def exportInfo(pedestal,noise):
+    # save to file:
+    data = {}
+    with open('pedestal_noise.json', 'w') as f:
+        data["p"] = pedestal
+        data["n"] = noise
+        json.dump(data,f)
 
+
+noise()
