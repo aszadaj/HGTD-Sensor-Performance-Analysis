@@ -77,10 +77,10 @@ def getPedestalStd(pedestals,noise,channels):
         yAxisTitle = "Number (N)"
         setGraphAttributes(noise[chan],titleAbove,xAxisTitle,yAxisTitle)
         
-        fileName = "pedestal_channel/distribution_pedestal_"+chan+".pdf"
+        fileName = "plots_distributions/distribution_pedestal_"+chan+".pdf"
         pedestal_final[chan] = exportGraph(pedestals[chan],canvas_pedestal,fileName)
         
-        fileName = "pedestal_channel/distribution_noise_"+chan+".pdf"
+        fileName = "plots_distributions/distribution_noise_"+chan+".pdf"
         noise_final[chan] = exportGraph(noise[chan],canvas_noise,fileName)
 
     return pedestal_final, noise_final
