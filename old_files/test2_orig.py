@@ -2,7 +2,7 @@ import ROOT
 
 # create the TFile object for reading the input file
 #f = ROOT.TFile("/eos/user/k/kastanas/TB/osci_conv/data_1504818689.tree.root")
-f = ROOT.TFile("~/oscilloscope_data/data_1504818689.tree.root")
+f = ROOT.TFile("~/cernbox/oscilloscope_data/data_1504818689.tree.root")
 
 # get the TTree from the TFile
 t  = f.Get("oscilloscope")
