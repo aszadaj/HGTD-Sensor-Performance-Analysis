@@ -11,7 +11,7 @@ def main():
     if first_entry != "m":
         last_entry = raw_input ("Until which entry? (0-220 000) or l as last: ")
     
-    dataFileName = "~/cernbox/oscilloscope_data/data_1504818689.tree.root"
+    dataFileName = "~/oscilloscope_data/data_1504818689.tree.root"
     pulsePropertiesFileName = "pedestal_noise.json"
     
     data,channels = setUpData(dataFileName,first_entry,last_entry)

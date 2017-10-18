@@ -5,7 +5,7 @@ import json
 
 def main():
     end = raw_input ("Until which entry? (0-200 000) or m as max: ")
-    fileName = "~/cernbox/oscilloscope_data/data_1504818689.tree.root"
+    fileName = "~/oscilloscope_data/data_1504818689.tree.root"
     
     pedestals,noise,data,channels = setUpData(fileName,end)
     filterData(pedestals,noise,data)

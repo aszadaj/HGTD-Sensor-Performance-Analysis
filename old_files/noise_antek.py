@@ -8,7 +8,7 @@ import numpy as np
 #################################
 
 
-f = ROOT.TFile("~/cernbox/oscilloscope_data/data_1504818689.tree.root")
+f = ROOT.TFile("~/oscilloscope_data/data_1504818689.tree.root")
 
 # get the TTree from the TFile
 t  = f.Get("oscilloscope")
