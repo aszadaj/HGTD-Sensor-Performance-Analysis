@@ -6,30 +6,17 @@ import json
 # The code obtains amplitudes and risetime for pulses for each channel for all selected entries
 # and orders them in a nested list within "amplitudes" and "risetime".
 def main():
-    first_entry = raw_input ("From which entry? (0-220 000) or m as max: ")
-    last_entry = 0
-    if first_entry != "m":
-        last_entry = raw_input ("Until which entry? (0-220 000) or l as last: ")
     
-    isFileOnLxplus = raw_input("Is the ROOT file on lxplus? (y/n) ")
-    dataFileName = "~/cernbox/oscilloscope_data/data_1504818689.tree.root"
-
-    if isFileOnLxplus == "y"
-        dataFileName = "/eos/user/k/kastanas/TB/osci_conv/data_1504818689.tree.root"
-
-    pulsePropertiesFileName = "pedestal_noise.json"
+    first_entry,last_entry,dataFileName = selectEntriesAndFile()
     
-    data,channels = setUpData(dataFileName,first_entry,last_entry)
+    data = setUpData(dataFileName,first_entry,last_entry)
     
-    pedestal,noise = importNoiseProperties(pulsePropertiesFileName)
+    pedestal,noise = importNoiseProperties()
     
     amplitudes,risetime = getPulseInfoForAllEntriesAndChannels(data,pedestal,noise)
+    
+    printAllValues(data,amplitudes,risetime,first_entry,last_entry)
 
-    print "\n"
-    for entry in range(0,len(data)):
-        for chan in channels:
-            if amplitudes[chan][entry] != 0:
-                print "Entry: " + str(int(first_entry)+entry) + " Channel: " + str(chan) +  "\nAmplitude: " +str(amplitudes[chan][entry]) +" mV\nRisetime: "+ str(risetime[chan][entry]) +" ns \n"
 
 # Creates amplitudes and risetime dictionaries and goes through all entries
 # and channels. Catches exceptions for KeyErrors
@@ -105,11 +92,14 @@ def setUpData(dataFileName,first,last):
     else:
         data = rnm.root2array(dataFileName,start=int(first),stop=int(last))
 
-    channels = data.dtype.names # gets names for the leafs in TTree file
-    return data, channels
+
+    return data
 
 # Import JSON file for pedestal and noise information from noise analysis
-def importNoiseProperties(fileName):
+def importNoiseProperties():
+    
+    fileName = "pedestal_noise.json"
+    
     # load from file:
     with open(fileName, 'r') as f:
         try:
@@ -120,5 +110,30 @@ def importNoiseProperties(fileName):
             data = {}
 
     return data["p"], data["n"]
+
+# Prompt for choosing entry and if file is locally or on lxplus
+def selectEntriesAndFile():
+
+    first_entry = raw_input ("From which entry? (0-220 000) or m as max: ")
+    last_entry = 0
+    if first_entry != "m":
+        last_entry = raw_input ("Until which entry? (0-220 000) or l as last: ")
+
+    isFileOnLxplus = raw_input("Is the ROOT file on lxplus? (y/n) ")
+    dataFileName = "~/cernbox/oscilloscope_data/data_1504818689.tree.root"
+
+    if isFileOnLxplus == "y":
+            dataFileName = "/eos/user/k/kastanas/TB/osci_conv/data_1504818689.tree.root"
+
+    return first_entry,last_entry,dataFileName
+
+# Print non-zero amplitude and risetime values and show for which channel and entry they represent
+def printAllValues(data,amplitudes,risetime,first_entry,last_entry):
+    print "\n"
+    for entry in range(0,len(data)):
+        for chan in data.dtype.names: # gets names for the leafs in TTree file
+            if amplitudes[chan][entry] != 0:
+                print "Entry: " + str(int(first_entry)+entry) + " Channel: " + str(chan) +  "\nAmplitude: " +str("%.2f" % amplitudes[chan][entry]) +" mV\nRisetime: "+ str(risetime[chan][entry]) +" ns \n"
+
 
 main()
