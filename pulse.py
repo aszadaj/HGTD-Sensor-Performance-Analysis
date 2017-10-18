@@ -11,10 +11,10 @@ def main():
     if first_entry != "m":
         last_entry = raw_input ("Until which entry? (0-220 000) or l as last: ")
     
-    isFileLxplus = raw_input("Is the ROOT file on lxplus? (y/n) ")
+    isFileOnLxplus = raw_input("Is the ROOT file on lxplus? (y/n) ")
     dataFileName = "~/cernbox/oscilloscope_data/data_1504818689.tree.root"
 
-    if isFileLxplus == "y"
+    if isFileOnLxplus == "y"
         dataFileName = "/eos/user/k/kastanas/TB/osci_conv/data_1504818689.tree.root"
 
     pulsePropertiesFileName = "pedestal_noise.json"
@@ -108,7 +108,7 @@ def setUpData(dataFileName,first,last):
     channels = data.dtype.names # gets names for the leafs in TTree file
     return data, channels
 
-# Import JSON file for pedestal and noise information
+# Import JSON file for pedestal and noise information from noise analysis
 def importNoiseProperties(fileName):
     # load from file:
     with open(fileName, 'r') as f:
