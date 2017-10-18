@@ -49,6 +49,7 @@ def getPulseInfoForAllEntriesAndChannels(data,pedestal,noise):
 # Obtains amplitude and risetime values for a entry and channel.
 # If no pulse found, the result will be 0 for both amplitude and risetime.
 # NB! This code assumes that there is only one pulse per entry.
+
 def getRisetimeAndAmplitude (event, pedestal):
     
     dt = 0.1 # Time scope, in ns
@@ -58,6 +59,7 @@ def getRisetimeAndAmplitude (event, pedestal):
     pulse_first_index = np.where(points_condition)[0][0] if len( np.where(points_condition)[0] ) else 1002
     pulse_last_index = np.argmin(event)
     
+    # check pedestal sign
     event = event*1000-pedestal # Convert from V to mV and remove the pedestal
     noise_limit = -25+pedestal # Set 25 mV limit on the noise oscillation curve
     
