@@ -15,4 +15,7 @@ Reads a ROOT file organized in TTree with leafs with 8 channels, labeled tchan0,
 The idea is to analyse risetime, amplitude, amplitude to ratio and other information related to how the pulses behave, depending on the channel. Code not ready.
 
 
+# File under test
+
+The file here which is tested is  ```data_1504818689.tree.root``` and is for run number  ```3656```.
 
