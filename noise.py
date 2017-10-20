@@ -5,12 +5,16 @@ import json
 
 def main():
     end = raw_input ("Until which entry? (0-200 000) or m as max: ")
-    fileName = "~/cernbox/oscilloscope_data/data_1504818689.tree.root"
+    
+    fileName = "/Users/aszadaj/cernbox/SH203X/HGTD_material/oscilloscope_data_sep_2017data_1504818689.tree.root"
     
     pedestals,noise,data,channels = setUpData(fileName,end)
+    
     filterData(pedestals,noise,data)
+    
     pedestal_final, noise_final = getPedestalStd(pedestals,noise,channels)
-    exportInfo(pedestal_final,noise_final)
+    
+    exportInfo(pedestal_final)
 
 
 # Import ROOT file(s), set up TH1 objects for each channel
@@ -77,10 +81,10 @@ def getPedestalStd(pedestals,noise,channels):
         yAxisTitle = "Number of entrie (N)"
         setGraphAttributes(noise[chan],titleAbove,xAxisTitle,yAxisTitle)
         
-        fileName = "plots_distributions/pedestal_"+chan+".pdf"
+        fileName = "pedestal_distributions/pedestal_"+chan+".pdf"
         pedestal_final[chan] = exportGraph(pedestals[chan],canvas_pedestal,fileName)
         
-        fileName = "plots_distributions/noise_"+chan+".pdf"
+        fileName = "pedestal_distributions/noise_"+chan+".pdf"
         noise_final[chan] = exportGraph(noise[chan],canvas_noise,fileName)
 
     return pedestal_final, noise_final
@@ -109,12 +113,11 @@ def exportGraph(graphList,canvas,fileName):
     return graphList.GetMean()
 
 # Unused function to export the pedestal and noise information
-def exportInfo(pedestal,noise):
+def exportInfo(pedestal):
     # save to file:
     data = {}
-    with open('pedestal_noise.json', 'w') as f:
+    with open('pedestal.json', 'w') as f:
         data["p"] = pedestal
-        data["n"] = noise
         json.dump(data,f)
 
 
