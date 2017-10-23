@@ -1,101 +1,100 @@
 
 import ROOT
-#import langaus # a C-file which determines landau(*)gauss fit, future project
 import numpy as np
 import root_numpy as rnm
 import json
+import pickle
 
 
 # The code obtains amplitudes and risetime for pulses for each channel for all selected entries
 # and orders them in a nested list within "amplitudes" and "risetime".
 def main():
-    
-    errors = 0 # Pulses which cannot be calculated
-    
+  
     data, sensors, first_entry, last_entry = importFileData()
-   
-    pedestal = importNoiseProperties()
     
-    amplitudes, risetimes, errors = getPulseInfoForAllEntriesAndChannels(data, pedestal, errors)
+    amplitudes, risetimes = getPulseInfoForAllEntriesAndChannels(data)
     
     produceDistributionPlots(amplitudes, risetimes, data.dtype.names, sensors)
     
-    #printAllValues(data.dtype.names, sensors, amplitudes, risetimes, first_entry, last_entry)
-    
-#    # about 3% of all pulses cannot be calculated.
-#    print "Errors: " + str(errors)
-#    print "Percentage: " + str(float(errors)/float(len(data))*8)
-
+    exportInfo(amplitudes, risetimes,data.dtype.names)
+   
     exit()
 
-# Creates amplitudes and risetime dictionaries and goes through all entries
-# and channels. Catches exceptions for KeyErrors
-def getPulseInfoForAllEntriesAndChannels(data, pedestal, errors):
+# Creates amplitudes and risetime dictionaries and goes through all entries and channels.
+def getPulseInfoForAllEntriesAndChannels(data):
+    
+    channels = data.dtype.names
+    pedestal = importNoiseProperties()
     
     amplitudes = dict()
-    risetime = dict()
-    entry = 0
-    for event in data:
+    risetimes = dict()
+    
+    for chan in channels:
         
-        for chan in data.dtype.names:
+        amplitudes[chan] = np.empty(0)
+        risetimes[chan] = np.empty(0)
+   
+   
+    for entry in range(0,len(data)):
+        
+        for chan in channels:
             
-            try:
-                amplitudes[chan]
-            except Exception, e:
-                amplitudes[chan] = np.empty(0)
-            
-            try:
-                risetime[chan]
-            except Exception, e:
-                risetime[chan] = np.empty(0)
-          
-            amplitude_entry_channel, risetime_entry_channel, errors = getRisetimeAndAmplitude(event[chan], pedestal[chan], chan, entry, errors)
+            amplitude_entry_channel, risetime_entry_channel = getRisetimeAndAmplitude(data[entry][chan], pedestal[chan], chan, entry)
             
             amplitudes[chan] = np.append(amplitudes[chan], amplitude_entry_channel)
-            risetime[chan] = np.append(risetime[chan], risetime_entry_channel)
-            
-        entry += 1
+            risetimes[chan] = np.append(risetimes[chan], risetime_entry_channel)
 
-    return amplitudes, risetime, errors
+
+    return amplitudes, risetimes
 
 
 # Obtains amplitude and risetime values for a entry and channel. Also obtains how many pulses cannot be calculated
 # If no pulse found, the result will be 0 for both amplitude and risetime.
 # NB1! This code assumes that there is only one pulse per entry.
 # NB2! Fitting minimal value by evaluating points is usally not the best way, it
-# decreases in realiablity, one could use instead a Landau(*)Gauss distribution fit
-def getRisetimeAndAmplitude (event, pedestal, chan, entry, errors):
+# decreases in realiablity, one could use instead a distribution fit
+def getRisetimeAndAmplitude (event, pedestal, chan, entry):
     
     dt = 0.1 # Time scope, in ns
     
     # Set condition on finding the pulse, and select indices where the pulse is.
-    points_condition = event<-20*0.001
-    pulse_first_index = np.where(points_condition)[0][0] if len(np.where(points_condition)[0]) else 1002
-    pulse_last_index = np.argmin(event)
+    indices_condition = event<-20*0.001
     
-    # check pedestal sign
-    event = event*1000 # Convert from V to mV
-    pulse_limit = -30-pedestal # Set 30 mV limit on the noise oscillation curve
-    
-    pulse_amplitude = np.amin(event)-pedestal
+    pulse_amplitude = 0
     pulse_risetime = 0
     
-    if  pulse_amplitude < pulse_limit: # clear problem here, in entry 52 chan4 there is a small pulse
+    if any(indices_condition):
         
-        # Select indices which are between 10% and 90% of the pulse.
-        amplitude_indices = np.argwhere((event[pulse_first_index:pulse_last_index]>0.9*pulse_amplitude) & (event[pulse_first_index:pulse_last_index]<0.1*pulse_amplitude))
+        pulse_first_index = np.where(indices_condition)[0][0] - 3
+        pulse_last_index = np.argmin(event)
         
-        try:
-            pulse_risetime = (amplitude_indices[-1][0] - amplitude_indices[0][0])*dt
-        except Exception, e:
-            #print "\nProblem with computing pulse risetime for channel " + str(chan) +" entry " + str(entry) +"\n"
-            #pulse_amplitude = 0 # If the rise time cannot be calculated, set the amplitude to zero, since it is small
-            errors += 1
+        event = event*1000 # Convert from V to mV
+        pulse_limit = -40-pedestal # Set 40 mV to consider it as a pulse
+        
+        pulse_amplitude = np.amin(event)-pedestal
+        
+        criticalValue = -354.7959327-pedestal
+        criticalValue_chan3 = -383.29595327-pedestal
+        
+        if  pulse_amplitude < pulse_limit and pulse_amplitude > criticalValue_chan3:
+            
+            if chan != "chan3" and pulse_amplitude < criticalValue:
+                pulse_amplitude = 0
+            
+            else:
+                
+                # Select indices which are between 10% and 90% of the pulse.
+                amplitude_indices = np.argwhere((event[pulse_first_index:pulse_last_index]>0.9*pulse_amplitude) & (event[pulse_first_index:pulse_last_index]<0.1*pulse_amplitude))
+                
+                try:
+                    pulse_risetime = (amplitude_indices[-1][0] - amplitude_indices[0][0])*dt
+                except Exception, e:
+                    pulse_amplitude = 0
 
-    else:
-        pulse_amplitude = 0
+        else:
+            pulse_amplitude = 0
     
-    return pulse_amplitude, pulse_risetime, errors
+    return pulse_amplitude, pulse_risetime
 
 
 # Prompt for choosing entry 
@@ -103,11 +102,16 @@ def importFileData():
     
     first_entry = raw_input ("From which entry? (0-220 000) or 'm' as max: ")
     last_entry = 0
+    
     if first_entry != "m":
+        
         last_entry = raw_input ("Until which entry? ("+str(first_entry)+"-220 000) or 'l' as last: ")
+        
         if last_entry == "l":
+            
             last_entry = 200263
     else:
+        
         first_entry = 0
         last_entry = 200263
 
@@ -127,28 +131,19 @@ def importNoiseProperties():
     
     # load from file:
     with open(fileName, 'r') as f:
+        
         try:
             data = json.load(f)
+        
         # if the file is empty the ValueError will be thrown
         except ValueError:
+            
             print "The file  " + str(fileName) + " is empty or cannot be read."
             data = {}
 
     return data["p"]
 
 
-# Print non-zero amplitude and risetime values and show for which channel and entry they represent
-def printAllValues(channels, sensors, amplitudes, risetime, first_entry, last_entry):
-        
-    print "\n"
-    for entry in range(0,len(amplitudes[channels[0]])):
-        for chan in channels:
-            index = 0
-            if amplitudes[chan][entry] != 0:
-                print "Entry: " + str(int(first_entry)+entry+1) + " Sensor: " + str(sensors[index]) +", Channel: " + str(chan) +  "\nAmplitude: " +str("%.2f" % amplitudes[chan][entry]) +" mV\nRisetime: "+ str(risetime[chan][entry]) +" ns \n"
-            index += 1               
-
-        
 # Create 8 plots, for each channel across all entries, for amplitudes and risetime
 def produceDistributionPlots(amplitudes,risetimes,channels,sensors):
     
@@ -157,38 +152,44 @@ def produceDistributionPlots(amplitudes,risetimes,channels,sensors):
     
     index = 0
     
-    yAxisLimits_amplitude = [220,250,300,1500,200,200,200,200]
+    yAxisLimits_amplitude = [250,250,350,1200,200,200,200,200]
+    
+    amplitude_graph = dict()
+    risetime_graph = dict()
     
     for chan in channels:
-
-        amplitude_graph = ROOT.TH1D("amplitude_"+chan,"Amplitude "+chan,1000,-450,0)
-        risetime_graph = ROOT.TH1D("risetime_"+chan,"Risetime "+chan,100,0,1)
+        amplitude_graph[chan] = ROOT.TH1D("amplitude_"+chan,"Amplitude "+chan,1000,-400,0)
+        risetime_graph[chan] = ROOT.TH1D("risetime_"+chan,"Risetime "+chan,100,0,1)
+    
+    
+    for chan in channels:
         
         for entry in range(0,len(amplitudes[chan])):
             if amplitudes[chan][entry] != 0:
-                amplitude_graph.Fill(amplitudes[chan][entry])
-                risetime_graph.Fill(risetimes[chan][entry])
+                amplitude_graph[chan].Fill(amplitudes[chan][entry])
+                risetime_graph[chan].Fill(risetimes[chan][entry])
         
         titleAbove = "Distribution of amplitudes, oscilloscope for Sep 17 Run 3656, for channel " + chan + ", sensor: " + str(sensors[index])
         xAxisTitle = "Amplitude (mV)"
         yAxisTitle = "Number (N)"
         
-        setGraphAttributes(amplitude_graph,titleAbove,xAxisTitle,yAxisTitle)
+        setGraphAttributes(amplitude_graph[chan],titleAbove,xAxisTitle,yAxisTitle)
         
-        amplitude_graph.SetMaximum(yAxisLimits_amplitude[index])
+        amplitude_graph[chan].SetMaximum(yAxisLimits_amplitude[index])
         
         titleAbove = "Distribution of rise times, oscilloscope for Sep 17 Run 3656, for channel " + chan + ", sensor: " + str(sensors[index])
         xAxisTitle = "Time (ns)"
         yAxisTitle = "Number (N)"
-        setGraphAttributes(risetime_graph,titleAbove,xAxisTitle,yAxisTitle)
+        setGraphAttributes(risetime_graph[chan],titleAbove,xAxisTitle,yAxisTitle)
         
         fileName = "pulse_distributions/amplitude_distribution_"+chan+".pdf"
-        exportGraph(amplitude_graph,canvas_amplitude,fileName)
+        exportGraph(amplitude_graph[chan],canvas_amplitude,fileName)
         
         fileName = "pulse_distributions/risetime_distribution_"+chan+".pdf"
-        exportGraph(risetime_graph,canvas_risetime,fileName)
+        exportGraph(risetime_graph[chan],canvas_risetime,fileName)
 
         index += 1
+
 
 # Define TH1 properties
 def setGraphAttributes(graphList,titleAbove,xAxisTitle,yAxisTitle):
@@ -209,6 +210,43 @@ def exportGraph(graphList,canvas,fileName):
     graphList.Draw()
     canvas.Update()
     canvas.Print(fileName)
+
+
+def exportInfo(amplitude,risetime,channels):
+    
+    with open("amplitude_risetime.pkl","wb") as output:
+        
+        pickle.dump(amplitude,output,pickle.HIGHEST_PROTOCOL)
+        
+        pickle.dump(risetime,output,pickle.HIGHEST_PROTOCOL)
+
+        pickle.dump(channels,output,pickle.HIGHEST_PROTOCOL)
+
+
+def printGraph(data_points,entry,channel):
+
+    canvas = ROOT.TCanvas("Waveforms", "Waveforms")
+    
+    dt = 0.1
+
+    graph = ROOT.TGraph(len(data_points))
+    graph.SetLineColor(1)
+    graph.SetMarkerColor(1)
+    
+    for i in range(0,len(data_points)):
+        graph.SetPoint(i, i*dt, data_points[i])
+
+    drawOpt = "LPA"
+    graph.Draw(drawOpt)
+    graph.GetYaxis().SetRangeUser(min(data_points)*1.2, max(data_points)*2)
+    graph.Draw(drawOpt)
+
+    canvas.cd()
+    canvas.Update()
+    plotName ="graphs/plot_entry" + str(entry) +"_"+str(channel) +".pdf"
+    canvas.Print(plotName)
+
+
 
 
 
