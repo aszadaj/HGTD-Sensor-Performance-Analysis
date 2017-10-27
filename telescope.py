@@ -6,46 +6,60 @@ import pickle
 import json
 
 
+
 ##########################################
-#
-#
-#               MAIN FUNCTION
-#
-#
+#                                        #
+#                                        #
+#             MAIN FUNCTION              #
+#                                        #
+#                                        #
 ##########################################
 
-# Note: amplitude is pedestal corrected, whereas criticalValues are not
+
 def main():
 
-    # data here is an array, each index (x,y)
     data_telescope = importTelescopeData()
-    
+
     amplitude, risetime, small_amplitude, criticalValues = importPulseProperties()
 
     exit()
 
 
+##########################################
+#                                        #
+#                                        #
+#              FUNCTIONS                 #
+#                                        #
+#                                        #
+##########################################
 
-##########################################
-#
-#
-#               FUNCTIONS
-#
-#
-##########################################
+#   For future notice, the max and min values for each dimension in the telescope data
+#   xMax 7053.56
+#   yMax 15174.8
+#   xMin -5092.44
+#   yMin 0
+
+def produceTProfileGraphs():
+    print "test"
+
+
+
+
+
 
 
 # Note, the file have only 200K entries
 def importTelescopeData():
   
     dataFileName = "~/cernbox/SH203X/HGTD_material/telescope_data_sep_2017/tracking1504818689.root"
-    data = rnm.root2array(dataFileName)
+    data = rnm.root2array(dataFileName) # numpy array, 200K elements (equivalent to no of entries), each element x and y values in micrometers
     
     return data
 
 # The file have 200 263 entries, reduced to 200K to adapt to telescope data
-def importRunData():
+def importOscilloscopeData():
     
+    # Prompt for reading in how many values should be considered
     first_entry = raw_input ("From which entry? (0-200 000) or 'm' as max: ")
     last_entry = 0
     
@@ -100,12 +114,13 @@ def importPulseProperties():
     small_amplitude = ""
     criticalValues = ""
     
+    # Note: amplitude values are corrected with a pedestal (from the noise analysis) and the critical values are not
     with open("pulse_info_backup.pkl","rb") as input:
         
-        amplitude = pickle.load(input)
-        risetime = pickle.load(input)
-        small_amplitude = pickle.load(input)
-        criticalValues = pickle.load(input)
+        amplitude = pickle.load(input)          # dictionary, keys: channels, for each key list of amplitude values (200K)
+        risetime = pickle.load(input)           # dictionary, keys: channels, for each key list of rise time values (200K)
+        small_amplitude = pickle.load(input)    # dictionary, keys: channels, for each key list of small amplitude values (<< 200K)
+        criticalValues = pickle.load(input)     # dictionary, keys: channels, for each key value for maximal value of reading in from the oscilloscope (1 value per channel)
     
     # Convert all values to positive
     amplitude.update((x, y*-1) for x, y in amplitude.items())
@@ -121,17 +136,18 @@ def importPulseProperties():
     return amplitude, risetime, small_amplitude, criticalValues
     
 
+# Gets sensor names specifically for run 3656 for Sep 2017
 def getSensorsNames():
     sensors = {'chan5': 'W4-S215', 'chan4': 'W4-S215', 'chan7': 'W4-S215', 'chan6': 'W4-S215', 'chan1': '50D-GBGR2', 'chan0': 'W9-LGA35', 'chan3': 'SiPM-AFP', 'chan2': 'W4-LG12'}
     return sensors
 
 
 ##########################################
-#
-#
-#               MAIN()
-#
-#
+#                                        #
+#                                        #
+#               MAIN()                   #
+#                                        #
+#                                        #
 ##########################################
 
 main()
