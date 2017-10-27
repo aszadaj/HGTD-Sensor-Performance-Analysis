@@ -22,6 +22,8 @@ def main():
 
     amplitude, risetime, small_amplitude, criticalValues = importPulseProperties()
 
+    produceTProfileGraphs(amplitude,data_telescope)
+
     exit()
 
 
@@ -34,17 +36,31 @@ def main():
 ##########################################
 
 #   For future notice, the max and min values for each dimension in the telescope data
-#   xMax 7053.56
-#   yMax 15174.8
 #   xMin -5092.44
+#   xMax 7053.56
+#
 #   yMin 0
+#   yMax 15174.8
 
-def produceTProfileGraphs():
-    print "test"
+# Define the code to make the analysis
+def produceTProfileGraphs(amplitude,data):
 
+    canvas = ROOT.TCanvas("TProfile2D","TProfile2D")
 
+    histogram2d = ROOT.TProfile2D("test","test",5,-20000,20000,5,0,20000)
+    
+    
+    # how come that TProfile2D is not producing any graphs?
+    for index in range(0,len(data)):
+        if data[index]['X'] != -9999:
+            print amplitude['chan0'][index]
+            histogram2d.Fill(data[index]['X'],data[index]['Y'],amplitude['chan0'][index])
 
-
+    canvas.cd()
+    histogram2d.Draw()
+    canvas.Update()
+    filename = "plot_telescope/testplot.pdf"
+    canvas.Print(filename)
 
 
 
