@@ -15,6 +15,8 @@ def main():
     
     amplitude, risetime, small_amplitude, criticalValues = importPulseProperties()
     
+    printGraph(data["chan2"][200263],200263,"chan2",sensors[2],amplitude["chan2"][200263])
+    
     pedestal = importNoiseProperties()
     
     exit()

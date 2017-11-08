@@ -12,13 +12,13 @@ def main():
   
     data, sensors, first_entry, last_entry = importFileData()
     
-    setGlobalVariables(data)
+    setGlobalVariables(data.dtype.names)
     
     findCriticalValues(data,criticalValues)
     
     amplitudes, risetimes = getPulseInfo(data)
  
-    produceDistributionPlots(amplitudes, risetimes, sensors)
+    #produceDistributionPlots(amplitudes, risetimes, sensors)
     
     exportResults(amplitudes, risetimes, small_amplitudes, criticalValues)
   
@@ -82,7 +82,7 @@ def getAmplitudeRisetime (event, pedestal, chan, entry):
             pulse_risetime = (amplitude_indices[-1][0] - amplitude_indices[0][0])*dt
         
         except Exception, e:
-            small_amplitudes[chan] = np.append(small_amplitudes[chan],entry)
+            small_amplitudes[chan][entry] = pulse_amplitude
             pulse_amplitude = 0
             pulse_risetime = 0
 
@@ -223,15 +223,15 @@ def exportResults(amplitude,risetime,small_amplitudes,criticalValues):
 
 # Define global variables small_amplitudes and criticalValue to be used in
 # findCriticalValues(data,criticalValues) and getAmplitudeRisetime(event, pedestal, chan, entry)
-def setGlobalVariables(data):
+def setGlobalVariables(channels):
 
     global small_amplitudes
     global criticalValues
     small_amplitudes = dict()
     criticalValues = dict()
 
-    for chan in data.dtype.names:
-        small_amplitudes[chan] = np.empty(0)
+    for chan in channels:
+        small_amplitudes[chan] = np.zeros(200263)
         criticalValues[chan] = 0
 
 

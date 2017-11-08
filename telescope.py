@@ -21,8 +21,10 @@ def main():
     data_telescope = importTelescopeData()
 
     amplitude, risetime, small_amplitude, criticalValues = importPulseProperties()
+    
+    print small_amplitude["chan2"][200263]
 
-    produceTProfileGraphs(amplitude,data_telescope)
+    #produceTProfileGraphs(amplitude, small_amplitude, data_telescope)
 
     exit()
 
@@ -39,25 +41,23 @@ def main():
 #   xMin -5092.44
 #   xMax 7053.56
 #
-#   yMin 0
+#   yMin 6046.8
 #   yMax 15174.8
 
 # Define the code to make the analysis
-def produceTProfileGraphs(amplitude,data):
+def produceTProfileGraphs(amplitude,small_amplitude, data):
 
     canvas = ROOT.TCanvas("TProfile2D","TProfile2D")
 
-    histogram2d = ROOT.TProfile2D("test","test",5,-20000,20000,5,0,20000)
+    histogram2d = ROOT.TProfile2D("test","test",100,-6000,7200,100,6000,15300)
     
-    
-    # how come that TProfile2D is not producing any graphs?
     for index in range(0,len(data)):
-        if data[index]['X'] != -9999:
-            print amplitude['chan0'][index]
-            histogram2d.Fill(data[index]['X'],data[index]['Y'],amplitude['chan0'][index])
+        # Compare also with small_amplitude, but first the rearrangment must be done
+        if data[index]['X'] != -9999 and amplitude["chan0"][index] > 0:
+            histogram2d.Fill(data[index]['X'], data[index]['Y'], amplitude['chan0'][index])
 
     canvas.cd()
-    histogram2d.Draw()
+    histogram2d.Draw("COLZ")
     canvas.Update()
     filename = "plot_telescope/testplot.pdf"
     canvas.Print(filename)
@@ -69,8 +69,9 @@ def importTelescopeData():
   
     dataFileName = "~/cernbox/SH203X/HGTD_material/telescope_data_sep_2017/tracking1504818689.root"
     data = rnm.root2array(dataFileName) # numpy array, 200K elements (equivalent to no of entries), each element x and y values in micrometers
-    
+  
     return data
+
 
 # The file have 200 263 entries, reduced to 200K to adapt to telescope data
 def importOscilloscopeData():
@@ -125,10 +126,10 @@ def importNoiseProperties():
 # Import dictionaries amplitude and risetime with channel names from a .pkl file
 def importPulseProperties():
     
-    amplitude = ""
-    risetime = ""
-    small_amplitude = ""
-    criticalValues = ""
+    amplitude = "" # Max amplitude value for each entry and channel
+    risetime = "" # Rise time for the same amplitude, entry and channel correspondingly
+    small_amplitude = "" # Max amplitude values for which rise time could not be calculated, due to insufficient points
+    criticalValues = "" # Maximal value for writing out data from the physical oscilloscope to data
     
     # Note: amplitude values are corrected with a pedestal (from the noise analysis) and the critical values are not
     with open("pulse_info_backup.pkl","rb") as input:
