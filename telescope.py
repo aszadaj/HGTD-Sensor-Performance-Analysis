@@ -21,8 +21,6 @@ def main():
     data_telescope = importTelescopeData()
 
     amplitude, risetime, small_amplitude, criticalValues = importPulseProperties()
-    
-    print small_amplitude["chan2"][200263]
 
     #produceTProfileGraphs(amplitude, small_amplitude, data_telescope)
 
@@ -106,7 +104,7 @@ def importOscilloscopeData():
 # Import JSON file for pedestal and noise information from noise analysis
 def importNoiseProperties():
     
-    fileName = "pedestal.json"
+    fileName = "resources/pedestal.json"
     
     # load from file:
     with open(fileName, 'r') as f:
@@ -132,7 +130,7 @@ def importPulseProperties():
     criticalValues = "" # Maximal value for writing out data from the physical oscilloscope to data
     
     # Note: amplitude values are corrected with a pedestal (from the noise analysis) and the critical values are not
-    with open("pulse_info_backup.pkl","rb") as input:
+    with open("resources/pulse_info.pkl","rb") as input:
         
         amplitude = pickle.load(input)          # dictionary, keys: channels, for each key list of amplitude values (200K)
         risetime = pickle.load(input)           # dictionary, keys: channels, for each key list of rise time values (200K)
