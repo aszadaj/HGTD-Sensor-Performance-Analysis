@@ -15,6 +15,20 @@ def main_debugFunctions(runInfo):
         print "Done with run " + str(runNumber)
 
 
+def getRunInfo():
+    
+    fileName = "/Users/aszadaj/cernbox/SH203X/HGTD_material/runlist_HGTD_September_2017/tb_sep17_run_log/RunLog-Table1.csv"
+    df = pd.read_csv(fileName)
+    
+    runInfo = dict()
+    
+    for index in range(0,len(df)):
+        runInfo[df.iloc[index,0]] = df.iloc[index,1]
+   
+    return runInfo
+
+
+
 # The code obtains amplitudes and rise time for pulses for each channel for all selected entries
 # and orders them in a nested list within "amplitudes" and "risetime".
 def debugFunctionsPerFile(runNumber,timeStamp):
@@ -207,4 +221,22 @@ def exportResults(difference_values,runNumber):
         
         # difference_values is a dictionary with channels as keys
         pickle.dump(difference_values,output,pickle.HIGHEST_PROTOCOL)
+
+
+def getRunMetaData():
+    
+    fileName = "/Users/aszadaj/cernbox/SH203X/HGTD_material/runlist_HGTD_September_2017/tb_sep17_run_log/RunLog-Table1.csv"
+    df = pd.read_csv(fileName)
+    
+    print df
+    
+    runInfo = dict()
+    
+#    for index in range(0,len(df)):
+#        runInfo[df.iloc[index,0]] = df.iloc[index,1]
+
+    return runInfo
+
+
+runInfo = getRunInfo()
 

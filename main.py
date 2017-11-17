@@ -1,20 +1,28 @@
 
 from pulse import *
 from noise import *
+from telescope import *
 from noise_plot import *
 from pulse_plot import *
+from datetime import datetime
+
 
 
 def main():
     
     runInfo = getRunInfo()
-    selectedRuns = [3657,3658,3659,3660] # batch 101 for now
+    selectedRuns = [3656] # batch 101 for now, ok until run 3670, weird problem with 3662
     runInfo = selectRuns(runInfo, selectedRuns)
     final_entry = raw_input ("Until which entry? m = max: ")
     
+    printTime()
+    
     for runNumber in runInfo.keys():
+    
         analyseFileForRunNumber(runNumber, runInfo[runNumber], final_entry)
-        print "Done with run " + str(runNumber)
+        
+        print "\nDone with run " + str(runNumber) + ".\n"
+        printTime()
     
     exit()
 
@@ -22,25 +30,30 @@ def main():
 # Perform noise and pulse analysis
 def analyseFileForRunNumber(runNumber, timeStamp, final_entry):
     
-    print "Importing file for run number " + str(runNumber) + " ... "
-    data, sensors = importOscilloscopeData(timeStamp,final_entry)
-
-    noise_average = noise_std = amplitudes = risetimes = small_amplitudes = np.zeros(0, dtype = data.dtype)
+    print "\nImporting file for run number " + str(runNumber) + " ... \n"
+    data_oscilloscope, sensors = importOscilloscopeData(timeStamp,final_entry)
+    
+    noise_average = noise_std = amplitudes = risetimes = small_amplitudes = np.zeros(0, dtype = data_oscilloscope.dtype)
 
     step = 1000
     
     # Noise
-    print "Done importing file. Start noise analysis."
-    noiseAnalysisPerFile(data, step, runNumber, noise_average, noise_std)
+    #noiseAnalysisPerFile(data_oscilloscope, step, runNumber, sensors[runNumber], noise_average, noise_std)
     
     # Pulse
-    print "Done with noise analysis. Start pulse analysis."
-    pulseAnalysisPerFile(data, step, runNumber, timeStamp, sensors, amplitudes, risetimes, small_amplitudes)
+    #pulseAnalysisPerFile(data_oscilloscope, step, runNumber, timeStamp, sensors[runNumber], amplitudes, risetimes, small_amplitudes)
+
+    # Telescope
+    data_telescope = importTelescopeData(timeStamp)
+    telescopeAnalysisPerFile(data_telescope, runNumber, timeStamp, sensors[runNumber])
 
 
 # Noise analysis in chunks
-def noiseAnalysisPerFile(data, step, runNumber, noise_average, noise_std):
+def noiseAnalysisPerFile(data, step, runNumber, sensors, noise_average, noise_std):
 
+    printTime()
+    print "\nDone importing file. Start noise analysis.\n"
+    
     for chunk in range(0, len(data), step):
     
         noise_average_chunk, noise_std_chunk = noiseAnalysisPerFilePerChunk(data[chunk:chunk+step])
@@ -51,13 +64,16 @@ def noiseAnalysisPerFile(data, step, runNumber, noise_average, noise_std):
     
     pedestal, noise = getPedestalNoiseValuePerChannel(noise_average, noise_std)
     
-    produceNoiseDistributionPlots(noise_average, noise_std, runNumber)
+    produceNoiseDistributionPlots(noise_average, noise_std, runNumber, sensors)
     exportNoiseInfo(pedestal, noise, runNumber)
 
 
 # Pulse analysis in chunks
 def pulseAnalysisPerFile(data, step, runNumber, timeStamp, sensors, amplitudes, risetimes, small_amplitudes):
 
+    printTime()
+    print "\nDone with noise analysis. Start pulse analysis.\n"
+    
     pedestal, noise = importNoiseProperties(runNumber)
     timeScope = getTimeScope(timeStamp)
 
@@ -75,7 +91,7 @@ def pulseAnalysisPerFile(data, step, runNumber, timeStamp, sensors, amplitudes, 
     producePulseDistributionPlots(amplitudes, risetimes, sensors, pedestal, runNumber, timeStamp, small_amplitudes)
     exportPulseInfo(amplitudes, risetimes, small_amplitudes, criticalValues, runNumber)
     
-    print "Number of small amplitudes: " + str(np.count_nonzero(small_amplitudes))
+    print "\nNumber of small amplitudes: " + str(np.count_nonzero(small_amplitudes)) + ".\n"
 
 
 # Function which removes amplitudes which are in the range being critical amplitude values
@@ -130,7 +146,10 @@ def importOscilloscopeData(timeStamp, final_entry):
     dataFileName = "~/cernbox/SH203X/HGTD_material/oscilloscope_data_sep_2017/data_"+str(timeStamp)+".tree.root"
    
     # Future issue, to fix names from metadata
-    sensors = ["W9-LGA35","50D-GBGR2","W4-LG12","SiPM-AFP","W4-S215","W4-S215","W4-S215","W4-S215"]
+    sensors = dict()
+    for index in range(3656,3670):
+        sensors[index] = ["W9-LGA35","50D-GBGR2","W4-LG12","SiPM-AFP","W4-S215","W4-S215","W4-S215","W4-S215"]
+    
     
     if final_entry == "m":
         data = rnm.root2array(dataFileName)
@@ -142,6 +161,18 @@ def importOscilloscopeData(timeStamp, final_entry):
         data[chan] = np.multiply(data[chan],-1000)
 
     return data, sensors
+
+# Note, the file have only 200K entries
+def importTelescopeData(timeStamp):
+  
+    dataFileName = "~/cernbox/SH203X/HGTD_material/telescope_data_sep_2017/tracking"+str(timeStamp)+".root"
+    data = rnm.root2array(dataFileName)
+    
+    # Convert into mm
+    for dimension in data.dtype.names:
+        data[dimension] = np.multiply(data[dimension], 0.001)
+  
+    return data
 
 
 # Generates which runs are considered located in runlist.csv with corresponding time stamps.
@@ -209,6 +240,12 @@ def exportPulseInfo(amplitude,risetime,small_amplitudes,criticalValues,runNumber
         pickle.dump(risetime,output,pickle.HIGHEST_PROTOCOL)
         pickle.dump(small_amplitudes,output,pickle.HIGHEST_PROTOCOL)
         pickle.dump(criticalValues,output,pickle.HIGHEST_PROTOCOL)
+
+def printTime():
+
+    time = str(datetime.now().time())
+    print  "\nTime: " + str(time[:-7])
+
 
 
 ########## MAIN ###########

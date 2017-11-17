@@ -6,7 +6,7 @@ import pickle
 import pandas as pd
 
 
-def produceNoiseDistributionPlots(noise_average, noise_std, runNumber):
+def produceNoiseDistributionPlots(noise_average, noise_std, runNumber, sensors):
 
     channels = noise_average.dtype.names
     pedestal = dict()
@@ -14,8 +14,8 @@ def produceNoiseDistributionPlots(noise_average, noise_std, runNumber):
 
     for chan in channels:
         
-        pedestal[chan] = ROOT.TH1D("Pedestal "+chan,"Pedestal "+chan,100,-10,10)
-        noise[chan] = ROOT.TH1D("Noise "+chan,"Noise "+chan,100,0,10)
+        pedestal[chan] = ROOT.TH1D("Pedestal channel "+str(int(chan[-1:])+1),"pedestal"+chan,300,-5,5)
+        noise[chan] = ROOT.TH1D("Noise channel "+str(int(chan[-1:])+1),"noise"+chan,300,0,7)
     
         for entry in range(0,len(noise_average)):
             pedestal[chan].Fill(noise_average[entry][chan])
@@ -25,21 +25,23 @@ def produceNoiseDistributionPlots(noise_average, noise_std, runNumber):
     canvas_noise = ROOT.TCanvas("Noise per channel", "Noise per channel")
    
     for chan in channels:
+    
+        chan_index = int(chan[-1:])
         
-        titleAbove = "Distribution of mean values (pedestal) for run "+str(runNumber)+", for each entry, for " + chan
-        xAxisTitle = "Pedestal mean value (mV)"
+        titleAbove = "Distribution of noise mean values from each entry, run "+str(runNumber)+", channel " + str(chan_index+1) +", sensor: " + str(sensors[chan_index])
+        xAxisTitle = "Noise mean value (mV)"
         yAxisTitle = "Number of entries (N)"
         setGraphAttributes(pedestal[chan],titleAbove,xAxisTitle,yAxisTitle)
         
-        titleAbove = "Distribution of standard deviation values (noise amplitude) for run "+str(runNumber)+" foreach entry, for " + chan
+        titleAbove = "Distribution of standard deviation values (noise) from each entry, Sep 2017 run "+str(runNumber)+", channel " + str(chan_index+1) + ", sensor: " + str(sensors[chan_index])
         xAxisTitle = "Standard deviation (mV)"
         yAxisTitle = "Number of entries (N)"
         setGraphAttributes(noise[chan],titleAbove,xAxisTitle,yAxisTitle)
         
-        fileName = "pedestal_distributions/pedestal_"+str(runNumber)+"_"+chan+".pdf"
+        fileName = "plots/pedestal_distributions/pedestal_"+str(runNumber)+"_"+chan+".pdf"
         exportGraph(pedestal[chan],canvas_pedestal,fileName)
         
-        fileName = "pedestal_distributions/noise_"+str(runNumber)+"_"+chan+".pdf"
+        fileName = "plots/pedestal_distributions/noise_"+str(runNumber)+"_"+chan+".pdf"
         exportGraph(noise[chan],canvas_noise,fileName)
 
 
