@@ -1,53 +1,53 @@
 
 import ROOT
 import numpy as np
+import metadata as md
 
 
 # Create 8 plots, for each channel across all entries, for amplitudes and rise times
-def producePulseDistributionPlots(amplitudes,risetimes,sensors,pedestals,runNumber,timeStamp,small_amplitudes):
+def producePulseDistributionPlots(amplitudes, rise_times, pedestals):
     
     canvas_amplitude = ROOT.TCanvas("Amplitude Distribution", "amplitude")
-    canvas_risetime = ROOT.TCanvas("Risetime Distribution", "risetime")
+    canvas_rise_time = ROOT.TCanvas("Risetime Distribution", "risetime")
 
-    amplitude_graph = dict()
-    risetime_graph = dict()
+    amplitudes_graph = dict()
+    rise_times_graph = dict()
     
     for chan in amplitudes.dtype.names:
         
-        amplitude_graph[chan] = ROOT.TH1D("Amplitude channel "+str(int(chan[-1:])+1),"amplitude"+chan,900,0,400)
-        risetime_graph[chan] = ROOT.TH1D("Rise time channel "+str(int(chan[-1:])+1),"risetime"+chan,50,0,1)
+        amplitudes_graph[chan] = ROOT.TH1D("Amplitude channel "+str(int(chan[-1:])+1),"amplitude"+chan,900,0,400)
+        rise_times_graph[chan] = ROOT.TH1D("Rise time channel "+str(int(chan[-1:])+1),"risetime"+chan,50,0,1)
         
         index = int(chan[-1:])
         
         # Exclude filling histograms with critical amplitude values
         for entry in range(0,len(amplitudes[chan])):
-            if amplitudes[chan][entry] != 0 and risetimes[chan][entry] != 0:
-                amplitude_graph[chan].Fill(amplitudes[chan][entry])
-                risetime_graph[chan].Fill(risetimes[chan][entry])
+            if amplitudes[chan][entry] != 0 and rise_times[chan][entry] != 0:
+                amplitudes_graph[chan].Fill(amplitudes[chan][entry])
+                rise_times_graph[chan].Fill(rise_times[chan][entry])
 
         typeOfGraph = "amplitude"
-        defineAndProduceHistogram(amplitude_graph[chan],canvas_amplitude,typeOfGraph,sensors,chan,runNumber,timeStamp)
-
-        typeOfGraph = "risetime"
-        defineAndProduceHistogram(risetime_graph[chan],canvas_risetime,typeOfGraph,sensors,chan,runNumber,timeStamp)
+        defineAndProduceHistogram(amplitudes_graph[chan],canvas_amplitude,typeOfGraph,chan)
+        typeOfGraph = "rise_time"
+        defineAndProduceHistogram(rise_times_graph[chan],canvas_rise_time,typeOfGraph,chan)
 
 
 # Produce TH1 plots and export them as a PDF file
-def defineAndProduceHistogram(graphList,canvas,typeOfGraph,sensors,chan,runNumber,timeStamp):
-    
+def defineAndProduceHistogram(graphList,canvas,typeOfGraph,chan):
+    sensors = md.getSensorNames()
     chan_index = int(chan[-1:])
-   
-    titleAbove = "Distribution of pulse rise times, Sep 2017 run "+str(runNumber)+", channel " + str(chan_index+1) + ", sensor: " + str(sensors[chan_index])
+    
+    titleAbove = "Distribution of pulse rise times, Sep 2017 run "+str(md.getRunNumber())+", channel " + str(chan_index+1) + ", sensor: " + str(sensors[chan_index])
     xAxisTitle = "Time (ns)"
     yAxisTitle = "Number (N)"
-    fileName = "plots/pulse_distributions/rise_time_distribution_"+str(runNumber)+"_"+chan+".pdf"
+    fileName = "plots/pulse_distributions/rise_time_distribution_"+str(md.getRunNumber())+"_"+chan+".pdf"
     
     
     if typeOfGraph == "amplitude":
     
-        titleAbove = "Distribution of pulse amplitudes, Sep 2017 run "+str(runNumber)+", channel " + str(chan_index+1) + ", sensor: " + str(sensors[chan_index])
+        titleAbove = "Distribution of pulse amplitudes, Sep 2017 run "+str(md.getRunNumber())+", channel " + str(chan_index+1) + ", sensor: " + str(sensors[chan_index])
         xAxisTitle = "Amplitude (mV)"
-        fileName = "plots/pulse_distributions/amplitude_distribution_"+str(runNumber)+"_"+chan+".pdf"
+        fileName = "plots/pulse_distributions/amplitude_distribution_"+str(md.getRunNumber())+"_"+chan+".pdf"
     
 
     graphList.SetLineColor(1)
