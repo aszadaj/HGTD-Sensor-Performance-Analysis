@@ -9,9 +9,9 @@ from os.path import isfile, join
 
 def getRunLog():
     
-    tb_2017_run_log_file_name = "resources/run_list_tb_sep_2017.csv"
+    tb_2017_run_log_file_name = "run_list_tb_sep_2017.csv"
     
-    # returns array of unproduced files (if available in folder pickle_files)
+    # returns array of unproduced files (if available in folder resources)
     runLog = createRunLogArray(tb_2017_run_log_file_name)
  
     return runLog
@@ -34,13 +34,15 @@ def createRunLogArray(fileName):
 
 def restrictToUndoneRuns(metaData):
     
-    folderPath = "pickle_files/"
+    folderPath = "../../resources/"
     availableFiles = [f for f in listdir(folderPath) if isfile(join(folderPath, f))]
-    del availableFiles[0]
-    availableFiles.sort()
-    del availableFiles[0:(len(availableFiles)/2)+1]
     
+    availableFiles.sort()
+    del availableFiles[0]
+    del availableFiles[0:(len(availableFiles)/2)]
+   
     availableRunNumber = []
+    
     for file in availableFiles:
         availableRunNumber.append(int(file[11:15]))
     
@@ -65,8 +67,8 @@ def getOscilloscopeMetaData(fileName):
     
     return metaData
 
-# Here check how the run log is read
-def getRunsForTelescopeAnalysis(metaData):
+
+def getRunsForTelescopeAnalysis(runLog):
 
     folderPath = "../../HGTD_material/telescope_data_sep_2017/"
     availableFiles = [f for f in listdir(folderPath) if isfile(join(folderPath, f))]
@@ -79,7 +81,7 @@ def getRunsForTelescopeAnalysis(metaData):
 
     for file_name in availableFiles:
         telescope_timeStamp = file_name[8:-5]
-        foundRun = getRunNumberTelescope(telescope_timeStamp, metaData)
+        foundRun = getRunNumberTelescope(telescope_timeStamp, runLog)
         
         if int(foundRun) != 0:
             telescope_runNumbers.append(foundRun)
@@ -88,16 +90,14 @@ def getRunsForTelescopeAnalysis(metaData):
 
     print "telescope run number available: " + str(len(telescope_runNumbers))
     print telescope_runNumbers
-    telescope_metadata = []
-    for row in metaData:
-        if int(row[3]) in telescope_runNumbers:
-            telescope_metadata.append(row)
 
-    return telescope_metadata, telescope_runNumbers
+    return runLog, telescope_runNumbers
 
 
 def getRunNumberTelescope(timeStamp,runLog):
     runNumber = 0
+    
+    
     for row in runLog:
         if row[4] == timeStamp:
             runNumber = row[3]

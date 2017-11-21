@@ -1,11 +1,9 @@
 import pickle
-import metadata as md
 import numpy as np
-
+import metadata as md
 from noise_plot import *
 
-# Select data wrt to condition for less than 25 mV and fill histograms for pedestals and noises
-# Input: TH1-objects for pedestals and noises for each channel, and data points
+
 def noiseAnalysis(data):
     
     channels = data.dtype.names
@@ -16,7 +14,7 @@ def noiseAnalysis(data):
     for entry in range(0,len(data)):
         for chan in channels:
             
-            pulse_compatible_samples = data[entry][chan] > 25
+            pulse_compatible_samples = data[entry][chan] < -25*0.001 
             max_index = np.where(pulse_compatible_samples)[0][0] - 3 if len( np.where(pulse_compatible_samples)[0] ) else 1002
             
             noise_average[entry][chan] = np.average(data[entry][chan][0:max_index])
@@ -24,11 +22,25 @@ def noiseAnalysis(data):
 
     return noise_average, noise_std
 
+def exportNoiseInfo(pedestal, noise, noise_average, noise_std):
+
+    exportNoiseData(noise_average, noise_std)
+    exportNoiseMean(pedestal, noise)
 
 # Export pedestal info (noise analysis)
-def exportNoiseInfo(pedestal, noise):
+def exportNoiseData(noise_average, noise_std):
 
-    fileName = "/Users/aszadaj/cernbox/SH203X/Gitlab/HGTD-Efficiency-analysis/resources/pedestal_"+str(md.getRunNumber())+".pkl"
+    fileName = "pickle_files/noise_files/noise_data_"+str(md.getRunNumber())+".pkl"
+    
+    with open(fileName,"wb") as output:
+        pickle.dump(noise_average,output,pickle.HIGHEST_PROTOCOL)
+        pickle.dump(noise_std,output,pickle.HIGHEST_PROTOCOL)
+
+
+# Export pedestal info (noise analysis)
+def exportNoiseMean(pedestal, noise):
+
+    fileName = "pickle_files/noise_files/noise_mean_"+str(md.getRunNumber())+".pkl"
     
     with open(fileName,"wb") as output:
         pickle.dump(pedestal,output,pickle.HIGHEST_PROTOCOL)
@@ -36,10 +48,19 @@ def exportNoiseInfo(pedestal, noise):
 
 
 # Import dictionaries amplitude and risetime with channel names from a .pkl file
-def importNoiseProperties():
+def importNoiseData():
     
-    pedestal = ""
-    fileName = "/Users/aszadaj/cernbox/SH203X/Gitlab/HGTD-Efficiency-analysis/resources/pedestal_"+str(md.getRunNumber())+".pkl"
+    fileName = "pickle_files/noise_files/noise_data_"+str(md.getRunNumber())+".pkl"
+    
+    with open(fileName,"rb") as input:
+        noise_average = pickle.load(input)
+        noise_std = pickle.load(input)
+
+    return noise_average, noise_std
+
+def importNoiseMean():
+    
+    fileName = "pickle_files/noise_files/noise_mean_"+str(md.getRunNumber())+".pkl"
     
     with open(fileName,"rb") as input:
         pedestal = pickle.load(input)
@@ -49,7 +70,7 @@ def importNoiseProperties():
 
 
 # Calculates pedestal and noise mean values per channel for all entries
-def getPedestalNoisePerChannel(noise_average, noise_std):
+def getPedestalAndNoisePerChannel(noise_average, noise_std):
     
     pedestal = dict()
     noise = dict()

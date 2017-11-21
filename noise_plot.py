@@ -4,7 +4,7 @@ import metadata as md
 
 
 def produceNoiseDistributionPlots(noise_average, noise_std):
-
+    
     channels = noise_average.dtype.names
     sensors = md.getSensorNames()
     pedestal_graph = dict()

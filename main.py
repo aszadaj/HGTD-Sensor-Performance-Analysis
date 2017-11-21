@@ -1,7 +1,8 @@
 import ROOT
-import root_numpy
+import root_numpy as rnm
 import time
-import numpy
+import numpy as np
+import pickle
 
 import pulse as ps
 import noise as ns
@@ -12,118 +13,146 @@ import metadata as md
 from pathos.multiprocessing import ProcessingPool as Pool
 from datetime import datetime
 
-ROOT.gROOT.SetBatch(True) # suppress the creation of canvases on the screen.. much much faster if over a remote connection
+#setupATLAS()
+ROOT.gROOT.SetBatch(True)
+# When running on lxplus, remember to run 'setupATLAS' and after 'asetup --restore'
+
 
 def main():
 
-    #setupATLAS()
-    # Choose which run was last done and how many files shoud be analysed in next order
-    lastRunNumber = 3747 # Ok to run until 3844
     numberOfRuns = 10
     threads = 4
     step = 10000
+    max = ""
+    sigma = 10
+   
+    startAnalysis(numberOfRuns, threads, step, sigma, max)
     
-    # Import run log from TB September 2017
-    runLog = md.getRunLog(numberOfRuns, lastRunNumber)
-    
-    # Start processing each selected runs
-    for input in runLog:
-        
-        md.globVar(input)
-        
-        runNumber = md.getRunNumber()
-        
-        print "Run number: " + str(runNumber)
-        analyseDataForRunNumber(threads, step)
-        print "\nDone with run " + str(runNumber) + ".\n"
-  
     exit()
 
 
 ########## MAIN ANALYSIS ##########
 
-# Perform noise, pulse and telescope analysis
-def analyseDataForRunNumber(threads, step):
+def startAnalysis(numberOfRuns, threads, step, sigma, max):
 
-    print "\nImporting file for run number " + str(md.getRunNumber()) + " ... \n"
+    runLog = md.restrictToUndoneRuns(md.getRunLog())
+    ps.defineSigmaConstant(sigma)
+    #runLog_telescope, runList = md.getRunsForTelescopeAnalysis(runLog)
+    
+    for row in runLog:
+    
+        if numberOfRuns == 0:
+            break
+        
+        md.defineGlobalVariableRun(row)
+        runNumber = md.getRunNumber()
+        
+        if (md.isRootFileAvailable(md.getTimeStamp())):
+        
+            print "Run number: " + str(runNumber)
+            analyseDataForRunNumber(threads, step, max)
+            
+            print "\nDone with run " + str(runNumber) + ".\n"
+            
+        else:
+        
+            print "There is no root file for run number: " + str(runNumber)
+        
+        numberOfRuns -= 1
+
+
+# Perform noise, pulse and telescope analysis
+def analyseDataForRunNumber(threads, step, max):
     
     # Start multiprocessing
     p = Pool(threads)
-    max = md.getNumberOfEvents()
+    max = md.getNumberOfEvents() if max=="" else max
     ranges = range(0, max, step)
-    dataPath = "~/cernbox/SH203X/HGTD_material/oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
+    dataPath = "../../HGTD_material/oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
     
     printTime()
-    print "\nStart Multiprocessing \n"
+    print "Threads: " + str(threads) + "\n"
+    print "Entries: " + str(max) + "\n"
+    print "\nStart multiprocessing... \n"
     
     results = p.map(lambda chunk: oscilloscopeAnalysis(dataPath,chunk,chunk+step),ranges)
+    #results = p.apply_async(lambda chunk: oscilloscopeAnalysis(dataPath,chunk,chunk+step),ranges)
     
     printTime()
     print "\nDone with multiprocessing \n"
-    
-    
-    noise_average = numpy.zeros(0, dtype=results[-1][0].dtype)
-    noise_std = numpy.zeros(0, dtype=results[-1][0].dtype)
-    amplitudes = numpy.zeros(0, dtype=results[-1][0].dtype)
-    rise_times = numpy.zeros(0, dtype=results[-1][0].dtype)
-    
-    for i in range(0,len(results)):
-        noise_average = numpy.append(noise_average, results[i][0])
-        noise_std = numpy.append(noise_std, results[i][1])
-        amplitudes = numpy.append(amplitudes, results[i][2])
-        rise_times = numpy.append(rise_times, results[i][3])
-    
-    
-    # Some final analysis
-    pedestal, noise = ns.getPedestalNoisePerChannel(noise_average, noise_std)
+    exportFilesAndPlots(getResultsFromMultiProcessing(results))
 
-    amplitudes, rise_times, criticalValues = ps.removeUnphyscialAmplitudes(amplitudes, rise_times, noise)
-
-    # Export and produce distribution plots
- 
-    ns.exportNoiseInfo(pedestal, noise)
-    ns.produceNoiseDistributionPlots(noise_average, noise_std)
-    
-    ps.exportPulseInfo(amplitudes, rise_times, criticalValues)
-    p_plot.producePulseDistributionPlots(amplitudes, rise_times, pedestal)
 
 
 def oscilloscopeAnalysis(dataPath, begin, end):
     
-    data = root_numpy.root2array(dataPath, start=begin, stop=end)
-    data = convertOscilloscopeData(data)
+    data = rnm.root2array(dataPath, start=begin, stop=end)
     
     noise_average, noise_std = ns.noiseAnalysis(data)
     amplitudes, rise_times = ps.pulseAnalysis(data, noise_average, noise_std)
     
     return noise_average, noise_std, amplitudes, rise_times
 
-    # Future fix, leave it for now
-    #data_telescope = importTelescopeData(timeStamp)
-    #telescopeAnalysisPerFile(data_telescope, runNumber, timeStamp, sensors[runNumber])
 
 
-# Import data file,  all entries
-def convertOscilloscopeData(data):
+def getResultsFromMultiProcessing(results):
+
+    noise_average = np.zeros(0, dtype=results[-1][0].dtype)
+    noise_std = np.zeros(0, dtype=results[-1][0].dtype)
+    amplitudes = np.zeros(0, dtype=results[-1][0].dtype)
+    rise_times = np.zeros(0, dtype=results[-1][0].dtype)
+    
+    for i in range(0,len(results)):
+        noise_average = np.append(noise_average, results[i][0])
+        noise_std = np.append(noise_std, results[i][1])
+        amplitudes = np.append(amplitudes, results[i][2])
+        rise_times = np.append(rise_times, results[i][3])
+    
+    
+    # Some final analysis
+    pedestal, noise = ns.getPedestalAndNoisePerChannel(noise_average, noise_std)
+
+    amplitudes, rise_times, criticalValues = ps.removeUnphyscialAmplitudes(amplitudes, rise_times, pedestal, noise)
+    
+    printTime()
+    print "Done with final analysis. \n"
+
+    return [noise_average, noise_std, amplitudes, rise_times, pedestal, noise, criticalValues]
+
+
+def exportFilesAndPlots(results):
+    # Export and produce distribution plots
+    [noise_average, noise_std, amplitudes, rise_times, pedestal, noise, criticalValues] = [i for i in results]
+    
+    noise_average, noise_std, pedestal, noise, amplitudes, rise_times, criticalValues = convertData(noise_average, noise_std, pedestal, noise, amplitudes, rise_times, criticalValues)
+
+
+    ns.exportNoiseInfo(pedestal, noise, noise_average, noise_std)
+    ns.produceNoiseDistributionPlots(noise_average, noise_std)
+
+    ps.exportPulseInfo(amplitudes, rise_times, criticalValues)
+    p_plot.producePulseDistributionPlots(amplitudes, rise_times, pedestal)
+
+    printTime()
+    print "Done with export data and plots. \n"
+
+
+# Convert to positive values in mV
+def convertData(noise_average, noise_std, pedestal, noise, amplitudes, rise_times, criticalValues):
+  
+    channels = noise_average.dtype.names
   
     # Invert minus sign and change from V to mV
-    for chan in data.dtype.names:
-        data[chan] = numpy.multiply(data[chan],-1000)
-
-    return data
-
-
-# Note, the file have only 200K entries
-def importTelescopeData():
-  
-    dataFileName = "~/cernbox/SH203X/HGTD_material/telescope_data_sep_2017/tracking"+str(md.getTimeStamp())+".root"
-    data = root_numpy.root2array(dataFileName)
+    for chan in channels:
     
-    # Convert into mm
-    for dimension in data.dtype.names:
-        data[dimension] = numpy.multiply(data[dimension], 0.001)
-  
-    return data, dataFileName
+        noise_average[chan] = np.multiply(noise_average[chan],-1000)
+        noise_std[chan] = np.multiply(noise_std[chan],1000)
+        pedestal[chan] *= -1000
+        noise[chan] *= 1000
+        amplitudes[chan] = np.multiply(amplitudes[chan],-1000)
+        criticalValues[chan] *= -1000
+    
+    return noise_average, noise_std, pedestal, noise, amplitudes, rise_times, criticalValues
 
 
 ########## OTHER ##########
@@ -133,13 +162,12 @@ def printTime():
     time = str(datetime.now().time())
     print  "\nTime: " + str(time[:-7])
 
-
+# Function for setting up ATLAS style plots
 def setupATLAS():
 
     ROOT.gROOT.SetBatch()
     ROOT.gROOT.LoadMacro("./style/AtlasStyle.C")
     ROOT.SetAtlasStyle()
-
 
 
 ########## MAIN ###########
