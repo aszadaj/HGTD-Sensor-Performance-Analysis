@@ -30,7 +30,7 @@ def exportNoiseInfo(pedestal, noise, noise_average, noise_std):
 # Export pedestal info (noise analysis)
 def exportNoiseData(noise_average, noise_std):
 
-    fileName = "pickle_files/noise_files/noise_data_"+str(md.getRunNumber())+".pkl"
+    fileName = "../../HGTD_material/data_hgtd_efficiency_sep_2017/noise_files/noise_data/noise_data_"+str(md.getRunNumber())+".pkl"
     
     with open(fileName,"wb") as output:
         pickle.dump(noise_average,output,pickle.HIGHEST_PROTOCOL)
@@ -40,7 +40,7 @@ def exportNoiseData(noise_average, noise_std):
 # Export pedestal info (noise analysis)
 def exportNoiseMean(pedestal, noise):
 
-    fileName = "pickle_files/noise_files/noise_mean_"+str(md.getRunNumber())+".pkl"
+    fileName = "../../HGTD_material/data_hgtd_efficiency_sep_2017/noise_files/noise_mean/noise_mean_"+str(md.getRunNumber())+".pkl"
     
     with open(fileName,"wb") as output:
         pickle.dump(pedestal,output,pickle.HIGHEST_PROTOCOL)
@@ -50,7 +50,7 @@ def exportNoiseMean(pedestal, noise):
 # Import dictionaries amplitude and risetime with channel names from a .pkl file
 def importNoiseData():
     
-    fileName = "pickle_files/noise_files/noise_data_"+str(md.getRunNumber())+".pkl"
+    fileName = "../../HGTD_material/data_hgtd_efficiency_sep_2017/noise_files/noise_data/noise_data_"+str(md.getRunNumber())+".pkl"
     
     with open(fileName,"rb") as input:
         noise_average = pickle.load(input)
@@ -60,7 +60,7 @@ def importNoiseData():
 
 def importNoiseMean():
     
-    fileName = "pickle_files/noise_files/noise_mean_"+str(md.getRunNumber())+".pkl"
+    fileName = "../../HGTD_material/data_hgtd_efficiency_sep_2017/noise_files/noise_mean/noise_mean_"+str(md.getRunNumber())+".pkl"
     
     with open(fileName,"rb") as input:
         pedestal = pickle.load(input)

@@ -10,90 +10,73 @@ from os.path import isfile, join
 def getRunLog():
     
     tb_2017_run_log_file_name = "resources/run_list_tb_sep_2017.csv"
-    
-    # returns array of unproduced files (if available in folder pickle_files)
-    runLog = createRunLogArray(tb_2017_run_log_file_name)
- 
-    return runLog
-
-
-def createRunLogArray(fileName):
-
     metaData = []
-
-    with open(fileName, "rb") as csvFile:
-       
+    
+    # returns array of unproduced files (if available in folder ../../HGTD_material/data_hgtd_efficiency_sep_2017)
+    with open(tb_2017_run_log_file_name, "rb") as csvFile:
         fileData = csv.reader(csvFile, delimiter=";")
         for row in fileData:
             metaData.append(row)
 
     del metaData[0:2]
-
+ 
     return metaData
 
 
 def restrictToUndoneRuns(metaData):
     
-    folderPath = "pickle_files/"
-    availableFiles = [f for f in listdir(folderPath) if isfile(join(folderPath, f))]
-    del availableFiles[0]
-    availableFiles.sort()
-    del availableFiles[0:(len(availableFiles)/2)+1]
+    folderPath = "../../HGTD_material/data_hgtd_efficiency_sep_2017/noise_files/noise_data" #noise_data_####
+    availableFiles = [int(f[11:15]) for f in listdir(folderPath) if isfile(join(folderPath, f)) and f != '.DS_Store']
     
-    availableRunNumber = []
-    for file in availableFiles:
-        availableRunNumber.append(int(file[11:15]))
-    
-    for runNumber in availableRunNumber:
-        for index in range(0,len(metaData)):
-            if int(metaData[index][3]) == runNumber:
-                del metaData[index]
-                break
+    runLog = []
 
-    return metaData
+    for index in range(0, len(metaData)):
+        if int(metaData[index][3]) not in availableFiles:
+            runLog.append(metaData[index])
+    
+    return runLog
 
+def considerOnlyRuns(runs, metaData):
+  
+    runLog = []
+    
+    for row in metaData:
+        if int(row[3]) in runs:
+            runLog.append(row)
 
-def getOscilloscopeMetaData(fileName):
-    
-    metaData = []
-    
-    with open(fileName, "rb") as csvFile:
-        
-        fileData = csv.reader(csvFile)
-        for row in fileData:
-            metaData.append(row)
-    
-    return metaData
+    return runLog
+
 
 # Here check how the run log is read
 def getRunsForTelescopeAnalysis(metaData):
-
-    folderPath = "../../HGTD_material/telescope_data_sep_2017/"
-    availableFiles = [f for f in listdir(folderPath) if isfile(join(folderPath, f))]
-    availableFiles.sort()
+    # Check for already produced pickle files
+    folderPath = "../../HGTD_material/forAntek/" #tracking1504949898.root
     
-    if '.DS_Store' in availableFiles:
-        del availableFiles[0]
-
-    telescope_runNumbers = []
-
-    for file_name in availableFiles:
-        telescope_timeStamp = file_name[8:-5]
-        foundRun = getRunNumberTelescope(telescope_timeStamp, metaData)
-        
-        if int(foundRun) != 0:
-            telescope_runNumbers.append(foundRun)
+    availableTimeStamps = [int(f[8:18]) for f in listdir(folderPath) if isfile(join(folderPath, f)) and f != '.DS_Store']
+    availableTimeStamps.sort()
     
-    telescope_runNumbers.sort()
+    runLog = []
+    runNumbers = []
+    
+    for index in range(0, len(metaData)):
+        if int(metaData[index][4]) in availableTimeStamps:
+            runLog.append(metaData[index])
 
-    print "telescope run number available: " + str(len(telescope_runNumbers))
-    print telescope_runNumbers
-    telescope_metadata = []
-    for row in metaData:
-        if int(row[3]) in telescope_runNumbers:
-            telescope_metadata.append(row)
+    # Check for telescope files
+    folderPath = "../../HGTD_material/data_hgtd_efficiency_sep_2017/pulse_files/pulse_data" #pulse_data_3656.pkl
 
-    return telescope_metadata, telescope_runNumbers
+    availableRunNumbers = [int(f[11:15]) for f in listdir(folderPath) if isfile(join(folderPath, f)) and f != '.DS_Store']
+    availableRunNumbers.sort()
+
+    runLog2 = []
+    
+    for index in range(0, len(runLog)):
+        if int(runLog[index][3]) in availableRunNumbers:
+            runLog2.append(runLog[index])
+            runNumbers.append(int(metaData[index][3]))
+
+
+    return runLog2, runNumbers
 
 
 def getRunNumberTelescope(timeStamp,runLog):
@@ -121,15 +104,6 @@ def getNumberOfEvents():
     return int(runInfo[6])
 
 
-def getTimeScope():
-
-    metaDataFileName = "../../HGTD_material/oscilloscope_data_sep_2017/csv/data_"+str(getTimeStamp())+".csv"
-    metaData = getOscilloscopeMetaData(metaDataFileName)
-    timeScope = float(metaData[0][4])*float("1E+09")
-   
-    return timeScope
-
-
 def getSensorNames():
 
     sensors = []
@@ -143,6 +117,7 @@ def getSensorNames():
 def isRootFileAvailable(timeStamp):
 
     folderPath = "../../HGTD_material/oscilloscope_data_sep_2017/"
+    folderPath = "/Volumes/500 1"
     availableFiles = [f for f in listdir(folderPath) if isfile(join(folderPath, f))]
     availableFiles.sort()
     
@@ -152,6 +127,17 @@ def isRootFileAvailable(timeStamp):
         if str(file_name[0]) != "." and int(file_name[5:-10]) == int(timeStamp):
             found = True
             break
+
+    folderPath = "../../HGTD_material/oscilloscope_data_sep_2017/"
+    
+    availableFiles = [f for f in listdir(folderPath) if isfile(join(folderPath, f))]
+    availableFiles.sort()
+
+    for file_name in availableFiles:
+        if str(file_name[0]) != "." and int(file_name[5:-10]) == int(timeStamp):
+            found = True
+            break
+
     return found
 
 

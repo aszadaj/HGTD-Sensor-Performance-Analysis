@@ -15,15 +15,20 @@ from datetime import datetime
 
 #setupATLAS()
 ROOT.gROOT.SetBatch(True)
+
 # When running on lxplus, remember to run 'setupATLAS' and after 'asetup --restore'
 
+# Comment: There are files which do have only selected number of channels
+# this should be taken care of. Another aspect is that the there is a possibility
+# to restrict amount of entries depending on the file, can be setup in metadata if
+# needed.
 
 def main():
 
-    numberOfRuns = 10
+    numberOfRuns = 40 # 88 max
     threads = 4
     step = 10000
-    max = ""
+    max = "" # "" all entries
     sigma = 10
    
     startAnalysis(numberOfRuns, threads, step, sigma, max)
@@ -34,10 +39,19 @@ def main():
 ########## MAIN ANALYSIS ##########
 
 def startAnalysis(numberOfRuns, threads, step, sigma, max):
-
+    
+    totalNumberOfRuns = numberOfRuns
+    startTime = getTime()
+    
+    print "\n"
+    printTime()
+    print "Start analysis, " + str(numberOfRuns) + " files."
+    print "Threads: " + str(threads)
+    print "Sigma: " + str(sigma)
+    
     runLog = md.restrictToUndoneRuns(md.getRunLog())
+    
     ps.defineSigmaConstant(sigma)
-    #runLog_telescope, runList = md.getRunsForTelescopeAnalysis(runLog)
     
     for row in runLog:
     
@@ -48,11 +62,11 @@ def startAnalysis(numberOfRuns, threads, step, sigma, max):
         runNumber = md.getRunNumber()
         
         if (md.isRootFileAvailable(md.getTimeStamp())):
-        
-            print "Run number: " + str(runNumber)
+            
             analyseDataForRunNumber(threads, step, max)
             
-            print "\nDone with run " + str(runNumber) + ".\n"
+            printTime()
+            print "Done with run " + str(runNumber) + ".\n"
             
         else:
         
@@ -61,26 +75,38 @@ def startAnalysis(numberOfRuns, threads, step, sigma, max):
         numberOfRuns -= 1
 
 
+    print "\nFinished with analysis of " + str(totalNumberOfRuns) + " files."
+
+    print "Time analysing: " + str(getTime() - startTime) +"\n"
+
+
 # Perform noise, pulse and telescope analysis
 def analyseDataForRunNumber(threads, step, max):
     
+    startTime = getTime()
+    
     # Start multiprocessing
     p = Pool(threads)
-    max = md.getNumberOfEvents() if max=="" else max
+    max = md.getNumberOfEvents()
+    max = 10000
     ranges = range(0, max, step)
     dataPath = "../../HGTD_material/oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
+    dataPath = "/Volumes/500 1/data_"+str(md.getTimeStamp())+".tree.root"
     
     printTime()
-    print "Threads: " + str(threads) + "\n"
-    print "Entries: " + str(max) + "\n"
-    print "\nStart multiprocessing... \n"
+    print "Start analysing run number: " + str(md.getRunNumber()) + " with "+str(max)+" entries ...\n"
     
     results = p.map(lambda chunk: oscilloscopeAnalysis(dataPath,chunk,chunk+step),ranges)
-    #results = p.apply_async(lambda chunk: oscilloscopeAnalysis(dataPath,chunk,chunk+step),ranges)
     
+    endTime = getTime()
     printTime()
-    print "\nDone with multiprocessing \n"
+    print "Done with multiprocessing. Time analysing: "+str(endTime-startTime)+"\n"
+    
+    print "Start with final analysis and exporting...\n"
+    
     exportFilesAndPlots(getResultsFromMultiProcessing(results))
+    
+    print "\nDone with final analysis and export. Time analysing: "+str(getTime()-endTime)+"\n"
 
 
 
@@ -109,36 +135,33 @@ def getResultsFromMultiProcessing(results):
         rise_times = np.append(rise_times, results[i][3])
     
     
-    # Some final analysis
+    # Final analysis
     pedestal, noise = ns.getPedestalAndNoisePerChannel(noise_average, noise_std)
 
-    amplitudes, rise_times, criticalValues = ps.removeUnphyscialAmplitudes(amplitudes, rise_times, pedestal, noise)
-    
-    printTime()
-    print "Done with final analysis. \n"
-
-    return [noise_average, noise_std, amplitudes, rise_times, pedestal, noise, criticalValues]
+    return [noise_average, noise_std, amplitudes, rise_times, pedestal, noise]
 
 
+# Note! The code first exports amplitude and noise values before producing plots.
 def exportFilesAndPlots(results):
+
     # Export and produce distribution plots
-    [noise_average, noise_std, amplitudes, rise_times, pedestal, noise, criticalValues] = [i for i in results]
+    [noise_average, noise_std, amplitudes, rise_times, pedestal, noise] = [i for i in results]
     
-    noise_average, noise_std, pedestal, noise, amplitudes, rise_times, criticalValues = convertData(noise_average, noise_std, pedestal, noise, amplitudes, rise_times, criticalValues)
-
-
+    noise_average, noise_std, pedestal, noise, amplitudes, rise_times = convertData(noise_average, noise_std, pedestal, noise, amplitudes, rise_times)
+    
+    
     ns.exportNoiseInfo(pedestal, noise, noise_average, noise_std)
-    ns.produceNoiseDistributionPlots(noise_average, noise_std)
+    ps.exportPulseData(amplitudes, rise_times)
+    
+    amplitudes, rise_times, criticalValues = ps.removeUnphyscialAmplitudes(amplitudes, rise_times, pedestal, noise)
 
-    ps.exportPulseInfo(amplitudes, rise_times, criticalValues)
+    ps.exportCriticalValues(criticalValues)
+    n_plot.produceNoiseDistributionPlots(noise_average, noise_std)
     p_plot.producePulseDistributionPlots(amplitudes, rise_times, pedestal)
-
-    printTime()
-    print "Done with export data and plots. \n"
 
 
 # Convert to positive values in mV
-def convertData(noise_average, noise_std, pedestal, noise, amplitudes, rise_times, criticalValues):
+def convertData(noise_average, noise_std, pedestal, noise, amplitudes, rise_times):
   
     channels = noise_average.dtype.names
   
@@ -150,9 +173,8 @@ def convertData(noise_average, noise_std, pedestal, noise, amplitudes, rise_time
         pedestal[chan] *= -1000
         noise[chan] *= 1000
         amplitudes[chan] = np.multiply(amplitudes[chan],-1000)
-        criticalValues[chan] *= -1000
     
-    return noise_average, noise_std, pedestal, noise, amplitudes, rise_times, criticalValues
+    return noise_average, noise_std, pedestal, noise, amplitudes, rise_times
 
 
 ########## OTHER ##########
@@ -160,7 +182,7 @@ def convertData(noise_average, noise_std, pedestal, noise, amplitudes, rise_time
 def printTime():
 
     time = str(datetime.now().time())
-    print  "\nTime: " + str(time[:-7])
+    print  "Time: " + str(time[:-7])
 
 # Function for setting up ATLAS style plots
 def setupATLAS():
@@ -168,6 +190,11 @@ def setupATLAS():
     ROOT.gROOT.SetBatch()
     ROOT.gROOT.LoadMacro("./style/AtlasStyle.C")
     ROOT.SetAtlasStyle()
+
+
+def getTime():
+
+    return datetime.now().replace(microsecond=0)
 
 
 ########## MAIN ###########

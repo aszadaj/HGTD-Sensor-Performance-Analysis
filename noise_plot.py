@@ -36,10 +36,10 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
         yAxisTitle = "Number of entries (N)"
         setGraphAttributes(noise_graph[chan],titleAbove,xAxisTitle,yAxisTitle)
         
-        fileName = "plots/pedestal_distributions/pedestal_"+str(md.getRunNumber())+"_"+chan+".pdf"
+        fileName = "plots/pedestal_distributions/pedestal_plots/pedestal_"+str(md.getRunNumber())+"_"+chan+".pdf"
         exportGraph(pedestal_graph[chan],canvas_pedestal,fileName)
         
-        fileName = "plots/pedestal_distributions/noise_"+str(md.getRunNumber())+"_"+chan+".pdf"
+        fileName = "plots/pedestal_distributions/noise_plots/noise_"+str(md.getRunNumber())+"_"+chan+".pdf"
         exportGraph(noise_graph[chan],canvas_noise,fileName)
 
 
