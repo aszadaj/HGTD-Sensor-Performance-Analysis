@@ -1,8 +1,7 @@
 
-import ROOT
 import numpy as np
 import root_numpy as rnm
-import pickle
+
 import metadata as md
 import telescope_plot as tplot
 import pulse as ps
@@ -12,8 +11,11 @@ ROOT.gROOT.SetBatch(True)
 
 
 def main():
+    
+    sourceFolderPath = "../../HGTD_material/"
+    md.defineFolderPath(sourceFolderPath)
     
-    numberOfRuns = 1
+    numberOfRuns = 10
     runLog, runs = md.getRunsForTelescopeAnalysis(md.getRunLog())
     
     for row in runLog:
@@ -23,7 +25,7 @@ def main():
         
         numberOfRuns -= 1
         
-        #if numberOfRuns == 0 break
+        if numberOfRuns == 0: break
     
     exit()
 
@@ -38,7 +40,7 @@ def telescopeAnalysis():
 # Note, the file have only 200K entries
 def importTelescopeData():
   
-    dataFileName = "../../HGTD_material/forAntek/tracking"+str(md.getTimeStamp())+".root"
+    dataFileName = md.getSourceFolderPath() + "forAntek/tracking"+str(md.getTimeStamp())+".root"
     # Define the batch here
     data = rnm.root2array(dataFileName)
     
@@ -49,13 +51,6 @@ def importTelescopeData():
     return data
 
 
-##########################################
-#                                        #
-#                                        #
-#               MAIN()                   #
-#                                        #
-#                                        #
-##########################################
 
 main()
 

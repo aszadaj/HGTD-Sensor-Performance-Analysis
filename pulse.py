@@ -17,13 +17,16 @@ def pulseAnalysis(data, noise_average, noise_std):
     
     pedestal, noise = ns.getPedestalAndNoisePerChannel(noise_average, noise_std)
     
-    for entry in range(0,len(data)):
+    for event in range(0,len(data)):
+    
         for chan in channels:
-            amplitudes[entry][chan], rise_times[entry][chan] = getAmplitudeAndRiseTime(data[chan][entry], chan, pedestal[chan], noise[chan])
-
+        
+            amplitudes[event][chan], rise_times[event][chan] = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[chan], noise[chan])
+   
     return amplitudes, rise_times
 
 
+# Calculate maximum amplitude value and rise time, if found.
 def getAmplitudeAndRiseTime(event, chan, pedestal, noise):
     
     timeScope = 0.1 # For all files
@@ -49,25 +52,24 @@ def getAmplitudeAndRiseTime(event, chan, pedestal, noise):
 
 
 # Function which removes amplitudes which are in the range being critical amplitude values
-def removeUnphyscialAmplitudes(amplitudes, rise_times, pedestal, noise):
+def removeUnphyscialAmplitudes(amplitudes, rise_times, noise):
 
-    criticalValues = findCriticalValues(amplitudes, pedestal)
-  
+    criticalValues = findCriticalValues(amplitudes)
     for chan in amplitudes.dtype.names:
       
-        indices = amplitudes[chan] < criticalValues[chan]*0.98
+        indices = amplitudes[chan] > criticalValues[chan]*0.98
         
         amplitudes[chan][indices] = 0
         rise_times[chan][indices] = 0
         
-        indices = amplitudes[chan] > noise[chan]*-sigmaConstant
+        indices = amplitudes[chan] < noise[chan]*sigmaConstant
         amplitudes[chan][indices] = 0
 
     return amplitudes, rise_times, criticalValues
 
 
 # Search for critical amplitude values
-def findCriticalValues(data, pedestal):
+def findCriticalValues(data):
     
     channels = data.dtype.names
     criticalValues = dict()
@@ -76,28 +78,26 @@ def findCriticalValues(data, pedestal):
         criticalValues[chan] = 0
 
     for chan in channels:
-        for entry in range(0,len(data)):
-            if criticalValues[chan] > np.amin(data[chan][entry]):
-                criticalValues[chan] = np.amin(data[chan][entry])
-
-    for chan in channels:
-        criticalValues[chan] -= pedestal[chan]
+        for event in range(0,len(data)):
+            if criticalValues[chan] < np.amin(data[chan][event]):
+                criticalValues[chan] = np.amin(data[chan][event])
 
     return criticalValues
 
 
-
+# Export found amplitude values 
 def exportPulseData(amplitudes, rise_times):
-
-    with open("../../HGTD_material/data_hgtd_efficiency_sep_2017/pulse_files/pulse_data/pulse_data_"+str(md.getRunNumber())+".pkl","wb") as output:
+    
+    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/pulse_files/pulse_data/pulse_data_"+str(md.getRunNumber())+".pkl","wb") as output:
         
         pickle.dump(amplitudes,output,pickle.HIGHEST_PROTOCOL)
         pickle.dump(rise_times,output,pickle.HIGHEST_PROTOCOL)
 
 
+# Export critical amplitude values to a pickle file
 def exportCriticalValues(criticalValues):
 
-    with open("../../HGTD_material/data_hgtd_efficiency_sep_2017/pulse_files/pulse_critical_values/pulse_critical_values_"+str(md.getRunNumber())+".pkl","wb") as output:
+    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/pulse_files/pulse_critical_values/pulse_critical_values_"+str(md.getRunNumber())+".pkl","wb") as output:
         
         pickle.dump(criticalValues,output,pickle.HIGHEST_PROTOCOL)
         
@@ -106,12 +106,12 @@ def exportCriticalValues(criticalValues):
 def importPulseInfo():
 
     # Note: amplitude values are corrected with a pedestal (from the noise analysis) and the critical values are not
-    with open("../../HGTD_material/data_hgtd_efficiency_sep_2017/pulse_files/pulse_data/pulse_data_"+str(md.getRunNumber())+".pkl","rb") as input:
+    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/pulse_files/pulse_data/pulse_data_"+str(md.getRunNumber())+".pkl","rb") as input:
         
         amplitude = pickle.load(input)
         rise_time = pickle.load(input)
     
-    with open("../../HGTD_material/data_hgtd_efficiency_sep_2017/pulse_files/pulse_critical_values/pulse_critical_values_"+str(md.getRunNumber())+".pkl","rb") as input:
+    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/pulse_files/pulse_critical_values/pulse_critical_values_"+str(md.getRunNumber())+".pkl","rb") as input:
     
         criticalValues = pickle.load(input)
 
@@ -119,10 +119,15 @@ def importPulseInfo():
     return amplitude, rise_time, criticalValues
 
 
+# Define sigma value
 def defineSigmaConstant(sigma):
 
     global sigmaConstant
     sigmaConstant = sigma
 
+
+# Get sigma value
+def getSigmaConstant():
+    return sigmaConstant
 
 

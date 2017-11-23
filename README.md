@@ -6,7 +6,12 @@
 
  ```main.py```
 
-The code runs  ```noise.py```,  ```pulse.py``` and  ```telescope.py``` in order to make the analysis of efficiencies of sensors tested in test beam experiment in September 2017. The code receives an input ROOT file, structured in TTree with eight channels, chan0 to chan7 where each of the four channels represent two oscilloscopes. The ROOT file is data collected from the two oscilloscopes which represents a run number and batch number, enlisted in  ```resources/run_list_tb_sep_2017.csv``` which has been modified to the original HGTD Runlist September 2017, which is available here (not providing explicit link to Google Drive, for security reasons).
+The code runs  ```noise.py```,  ```pulse.py``` and  ```telescope.py``` in order to make the analysis of efficiencies
+of sensors tested in test beam experiment in September 2017. The code receives an input ROOT file, structured in TTree
+with eight channels, chan0 to chan7 where each of the four channels represent two oscilloscopes. The ROOT file is data
+collected from the two oscilloscopes which represents a run number and batch number, enlisted in
+```resources/run_list_tb_sep_2017.csv``` which has been modified to the original HGTD Runlist September 2017,
+which is available here (not providing explicit link to Google Drive, for security reasons).
 
 
 ```https://twiki.cern.ch/twiki/bin/view/LAr/HGTDTBSensorsSep17```
@@ -14,6 +19,14 @@ The code runs  ```noise.py```,  ```pulse.py``` and  ```telescope.py``` in order 
 
 The output is in form of distribution plots for  ```noise```,  ```pulse``` and  ```telescope```  as well as obtained data
 information in ```pickle_files``` which can be used for future reference.
+
+
+# Analysis
+
+ ```analysis.py```
+ 
+This takes care of all the run files which are part of the HGTD TB September 2017 experiment. The code selects runs which
+are not done and runs noise and pulse analysis. 
 
 
 
@@ -30,7 +43,9 @@ information in ```pickle_files``` which can be used for future reference.
 
  ```pulse.py``` and  ```pulse_plot.py```
 
-The code calculates the maximal amplitude value for found pulses and also calculates the rise time. Using the noise level and pedestal, the code is adapted to introduce a ```sigma```-value which is conventionally set to ```sigma=10``` which identifies a pulse above the noise level. This is then exported as a data file and distribution plots for each run number.
+The code calculates the maximal amplitude value for found pulses and also calculates the rise time. Using the noise level and
+pedestal, the code is adapted to introduce a ```sigma```-value which is conventionally set to ```sigma=10``` which identifies
+a pulse above the noise level. This is then exported as a data file and distribution plots for each run number.
 
 
 
@@ -42,9 +57,9 @@ The code calculates the maximal amplitude value for found pulses and also calcul
  Given the the found amplitudes the code uses the data recorded from the MIMOSA-s and notes where the hitting is.
  
  
- # Comments
+# Comments
  
-Givem the run list, these runs with corresponding time stamps have different dataset:
+1. Given the run list, these runs with corresponding time stamps have different dataset:
 
 channels w/o chan7
 3785    1504944107
@@ -92,9 +107,9 @@ chan0, chan1, chan2, chan3
 4001    1505247000
 
 
- 2. Not all runs are compatible with the code. Apparently corrupted ROOT files or some other reason. These are:
+2. Not all runs are compatible with the code. Apparently corrupted ROOT files or some other reason. These are:
  
- 3889    1505056046
+3889    1505056046
 3890    1505057795
 3891    1505059124
 3893    1505062148
@@ -118,6 +133,6 @@ chan0, chan1, chan2, chan3
 4000    1505246642
 4001    1505247000
 
- 3. Two run is shorter than expected, run 3738, and 3869
+3. Two run is shorter than expected, run 3738, and 3869
 
 
