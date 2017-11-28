@@ -19,12 +19,12 @@ def produceTelescopeGraphs(data, amplitude, number):
     
     # Check how to fix that the graphs fit
     
-    xMin = -4.5
+    xMin = -5
     xMax = 0
-    xBins = 800
-    yMin = 12
-    yMax = 14.2
-    yBins = 800
+    xBins = 1000
+    yMin = 10
+    yMax = 15
+    yBins = 1000
     batchNumber = number
 
     canvas_graph = ROOT.TCanvas("TelescopeGraph","TelescopeGraph")

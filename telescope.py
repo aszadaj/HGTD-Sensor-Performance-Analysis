@@ -10,11 +10,13 @@ import pulse as ps
 
 ROOT.gROOT.SetBatch(True)
 
+# Log: there is a problem when the code runs again through the same batch.
+
 
 def telescopeAnalysis(numberOfRunsPerBatch, numberOfBatches):
     startTime = getTime()
     printTime()
-    print "Start telescope analysis, " +str(numberOfBatches)+" batche(s), " + str(numberOfRunsPerBatch) + " run(s) per batch.\n"
+    print "Start telescope analysis, " +str(numberOfBatches)+" batch(es), " + str(numberOfRunsPerBatch) + " run(s) per batch.\n"
 
     md.defineDataFolderPath()
     
