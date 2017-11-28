@@ -102,8 +102,20 @@ def exportCriticalValues(criticalValues):
         pickle.dump(criticalValues,output,pickle.HIGHEST_PROTOCOL)
         
         
-# Import dictionaries amplitude and risetime with channel names from a .pkl file
+# Import dictionaries amplitude and risetime with names from a .pkl file
 def importPulseInfo():
+
+    # Note: amplitude values are corrected with a pedestal (from the noise analysis) and the critical values are not
+    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/pulse_files/pulse_data/pulse_data_"+str(md.getRunNumber())+".pkl","rb") as input:
+        
+        amplitude = pickle.load(input)
+
+    # Restrict to 200K entries to match the telescope data
+    return amplitude[0:200000]
+
+
+# Import dictionaries amplitude and risetime with names from a .pkl file
+def importPulseInfo2():
 
     # Note: amplitude values are corrected with a pedestal (from the noise analysis) and the critical values are not
     with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/pulse_files/pulse_data/pulse_data_"+str(md.getRunNumber())+".pkl","rb") as input:
@@ -112,7 +124,7 @@ def importPulseInfo():
         rise_time = pickle.load(input)
     
     with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/pulse_files/pulse_critical_values/pulse_critical_values_"+str(md.getRunNumber())+".pkl","rb") as input:
-    
+
         criticalValues = pickle.load(input)
 
 

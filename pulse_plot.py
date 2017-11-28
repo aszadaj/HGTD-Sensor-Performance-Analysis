@@ -35,10 +35,8 @@ def producePulseDistributionPlots(amplitudes, rise_times, pedestals):
 
 # Produce TH1 plots and export them as a PDF file
 def defineAndProduceHistogram(graphList,canvas,typeOfGraph,chan):
-    sensors = md.getSensorNames()
-    chan_index = int(chan[-1:])
-    
-    titleAbove = "Distribution of pulse rise times, Sep 2017 run "+str(md.getRunNumber())+", channel " + str(chan_index+1) + ", sensor: " + str(sensors[chan_index])
+  
+    headTitle = "Distribution of pulse rise times, Sep 2017 run "+str(md.getRunNumber())+", channel " + str(int(chan[-1:])+1) + ", sensor: " + str(md.getNameOfSensor(chan))
     xAxisTitle = "Time (ns)"
     yAxisTitle = "Number (N)"
     fileName = "plots/pulse_distributions/rise_time_plots/rise_time_distribution_"+str(md.getRunNumber())+"_"+chan+".pdf"
@@ -46,7 +44,7 @@ def defineAndProduceHistogram(graphList,canvas,typeOfGraph,chan):
     
     if typeOfGraph == "amplitude":
     
-        titleAbove = "Distribution of pulse amplitudes, Sep 2017 run "+str(md.getRunNumber())+", channel " + str(chan_index+1) + ", sensor: " + str(sensors[chan_index])
+        headTitle = "Distribution of pulse amplitudes, Sep 2017 run "+str(md.getRunNumber())+", channel " + str(int(chan[-1:])+1) + ", sensor: " + str(md.getNameOfSensor(chan))
         xAxisTitle = "Amplitude (mV)"
         fileName = "plots/pulse_distributions/amplitude_plots/amplitude_distribution_"+str(md.getRunNumber())+"_"+chan+".pdf"
     
@@ -56,8 +54,7 @@ def defineAndProduceHistogram(graphList,canvas,typeOfGraph,chan):
     graphList.GetYaxis().SetTitle(yAxisTitle)
     graphList.GetXaxis().SetTitle(xAxisTitle)
     
-    setTitleAboveGraph = titleAbove
-    graphList.SetTitle(setTitleAboveGraph)
+    graphList.SetTitle(headTitle)
     
     canvas.cd()
     graphList.Draw()

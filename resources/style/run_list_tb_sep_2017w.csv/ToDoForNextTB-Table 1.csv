@@ -1,0 +1,10 @@
+;;;;
+;;;;
+- calibrate T sensors before running;;;;
+DONE - get level adapter to be able to trigger on scope (TTL -> NIM);;;;
+DONE - remember to set TLU threshold to ~-300 mV for FEI4 hitOr (default for scintillator PMTs and scope - 40 mV);;;;
+- prepare and calibrate sensors well in advance;;;;
+- have one well understood reference sample to start with;;;;
+- start from the coldest point and perform measurements with warmer and warmer box!;;;;
+;;;;
+- Give the gateway iMac a fixed address;;;;

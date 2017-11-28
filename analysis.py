@@ -3,6 +3,9 @@ import root_numpy as rnm
 import time
 import numpy as np
 import pickle
+import os
+from os import listdir
+from os.path import isfile, join
 
 import pulse as ps
 import noise as ns
@@ -16,50 +19,55 @@ from datetime import datetime
 #setupATLAS()
 ROOT.gROOT.SetBatch(True)
 
+# Check if those root files which have zero bytes or less than 1 kb if they can be converted again.
+
 # When running on lxplus, remember to run 'setupATLAS' and after 'asetup --restore'
 
 # Start analysis of selected run numbers
-def startAnalysis(numberOfRuns, threads, step, rootFolderPath):
+def startAnalysis(numberOfRuns, step, sigma):
     
+    ps.defineSigmaConstant(sigma)
+    md.defineDataFolderPath()
     totalNumberOfRuns = numberOfRuns
+
     startTime = getTime()
     
     print "\n"
     printTime()
     print "Start analysis, " + str(numberOfRuns) + " files."
     print "Threads: " + str(threads)
-    print "Sigma: " + str(ps.getSigmaConstant())
+    print "Sigma: " + str(ps.getSigmaConstant()) + "\n"
     
     runLog = md.getRunLog()
     runLog = md.restrictToUndoneRuns(runLog)
     
     for row in runLog:
     
-        if numberOfRuns == 0:
-            break
-        
         md.defineGlobalVariableRun(row)
         runNumber = md.getRunNumber()
         
-        if (md.isRootFileAvailable(md.getTimeStamp(), rootFolderPath)):
+        if (md.isRootFileAvailable(md.getTimeStamp())):
             
-            analyseDataForRunNumber(threads, step, rootFolderPath)
+            analyseDataForRunNumber(step)
             
             printTime()
             print "Done with run " + str(runNumber) + ".\n"
-            
+    
+        
         else:
-            print "There is no root file for run number: " + str(runNumber)
+            print "There is no root file for run number: " + str(runNumber) + "\n"
+        
         
         numberOfRuns -= 1
-
-
-    print "\nFinished with analysis of " + str(totalNumberOfRuns) + " files."
-    print "Time analysing: " + str(getTime() - startTime) +"\n"
-
-
+        if numberOfRuns == 0:
+        
+            print "\nFinished with analysis of " + str(totalNumberOfRuns) + " files."
+            print "Time analysing: " + str(getTime() - startTime) +"\n"
+            break
+        
+        
 # Perform noise, pulse and telescope analysis
-def analyseDataForRunNumber(threads, step, rootFolderPath):
+def analyseDataForRunNumber(step):
     
     startTime = getTime()
     
@@ -68,7 +76,7 @@ def analyseDataForRunNumber(threads, step, rootFolderPath):
     max = md.getNumberOfEvents()
     ranges = range(0, max, step)
     
-    dataPath = rootFolderPath + "/data_"+str(md.getTimeStamp())+".tree.root"
+    dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
     
     printTime()
     print "Start analysing run number: " + str(md.getRunNumber()) + " with "+str(max)+ " events ...\n"
@@ -157,12 +165,32 @@ def convertData(noise_average, noise_std, pedestal, noise, amplitudes, rise_time
 
 ########## OTHER ##########
 
+# Check if the repository is on the stau server
+def checkIfRepositoryOnStau():
+
+    onStau = False
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    number = 4
+    
+    if dir_path == "/home/aszadaj/Gitlab/HGTD-Efficiency-analysis":
+        number = 16
+        onStau = True
+
+    defineNumberOfThreads(number)
+    
+    return onStau
+
+# Define thread number or multiprocessing
+def defineNumberOfThreads(number):
+    global threads
+    threads = number
+
+
 # Print time stamp
 def printTime():
 
     time = str(datetime.now().time())
-    print  "Time: " + str(time[:-7])
-
+    print  "\nTime: " + str(time[:-7])
 
 # Function for setting up ATLAS style plots
 def setupATLAS():

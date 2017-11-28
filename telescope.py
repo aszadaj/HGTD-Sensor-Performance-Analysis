@@ -1,6 +1,7 @@
-
+import ROOT
 import numpy as np
 import root_numpy as rnm
+from datetime import datetime
 
 import metadata as md
 import telescope_plot as tplot
@@ -10,38 +11,72 @@ import pulse as ps
 ROOT.gROOT.SetBatch(True)
 
 
-def main():
-    
-    sourceFolderPath = "../../HGTD_material/"
-    md.defineFolderPath(sourceFolderPath)
+def telescopeAnalysis(numberOfRunsPerBatch, numberOfBatches):
+    startTime = getTime()
+    printTime()
+    print "Start telescope analysis, " +str(numberOfBatches)+" batche(s), " + str(numberOfRunsPerBatch) + " run(s) per batch.\n"
+
+    md.defineDataFolderPath()
     
-    numberOfRuns = 10
-    runLog, runs = md.getRunsForTelescopeAnalysis(md.getRunLog())
+    runLog_telescope = md.getRunLogForTelescopeAnalysis(md.getRunLog(), numberOfBatches, numberOfRunsPerBatch)
     
-    for row in runLog:
-        md.defineGlobalVariableRun(row)
-        
-        telescopeAnalysis()
-        
-        numberOfRuns -= 1
-        
-        if numberOfRuns == 0: break
+    currentBatch = int(runLog_telescope[0][5])
+    last_row = runLog_telescope[-1][3]
+    data_batch = [np.empty(0), np.empty(0)]
     
+    for row in runLog_telescope:
+        data_batch = telescopeAnalysisPerBatch(row, last_row, currentBatch, data_batch)
+
+    print "\nDone analysing, time analysing: " + str(getTime()-startTime) + "\n"
     exit()
 
 
-def telescopeAnalysis():
+def telescopeAnalysisPerBatch(row, last_row, currentBatch, data_batch):
 
-    amplitudes, rise_times, criticalValues = ps.importPulseInfo()
-    data = importTelescopeData()
-    tplot.produceTelescopeGraphs(data, amplitudes)
+    [telescope_data_batch, amplitudes_batch] = [i for i in data_batch]
 
+    md.defineGlobalVariableRun(row)
+   
+    telescope_data_run = importTelescopeData()
+    amplitudes_run = ps.importPulseInfo()
+    if telescope_data_batch.size == 0:
+        print "Start analysing batch " + str(currentBatch) + "\n"
+        telescope_data_batch = np.empty(0, dtype = telescope_data_run.dtype)
+        amplitudes_batch = np.empty(0, dtype = amplitudes_run.dtype)
+
+
+    if currentBatch != md.getBatchNumber():
+
+        print "All runs in batch " + str(currentBatch) + " considered, producing plots...\n"
+        
+        tplot.produceTelescopeGraphs(telescope_data_batch, amplitudes_batch, currentBatch)
+        
+        currentBatch = md.getBatchNumber()
+        
+        printTime()
+        print "Start analysing batch " + str(currentBatch) + "\n"
+        telescope_data_batch = np.empty(0, dtype = telescope_data_run.dtype)
+        amplitudes_batch = np.empty(0, dtype = amplitudes_run.dtype)
+        
+        telescope_data_batch = np.append(telescope_data_batch, telescope_data_run)
+        amplitudes_batch = np.append(amplitudes_batch, amplitudes_run)
+        
+        if row[3] == last_row:
+            
+            printTime()
+            print "All runs in batch " + str(currentBatch) + " considered, producing plots...\n"
+            tplot.produceTelescopeGraphs(telescope_data_batch, amplitudes_batch, currentBatch)
+    
+    else:
+        telescope_data_batch = np.append(telescope_data_batch, telescope_data_run)
+        amplitudes_batch = np.append(amplitudes_batch, amplitudes_run)
+
+    return [telescope_data_batch, amplitudes_batch]
 
 # Note, the file have only 200K entries
 def importTelescopeData():
-  
+    
     dataFileName = md.getSourceFolderPath() + "forAntek/tracking"+str(md.getTimeStamp())+".root"
-    # Define the batch here
     data = rnm.root2array(dataFileName)
     
     # Convert into mm
@@ -52,5 +87,16 @@ def importTelescopeData():
 
 
 
-main()
+
+# Get actual time
+def getTime():
+
+    return datetime.now().replace(microsecond=0)
+
+# Print time stamp
+def printTime():
+
+    time = str(datetime.now().time())
+    print  "\nTime: " + str(time[:-7])
+
 

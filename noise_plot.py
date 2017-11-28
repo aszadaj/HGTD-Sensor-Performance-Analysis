@@ -6,7 +6,6 @@ import metadata as md
 def produceNoiseDistributionPlots(noise_average, noise_std):
     
     channels = noise_average.dtype.names
-    sensors = md.getSensorNames()
     pedestal_graph = dict()
     noise_graph = dict()
     
@@ -24,14 +23,12 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
    
     for chan in channels:
     
-        chan_index = int(chan[-1:])
-        
-        titleAbove = "Distribution of noise mean values from each entry, run "+str(md.getRunNumber())+", channel " + str(chan_index+1) +", sensor: " + str(sensors[chan_index])
+        titleAbove = "Distribution of noise mean values from each entry, run "+str(md.getRunNumber())+", channel " + str(int(chan[-1:])+1) +", sensor: " + str(md.getNameOfSensor(chan))
         xAxisTitle = "Noise mean value (mV)"
         yAxisTitle = "Number of entries (N)"
         setGraphAttributes(pedestal_graph[chan],titleAbove,xAxisTitle,yAxisTitle)
         
-        titleAbove = "Distribution of standard deviation values (noise) from each entry, Sep 2017 run "+str(md.getRunNumber())+", channel " + str(chan_index+1) + ", sensor: " + str(sensors[chan_index])
+        titleAbove = "Distribution of standard deviation values (noise) from each entry, Sep 2017 run "+str(md.getRunNumber())+", channel " + str(int(chan[-1:])+1) + ", sensor: " + str(md.getNameOfSensor(chan))
         xAxisTitle = "Standard deviation (mV)"
         yAxisTitle = "Number of entries (N)"
         setGraphAttributes(noise_graph[chan],titleAbove,xAxisTitle,yAxisTitle)
@@ -54,6 +51,7 @@ def setGraphAttributes(graphList,titleAbove,xAxisTitle,yAxisTitle):
     
     setTitleAboveGraph = titleAbove
     graphList.SetTitle(setTitleAboveGraph)
+
 
 # Produce PDF file for selected chan
 # Input: dictionary with TH1 objects, TCanvas object and filename for the produced file
