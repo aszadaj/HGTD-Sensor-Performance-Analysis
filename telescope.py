@@ -39,7 +39,9 @@ def telescopeAnalysisPerBatch(row, last_row, currentBatch, data_batch):
    
     telescope_data_run = importTelescopeData()
     amplitudes_run = ps.importPulseInfo()
+    
     if telescope_data_batch.size == 0:
+    
         print "Start analysing batch " + str(currentBatch) + "\n"
         telescope_data_batch = np.empty(0, dtype = telescope_data_run.dtype)
         amplitudes_batch = np.empty(0, dtype = amplitudes_run.dtype)
@@ -55,6 +57,7 @@ def telescopeAnalysisPerBatch(row, last_row, currentBatch, data_batch):
         
         printTime()
         print "Start analysing batch " + str(currentBatch) + "\n"
+        
         telescope_data_batch = np.empty(0, dtype = telescope_data_run.dtype)
         amplitudes_batch = np.empty(0, dtype = amplitudes_run.dtype)
         
@@ -65,6 +68,7 @@ def telescopeAnalysisPerBatch(row, last_row, currentBatch, data_batch):
             
             printTime()
             print "All runs in batch " + str(currentBatch) + " considered, producing plots...\n"
+            
             tplot.produceTelescopeGraphs(telescope_data_batch, amplitudes_batch, currentBatch)
     
     else:
@@ -84,8 +88,6 @@ def importTelescopeData():
         data[dimension] = np.multiply(data[dimension], 0.001)
   
     return data
-
-
 
 
 # Get actual time

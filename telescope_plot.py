@@ -113,6 +113,10 @@ def produceEfficiencyPlot(data, amplitude, graph_eff, canvas_eff):
     graph_eff[chan] = ROOT.TEfficiency(LGAD_particles, tel_particles)
     
     
+    # Log: This function is for trying to find the mean value bin for which the
+    # conditions are high enough. Try to restrict filling with minimum amount of entries
+    # per bin, say 10. Do this as the first stage when the comparison begins L: 56
+    
 #
 #    graph_selected = ROOT.TEfficiency("TEfficiency_selected","Telescope particles higher conditions channel "+str(int(chan[-1:])+1),xBins,xMin,xMax,yBins,yMin,yMax)
 #
