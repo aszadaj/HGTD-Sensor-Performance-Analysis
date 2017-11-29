@@ -19,10 +19,10 @@ def produceTelescopeGraphs(data, amplitude, number):
     
     # Check how to fix that the graphs fit
     
-    xMin = -5
-    xMax = 0
+    xMin = -4.5
+    xMax = -0.5
     xBins = 1000
-    yMin = 10
+    yMin = 12
     yMax = 15
     yBins = 1000
     batchNumber = number
@@ -39,33 +39,18 @@ def produceTelescopeGraphs(data, amplitude, number):
 
     channels = amplitude.dtype.names
     
+    channels = channels[0:1]
+    
     for chan in channels:
     
-        produceMeanPlot(data, amplitude, graph_meanValue, canvas_graph)
+        produceTProfileMeanPlot(data, amplitude, graph_meanValue, canvas_graph)
         produceStdPlot(data, graph_std, graph_meanValue, canvas_error)
         produceEfficiencyPlot(data,amplitude, graph_eff, canvas_eff)
-        produceMeanDistributionPlots(data, graph_hist, graph_meanValue, canvas_hist)
+        produceTHMeanPlot(data, graph_hist, graph_meanValue, canvas_hist)
 
 
-def produceMeanDistributionPlots(data, graph_hist, graph_meanValue, canvas):
 
-    graph_hist[chan] = ROOT.TH1F("distribution_"+chan+"_histogram","Mean value distribution "+str(int(chan[-1:])+1),200,0,400)
-  
-    bins = graph_meanValue[chan].GetSize()
-    
-    for bin in range(0, int(bins)):
-        error = graph_meanValue[chan].GetBinError(bin)
-        meanVal = graph_meanValue[chan].GetBinContent(bin)
-        if error != 0.0:
-            graph_hist[chan].Fill(meanVal)
-        
-
-    headTitle = "Mean amplitude value distribution from each bin (mV)"
-    fileName = "_hist.pdf"
-    produceTH1Plot(graph_hist[chan], canvas, headTitle, fileName)
-
-
-def produceMeanPlot(data, amplitude, graph_meanValue, canvas_graph):
+def produceTProfileMeanPlot(data, amplitude, graph_meanValue, canvas_graph):
 
     graph_meanValue[chan] = ROOT.TProfile2D("telescope_"+chan,"Telescope channel "+str(int(chan[-1:])+1),xBins,xMin,xMax,yBins,yMin,yMax)
     
@@ -137,6 +122,24 @@ def produceEfficiencyPlot(data, amplitude, graph_eff, canvas_eff):
     headTitle = "Efficiency of hit particles in each bin"
     fileName = "_eff.pdf"
     produceTH2Plot(graph_eff[chan], canvas_eff, headTitle, fileName)
+
+
+def produceTHMeanPlot(data, graph_hist, graph_meanValue, canvas):
+
+    graph_hist[chan] = ROOT.TH1F("distribution_"+chan+"_histogram","Mean value distribution "+str(int(chan[-1:])+1),200,0,400)
+  
+    bins = graph_meanValue[chan].GetSize()
+    
+    for bin in range(0, int(bins)):
+        error = graph_meanValue[chan].GetBinError(bin)
+        meanVal = graph_meanValue[chan].GetBinContent(bin)
+        if error != 0.0:
+            graph_hist[chan].Fill(meanVal)
+    
+
+    headTitle = "Mean amplitude value distribution from each bin (mV)"
+    fileName = "_hist.pdf"
+    produceTH1Plot(graph_hist[chan], canvas, headTitle, fileName)
 
 
 def produceTH2Plot(graph, canvas, headTitle, fileName):

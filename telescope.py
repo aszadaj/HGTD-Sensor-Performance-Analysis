@@ -24,18 +24,18 @@ def telescopeAnalysis(numberOfRunsPerBatch, numberOfBatches):
     
     currentBatch = int(runLog_telescope[0][5])
     last_row = runLog_telescope[-1][3]
-    data_batch = [np.empty(0), np.empty(0)]
+    data_batch = [np.empty(0), np.empty(0), currentBatch]
     
     for row in runLog_telescope:
-        data_batch = telescopeAnalysisPerBatch(row, last_row, currentBatch, data_batch)
+        data_batch = telescopeAnalysisPerBatch(row, last_row, data_batch)
 
     print "\nDone analysing, time analysing: " + str(getTime()-startTime) + "\n"
     exit()
 
 
-def telescopeAnalysisPerBatch(row, last_row, currentBatch, data_batch):
+def telescopeAnalysisPerBatch(row, last_row, data_batch):
 
-    [telescope_data_batch, amplitudes_batch] = [i for i in data_batch]
+    [telescope_data_batch, amplitudes_batch, currentBatch] = [i for i in data_batch]
 
     md.defineGlobalVariableRun(row)
    
@@ -77,7 +77,7 @@ def telescopeAnalysisPerBatch(row, last_row, currentBatch, data_batch):
         telescope_data_batch = np.append(telescope_data_batch, telescope_data_run)
         amplitudes_batch = np.append(amplitudes_batch, amplitudes_run)
 
-    return [telescope_data_batch, amplitudes_batch]
+    return [telescope_data_batch, amplitudes_batch, currentBatch]
 
 # Note, the file have only 200K entries
 def importTelescopeData():
