@@ -7,7 +7,7 @@ import metadata as md
 
 
 def produceTelescopeGraphs(data, amplitude, number):
-
+    
     global xMin
     global xMax
     global xBins
@@ -19,12 +19,12 @@ def produceTelescopeGraphs(data, amplitude, number):
     
     # Check how to fix that the graphs fit
     
-    xMin = -4.5
-    xMax = -0.5
-    xBins = 1000
+    xMin = -4
+    xMax = -2.0
+    xBins = 800
     yMin = 12
-    yMax = 15
-    yBins = 1000
+    yMax = 13.5
+    yBins = 800
     batchNumber = number
 
     canvas_graph = ROOT.TCanvas("TelescopeGraph","TelescopeGraph")
@@ -32,36 +32,49 @@ def produceTelescopeGraphs(data, amplitude, number):
     canvas_eff   = ROOT.TCanvas("Efficiency","Efficiency")
     canvas_hist  = ROOT.TCanvas("Histogram","Histogram")
 
-    graph_meanValue = dict()
-    graph_std = dict()
-    graph_eff   = dict()
-    graph_hist  = dict()
+    graph_meanValue     = dict()
+    graph_meanValue2    = dict()
+    graph_std           = dict()
+    graph_eff           = dict()
+    graph_hist          = dict()
 
     channels = amplitude.dtype.names
     
-    channels = channels[0:1]
+    channels = channels[0:1] #CHANGE
     
     for chan in channels:
+        
+        print "size of amplitudes in channel, non zero"
+        print np.count_nonzero(amplitude[chan])
     
-        produceTProfileMeanPlot(data, amplitude, graph_meanValue, canvas_graph)
+        produceTProfileMeanPlot(data, amplitude, graph_meanValue, graph_meanValue2, canvas_graph)
         produceStdPlot(data, graph_std, graph_meanValue, canvas_error)
         produceEfficiencyPlot(data,amplitude, graph_eff, canvas_eff)
         produceTHMeanPlot(data, graph_hist, graph_meanValue, canvas_hist)
 
 
 
-def produceTProfileMeanPlot(data, amplitude, graph_meanValue, canvas_graph):
+def produceTProfileMeanPlot(data, amplitude, graph_meanValue, graph_meanValue2, canvas_graph):
 
     graph_meanValue[chan] = ROOT.TProfile2D("telescope_"+chan,"Telescope channel "+str(int(chan[-1:])+1),xBins,xMin,xMax,yBins,yMin,yMax)
     
+    graph_meanValue2[chan] = ROOT.TProfile2D("telescope2_"+chan,"Telescope channel "+str(int(chan[-1:])+1),xBins,xMin,xMax,yBins,yMin,yMax)
     
     for index in range(0,len(data)):
          if data['X'][index] > -9.0 and amplitude[chan][index] > 0:
             graph_meanValue[chan].Fill(data['X'][index], data['Y'][index], amplitude[chan][index])
 
-    headTitle = "Maximal amplitude mean value (mV) in each bin"
-    fileName = ".pdf"
-    produceTH2Plot(graph_meanValue[chan], canvas_graph, headTitle, fileName)
+    print "check content"
+
+    print graph_meanValue[chan].GetNumberOfBins()
+
+    for bin in range(0, int(graph_meanValue[chan].GetNumberOfBins())):
+        if graph_meanValue[chan].GetBinEntries(bin) > 2:
+            graph_meanValue2[chan].SetBinContent(bin,  graph_meanValue[chan].GetBinContent(bin))
+
+    headTitle = "Maximal amplitude mean value2 (mV) in each bin"
+    fileName = "2.pdf"
+    produceTH2Plot(graph_meanValue2[chan], canvas_graph, headTitle, fileName)
 
 
 def produceStdPlot(data, graph_std, graph_meanValue, canvas_error):

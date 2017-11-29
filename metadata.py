@@ -52,7 +52,10 @@ def getRunLogForTelescopeAnalysis(metaData, numberOfBatches, numberOfRunsPerBatc
     
     for index in range(0, len(metaData)):
     
-        if int(metaData[index][4]) in availableTimeStamps:
+        if numberOfBatches == 0:
+            break
+    
+        elif int(metaData[index][4]) in availableTimeStamps:
         
             currentBatch = int(metaData[index][5])
             
@@ -68,13 +71,10 @@ def getRunLogForTelescopeAnalysis(metaData, numberOfBatches, numberOfRunsPerBatc
                 numberOfBatches -= 1
                 actualBatch = currentBatch
                 numberOfRuns = numberOfRunsPerBatch
-                
-                
-        elif numberOfBatches == 0:
-            break
-
 
     return runLog
+
+    
 # Check if repository is on the stau server
 def isRootFileAvailable(timeStamp):
 

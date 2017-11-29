@@ -10,8 +10,6 @@ import pulse as ps
 
 ROOT.gROOT.SetBatch(True)
 
-# Log: there is a problem when the code runs again through the same batch.
-
 
 def telescopeAnalysis(numberOfRunsPerBatch, numberOfBatches):
     startTime = getTime()
@@ -21,7 +19,7 @@ def telescopeAnalysis(numberOfRunsPerBatch, numberOfBatches):
     md.defineDataFolderPath()
     
     runLog_telescope = md.getRunLogForTelescopeAnalysis(md.getRunLog(), numberOfBatches, numberOfRunsPerBatch)
-    
+  
     currentBatch = int(runLog_telescope[0][5])
     last_row = runLog_telescope[-1][3]
     data_batch = [np.empty(0), np.empty(0), currentBatch]
@@ -49,7 +47,7 @@ def telescopeAnalysisPerBatch(row, last_row, data_batch):
         amplitudes_batch = np.empty(0, dtype = amplitudes_run.dtype)
 
 
-    if currentBatch != md.getBatchNumber():
+    if currentBatch != md.getBatchNumber() or row[3] == last_row:
 
         print "All runs in batch " + str(currentBatch) + " considered, producing plots...\n"
         
@@ -66,7 +64,7 @@ def telescopeAnalysisPerBatch(row, last_row, data_batch):
         telescope_data_batch = np.append(telescope_data_batch, telescope_data_run)
         amplitudes_batch = np.append(amplitudes_batch, amplitudes_run)
         
-        if row[3] == last_row:
+        elif row[3] == last_row:
             
             printTime()
             print "All runs in batch " + str(currentBatch) + " considered, producing plots...\n"
