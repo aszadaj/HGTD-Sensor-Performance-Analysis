@@ -64,7 +64,7 @@ def telescopeAnalysisPerBatch(row, last_row, data_batch):
         telescope_data_batch = np.append(telescope_data_batch, telescope_data_run)
         amplitudes_batch = np.append(amplitudes_batch, amplitudes_run)
         
-        elif row[3] == last_row:
+    elif row[3] == last_row:
             
             printTime()
             print "All runs in batch " + str(currentBatch) + " considered, producing plots...\n"
