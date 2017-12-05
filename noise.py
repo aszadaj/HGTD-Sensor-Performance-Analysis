@@ -1,89 +1,101 @@
+import ROOT
 import pickle
 import numpy as np
+import root_numpy as rnm
+import os
 
 import metadata as md
+import data_management as dm
+import noise_plot as n_plot
+import noise_calculations as n_calc
 
-# Calculate the noise for all channels
-def noiseAnalysis(data):
+from pathos.multiprocessing import ProcessingPool as Pool
+
+ROOT.gROOT.SetBatch(True)
+
+def noiseAnalysis(numberOfRuns, step):
+    print "noise"
+    dm.checkIfRepositoryOnStau()
+    totalNumberOfRuns = numberOfRuns
+    startTime = md.getTime()
     
-    channels = data.dtype.names
+    print "\n"
+    md.printTime()
+    print "Start noise analysis, " + str(numberOfRuns) + " file(s)."
+   
+    runLog = md.restrictToUndoneRuns(md.getRunLog(), "noise")
+   
+    for row in runLog:
     
-    noise_average = np.zeros(len(data), dtype = data.dtype)
-    noise_std = np.zeros(len(data), dtype = data.dtype)
-    
-    for event in range(0,len(data)):
-        for chan in channels:
+        md.defineGlobalVariableRun(row)
+        runNumber = md.getRunNumber()
+        
+        if (md.isRootFileAvailable(md.getTimeStamp())):
             
-            pulse_compatible_samples = data[event][chan] < -25*0.001
-            max_index = np.where(pulse_compatible_samples)[0][0] - 3 if len( np.where(pulse_compatible_samples)[0] ) else 1002
+            noiseAnalysisPerRun(step)
             
-            noise_average[event][chan] = np.average(data[event][chan][0:max_index])
-            noise_std[event][chan] = np.std(data[event][chan][0:max_index])
+            md.printTime()
+            print "Done with run " + str(runNumber) + ".\n"
+    
+        else:
+            print "There is no root file for run number: " + str(runNumber) + "\n"
+        
+        
+        numberOfRuns -= 1
+        if numberOfRuns == 0:
+        
+            print "\nFinished with analysis of " + str(totalNumberOfRuns) + " files."
+            print "Time analysing: " + str(md.getTime() - startTime) +"\n"
+            break
+
+
+def noiseAnalysisPerRun(step):
+    
+    startTime = md.getTime()
+    
+    p = Pool(dm.threads)
+    max = md.getNumberOfEvents()
+    ranges = range(0, max, step)
+    
+    dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
+    
+    md.printTime()
+    print "Start analysing run number: " + str(md.getRunNumber()) + " with "+str(max)+ " events ...\n"
+    
+    results = p.map(lambda chunk: n_calc.findNoiseAverageAndStd(dataPath,chunk,chunk+step),ranges)
+
+    endTime = md.getTime()
+    md.printTime()
+    
+    print "Done with multiprocessing. Time analysing: "+str(endTime-startTime)+"\n"
+    print "Start with final analysis and exporting...\n"
+    
+    noise_average, noise_std = getResultsFromMultiProcessing(results)
+    noise_average, noise_std = n_calc.convertNoise(noise_average, noise_std)
+    
+    n_plot.produceNoiseDistributionPlots(noise_average, noise_std)
+    
+    pedestal, noise = n_calc.getPedestalAndNoisePerChannel(noise_average, noise_std)
+    dm.exportNoiseData(pedestal, noise)
+    
+    print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-endTime)+"\n"
+
+
+
+# Receive results from multiprocessing function
+def getResultsFromMultiProcessing(results):
+
+    # Future fix, append is slow
+    noise_average = np.zeros(0, dtype=results[-1][0].dtype)
+    noise_std = np.zeros(0, dtype=results[-1][0].dtype)
+    
+    for i in range(0,len(results)):
+        noise_average = np.append(noise_average, results[i][0])
+        noise_std = np.append(noise_std, results[i][1])
+
 
     return noise_average, noise_std
 
 
-# Export noise data in a pickle file
-def exportNoiseInfo(pedestal, noise, noise_average, noise_std):
-
-    exportNoiseData(noise_average, noise_std)
-    exportNoiseMean(pedestal, noise)
-
-
-# Export pedestal info (noise analysis)
-def exportNoiseData(noise_average, noise_std):
-
-    fileName = md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/noise_files/noise_data/noise_data_"+str(md.getRunNumber())+".pkl"
-    
-    with open(fileName,"wb") as output:
-        pickle.dump(noise_average,output,pickle.HIGHEST_PROTOCOL)
-        pickle.dump(noise_std,output,pickle.HIGHEST_PROTOCOL)
-
-
-# Export pedestal info (noise analysis)
-def exportNoiseMean(pedestal, noise):
-
-    fileName = md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/noise_files/noise_mean/noise_mean_"+str(md.getRunNumber())+".pkl"
-    
-    with open(fileName,"wb") as output:
-        pickle.dump(pedestal,output,pickle.HIGHEST_PROTOCOL)
-        pickle.dump(noise,output,pickle.HIGHEST_PROTOCOL)
-
-
-# Import dictionaries amplitude and risetime with channel names from a .pkl file
-def importNoiseData():
-    
-    fileName = md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/noise_files/noise_data/noise_data_"+str(md.getRunNumber())+".pkl"
-    
-    with open(fileName,"rb") as input:
-        noise_average = pickle.load(input)
-        noise_std = pickle.load(input)
-
-    return noise_average, noise_std
-
-
-# Import noise mean values, i.e. noise and pedestal values
-def importNoiseMean():
-    
-    fileName = md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/noise_files/noise_mean/noise_mean_"+str(md.getRunNumber())+".pkl"
-    
-    with open(fileName,"rb") as input:
-        pedestal = pickle.load(input)
-        noise = pickle.load(input)
-
-    return pedestal, noise
-
-
-# Calculates pedestal and noise mean values per channel for all entries
-def getPedestalAndNoisePerChannel(noise_average, noise_std):
-    
-    pedestal = dict()
-    noise = dict()
-
-    for chan in noise_average.dtype.names:
-        pedestal[chan] = np.mean(noise_average[chan])
-        noise[chan] = np.mean(noise_std[chan])
-    
-    return pedestal, noise
 
 

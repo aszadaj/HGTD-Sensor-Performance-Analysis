@@ -5,89 +5,80 @@ from datetime import datetime
 
 import metadata as md
 import telescope_plot as tplot
-import pulse as ps
+import data_management as dm
 
-
+#md.setupATLAS()
 ROOT.gROOT.SetBatch(True)
 
 
 def telescopeAnalysis(numberOfRunsPerBatch, numberOfBatches):
+    
     startTime = getTime()
     printTime()
     print "Start telescope analysis, " +str(numberOfBatches)+" batch(es), " + str(numberOfRunsPerBatch) + " run(s) per batch.\n"
 
-    md.defineDataFolderPath()
+    dm.checkIfRepositoryOnStau()
     
-    runLog_telescope = md.getRunLogForTelescopeAnalysis(md.getRunLog(), numberOfBatches, numberOfRunsPerBatch)
-  
-    currentBatch = int(runLog_telescope[0][5])
-    last_row = runLog_telescope[-1][3]
-    data_batch = [np.empty(0), np.empty(0), currentBatch]
-    
-    for row in runLog_telescope:
-        data_batch = telescopeAnalysisPerBatch(row, last_row, data_batch)
+    runLog_telescope = md.getRunLogForTelescopeAnalysis(numberOfBatches, numberOfRunsPerBatch)
+    data_batch = [np.empty(0), np.empty(0)]
 
+    for row_number in range(0,len(runLog_telescope)): data_batch = telescopeAnalysisPerBatch(row_number, runLog_telescope, data_batch)
     print "\nDone analysing, time analysing: " + str(getTime()-startTime) + "\n"
+    
     exit()
 
 
-def telescopeAnalysisPerBatch(row, last_row, data_batch):
+def telescopeAnalysisPerBatch(row_number, runLog, data_batch):
+    
+    row = runLog[row_number]
 
-    [telescope_data_batch, amplitudes_batch, currentBatch] = [i for i in data_batch]
+    [telescope_data_batch, amplitudes_batch] = [i for i in data_batch]
 
     md.defineGlobalVariableRun(row)
-   
-    telescope_data_run = importTelescopeData()
-    amplitudes_run = ps.importPulseInfo()
+    telescope_data_run = dm.importTelescopeData()
+    amplitudes_run = dm.importPulseFile("amplitudes")
+    amplitudes_run = amplitudes_run[0:len(telescope_data_run)]
     
     if telescope_data_batch.size == 0:
     
-        print "Start analysing batch " + str(currentBatch) + "\n"
+        print "Start analysing batch " + str(row[5]) + "...\n"
         telescope_data_batch = np.empty(0, dtype = telescope_data_run.dtype)
         amplitudes_batch = np.empty(0, dtype = amplitudes_run.dtype)
+    
 
+    if row[5] != runLog[row_number-1][5] and row_number > 0:
+    
+        print "All runs in batch " + str(runLog[row_number-1][5]) + " considered, producing plots...\n"
+        
+        md.defineGlobalVariableRun(runLog[row_number-1])
+        tplot.produceTelescopeGraphs(telescope_data_batch, amplitudes_batch)
+        
+        md.defineGlobalVariableRun(runLog[row_number])
 
-    if currentBatch != md.getBatchNumber() or row[3] == last_row:
-
-        print "All runs in batch " + str(currentBatch) + " considered, producing plots...\n"
-        
-        tplot.produceTelescopeGraphs(telescope_data_batch, amplitudes_batch, currentBatch)
-        
-        currentBatch = md.getBatchNumber()
-        
         printTime()
-        print "Start analysing batch " + str(currentBatch) + "\n"
-        
+        print "Start analysing batch " + str(row[5]) + "...\n"
         telescope_data_batch = np.empty(0, dtype = telescope_data_run.dtype)
         amplitudes_batch = np.empty(0, dtype = amplitudes_run.dtype)
+
+
+    # Last row
+    if row[3] == runLog[-1][3]:
+    
+        printTime()
+        print "All runs in batch " + str(row[5]) + " considered, producing plots...\n"
         
         telescope_data_batch = np.append(telescope_data_batch, telescope_data_run)
         amplitudes_batch = np.append(amplitudes_batch, amplitudes_run)
         
-    elif row[3] == last_row:
-            
-            printTime()
-            print "All runs in batch " + str(currentBatch) + " considered, producing plots...\n"
-            
-            tplot.produceTelescopeGraphs(telescope_data_batch, amplitudes_batch, currentBatch)
-    
+        tplot.produceTelescopeGraphs(telescope_data_batch, amplitudes_batch)
+
     else:
+        
         telescope_data_batch = np.append(telescope_data_batch, telescope_data_run)
         amplitudes_batch = np.append(amplitudes_batch, amplitudes_run)
-
-    return [telescope_data_batch, amplitudes_batch, currentBatch]
-
-# Note, the file have only 200K entries
-def importTelescopeData():
     
-    dataFileName = md.getSourceFolderPath() + "forAntek/tracking"+str(md.getTimeStamp())+".root"
-    data = rnm.root2array(dataFileName)
     
-    # Convert into mm
-    for dimension in data.dtype.names:
-        data[dimension] = np.multiply(data[dimension], 0.001)
-  
-    return data
+    return [telescope_data_batch, amplitudes_batch]
 
 
 # Get actual time
@@ -100,5 +91,4 @@ def printTime():
 
     time = str(datetime.now().time())
     print  "\nTime: " + str(time[:-7])
-
 

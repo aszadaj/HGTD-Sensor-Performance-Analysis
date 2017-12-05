@@ -1,145 +1,116 @@
-import pickle
+import ROOT
+import root_numpy as rnm
 import numpy as np
-import sys
 
-import noise as ns
+import pulse_calculations as p_calc
+import pulse_plot as p_plot
 import metadata as md
+import data_management as dm
+
+from pathos.multiprocessing import ProcessingPool as Pool
+
+#md.setupATLAS()
+ROOT.gROOT.SetBatch(True)
 
 
-# The code obtains amplitudes and rise time for pulses for each channel for all selected entries
-# and orders them in a nested list within "amplitudes" and "rise_time".
-def pulseAnalysis(data, noise_average, noise_std):
+# Start analysis of selected run numbers
+def pulseAnalysis(numberOfRuns, step, sigma):
+    
+    p_calc.defineSigmaConstant(sigma)
+    dm.checkIfRepositoryOnStau()
+    totalNumberOfRuns = numberOfRuns
+    startTime = md.getTime()
+    
+    print "\n"
+    md.printTime()
+    print "\nStart pulse analysis, " + str(numberOfRuns) + " file(s)."
+    print "Sigma: " + str(p_calc.getSigmaConstant()) + "\n"
    
-    channels = data.dtype.names
-    
-    amplitudes = np.zeros(len(data), dtype = data.dtype)
-    rise_times = np.zeros(len(data), dtype = data.dtype)
-    
-    pedestal, noise = ns.getPedestalAndNoisePerChannel(noise_average, noise_std)
-    
-    for event in range(0,len(data)):
-    
-        for chan in channels:
-        
-            amplitudes[event][chan], rise_times[event][chan] = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[chan], noise[chan])
+    runLog = md.restrictToUndoneRuns(md.getRunLog(), "pulse")
+    #runLog = md.restrictToBatch(md.getRunLog(), 507)
+ 
    
-    return amplitudes, rise_times
-
-
-# Calculate maximum amplitude value and rise time, if found.
-def getAmplitudeAndRiseTime(event, chan, pedestal, noise):
+    for row in runLog:
     
-    timeScope = 0.1 # For all files
+        md.defineGlobalVariableRun(row)
+        runNumber = md.getRunNumber()
+        
+        if (md.isRootFileAvailable(md.getTimeStamp())):
+            
+            pulseAnalysisPerRun(step)
+            md.printTime()
+            print "Done with run " + str(runNumber) + ".\n"
     
-    pulse_amplitude = 0
-    pulse_rise_time = 0
-    indices_condition = event < noise * -sigmaConstant
-   
-    if any(indices_condition):
-        pulse_first_index = np.where(indices_condition)[0][0] - 3
-        pulse_last_index = np.argmin(event)
-        pulse_amplitude = np.amin(event) - pedestal
+        else:
+            print "There is no root file for run number: " + str(runNumber) + "\n"
         
-        # Select indices which are between 10% and 90% of the pulse.
-        amplitude_indices = np.argwhere((event[pulse_first_index:pulse_last_index] > 0.9*np.amin(event)) & (event[pulse_first_index:pulse_last_index] < 0.1*np.amin(event)))
+        numberOfRuns -= 1
         
-        pulse_rise_time = len(amplitude_indices)*timeScope
+        if numberOfRuns == 0:
         
-        if len(amplitude_indices) == 0:
-            pulse_amplitude = 0
-
-    return pulse_amplitude, pulse_rise_time
-
-
-# Function which removes amplitudes which are in the range being critical amplitude values
-def removeUnphyscialAmplitudes(amplitudes, rise_times, noise):
-
-    criticalValues = findCriticalValues(amplitudes)
-    for chan in amplitudes.dtype.names:
-      
-        indices = amplitudes[chan] > criticalValues[chan]*0.98
+            print "\nFinished with analysis of " + str(totalNumberOfRuns) + " files."
+            print "Time analysing: " + str(md.getTime() - startTime) +"\n"
+            break
         
-        amplitudes[chan][indices] = 0
-        rise_times[chan][indices] = 0
         
-        indices = amplitudes[chan] < noise[chan]*sigmaConstant
-        amplitudes[chan][indices] = 0
-
-    return amplitudes, rise_times, criticalValues
-
-
-# Search for critical amplitude values
-def findCriticalValues(data):
+# Perform noise, pulse and telescope analysis
+def pulseAnalysisPerRun(step):
     
-    channels = data.dtype.names
-    criticalValues = dict()
-
-    for chan in channels:
-        criticalValues[chan] = 0
-
-    for chan in channels:
-        for event in range(0,len(data)):
-            if criticalValues[chan] < np.amin(data[chan][event]):
-                criticalValues[chan] = np.amin(data[chan][event])
-
-    return criticalValues
-
-
-# Export found amplitude values 
-def exportPulseData(amplitudes, rise_times):
+    startTimeRun = md.getTime()
     
-    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/pulse_files/pulse_data/pulse_data_"+str(md.getRunNumber())+".pkl","wb") as output:
-        
-        pickle.dump(amplitudes,output,pickle.HIGHEST_PROTOCOL)
-        pickle.dump(rise_times,output,pickle.HIGHEST_PROTOCOL)
-
-
-# Export critical amplitude values to a pickle file
-def exportCriticalValues(criticalValues):
-
-    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/pulse_files/pulse_critical_values/pulse_critical_values_"+str(md.getRunNumber())+".pkl","wb") as output:
-        
-        pickle.dump(criticalValues,output,pickle.HIGHEST_PROTOCOL)
-        
-        
-# Import dictionaries amplitude and risetime with names from a .pkl file
-def importPulseInfo():
-
-    # Note: amplitude values are corrected with a pedestal (from the noise analysis) and the critical values are not
-    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/pulse_files/pulse_data/pulse_data_"+str(md.getRunNumber())+".pkl","rb") as input:
-        
-        amplitude = pickle.load(input)
-
-    # Restrict to 200K entries to match the telescope data
-    return amplitude[0:200000]
-
-
-# Import dictionaries amplitude and risetime with names from a .pkl file
-def importPulseInfo2():
-
-    # Note: amplitude values are corrected with a pedestal (from the noise analysis) and the critical values are not
-    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/pulse_files/pulse_data/pulse_data_"+str(md.getRunNumber())+".pkl","rb") as input:
-        
-        amplitude = pickle.load(input)
-        rise_time = pickle.load(input)
+    p = Pool(dm.threads)
+    max = md.getNumberOfEvents()
+    ranges = range(0, max, step)
     
-    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/pulse_files/pulse_critical_values/pulse_critical_values_"+str(md.getRunNumber())+".pkl","rb") as input:
+    md.printTime()
+    print "Start analysing run number: " + str(md.getRunNumber()) + " with "+str(max)+ " events ...\n"
+    
+    dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
+    
+    pedestal    = dm.importNoiseFile("pedestal")
+    noise       = dm.importNoiseFile("noise")
+    
+    results = p.map(lambda chunk: multiProcess(dataPath, pedestal, noise, chunk, chunk+step), ranges)
 
-        criticalValues = pickle.load(input)
+    endTime = md.getTime()
+    
+    md.printTime()
+    print "Done with multiprocessing. Time analysing: "+str(endTime-startTimeRun)+"\n"
+    print "Start with final analysis and exporting...\n"
+    
+    results = getResultsFromMultiProcessing(results)
+    
+    amplitudes, rise_times, criticalValues, peak_times = p_calc.removeUnphyscialQuantities(results, noise)
+    
+    dm.exportPulseData(amplitudes, rise_times, peak_times, criticalValues)
+    p_plot.producePulseDistributionPlots(amplitudes, rise_times)
+    
+    print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-endTime)+"\n"
 
 
-    return amplitude, rise_time, criticalValues
+# Start multiprocessing analysis of noises and pulses in ROOT considerOnlyRunsfile
+def multiProcess(dataPath, pedestal, noise, begin, end):
+    
+    data = rnm.root2array(dataPath, start=begin, stop=end)
+    amplitudes, rise_times, peak_times = p_calc.pulseAnalysis(data, pedestal, noise)
+    
+    return amplitudes, rise_times, peak_times
 
 
-# Define sigma value
-def defineSigmaConstant(sigma):
+# Receive results from multiprocessing function
+def getResultsFromMultiProcessing(results):
 
-    global sigmaConstant
-    sigmaConstant = sigma
-
-
-# Get sigma value
-def getSigmaConstant():
-    return sigmaConstant
+    # Future fix, append is slow
+    amplitudes = np.zeros(0, dtype=results[-1][0].dtype)
+    rise_times = np.zeros(0, dtype=results[-1][0].dtype)
+    peak_times = np.zeros(0, dtype=results[-1][0].dtype)
+    
+    for i in range(0, len(results)):
+        amplitudes = np.append(amplitudes, results[i][0])
+        rise_times = np.append(rise_times, results[i][1])
+        peak_times = np.append(peak_times, results[i][2])
+    
+    
+    return [amplitudes, rise_times, peak_times]
 
 

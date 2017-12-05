@@ -6,7 +6,7 @@ import metadata as md
 
 
 # Create 8 plots, for each channel across all entries, for amplitudes and rise times
-def producePulseDistributionPlots(amplitudes, rise_times, pedestals):
+def producePulseDistributionPlots(amplitudes, rise_times):
     
     canvas_amplitude = ROOT.TCanvas("Amplitude Distribution", "amplitude")
     canvas_rise_time = ROOT.TCanvas("Risetime Distribution", "risetime")
