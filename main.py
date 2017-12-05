@@ -11,7 +11,7 @@ def main():
     step = 8000 # 10000 minimum, due to restrictions on criticalValue
     sigma = 7 # At least 8 for acceptable results, related to passing amplitudes
     
-    numberOfRunsPerBatch = 20 # Example: 12 runs in batch 301
+    numberOfRunsPerBatch = 13 # Example: 12 runs in batch 301
     numberOfBatches = 3 # For quicker results, all batches: 38
     
     runNumber = 3656
@@ -20,8 +20,8 @@ def main():
     
     #noise.noiseAnalysis(numberOfRuns, step)
     #pulse.pulseAnalysis(numberOfRuns, step, sigma)
-    #telescope.telescopeAnalysis(numberOfRunsPerBatch, numberOfBatches)
-    timing.timingAnalysis(numberOfRunsPerBatch, numberOfBatches)
+    telescope.telescopeAnalysis(numberOfRunsPerBatch, numberOfBatches)
+    #timing.timingAnalysis(numberOfRunsPerBatch, numberOfBatches)
     #graph.printWaveform(runNumber, entry, channel)
     
     exit()
