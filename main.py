@@ -4,25 +4,38 @@ import pulse
 import telescope
 import timing
 import graph
+import metadata as md
+
+#md.setupATLAS()
 
 def main():
 
-    numberOfRuns = 10 # /Users/aszadaj/cernbox/SH203X/Gitlab/HGTD-Efficiency-analysis/plots/timing/timing_101_chan0.pdf88 max, that is those which can be run atm
-    step = 8000 # 10000 minimum, due to restrictions on criticalValue
-    sigma = 7 # At least 8 for acceptable results, related to passing amplitudes
+    ######  NOISE AND PULSE ######
+    numberOfRuns = 2    # 88 max, that is those which can be run atm
+    step = 5000         # Amount of entries for each thread (multiprocessing)
+    entries = "all"     # 'all' or number of entries to be considered
+    sigma = 8           # At least 8 for acceptable results, related to passing amplitudes
     
-    numberOfRunsPerBatch = 13 # Example: 12 runs in batch 301
-    numberOfBatches = 3 # For quicker results, all batches: 38
+    ######  TELESCOPE AND TIMING   ######
+    numberOfRunsPerBatch = 1    # Example: 12 runs in batch 301
+    numberOfBatches = 1         # For quicker results, all batches: 38
     
+    ######  GRAPH   ######
     runNumber = 3656
-    entry = 156400
-    channel = "chan0"
+    entries = [60010]
+    
+    #entries=[60010,60035,60042,60044,60052,60069,60082,60090,60102,60113,60135,60147,60635]
     
     #noise.noiseAnalysis(numberOfRuns, step)
-    #pulse.pulseAnalysis(numberOfRuns, step, sigma)
-    telescope.telescopeAnalysis(numberOfRunsPerBatch, numberOfBatches)
+    
+    pulse.pulseAnalysis(numberOfRuns, step, sigma)
+    
+    #telescope.telescopeAnalysis(numberOfRunsPerBatch, numberOfBatches)
+    
     #timing.timingAnalysis(numberOfRunsPerBatch, numberOfBatches)
-    #graph.printWaveform(runNumber, entry, channel)
+    
+    #graph.printWaveform(runNumber, entries)
+    
     
     exit()
 

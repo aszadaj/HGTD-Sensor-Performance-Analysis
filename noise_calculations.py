@@ -18,9 +18,23 @@ def findNoiseAverageAndStd(dataPath, begin, end):
     
     for event in range(0,len(data)):
         for chan in channels:
+        
+            ####################################################################
+            #
+            #   Two conditions of selecting the pedestal and noise:
+            #       1. pulse_limit = limit of exceeding the noise
+            #       2. data_point_correction = 'going back' couple of points
+            #
+            #   The limit is chosen from observing the waveform, the data point
+            #   correction is a convention to make the code more reliable
+            #
+            ####################################################################
+
+            pulse_limit = -25 * 0.001 # mV
+            data_point_correction = 3
             
-            pulse_compatible_samples = data[event][chan] < -25*0.001
-            max_index = np.where(pulse_compatible_samples)[0][0] - 3 if len( np.where(pulse_compatible_samples)[0] ) else 1002
+            pulse_compatible_samples = data[event][chan] < pulse_limit
+            max_index = np.where(pulse_compatible_samples)[0][0] - data_point_correction if len( np.where(pulse_compatible_samples)[0] ) else 1002
             
             noise_average[event][chan] = np.average(data[event][chan][0:max_index])
             noise_std[event][chan] = np.std(data[event][chan][0:max_index])

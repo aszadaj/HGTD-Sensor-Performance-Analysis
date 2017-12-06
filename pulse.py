@@ -29,7 +29,7 @@ def pulseAnalysis(numberOfRuns, step, sigma):
     runLog = md.restrictToUndoneRuns(md.getRunLog(), "pulse")
     #runLog = md.restrictToBatch(md.getRunLog(), 507)
  
-   
+ 
     for row in runLog:
     
         md.defineGlobalVariableRun(row)
@@ -51,17 +51,20 @@ def pulseAnalysis(numberOfRuns, step, sigma):
             print "\nFinished with analysis of " + str(totalNumberOfRuns) + " files."
             print "Time analysing: " + str(md.getTime() - startTime) +"\n"
             break
-        
+
+    if not runLog:
+        print "All files are already converted. Remove first pickle file from: \n/Users/aszadaj/cernbox/SH203X/HGTD_material/data_hgtd_efficiency_sep_2017/pulse_files/pulse_amplitudes"
+
         
 # Perform noise, pulse and telescope analysis
 def pulseAnalysisPerRun(step):
     
     startTimeRun = md.getTime()
     
-    p = Pool(dm.threads)
+    p = Pool(dm.threads) #Change
     max = md.getNumberOfEvents()
     ranges = range(0, max, step)
-    
+
     md.printTime()
     print "Start analysing run number: " + str(md.getRunNumber()) + " with "+str(max)+ " events ...\n"
     
@@ -77,10 +80,10 @@ def pulseAnalysisPerRun(step):
     md.printTime()
     print "Done with multiprocessing. Time analysing: "+str(endTime-startTimeRun)+"\n"
     print "Start with final analysis and exporting...\n"
+ 
+    results = p_calc.removeUnphyscialQuantities(results, noise)
     
-    results = getResultsFromMultiProcessing(results)
-    
-    amplitudes, rise_times, criticalValues, peak_times = p_calc.removeUnphyscialQuantities(results, noise)
+    [amplitudes, rise_times, peak_times, criticalValues] = [i for i in results]
     
     dm.exportPulseData(amplitudes, rise_times, peak_times, criticalValues)
     p_plot.producePulseDistributionPlots(amplitudes, rise_times)
@@ -95,22 +98,5 @@ def multiProcess(dataPath, pedestal, noise, begin, end):
     amplitudes, rise_times, peak_times = p_calc.pulseAnalysis(data, pedestal, noise)
     
     return amplitudes, rise_times, peak_times
-
-
-# Receive results from multiprocessing function
-def getResultsFromMultiProcessing(results):
-
-    # Future fix, append is slow
-    amplitudes = np.zeros(0, dtype=results[-1][0].dtype)
-    rise_times = np.zeros(0, dtype=results[-1][0].dtype)
-    peak_times = np.zeros(0, dtype=results[-1][0].dtype)
-    
-    for i in range(0, len(results)):
-        amplitudes = np.append(amplitudes, results[i][0])
-        rise_times = np.append(rise_times, results[i][1])
-        peak_times = np.append(peak_times, results[i][2])
-    
-    
-    return [amplitudes, rise_times, peak_times]
 
 

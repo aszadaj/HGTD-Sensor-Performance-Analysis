@@ -1,4 +1,5 @@
 
+import ROOT
 import csv
 import os
 import datetime as dt
@@ -18,7 +19,6 @@ def getRunLog():
             metaData.append(row)
 
     del metaData[0:2]
- 
     return metaData
 
 
@@ -200,15 +200,31 @@ def readFileNames(folderPath, fileType):
 
 
 # Get current run number
-def getRunNumber():
+def getRunNumber(timeStamp=""):
     
-    return runInfo[3]
+    if timeStamp == "":
+        return runInfo[3]
+    
+    else:
+        runLog = getRunLog()
+
+        for row in runLog:
+            if int(row[4]) == timeStamp:
+                return int(row[3])
 
 
 # Get current time stamp (which corresponds to the run number)
-def getTimeStamp():
+def getTimeStamp(runNumber=""):
     
-    return runInfo[4]
+    if runNumber == "":
+        return runInfo[4]
+
+    else:
+        runLog = getRunLog()
+
+        for row in runLog:
+            if int(row[3]) == runNumber:
+                return int(row[4])
 
 
 # Get number of events inside the current ROOT file
@@ -237,6 +253,14 @@ def getBatchNumber():
 
     return int(runInfo[5])
 
+# Return row in run log for given run number
+def getRowForRunNumber(runNumber):
+
+    runLog = getRunLog()
+
+    for row in runLog:
+        if int(row[3]) == runNumber:
+            return row
 
 # Set run info for selected run
 def defineGlobalVariableRun(row):
@@ -261,7 +285,7 @@ def printTime():
 def setupATLAS():
 
     ROOT.gROOT.SetBatch()
-    ROOT.gROOT.LoadMacro("./style/AtlasStyle.C")
+    ROOT.gROOT.LoadMacro("./resources/style/AtlasStyle.C")
     ROOT.SetAtlasStyle()
 
 

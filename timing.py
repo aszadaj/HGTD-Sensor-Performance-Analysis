@@ -6,7 +6,7 @@ from datetime import datetime
 import metadata as md
 import data_management as dm
 
-#md.setupATLAS()
+
 ROOT.gROOT.SetBatch(True)
 
 
@@ -26,8 +26,6 @@ def timingAnalysis(numberOfRunsPerBatch, numberOfBatches):
     
     for row_number in range(0,len(runLog)): data_batch = timingAnalysisPerBatch(row_number, runLog, data_batch)
     print "\nDone analysing, time analysing: " + str(getTime()-startTime) + "\n"
-    
-    exit()
 
 
 def timingAnalysisPerBatch(row_number, runLog, data_batch):
@@ -37,6 +35,8 @@ def timingAnalysisPerBatch(row_number, runLog, data_batch):
     md.defineGlobalVariableRun(row)
     [peak_times_batch, currentBatch] = [i for i in data_batch]
     peak_times_run = dm.importPulseFile("peak_times")
+    
+    print "Run number considered: " + md.getRunNumber() + "\n"
     
     if peak_times_batch.size == 0:
     
@@ -80,39 +80,51 @@ def comparePeakTimes(peak_times):
 
     SiPM_name = "SiPM-AFP"
     SiPM_chan = md.getChannelNameForSensor(SiPM_name)
+    print "SiPM Channel: " + str(SiPM_chan)
     data_graph = dict()
     
-    chans = peak_times.dtype.names
+    all_channels = peak_times.dtype.names
     
     channels = []
     
     SiPM_index = int(SiPM_chan[-1])
     
-    for chan in chans:
-        if chan != chans[int(SiPM_chan[-1])]:
+    for chan in all_channels:
+        if chan != all_channels[int(SiPM_chan[-1])]:
             channels.append(chan)
 
     canvas = ROOT.TCanvas("Timing","timing")
     
-    low_time_difference = np.empty(len(peak_times), dtype=peak_times.dtype)
+    filled_entries = np.zeros(len(peak_times), dtype=peak_times.dtype)
     
     for chan in channels:
     
-        data_graph[chan] = ROOT.TH1D("timing_"+chan+"_histogram","Time difference distribution between SiPM and " + md.getNameOfSensor(chan) + " "+str(int(chan[-1:])+1),200,35,60)
+        data_graph[chan] = ROOT.TH1D("timing_"+chan+"_histogram","Time difference distribution between SiPM and " + md.getNameOfSensor(chan) + " "+str(int(chan[-1:])+1),2000,-10,100)
         for entry in range(0, len(peak_times)):
             timeDifference = abs(peak_times[entry][chan]-peak_times[entry][SiPM_index])*0.1
-            data_graph[chan].Fill(timeDifference)
-            if timeDifference < 30:
-                low_time_difference[entry][chan] = 1.0
+            #print timeDifference
+            if 0 < timeDifference < 50:
+                data_graph[chan].Fill(timeDifference)
+                filled_entries[chan][entry] = 1.0
         
     
         produceTH1Plot(data_graph[chan], chan, canvas)
 
-    print "low value points"
+    amount = 50
 
-    for chan in channels:
-        print chan
-        print np.count_nonzero(low_time_difference[chan]) + "\n"
+    entry_string = "["
+
+    for entry in range(0, len(filled_entries[chan])):
+        if np.count_nonzero(filled_entries[entry]) != 0 and amount != 1:
+            entry_string += str(entry) +","
+            amount -= 1
+
+        if amount == 1:
+            entry_string+= str(entry) +"]"
+            break
+
+
+    print entry_string
 
 
 def produceTH1Plot(graph, chan, canvas):

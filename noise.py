@@ -13,7 +13,9 @@ from pathos.multiprocessing import ProcessingPool as Pool
 
 ROOT.gROOT.SetBatch(True)
 
-def noiseAnalysis(numberOfRuns, step):
+
+
+def noiseAnalysisPerBatch(numberOfRuns, step):
     print "noise"
     dm.checkIfRepositoryOnStau()
     totalNumberOfRuns = numberOfRuns
@@ -32,6 +34,7 @@ def noiseAnalysis(numberOfRuns, step):
         
         if (md.isRootFileAvailable(md.getTimeStamp())):
             
+            #noise_average, noise_std = noiseAnalysisPerRun(step)
             noiseAnalysisPerRun(step)
             
             md.printTime()
@@ -47,6 +50,9 @@ def noiseAnalysis(numberOfRuns, step):
             print "\nFinished with analysis of " + str(totalNumberOfRuns) + " files."
             print "Time analysing: " + str(md.getTime() - startTime) +"\n"
             break
+
+    if not runLog:
+        print "All files are already converted. Remove first pickle file from: \n/Users/aszadaj/cernbox/SH203X/HGTD_material/data_hgtd_efficiency_sep_2017/pulse_files/pulse_amplitudes"
 
 
 def noiseAnalysisPerRun(step):
@@ -72,13 +78,17 @@ def noiseAnalysisPerRun(step):
     
     noise_average, noise_std = getResultsFromMultiProcessing(results)
     noise_average, noise_std = n_calc.convertNoise(noise_average, noise_std)
+
+    ###### Perform these functions later   ###############
+
+    #n_plot.produceNoiseDistributionPlots(noise_average, noise_std)
     
-    n_plot.produceNoiseDistributionPlots(noise_average, noise_std)
+    #pedestal, noise = n_calc.getPedestalAndNoisePerChannel(noise_average, noise_std)
+    #dm.exportNoiseData(pedestal, noise)
     
-    pedestal, noise = n_calc.getPedestalAndNoisePerChannel(noise_average, noise_std)
-    dm.exportNoiseData(pedestal, noise)
-    
-    print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-endTime)+"\n"
+    #print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-endTime)+"\n"
+
+    return noise_average, noise_std
 
 
 

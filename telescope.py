@@ -1,3 +1,4 @@
+
 import ROOT
 import numpy as np
 import root_numpy as rnm
@@ -24,8 +25,7 @@ def telescopeAnalysis(numberOfRunsPerBatch, numberOfBatches):
 
     for row_number in range(0,len(runLog_telescope)): data_batch = telescopeAnalysisPerBatch(row_number, runLog_telescope, data_batch)
     print "\nDone analysing, time analysing: " + str(getTime()-startTime) + "\n"
-    
-    exit()
+
 
 
 def telescopeAnalysisPerBatch(row_number, runLog, data_batch):
