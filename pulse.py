@@ -9,59 +9,81 @@ import data_management as dm
 
 from pathos.multiprocessing import ProcessingPool as Pool
 
-#md.setupATLAS()
 ROOT.gROOT.SetBatch(True)
 
 
 # Start analysis of selected run numbers
-def pulseAnalysis(numberOfRuns, step, sigma):
+def pulseAnalysis(numberOfRunsPerBatch, numberOfBatches):
     
+    sigma = 8
     p_calc.defineSigmaConstant(sigma)
     dm.checkIfRepositoryOnStau()
-    totalNumberOfRuns = numberOfRuns
+    
     startTime = md.getTime()
-    
-    print "\n"
-    md.printTime()
-    print "\nStart pulse analysis, " + str(numberOfRuns) + " file(s)."
-    print "Sigma: " + str(p_calc.getSigmaConstant()) + "\n"
+    runLog_batch = md.getRunLogElementBatch(numberOfBatches, numberOfRunsPerBatch)
    
-    runLog = md.restrictToUndoneRuns(md.getRunLog(), "pulse")
- 
- 
-    for row in runLog:
+    print "\nStart pulse analysis", numberOfBatches, "batch(es),", numberOfRunsPerBatch,"run(s) per batch.\n"
+    print "Sigma:", p_calc.getSigmaConstant(), "\n"
+
+    for runLog in runLog_batch:
     
-        md.defineGlobalVariableRun(row)
-        runNumber = md.getRunNumber()
+        results_batch = []
+    
+        startTimeBatch = md.getTime()
+        md.printTime()
+        totalNumberOfRuns = len(runLog)
         
-        if (md.isRootFileAvailable(md.getTimeStamp())):
+        print "Batch:", runLog[0][5], "\n"
+      
+        for index in range(0, len(runLog)):
             
-            results = pulseAnalysisPerRun(step)
-            md.printTime()
-            print "Done with run " + str(runNumber) + ".\n"
+            row = runLog[index]
+            md.defineGlobalVariableRun(row)
+            runNumber = md.getRunNumber()
+            
+            if (md.isRootFileAvailable(md.getTimeStamp())):
+                
+                results_batch.append(pulseAnalysisPerRun())
+        
+                md.printTime()
+                print "Done with run " + str(runNumber) + ".\n"
+        
+            else:
+                print "WARNING! There is no root file for run number: " + str(runNumber) + "\n"
     
-        else:
-            print "There is no root file for run number: " + str(runNumber) + "\n"
+        # Done with the for loop and appending results, export and produce files
         
-        numberOfRuns -= 1
+        print "Done with batch", md.getBatchNumber(),"producing plots and exporting file.\n"
         
-        if numberOfRuns == 0:
+        amplitudes = np.empty(0, dtype=results_batch[0][0].dtype)
+        rise_times = np.empty(0, dtype=results_batch[0][1].dtype)
+        peak_times = np.empty(0, dtype=results_batch[0][2].dtype)
+        criticalValues = np.empty(0, dtype=results_batch[0][3].dtype)
+    
+        for results in results_batch:
+            amplitudes = np.concatenate((amplitudes, results[0]), axis = 0)
+            rise_times = np.concatenate((rise_times, results[1]), axis = 0)
+            peak_times = np.concatenate((peak_times, results[2]), axis = 0)
+            criticalValues = np.concatenate((criticalValues, results[3]), axis = 0)
         
-            print "\nFinished with analysis of " + str(totalNumberOfRuns) + " files."
-            print "Time analysing: " + str(md.getTime() - startTime) +"\n"
-            break
+        dm.exportPulseData(amplitudes, rise_times, peak_times, criticalValues)
 
-    if not runLog:
-        print "All files are already converted. Remove first pickle file from: \n/Users/aszadaj/cernbox/SH203X/HGTD_material/data_hgtd_efficiency_sep_2017/pulse_files/pulse_amplitudes"
+        dm.exportPulseData(amplitudes, rise_times, peak_times, criticalValues)
+        p_plot.producePulseDistributionPlots(amplitudes, rise_times)
+    
+        print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
 
-        
+    print "Done with batch",runLog[0][5],".\n"
+
 # Perform noise, pulse and telescope analysis
-def pulseAnalysisPerRun(step):
+def pulseAnalysisPerRun():
     
     startTimeRun = md.getTime()
     
-    p = Pool(dm.threads) #Change
+    # Configure inputs for multiprocessing
+    p = Pool(dm.threads)
     max = md.getNumberOfEvents()
+    step = 5000
     ranges = range(0, max, step)
 
     md.printTime()
@@ -73,25 +95,11 @@ def pulseAnalysisPerRun(step):
     noise       = dm.importNoiseFile("noise")
     
     results = p.map(lambda chunk: multiProcess(dataPath, pedestal, noise, chunk, chunk+step), ranges)
-
-    endTime = md.getTime()
-    
-    md.printTime()
-    print "Done with multiprocessing. Time analysing: "+str(endTime-startTimeRun)+"\n"
-    print "Start with final analysis and exporting...\n"
  
     # Note, here the function receives the results from multiprocessing
     results = p_calc.removeUnphyscialQuantities(results, noise)
-
-    return results
     
-#
-#    [amplitudes, rise_times, peak_times, criticalValues] = [i for i in results]
-#
-#    dm.exportPulseData(amplitudes, rise_times, peak_times, criticalValues)
-#    p_plot.producePulseDistributionPlots(amplitudes, rise_times)
-#
-#    print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-endTime)+"\n"
+    return results
 
 
 # Start multiprocessing analysis of noises and pulses in ROOT considerOnlyRunsfile
@@ -101,5 +109,3 @@ def multiProcess(dataPath, pedestal, noise, begin, end):
     amplitudes, rise_times, peak_times = p_calc.pulseAnalysis(data, pedestal, noise)
     
     return amplitudes, rise_times, peak_times
-
-

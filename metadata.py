@@ -93,9 +93,8 @@ def getRunLogForTelescopeAnalysis(numberOfBatches, numberOfRunsPerBatch):
 
     return runLog
 
-# Get run log for timing analysis
-# Check this function if it correctly returns the right amount of runs
-def getRunLogForTimingAnalysis(numberOfBatches, numberOfRunsPerBatch):
+
+def getRunLogBatches(numberOfBatches, numberOfRunsPerBatch):
 
     metaData = getRunLog()
     
@@ -126,6 +125,27 @@ def getRunLogForTimingAnalysis(numberOfBatches, numberOfRunsPerBatch):
 
     return runLog
 
+# Structure of results: [runLogbatch1, runlogbacth2, ...,] and runLogBacth1 = [run1, run2, run3, ]... run1 = info about the run, as usual.
+def getRunLogElementBatch(numberOfBatches, numberOfRunsPerBatch):
+
+    metaData = getRunLog()
+    batchNumbers = getAllBatchNumbers()
+    runLog = []
+    
+    for batch in batchNumbers:
+        runLog_batch = []
+        if numberOfBatches == 0:
+            break
+        
+        for row in metaData:
+            if batch == int(row[5]):
+                runLog_batch.append(row)
+                
+        runLog.append(runLog_batch[0:numberOfRunsPerBatch])
+        
+        numberOfBatches -= 1
+        
+    return runLog
 
 # Check if repository is on the stau server
 def isRootFileAvailable(timeStamp):
@@ -252,6 +272,19 @@ def getNameOfSensor(chan):
 def getBatchNumber():
 
     return int(runInfo[5])
+
+
+def getAllBatchNumbers():
+
+    metaData = getRunLog()
+    batchNumbers = [int(metaData[0][5])]
+    
+    for row in metaData:
+        if int(row[5]) not in batchNumbers:
+            batchNumbers.append(int(row[5]))
+
+    return batchNumbers
+
 
 # Return row in run log for given run number
 def getRowForRunNumber(runNumber):

@@ -17,7 +17,7 @@ def timingAnalysis(numberOfRunsPerBatch, numberOfBatches):
     print "Start timing analysis, " +str(numberOfBatches)+" batch(es), " + str(numberOfRunsPerBatch) + " run(s) per batch.\n"
 
     dm.checkIfRepositoryOnStau()
-    runLog = md.getRunLogForTimingAnalysis(numberOfBatches, numberOfRunsPerBatch)
+    runLog = md.getRunLogBatches(numberOfBatches, numberOfRunsPerBatch)
  
     currentBatch = int(runLog[0][5])
     last_row = runLog[-1][3]

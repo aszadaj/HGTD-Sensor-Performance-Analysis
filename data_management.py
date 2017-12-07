@@ -14,14 +14,14 @@ def exportNoiseData(pedestal, noise):
 
 def exportNoiseFile(data, dataType):
 
-    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/noise_files/noise_"+str(dataType)+"/noise_"+str(dataType)+"_"+str(md.getRunNumber())+".pkl","wb") as output:
+    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/noise_files/noise_"+str(dataType)+"/noise_"+str(dataType)+"_"+str(md.getBatchNumber())+".pkl","wb") as output:
         
         pickle.dump(data,output,pickle.HIGHEST_PROTOCOL)
 
 
 def importNoiseFile(dataType):
     
-    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/noise_files/noise_"+str(dataType)+"/noise_"+str(dataType)+"_"+str(md.getRunNumber())+".pkl","rb") as input:
+    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/noise_files/noise_"+str(dataType)+"/noise_"+str(dataType)+"_"+str(md.getBatchNumber())+".pkl","rb") as input:
        
         dataFile = pickle.load(input)
 
@@ -38,14 +38,14 @@ def exportPulseData(amplitudes, rise_times, peak_times, criticalValues):
 
 def exportPulseFile(data, dataType):
 
-    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/pulse_files/pulse_"+str(dataType)+"/pulse_"+str(dataType)+"_"+str(md.getRunNumber())+".pkl","wb") as output:
+    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/pulse_files/pulse_"+str(dataType)+"/pulse_"+str(dataType)+"_"+str(md.getBatchNumber())+".pkl","wb") as output:
         
         pickle.dump(data,output,pickle.HIGHEST_PROTOCOL)
 
 
 def importPulseFile(dataType):
 
-    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/pulse_files/pulse_"+str(dataType)+"/pulse_"+str(dataType)+"_"+str(md.getRunNumber())+".pkl","rb") as input:
+    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/pulse_files/pulse_"+str(dataType)+"/pulse_"+str(dataType)+"_"+str(md.getBatchNumber())+".pkl","rb") as input:
        
         dataFile = pickle.load(input)
 

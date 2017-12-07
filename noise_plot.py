@@ -10,8 +10,8 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
     
     for chan in channels:
         
-        pedestal_graph[chan] = ROOT.TH1D("Pedestal channel "+str(int(chan[-1:])+1),"pedestal"+chan,300,-5,5)
-        noise_graph[chan] = ROOT.TH1D("Noise channel "+str(int(chan[-1:])+1),"noise"+chan,300,0,7)
+        pedestal_graph[chan] = ROOT.TH1D("Pedestal channel "+str(int(chan[-1:])+1),"pedestal"+chan,800,-3,3.5)
+        noise_graph[chan] = ROOT.TH1D("Noise channel "+str(int(chan[-1:])+1),"noise"+chan,800,1,6)
     
         for entry in range(0,len(noise_average)):
             pedestal_graph[chan].Fill(noise_average[entry][chan])
@@ -22,7 +22,7 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
    
     for chan in channels:
     
-        titleAbove = "Distribution of noise mean values from each entry, run "+str(md.getRunNumber())+", channel " + str(int(chan[-1:])+1) +", sensor: " + str(md.getNameOfSensor(chan))
+        titleAbove = "Distribution of noise mean values from each entry, batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])+1) +", sensor: " + str(md.getNameOfSensor(chan))
         xAxisTitle = "Noise mean value (mV)"
         yAxisTitle = "Number of entries (N)"
         setGraphAttributes(pedestal_graph[chan],titleAbove,xAxisTitle,yAxisTitle)
@@ -32,10 +32,10 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
         yAxisTitle = "Number of entries (N)"
         setGraphAttributes(noise_graph[chan],titleAbove,xAxisTitle,yAxisTitle)
         
-        fileName = "plots/noise_distributions/pedestal_plots/pedestal_"+str(md.getRunNumber())+"_"+chan+".pdf"
+        fileName = "plots/noise_distributions/pedestal_plots/pedestal_"+str(md.getBatchNumber())+"_"+chan+".pdf"
         exportGraph(pedestal_graph[chan],canvas_pedestal,fileName)
         
-        fileName = "plots/noise_distributions/noise_plots/noise_"+str(md.getRunNumber())+"_"+chan+".pdf"
+        fileName = "plots/noise_distributions/noise_plots/noise_"+str(md.getBatchNumber())+"_"+chan+".pdf"
         exportGraph(noise_graph[chan],canvas_noise,fileName)
 
 
