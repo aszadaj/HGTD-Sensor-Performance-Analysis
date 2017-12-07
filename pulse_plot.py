@@ -16,8 +16,8 @@ def producePulseDistributionPlots(amplitudes, rise_times):
     
     for chan in amplitudes.dtype.names:
         
-        amplitudes_graph[chan] = ROOT.TH1D("Amplitude channel "+str(int(chan[-1:])+1), "amplitude" + chan,900, 0, 400)
-        rise_times_graph[chan] = ROOT.TH1D("Rise time channel "+str(int(chan[-1:])+1), "rise_time" + chan,400,0 ,2)
+        amplitudes_graph[chan] = ROOT.TH1D("Amplitude channel "+str(int(chan[-1:])+1), "amplitude" + chan,900,0,400)
+        rise_times_graph[chan] = ROOT.TH1D("Rise time channel "+str(int(chan[-1:])+1), "rise_time" + chan,400,0,1)
         
         index = int(chan[-1:])
         

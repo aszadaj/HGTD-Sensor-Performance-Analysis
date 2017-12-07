@@ -77,6 +77,7 @@ def getAmplitudeAndRiseTime(event, chan, pedestal, noise):
 
 # Function which removes amplitudes which are in the range being critical amplitude values
 # NOTE THIS FUNCTION HANDLES CONVERTED DATA (I.E. NEGATIVE TO POSITIVE VALUES AND IN mV)
+# NOTE2 Here the amplitude values are pedestal corrected
 def removeUnphyscialQuantities(results, noise):
 
     # There is a more beautiful fix, with nesting for loops, not important for now
@@ -113,7 +114,6 @@ def findCriticalValues(data):
 
     data = convertData(data)
 
-    noise = dm.importNoiseFile("noise")
     channels = data.dtype.names
     
     criticalValues = dict()

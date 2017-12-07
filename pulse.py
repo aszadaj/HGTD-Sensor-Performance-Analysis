@@ -27,7 +27,6 @@ def pulseAnalysis(numberOfRuns, step, sigma):
     print "Sigma: " + str(p_calc.getSigmaConstant()) + "\n"
    
     runLog = md.restrictToUndoneRuns(md.getRunLog(), "pulse")
-    #runLog = md.restrictToBatch(md.getRunLog(), 507)
  
  
     for row in runLog:
@@ -37,7 +36,7 @@ def pulseAnalysis(numberOfRuns, step, sigma):
         
         if (md.isRootFileAvailable(md.getTimeStamp())):
             
-            pulseAnalysisPerRun(step)
+            results = pulseAnalysisPerRun(step)
             md.printTime()
             print "Done with run " + str(runNumber) + ".\n"
     
@@ -81,14 +80,18 @@ def pulseAnalysisPerRun(step):
     print "Done with multiprocessing. Time analysing: "+str(endTime-startTimeRun)+"\n"
     print "Start with final analysis and exporting...\n"
  
+    # Note, here the function receives the results from multiprocessing
     results = p_calc.removeUnphyscialQuantities(results, noise)
+
+    return results
     
-    [amplitudes, rise_times, peak_times, criticalValues] = [i for i in results]
-    
-    dm.exportPulseData(amplitudes, rise_times, peak_times, criticalValues)
-    p_plot.producePulseDistributionPlots(amplitudes, rise_times)
-    
-    print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-endTime)+"\n"
+#
+#    [amplitudes, rise_times, peak_times, criticalValues] = [i for i in results]
+#
+#    dm.exportPulseData(amplitudes, rise_times, peak_times, criticalValues)
+#    p_plot.producePulseDistributionPlots(amplitudes, rise_times)
+#
+#    print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-endTime)+"\n"
 
 
 # Start multiprocessing analysis of noises and pulses in ROOT considerOnlyRunsfile

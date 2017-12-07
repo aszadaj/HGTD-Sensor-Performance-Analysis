@@ -14,7 +14,6 @@ from pathos.multiprocessing import ProcessingPool as Pool
 ROOT.gROOT.SetBatch(True)
 
 
-
 def noiseAnalysisPerBatch(numberOfRuns, step):
     print "noise"
     dm.checkIfRepositoryOnStau()
