@@ -22,12 +22,12 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
    
     for chan in channels:
     
-        titleAbove = "Distribution of noise mean values from each entry, batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])+1) +", sensor: " + str(md.getNameOfSensor(chan))
+        titleAbove = "Distribution of noise mean values (pedestal) from each entry, batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])+1) +", sensor: " + str(md.getNameOfSensor(chan))
         xAxisTitle = "Noise mean value (mV)"
         yAxisTitle = "Number of entries (N)"
         setGraphAttributes(pedestal_graph[chan],titleAbove,xAxisTitle,yAxisTitle)
         
-        titleAbove = "Distribution of standard deviation values (noise) from each entry, Sep 2017 run "+str(md.getRunNumber())+", channel " + str(int(chan[-1:])+1) + ", sensor: " + str(md.getNameOfSensor(chan))
+        titleAbove = "Distribution of standard deviation values (noise) from each entry, Sep 2017 batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])+1) + ", sensor: " + str(md.getNameOfSensor(chan))
         xAxisTitle = "Standard deviation (mV)"
         yAxisTitle = "Number of entries (N)"
         setGraphAttributes(noise_graph[chan],titleAbove,xAxisTitle,yAxisTitle)

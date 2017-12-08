@@ -25,7 +25,7 @@ def noiseAnalysis(batchNumbers):
  
     for runLog in runLog_batch:
     
-        #runLog = runLog[0:1] # Consider only 1  files for now
+        runLog = runLog[8:9] # Consider only 1  files for now
     
         results_batch = []
     
@@ -44,7 +44,7 @@ def noiseAnalysis(batchNumbers):
             
                 print "Run", md.getRunNumber()
                 results_batch.append(noiseAnalysisPerRun())
-                print "Done with run", md.getRunNumber()
+                print "Done with run", md.getRunNumber(),"\n"
         
             else:
                 print "WARNING! There is no root file for run number: " + str(runNumber) + "\n"

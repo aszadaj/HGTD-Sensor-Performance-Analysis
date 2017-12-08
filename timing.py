@@ -38,6 +38,8 @@ def comparePeakTimes(peak_times):
 
     SiPM_name = "SiPM-AFP"
     SiPM_chan = md.getChannelNameForSensor(SiPM_name)
+    SiPM_index = int(SiPM_chan[-1])
+    
     print "SiPM Channel: " + str(SiPM_chan)
     data_graph = dict()
     
@@ -45,10 +47,8 @@ def comparePeakTimes(peak_times):
     
     channels = []
     
-    SiPM_index = int(SiPM_chan[-1])
-    
     for chan in all_channels:
-        if chan != all_channels[int(SiPM_chan[-1])]:
+        if chan != all_channels[SiPM_index]:
             channels.append(chan)
 
     canvas = ROOT.TCanvas("Timing","timing")
@@ -60,7 +60,7 @@ def comparePeakTimes(peak_times):
         data_graph[chan] = ROOT.TH1D("timing_"+chan+"_histogram","Time difference distribution between SiPM and " + md.getNameOfSensor(chan) + " "+str(int(chan[-1:])+1),70,1.15,1.3)
         # outside the range, if there are filled values
         for entry in range(0, len(peak_times)):
-            timeDifference = abs(peak_times[entry][chan]-peak_times[entry][SiPM_index])*0.1
+            timeDifference = abs(peak_times[entry][chan]-peak_times[entry][SiPM_index])
 
             if peak_times[entry][chan] != 0.0 and peak_times[entry][SiPM_index]:
                 data_graph[chan].Fill(timeDifference)

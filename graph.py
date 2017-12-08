@@ -23,6 +23,21 @@ def printWaveform(runNumber, entries):
         dm.checkIfRepositoryOnStau()
         
         pedestal = dm.importNoiseFile("pedestal")
+        amplitudes = dm.importPulseFile("amplitudes")
+        
+        SiPM_name = "SiPM-AFP"
+        SiPM_chan = md.getChannelNameForSensor(SiPM_name)
+        SiPM_index = int(SiPM_chan[-1])
+        
+        for entry in range(0,len(amplitudes[chan])):
+            for chan in amplitudes.dtype.names:
+                if chan != SiPM_chan and amplitudes[chan][entry] != 0:
+                    print entry, chan
+                    count += 1
+                    
+            if count == 15:
+                break
+        
 
         dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(timeStamp)+".tree.root"
 
