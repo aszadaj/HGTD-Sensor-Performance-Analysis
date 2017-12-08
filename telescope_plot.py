@@ -36,8 +36,6 @@ def produceTelescopeGraphs(data_telescope, data_amplitude):
     
     minEntries = 1
     
-    channels = channels[0:1]
-    
     for chan in channels:
     
         # 1. Shows the mean amplitude in each filled bin (with or without conditions)

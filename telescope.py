@@ -36,8 +36,6 @@ def telescopeAnalysisPerBatch(runLog):
 
     amplitudes_batch = dm.importPulseFile("amplitudes")
     
-    
-    
     telescope_data_batch = telescope_data_batch[0:len(amplitudes_batch)]
 
     tplot.produceTelescopeGraphs(telescope_data_batch, amplitudes_batch)
