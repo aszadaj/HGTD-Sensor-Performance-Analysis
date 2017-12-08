@@ -27,7 +27,7 @@ def pulseAnalysis(batchNumbers):
 
     for runLog in runLog_batch:
     
-        runLog = [runLog[8]]
+        #runLog = [runLog[8]]
     
         results_batch = []
     
