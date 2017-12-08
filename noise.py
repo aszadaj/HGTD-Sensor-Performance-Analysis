@@ -25,7 +25,7 @@ def noiseAnalysis(batchNumbers):
  
     for runLog in runLog_batch:
     
-        runLog = runLog[0:1] # Consider only 1  files for now
+        #runLog = runLog[0:1] # Consider only 1  files for now
     
         results_batch = []
     
