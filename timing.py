@@ -30,7 +30,7 @@ def timingAnalysis(numberOfBatches):
 def timingAnalysisPerBatch(runLog):
 
     md.defineGlobalVariableRun(runLog[0])
-    peak_times_run = dm.importPulseFile("peak_times")
+    peak_times_run = dm.importPulseFile("half_max_times")
     comparePeakTimes(peak_times_run)
 
 
@@ -57,15 +57,15 @@ def comparePeakTimes(peak_times):
     
     for chan in channels:
     
-        data_graph[chan] = ROOT.TH1D("timing_"+chan+"_histogram","Time difference distribution between SiPM and " + md.getNameOfSensor(chan) + " "+str(int(chan[-1:])+1),2000,-10,20)
+        data_graph[chan] = ROOT.TH1D("timing_"+chan+"_histogram","Time difference distribution between SiPM and " + md.getNameOfSensor(chan) + " "+str(int(chan[-1:])+1),70,1.15,1.3)
+        # outside the range, if there are filled values
         for entry in range(0, len(peak_times)):
             timeDifference = abs(peak_times[entry][chan]-peak_times[entry][SiPM_index])*0.1
-            
-            if 0 < timeDifference < 50:
+
+            if peak_times[entry][chan] != 0.0 and peak_times[entry][SiPM_index]:
                 data_graph[chan].Fill(timeDifference)
                 filled_entries[chan][entry] = 1.0
-        
-    
+
         produceTH1Plot(data_graph[chan], chan, canvas)
 
 
@@ -80,7 +80,7 @@ def produceTH1Plot(graph, chan, canvas):
     canvas.cd()
     graph.Draw()
     canvas.Update()
-    canvas.Print("plots/timing/timing_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
+    canvas.Print("/../../HGTD_material/plots/timing/timing_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
     canvas.Clear()
 
 

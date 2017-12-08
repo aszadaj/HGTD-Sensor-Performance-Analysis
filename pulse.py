@@ -16,7 +16,7 @@ ROOT.gROOT.SetBatch(True)
 def pulseAnalysis(batchNumbers):
     
     sigma = 8
-    p_calc.defineSigmaConstant(sigma)
+    defineSigmaConstant(sigma)
     dm.checkIfRepositoryOnStau()
     
     startTime = md.getTime()
@@ -27,7 +27,7 @@ def pulseAnalysis(batchNumbers):
 
     for runLog in runLog_batch:
     
-        #runLog = runLog[0:1] # Consider only 1 files for now
+        #runLog = runLog[0:4] # Consider only 1 files for now
     
         results_batch = []
     
@@ -43,6 +43,7 @@ def pulseAnalysis(batchNumbers):
             
             if (md.isRootFileAvailable(md.getTimeStamp())):
                 
+                print "Run", md.getRunNumber()
                 results_batch.append(pulseAnalysisPerRun())
         
             else:
@@ -54,18 +55,17 @@ def pulseAnalysis(batchNumbers):
         
         amplitudes = np.empty(0, dtype=results_batch[0][0].dtype)
         rise_times = np.empty(0, dtype=results_batch[0][1].dtype)
-        peak_times = np.empty(0, dtype=results_batch[0][2].dtype)
+        half_max_times = np.empty(0, dtype=results_batch[0][2].dtype)
         criticalValues = np.empty(0, dtype=results_batch[0][3].dtype)
     
         for results in results_batch:
             amplitudes = np.concatenate((amplitudes, results[0]), axis = 0)
             rise_times = np.concatenate((rise_times, results[1]), axis = 0)
-            peak_times = np.concatenate((peak_times, results[2]), axis = 0)
+            half_max_times = np.concatenate((half_max_times, results[2]), axis = 0)
             criticalValues = np.concatenate((criticalValues, results[3]), axis = 0)
         
-        dm.exportPulseData(amplitudes, rise_times, peak_times, criticalValues)
+        dm.exportPulseData(amplitudes, rise_times, half_max_times, criticalValues)
 
-        dm.exportPulseData(amplitudes, rise_times, peak_times, criticalValues)
         p_plot.producePulseDistributionPlots(amplitudes, rise_times)
     
         print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
@@ -78,7 +78,7 @@ def pulseAnalysisPerRun():
     startTimeRun = md.getTime()
     
     # Configure inputs for multiprocessing
-    p = Pool(dm.threads)
+    p = Pool(8) #dm.threads
     #max = md.getNumberOfEvents()
     max = 200000 # This is adapted to match the number of telescope files
     #max = 1000
@@ -102,6 +102,10 @@ def pulseAnalysisPerRun():
 def multiProcess(dataPath, pedestal, noise, begin, end):
     
     data = rnm.root2array(dataPath, start=begin, stop=end)
-    amplitudes, rise_times, peak_times = p_calc.pulseAnalysis(data, pedestal, noise)
+    amplitudes, rise_times, half_max_times = p_calc.pulseAnalysis(data, pedestal, noise)
     
-    return amplitudes, rise_times, peak_times
+    return amplitudes, rise_times, half_max_times
+
+
+
+

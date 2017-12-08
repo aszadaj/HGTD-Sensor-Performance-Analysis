@@ -19,10 +19,9 @@ def telescopeAnalysis(batchNumbers):
     print "Start telescope analysis, batch",batchNumbers[0],"\n"
 
     dm.checkIfRepositoryOnStau()
-    
-    # Structure: each element is a run log consisting of all runs
-    # Note!
+   
     runLogs = md.getRunLogBatches(batchNumbers)
+    
     for runLog in runLogs:
         telescopeAnalysisPerBatch(runLog)
 
@@ -35,12 +34,13 @@ def telescopeAnalysisPerBatch(runLog):
     
     telescope_data_batch = dm.importTelescopeDataBatch()
 
-    print len(telescope_data_batch)
-    print telescope_data_batch.dtype
-    print telescope_data_batch
-    #amplitudes_batch = dm.importPulseFile("amplitudes")
+    amplitudes_batch = dm.importPulseFile("amplitudes")
     
-    #tplot.produceTelescopeGraphs(telescope_data_batch, amplitudes_batch)
+    
+    
+    telescope_data_batch = telescope_data_batch[0:len(amplitudes_batch)]
+
+    tplot.produceTelescopeGraphs(telescope_data_batch, amplitudes_batch)
 
 
 # Get actual time
