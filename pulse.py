@@ -27,7 +27,7 @@ def pulseAnalysis(batchNumbers):
 
     for runLog in runLog_batch:
     
-        runLog = runLog[8:9] # Consider only 1 files for now
+        runLog = [runLog[8]]
     
         results_batch = []
     
@@ -64,6 +64,9 @@ def pulseAnalysis(batchNumbers):
             rise_times = np.concatenate((rise_times, results[1]), axis = 0)
             half_max_times = np.concatenate((half_max_times, results[2]), axis = 0)
             criticalValues = np.concatenate((criticalValues, results[3]), axis = 0)
+        
+        print "Check length: ",str(len(runLog)*200000)
+        print len(amplitudes)
         
         dm.exportPulseData(amplitudes, rise_times, half_max_times, criticalValues)
 

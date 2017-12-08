@@ -20,12 +20,14 @@ def noiseAnalysis(batchNumbers):
     startTime = md.getTime()
    
     runLog_batch = md.getRunLogBatches(batchNumbers)
+    
+    print
 
     print "\nStart noise analysis, batches:", batchNumbers
  
     for runLog in runLog_batch:
-    
-        runLog = runLog[8:9] # Consider only 1  files for now
+        
+        runLog = [runLog[8]]
     
         results_batch = []
     
@@ -59,6 +61,8 @@ def noiseAnalysis(batchNumbers):
             noise_average = np.concatenate((noise_average, results_run[0]), axis = 0)
             noise_std = np.concatenate((noise_std, results_run[1]), axis = 0)
 
+        print "Check length: ",str(len(runLog)*200000)
+        print len(noise_average)
         
         pedestal, noise = n_calc.getPedestalAndNoisePerChannel(noise_average, noise_std)
         dm.exportNoiseData(pedestal, noise)
