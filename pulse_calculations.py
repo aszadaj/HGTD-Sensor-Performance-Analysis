@@ -41,7 +41,7 @@ def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber):
     pulse_half_maximum = 0
     
     # This sets the condition for seeing a value above the noise.
-    indices_condition = event < - noise * sigmaConstant # Note, event is negative
+    indices_condition = event < - noise * dm.getSigmaConstant() # Note, event is negative
    
     if any(indices_condition):
         
@@ -112,7 +112,7 @@ def removeUnphyscialQuantities(results, noise):
         half_max_times[chan][indices] = 0
         
         # Noise is in mV since imported from earlier program, future fix
-        indices = amplitudes[chan] > 0.001 * noise[chan] * sigmaConstant
+        indices = amplitudes[chan] > 0.001 * noise[chan] * dm.getSigmaConstant()
         
         amplitudes[chan][indices] = 0
         rise_times[chan][indices] = 0
