@@ -23,7 +23,7 @@ def pulseAnalysis(batchNumbers):
     runLog_batch = md.getRunLogBatches(batchNumbers)
    
     print "\nStart pulse analysis, batches:", batchNumbers
-    print "Sigma:", dm.getSigmaConstant()
+    print "Sigma:", dm.sigma
 
     for runLog in runLog_batch:
     
