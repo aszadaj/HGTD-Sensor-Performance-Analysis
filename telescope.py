@@ -12,73 +12,35 @@ import data_management as dm
 ROOT.gROOT.SetBatch(True)
 
 
-def telescopeAnalysis(numberOfBatches):
+def telescopeAnalysis(batchNumbers):
     
     startTime = getTime()
     printTime()
-    print "Start telescope analysis, " +str(numberOfBatches)+" batch(es).\n"
+    print "Start telescope analysis, batch",batchNumbers[0],"\n"
 
     dm.checkIfRepositoryOnStau()
     
-    runLog_telescope = md.getRunLogForTelescopeAnalysis(numberOfBatches)
-    data_batch = [np.empty(0), np.empty(0)]
+    # Structure: each element is a run log consisting of all runs
+    # Note!
+    runLogs = md.getRunLogBatches(batchNumbers)
+    for runLog in runLogs:
+        telescopeAnalysisPerBatch(runLog)
 
-    for row_number in range(0,len(runLog_telescope)): data_batch = telescopeAnalysisPerBatch(row_number, runLog_telescope, data_batch)
     print "\nDone analysing, time analysing: " + str(getTime()-startTime) + "\n"
 
 
-
-def telescopeAnalysisPerBatch(row_number, runLog, data_batch):
+def telescopeAnalysisPerBatch(runLog):
     
-    row = runLog[row_number]
-
-    [telescope_data_batch, amplitudes_batch] = [i for i in data_batch]
-
-    md.defineGlobalVariableRun(row)
-    telescope_data_run = dm.importTelescopeData()
-    amplitudes_run = dm.importPulseFile("amplitudes")
-    amplitudes_run = amplitudes_run[0:len(telescope_data_run)]
+    md.defineGlobalVariableRun(runLog[0])
     
-    if telescope_data_batch.size == 0:
-    
-        print "Start analysing batch " + str(row[5]) + "...\n"
-        telescope_data_batch = np.empty(0, dtype = telescope_data_run.dtype)
-        amplitudes_batch = np.empty(0, dtype = amplitudes_run.dtype)
-    
+    telescope_data_batch = dm.importTelescopeDataBatch()
 
-    if row[5] != runLog[row_number-1][5] and row_number > 0:
+    print len(telescope_data_batch)
+    print telescope_data_batch.dtype
+    print telescope_data_batch
+    #amplitudes_batch = dm.importPulseFile("amplitudes")
     
-        print "All runs in batch " + str(runLog[row_number-1][5]) + " considered, producing plots...\n"
-        
-        md.defineGlobalVariableRun(runLog[row_number-1])
-        tplot.produceTelescopeGraphs(telescope_data_batch, amplitudes_batch)
-        
-        md.defineGlobalVariableRun(runLog[row_number])
-
-        printTime()
-        print "Start analysing batch " + str(row[5]) + "...\n"
-        telescope_data_batch = np.empty(0, dtype = telescope_data_run.dtype)
-        amplitudes_batch = np.empty(0, dtype = amplitudes_run.dtype)
-
-
-    # Last row
-    if row[3] == runLog[-1][3]:
-    
-        printTime()
-        print "All runs in batch " + str(row[5]) + " considered, producing plots...\n"
-        
-        telescope_data_batch = np.append(telescope_data_batch, telescope_data_run)
-        amplitudes_batch = np.append(amplitudes_batch, amplitudes_run)
-        
-        tplot.produceTelescopeGraphs(telescope_data_batch, amplitudes_batch)
-
-    else:
-        
-        telescope_data_batch = np.append(telescope_data_batch, telescope_data_run)
-        amplitudes_batch = np.append(amplitudes_batch, amplitudes_run)
-    
-    
-    return [telescope_data_batch, amplitudes_batch]
+    #tplot.produceTelescopeGraphs(telescope_data_batch, amplitudes_batch)
 
 
 # Get actual time

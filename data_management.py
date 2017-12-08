@@ -53,16 +53,22 @@ def importPulseFile(dataType):
 
 
 # Note, the file have only 200K entries
-def importTelescopeData():
+def importTelescopeDataBatch():
+
+    batchNumber = md.getBatchNumber()
+    timeStamps = md.getTimeStampsForBatch(batchNumber)
     
-    dataFileName = md.getSourceFolderPath() + "forAntek/tracking"+str(md.getTimeStamp())+".root"
-    data = rnm.root2array(dataFileName)
-    
+    data_batch = np.empty(0, dtype=[('X', '<f4'), ('Y', '<f4')])
+
+    for timeStamp in timeStamps:
+        dataFileName = md.getSourceFolderPath() + "forAntek/tracking"+str(timeStamp)+".root"
+        data_batch = np.concatenate((data_batch, rnm.root2array(dataFileName, start=0, stop=200000)), axis=0)
+
     # Convert into mm
-    for dimension in data.dtype.names:
-        data[dimension] = np.multiply(data[dimension], 0.001)
+    for dimension in data_batch.dtype.names:
+        data_batch[dimension] = np.multiply(data_batch[dimension], 0.001)
   
-    return data
+    return data_batch
 
 
 # Check if the repository is on the stau server

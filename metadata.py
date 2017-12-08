@@ -35,25 +35,24 @@ def restrictToBatch(metaData, batchNumber):
 
 
 # Structure of results: [runLogbatch1, runlogbacth2, ...,] and runLogBacth1 = [run1, run2, run3, ]... run1 = info about the run, as usual.
-def getRunLogBatches(numberOfBatches):
+def getRunLogBatches(batchNumbers):
+
+    if batchNumbers == "all":
+        batchNumbers = getAllBatchNumbers()
 
     metaData = getRunLog()
-    batchNumbers = getAllBatchNumbers()
+    
     runLog = []
     
     for batch in batchNumbers:
         runLog_batch = []
-        if numberOfBatches == 0:
-            break
         
         for row in metaData:
             if batch == int(row[5]):
                 runLog_batch.append(row)
                 
         runLog.append(runLog_batch)
-        
-        numberOfBatches -= 1
-        
+
     return runLog
 
 # Check if repository is on the stau server
@@ -155,6 +154,15 @@ def getTimeStamp(runNumber=""):
             if int(row[3]) == runNumber:
                 return int(row[4])
 
+def getTimeStampsForBatch(batchNumber):
+
+    runLog = getRunLogBatches([batchNumber])
+
+    timeStamps = []
+    for row in runLog[0]:
+        timeStamps.append(int(row[4]))
+    
+    return timeStamps
 
 # Get number of events inside the current ROOT file
 def getNumberOfEvents():

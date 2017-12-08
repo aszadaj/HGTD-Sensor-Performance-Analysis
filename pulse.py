@@ -13,27 +13,27 @@ ROOT.gROOT.SetBatch(True)
 
 
 # Start analysis of selected run numbers
-def pulseAnalysis(numberOfBatches):
+def pulseAnalysis(batchNumbers):
     
     sigma = 8
     p_calc.defineSigmaConstant(sigma)
     dm.checkIfRepositoryOnStau()
     
     startTime = md.getTime()
-    runLog_batch = md.getRunLogBatches(numberOfBatches)
+    runLog_batch = md.getRunLogBatches(batchNumbers)
    
-    print "\nStart pulse analysis", numberOfBatches, "batch(es).\n"
-    print "Sigma:", p_calc.getSigmaConstant(), "\n"
+    print "\nStart pulse analysis, batches:", batchNumbers
+    print "Sigma:", p_calc.getSigmaConstant()
 
     for runLog in runLog_batch:
+    
+        #runLog = runLog[0:1] # Consider only 1 files for now
     
         results_batch = []
     
         startTimeBatch = md.getTime()
         md.printTime()
-        totalNumberOfRuns = len(runLog)
-        
-        print "Batch:", runLog[0][5], "\n"
+        print "Analysing batch:", runLog[0][5], "with", len(runLog),"run files.\n"
       
         for index in range(0, len(runLog)):
             
@@ -44,9 +44,6 @@ def pulseAnalysis(numberOfBatches):
             if (md.isRootFileAvailable(md.getTimeStamp())):
                 
                 results_batch.append(pulseAnalysisPerRun())
-        
-                md.printTime()
-                print "Done with run " + str(runNumber) + ".\n"
         
             else:
                 print "WARNING! There is no root file for run number: " + str(runNumber) + "\n"
@@ -82,12 +79,11 @@ def pulseAnalysisPerRun():
     
     # Configure inputs for multiprocessing
     p = Pool(dm.threads)
-    max = md.getNumberOfEvents()
-    step = 5000
+    #max = md.getNumberOfEvents()
+    max = 200000 # This is adapted to match the number of telescope files
+    #max = 1000
+    step = 7000
     ranges = range(0, max, step)
-
-    md.printTime()
-    print "Start analysing run number: " + str(md.getRunNumber()) + " with "+str(max)+ " events ...\n"
     
     dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
     

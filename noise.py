@@ -13,25 +13,26 @@ ROOT.gROOT.SetBatch(True)
 
 
 # Start analysis of selected run numbers
-def noiseAnalysis(numberOfBatches):
+def noiseAnalysis(batchNumbers):
     
     dm.checkIfRepositoryOnStau()
     
     startTime = md.getTime()
    
-    runLog_batch = md.getRunLogBatches(numberOfBatches)
+    runLog_batch = md.getRunLogBatches(batchNumbers)
 
-    print "\nStart noise analysis", numberOfBatches, "batch(es).\n"
+    print "\nStart noise analysis, batches:", batchNumbers
  
     for runLog in runLog_batch:
+    
+        #runLog = runLog[0:2] # Consider only 1  files for now
     
         results_batch = []
     
         startTimeBatch = md.getTime()
         md.printTime()
-        totalNumberOfRuns = len(runLog)
         
-        print "Batch:", runLog[0][5], "\n"
+        print "Analysing batch:", runLog[0][5], "with", len(runLog),"run files.\n"
       
         for index in range(0, len(runLog)):
             
@@ -42,9 +43,6 @@ def noiseAnalysis(numberOfBatches):
             if (md.isRootFileAvailable(md.getTimeStamp())):
                 
                 results_batch.append(noiseAnalysisPerRun())
-        
-                md.printTime()
-                print "Done with run " + str(runNumber) + ".\n"
         
             else:
                 print "WARNING! There is no root file for run number: " + str(runNumber) + "\n"
@@ -76,14 +74,13 @@ def noiseAnalysisPerRun():
     
     # Configure inputs for multiprocessing
     p = Pool(dm.threads)
-    max = md.getNumberOfEvents()
+    #max = md.getNumberOfEvents()
+    max = 200000 # This is adapted to match the number of telescope files
+    #max = 1000
     step = 7000
     ranges = range(0, max, step)
     
     dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
-    
-    md.printTime()
-    print "Start analysing run number: " + str(md.getRunNumber()) + " with "+str(max)+ " events ...\n"
     
     results = p.map(lambda chunk: multiProcess(dataPath,chunk,chunk+step),ranges)
 

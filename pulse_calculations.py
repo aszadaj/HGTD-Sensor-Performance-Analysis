@@ -8,7 +8,7 @@ import data_management as dm
 # The code obtains amplitudes and rise time for pulses for each channel for all selected entries
 # and orders them in a nested list within "amplitudes" and "rise_time".
 def pulseAnalysis(data, pedestal, noise):
-   
+
     channels = data.dtype.names
     
     amplitudes = np.zeros(len(data), dtype = data.dtype)
@@ -32,7 +32,7 @@ def getAmplitudeAndRiseTime(event, chan, pedestal, noise):
     pulse_amplitude = 0
     pulse_rise_time = 0
     pulse_last_index = 0
-    indices_condition = event < noise * -sigmaConstant
+    indices_condition = event < noise * -8 # sigma
    
     if any(indices_condition):
     
@@ -83,7 +83,7 @@ def removeUnphyscialQuantities(results, noise):
         peak_times[chan][indices] = 0
         
         # Noise is in mV since imported from earlier program, future fix
-        indices = amplitudes[chan] > noise[chan]*0.001*sigmaConstant
+        indices = amplitudes[chan] > noise[chan]*0.001*8 # sigma
         
         amplitudes[chan][indices] = 0
         rise_times[chan][indices] = 0

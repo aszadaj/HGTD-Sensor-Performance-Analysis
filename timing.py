@@ -17,11 +17,12 @@ def timingAnalysis(numberOfBatches):
     print "Start timing analysis,",numberOfBatches, "batch(es).\n"
 
     dm.checkIfRepositoryOnStau()
-    # Structure: each element is a run log consisting of all runs
-    runLog = md.getRunLogBatches(numberOfBatches)
     
-    for runLog_batch in runLog:
-        timingAnalysisPerBatch(runLog_batch)
+    # Structure: each element is a run log consisting of all runs
+    runLogs = md.getRunLogBatches(numberOfBatches)
+    
+    for runLog in runLogs:
+        timingAnalysisPerBatch(runLog)
     
     print "\nDone analysing, time analysing: " + str(getTime()-startTime) + "\n"
 
@@ -31,7 +32,6 @@ def timingAnalysisPerBatch(runLog):
     md.defineGlobalVariableRun(runLog[0])
     peak_times_run = dm.importPulseFile("peak_times")
     comparePeakTimes(peak_times_run)
-
 
 
 def comparePeakTimes(peak_times):
@@ -67,22 +67,6 @@ def comparePeakTimes(peak_times):
         
     
         produceTH1Plot(data_graph[chan], chan, canvas)
-
-
-    amount = 50
-
-    entry_string = "["
-
-    for entry in range(0, len(filled_entries[chan])):
-        if np.count_nonzero(filled_entries[entry]) != 0 and amount != 1:
-            entry_string += str(entry) +","
-            amount -= 1
-
-        if amount == 1:
-            entry_string+= str(entry) +"]"
-            break
-
-    print entry_string
 
 
 def produceTH1Plot(graph, chan, canvas):

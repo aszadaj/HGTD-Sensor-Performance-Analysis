@@ -21,7 +21,7 @@ def main():
 
     ######  NOISE, PULSE, TELESCOPE AND TIMING   ######
     
-    batches = 2         # All batches 38
+    batchNumber = [306]   # All batches 38, or "all" to consider them all
     
     ##################################################
     
@@ -32,13 +32,13 @@ def main():
     
     ###########################
     
-    #noise.noiseAnalysis            (batches)
+    noise.noiseAnalysis            (batchNumber)
     
-    #pulse.pulseAnalysis            (batches)
+    pulse.pulseAnalysis            (batchNumber)
     
-    #telescope.telescopeAnalysis    (batches)
+    #telescope.telescopeAnalysis    (batchNumber)
     
-    timing.timingAnalysis           (batches)
+    #timing.timingAnalysis           (batchNumber)
     
     #graph.printWaveform            (runNumber, entries)
     
