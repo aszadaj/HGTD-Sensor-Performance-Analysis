@@ -94,16 +94,8 @@ def defineNumberOfThreads(number):
     threads = number
 
 # Define sigma value
-def defineSigmaConstant(sigma):
+def defineSigma(sigmaValue):
 
-    global sigmaConstant
-    sigmaConstant = sigma
-
-
-# Get sigma value
-def getSigmaConstant():
-    return sigmaConstant
-
-
-
+    global sigma
+    sigma = sigmaValue
 

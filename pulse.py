@@ -15,8 +15,8 @@ ROOT.gROOT.SetBatch(True)
 # Start analysis of selected run numbers
 def pulseAnalysis(batchNumbers):
     
-    sigma = 8
-    dm.defineSigmaConstant(sigma)
+    sigmaValue = 8
+    dm.defineSigma(sigmaValue)
     dm.checkIfRepositoryOnStau()
     
     startTime = md.getTime()
