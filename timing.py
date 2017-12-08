@@ -80,7 +80,7 @@ def produceTH1Plot(graph, chan, canvas):
     canvas.cd()
     graph.Draw()
     canvas.Update()
-    canvas.Print("/../../HGTD_material/plots/timing/timing_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
+    canvas.Print("../../HGTD_material/plots/timing/timing_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
     canvas.Clear()
 
 

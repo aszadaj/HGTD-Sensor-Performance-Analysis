@@ -16,7 +16,7 @@ ROOT.gROOT.SetBatch(True)
 def pulseAnalysis(batchNumbers):
     
     sigma = 8
-    defineSigmaConstant(sigma)
+    md.defineSigmaConstant(sigma)
     dm.checkIfRepositoryOnStau()
     
     startTime = md.getTime()
@@ -79,7 +79,7 @@ def pulseAnalysisPerRun():
     startTimeRun = md.getTime()
     
     # Configure inputs for multiprocessing
-    p = Pool(8) #dm.threads
+    p = Pool(dm.threads)
     #max = md.getNumberOfEvents()
     max = 200000 # This is adapted to match the number of telescope files
     #max = 1000
