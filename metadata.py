@@ -23,28 +23,6 @@ def getRunLog():
 
 
 # Check inside folder which runs should be considered
-def restrictToUndoneRuns(metaData, analysisType):
-
-    folderPath = "data_hgtd_efficiency_sep_2017/pulse_files/pulse_amplitudes/"
-    
-    if analysisType == "noise":
-        
-        folderPath = "data_hgtd_efficiency_sep_2017/noise_files/noise_noise/"
-
-
-    availableFiles = readFileNames(folderPath, analysisType)
-
-    runLog = []
-    
-    for index in range(0, len(metaData)):
-        if int(metaData[index][3]) not in availableFiles:
-            runLog.append(metaData[index])
-    
-    return runLog
-
-
-
-# Check inside folder which runs should be considered
 def restrictToBatch(metaData, batchNumber):
    
     runLog = []
@@ -56,77 +34,8 @@ def restrictToBatch(metaData, batchNumber):
     return runLog
 
 
-
-# Restrict runs for telescope analysis for available files
-def getRunLogForTelescopeAnalysis(numberOfBatches, numberOfRunsPerBatch):
-
-    metaData = getRunLog()
-    folderPath = "forAntek/"
-    availableTimeStamps = readFileNames(folderPath, "telescope")
-    
-    runLog = []
-    actualBatch = 0
-    firstBatch = True
-    numberOfRuns = numberOfRunsPerBatch
-    
-    for index in range(0, len(metaData)):
-    
-        if numberOfBatches == 0:
-            break
-    
-        elif int(metaData[index][4]) in availableTimeStamps:
-        
-            currentBatch = int(metaData[index][5])
-            
-            if firstBatch:
-                actualBatch = currentBatch
-                firstBatch = False
-        
-            if numberOfRuns != 0 and actualBatch == currentBatch:
-                runLog.append(metaData[index])
-                numberOfRuns -= 1
-            
-            if actualBatch != currentBatch:
-                numberOfBatches -= 1
-                actualBatch = currentBatch
-                numberOfRuns = numberOfRunsPerBatch
-
-    return runLog
-
-
-def getRunLogBatches(numberOfBatches, numberOfRunsPerBatch):
-
-    metaData = getRunLog()
-    
-    runLog = []
-    actualBatch = 0
-    firstBatch = True
-    numberOfRuns = numberOfRunsPerBatch
-    
-    for index in range(0, len(metaData)):
-        
-        currentBatch = int(metaData[index][5])
-        
-        if firstBatch:
-            actualBatch = currentBatch
-            firstBatch = False
-        
-        if actualBatch != currentBatch:
-            numberOfBatches -= 1
-            actualBatch = currentBatch
-            numberOfRuns = numberOfRunsPerBatch
-        
-        if numberOfBatches == 0:
-            break
-        
-        if numberOfRuns != 0:
-            runLog.append(metaData[index])
-            numberOfRuns -= 1
-
-    return runLog
-
 # Structure of results: [runLogbatch1, runlogbacth2, ...,] and runLogBacth1 = [run1, run2, run3, ]... run1 = info about the run, as usual.
-def getRunLogElementBatch(numberOfBatches, numberOfRunsPerBatch):
+def getRunLogBatches(numberOfBatches):
 
     metaData = getRunLog()
     batchNumbers = getAllBatchNumbers()
@@ -141,7 +50,7 @@ def getRunLogElementBatch(numberOfBatches, numberOfRunsPerBatch):
             if batch == int(row[5]):
                 runLog_batch.append(row)
                 
-        runLog.append(runLog_batch[0:numberOfRunsPerBatch])
+        runLog.append(runLog_batch)
         
         numberOfBatches -= 1
         

@@ -21,7 +21,6 @@ def main():
 
     ######  NOISE, PULSE, TELESCOPE AND TIMING   ######
     
-    runsPerBatch = 7    # Example: 12 runs in batch 301
     batches = 2         # All batches 38
     
     ##################################################
@@ -33,13 +32,13 @@ def main():
     
     ###########################
     
-    #noise.noiseAnalysis            (runsPerBatch, batches)
+    #noise.noiseAnalysis            (batches)
     
-    pulse.pulseAnalysis             (runsPerBatch, batches)
+    #pulse.pulseAnalysis            (batches)
     
-    #telescope.telescopeAnalysis    (runsPerBatch, batches)
+    #telescope.telescopeAnalysis    (batches)
     
-    #timing.timingAnalysis          (runsPerBatch, batches)
+    timing.timingAnalysis           (batches)
     
     #graph.printWaveform            (runNumber, entries)
     

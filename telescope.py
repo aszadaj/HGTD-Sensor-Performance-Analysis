@@ -12,15 +12,15 @@ import data_management as dm
 ROOT.gROOT.SetBatch(True)
 
 
-def telescopeAnalysis(numberOfRunsPerBatch, numberOfBatches):
+def telescopeAnalysis(numberOfBatches):
     
     startTime = getTime()
     printTime()
-    print "Start telescope analysis, " +str(numberOfBatches)+" batch(es), " + str(numberOfRunsPerBatch) + " run(s) per batch.\n"
+    print "Start telescope analysis, " +str(numberOfBatches)+" batch(es).\n"
 
     dm.checkIfRepositoryOnStau()
     
-    runLog_telescope = md.getRunLogForTelescopeAnalysis(numberOfBatches, numberOfRunsPerBatch)
+    runLog_telescope = md.getRunLogForTelescopeAnalysis(numberOfBatches)
     data_batch = [np.empty(0), np.empty(0)]
 
     for row_number in range(0,len(runLog_telescope)): data_batch = telescopeAnalysisPerBatch(row_number, runLog_telescope, data_batch)

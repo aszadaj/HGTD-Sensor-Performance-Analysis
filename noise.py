@@ -13,15 +13,15 @@ ROOT.gROOT.SetBatch(True)
 
 
 # Start analysis of selected run numbers
-def noiseAnalysis(numberOfRunsPerBatch, numberOfBatches):
+def noiseAnalysis(numberOfBatches):
     
     dm.checkIfRepositoryOnStau()
     
     startTime = md.getTime()
    
-    runLog_batch = md.getRunLogElementBatch(numberOfBatches, numberOfRunsPerBatch)
+    runLog_batch = md.getRunLogBatches(numberOfBatches)
 
-    print "\nStart noise analysis", numberOfBatches, "batch(es),", numberOfRunsPerBatch,"run(s) per batch.\n"
+    print "\nStart noise analysis", numberOfBatches, "batch(es).\n"
  
     for runLog in runLog_batch:
     

@@ -13,16 +13,16 @@ ROOT.gROOT.SetBatch(True)
 
 
 # Start analysis of selected run numbers
-def pulseAnalysis(numberOfRunsPerBatch, numberOfBatches):
+def pulseAnalysis(numberOfBatches):
     
     sigma = 8
     p_calc.defineSigmaConstant(sigma)
     dm.checkIfRepositoryOnStau()
     
     startTime = md.getTime()
-    runLog_batch = md.getRunLogElementBatch(numberOfBatches, numberOfRunsPerBatch)
+    runLog_batch = md.getRunLogBatches(numberOfBatches)
    
-    print "\nStart pulse analysis", numberOfBatches, "batch(es),", numberOfRunsPerBatch,"run(s) per batch.\n"
+    print "\nStart pulse analysis", numberOfBatches, "batch(es).\n"
     print "Sigma:", p_calc.getSigmaConstant(), "\n"
 
     for runLog in runLog_batch:
