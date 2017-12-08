@@ -48,6 +48,7 @@ def getPedestalAndNoisePerChannel(noise_average, noise_std):
     noise = np.empty(1, dtype=noise_average.dtype)
 
     for chan in noise_average.dtype.names:
+        
         pedestal[chan] = np.mean(noise_average[chan])
         noise[chan] = np.mean(noise_std[chan])
     
