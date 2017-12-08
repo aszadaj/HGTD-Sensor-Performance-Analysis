@@ -16,14 +16,14 @@ ROOT.gROOT.SetBatch(True)
 def pulseAnalysis(batchNumbers):
     
     sigma = 8
-    p_calc.defineSigmaConstant(sigma)
+    dm.defineSigmaConstant(sigma)
     dm.checkIfRepositoryOnStau()
     
     startTime = md.getTime()
     runLog_batch = md.getRunLogBatches(batchNumbers)
    
     print "\nStart pulse analysis, batches:", batchNumbers
-    print "Sigma:", p_calc.getSigmaConstant()
+    print "Sigma:", sigmaConstant
 
     for runLog in runLog_batch:
     
