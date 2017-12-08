@@ -16,7 +16,7 @@ ROOT.gROOT.SetBatch(True)
 def pulseAnalysis(batchNumbers):
     
     sigma = 8
-    md.defineSigmaConstant(sigma)
+    p_calc.defineSigmaConstant(sigma)
     dm.checkIfRepositoryOnStau()
     
     startTime = md.getTime()

@@ -41,7 +41,7 @@ def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber):
     pulse_half_maximum = 0
     
     # This sets the condition for seeing a value above the noise.
-    indices_condition = event < - noise * getSigmaConstant() # Note, event is negative
+    indices_condition = event < - noise * () # Note, event is negative
    
     if any(indices_condition):
         
