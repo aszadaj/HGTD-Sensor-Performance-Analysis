@@ -9,8 +9,6 @@ import data_management as dm
 # and orders them in a nested list within "amplitudes" and "rise_time".
 def pulseAnalysis(data, pedestal, noise):
 
-    defineSigma(8)
-
     channels = data.dtype.names
     
     amplitudes      =   np.zeros(len(data), dtype = data.dtype)
@@ -37,13 +35,14 @@ def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber):
     # Time scope is the time difference between two recorded points
     # Assumption: for all events this value is the same.
     timeScope = 0.1
+    sigma = 8
     
     pulse_amplitude = 0
     pulse_rise_time = 0
     pulse_half_maximum = 0
     
     # This sets the condition for seeing a value above the noise.
-    indices_condition = event < - noise * dm.sigma # Note, event is negative
+    indices_condition = event < - noise * sigma # Note, event is negative
    
     if any(indices_condition):
         
@@ -92,7 +91,9 @@ def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber):
 # NOTE THIS FUNCTION HANDLES CONVERTED DATA (I.E. NEGATIVE TO POSITIVE VALUES AND IN mV)
 # NOTE2 Here the amplitude values are pedestal corrected
 def removeUnphyscialQuantities(results, noise):
-
+    
+    sigma = 8
+    
     # There is a more beautiful fix, with nesting for loops, not important for now
     amplitudes      = np.empty(0,dtype=results[0][0].dtype)
     rise_times      = np.empty(0,dtype=results[0][1].dtype)
@@ -114,7 +115,7 @@ def removeUnphyscialQuantities(results, noise):
         half_max_times[chan][indices] = 0
         
         # Noise is in mV since imported from earlier program, future fix
-        indices = amplitudes[chan] > 0.001 * noise[chan] * dm.sigma
+        indices = amplitudes[chan] > 0.001 * noise[chan] * sigma
         
         amplitudes[chan][indices] = 0
         rise_times[chan][indices] = 0
@@ -146,12 +147,14 @@ def convertData(data):
     
     return data
 
-# Define sigma value
-def defineSigma(sigmaValue):
 
-    global sigma
-    sigma = sigmaValue
-
+# Have problem with defining this global variable, future fix
+## Define sigma value
+#def defineSigma(sigmaValue):
+#
+#    global sigma
+#    sigma = sigmaValue
+#
 
 
 
