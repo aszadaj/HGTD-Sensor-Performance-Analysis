@@ -20,7 +20,7 @@ def getRunLog():
 
     del metaData[0:2]
     return metaData
-    
+
 
 # Check inside folder which runs should be considered
 def restrictToBatch(metaData, batchNumber):
@@ -55,6 +55,7 @@ def getRunLogBatches(batchNumbers):
 
     return runLog
 
+
 # Check if repository is on the stau server
 def isRootFileAvailable(timeStamp):
 
@@ -69,6 +70,7 @@ def isRootFileAvailable(timeStamp):
             break
 
     return found
+
 
 # Check which files are available (either on stau or local)
 def availableRunFiles():
@@ -154,6 +156,7 @@ def getTimeStamp(runNumber=""):
             if int(row[3]) == runNumber:
                 return int(row[4])
 
+
 def getTimeStampsForBatch(batchNumber):
 
     runLog = getRunLogBatches([batchNumber])
@@ -163,6 +166,7 @@ def getTimeStampsForBatch(batchNumber):
         timeStamps.append(int(row[4]))
     
     return timeStamps
+
 
 # Get number of events inside the current ROOT file
 def getNumberOfEvents():
@@ -230,6 +234,7 @@ def printTime():
 
     time = str(dt.datetime.now().time())
     print  "\nTime: " + str(time[:-7])
+
 
 # Function for setting up ATLAS style plots
 def setupATLAS():

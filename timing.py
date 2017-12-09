@@ -89,6 +89,7 @@ def getTime():
 
     return datetime.now().replace(microsecond=0)
 
+
 # Print time stamp
 def printTime():
 

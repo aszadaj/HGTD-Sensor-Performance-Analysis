@@ -14,14 +14,13 @@ ROOT.gROOT.SetBatch(True)
 
 # Start analysis of selected run numbers
 def pulseAnalysis(batchNumbers):
-    
+
     dm.checkIfRepositoryOnStau()
     
     startTime = md.getTime()
     runLog_batch = md.getRunLogBatches(batchNumbers)
    
     print "\nStart pulse analysis, batches:", batchNumbers
-    print "Sigma:", dm.sigma
 
     for runLog in runLog_batch:
     
