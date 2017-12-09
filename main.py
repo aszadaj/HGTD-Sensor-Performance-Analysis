@@ -33,7 +33,7 @@ def main():
     
     #noise.noiseAnalysis            (batchNumber)
     
-    #pulse.pulseAnalysis            (batchNumber)
+    pulse.pulseAnalysis            (batchNumber)
     
     #telescope.telescopeAnalysis     (batchNumber)
     
@@ -50,7 +50,7 @@ main()
 # redefined sigma value after check in the waveforms function
 # Program is adapted to receive code in batches and exports them as pickle files
 # amplitudes and rise time are large, but not too large.
-# New file rise time half maximum is a reference point for 
+# New file rise time half maximum is a reference point for
 
 
 # Available batch numbers:

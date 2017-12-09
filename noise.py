@@ -24,9 +24,6 @@ def noiseAnalysis(batchNumbers):
     print "\nStart noise analysis, batches:", batchNumbers
  
     for runLog in runLog_batch:
-        
-        #runLog = [runLog[8]]
-    
         results_batch = []
     
         startTimeBatch = md.getTime()
