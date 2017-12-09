@@ -56,7 +56,7 @@ def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber):
         amplitude_indices = np.argwhere((event[pulse_first_index:pulse_last_index] > 0.9*pulse_amplitude) & (event[pulse_first_index:pulse_last_index] < 0.1*pulse_amplitude))
         
         # Check if there are more than two points in the polyfit
-        if len(amplitude_indices) > 3:
+        if len(amplitude_indices) > 4:
             
             # Make a linear fit, first degree
             # U = K*t + U_0

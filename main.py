@@ -20,7 +20,7 @@ def main():
 
     ######  NOISE, PULSE, TELESCOPE AND TIMING   ######
     
-    batchNumber = [306]   # All batches 38, or "all" to consider them all
+    batchNumber = "all"   # All batches 38, or "all" to consider them all
     
     ##################################################
     
@@ -46,12 +46,15 @@ def main():
 
 main()
 
-# Log 09.12.2017
+# Log1 09.12.2017
 # redefined sigma value after check in the waveforms function
 # Program is adapted to receive code in batches and exports them as pickle files
 # amplitudes and rise time are large, but not too large.
 # New file rise time half maximum is a reference point for
 
+# Log2
+# The lowered sigma gives more values but the SiPM have a higher noise and the sigma is
+# too low. There fore testing with sigma = 6 for SiPM and sigma=5 for rest of the sensors
 
 # Available batch numbers:
 # 101, 102, 103, 104, 105, 106, 107, 108
