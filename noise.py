@@ -83,7 +83,7 @@ def noiseAnalysisPerRun():
     #max = md.getNumberOfEvents()
     max = 200000 # This is adapted to match the number of telescope files
     #max = 1000
-    step = 7000
+    step = 5000
     ranges = range(0, max, step)
     
     dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"

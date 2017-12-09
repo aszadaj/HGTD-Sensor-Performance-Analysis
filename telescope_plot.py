@@ -73,15 +73,15 @@ def produceTProfile2DPlot():
             
             unwantedEntries += 1
         
-        elif entries > minEntries:
+        else:
             graph_std.SetBinContent(bin, graph.GetBinError(bin))
-            graph_std.SetBinEntries(bin, 1)
+            graph_std.SetBinEntries(bin, entries)
             setEntries +=1
 
     print unwantedEntries
 
-    graph_std.SetEntries(setEntries)
-    graphFiltered.SetEntries((totalEntries-unwantedEntries))
+#    graph_std.SetEntries(setEntries)
+#    graphFiltered.SetEntries((totalEntries-unwantedEntries))
 
     headTitle = "Pulse amplitude mean value (mV) in each bin, entries " + str(int(graphFiltered.GetEntries()))
     fileName = ".pdf"

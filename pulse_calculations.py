@@ -9,6 +9,8 @@ import data_management as dm
 # and orders them in a nested list within "amplitudes" and "rise_time".
 def pulseAnalysis(data, pedestal, noise):
 
+    defineSigma(8)
+
     channels = data.dtype.names
     
     amplitudes      =   np.zeros(len(data), dtype = data.dtype)
@@ -143,4 +145,13 @@ def convertData(data):
         data[chan] = np.multiply(data[chan],-1000)
     
     return data
+
+# Define sigma value
+def defineSigma(sigmaValue):
+
+    global sigma
+    sigma = sigmaValue
+
+
+
 

@@ -29,6 +29,9 @@ def telescopeAnalysis(batchNumbers):
 
 
 def telescopeAnalysisPerBatch(runLog):
+
+    for row in runLog:
+        print row[3]
     
     md.defineGlobalVariableRun(runLog[0])
     
@@ -36,9 +39,13 @@ def telescopeAnalysisPerBatch(runLog):
 
     amplitudes_batch = dm.importPulseFile("amplitudes")
     
-    telescope_data_batch = telescope_data_batch[0:len(amplitudes_batch)]
-
-    tplot.produceTelescopeGraphs(telescope_data_batch, amplitudes_batch)
+    print "telescope data", len(telescope_data_batch)
+    print "amplitude data", len(amplitudes_batch)
+    
+    if len(amplitudes_batch) == len(amplitudes_batch):
+        tplot.produceTelescopeGraphs(telescope_data_batch, amplitudes_batch)
+    else:
+        print "Mismatch! Must be the same!"
 
 
 # Get actual time

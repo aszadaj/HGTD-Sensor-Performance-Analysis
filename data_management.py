@@ -93,9 +93,6 @@ def defineNumberOfThreads(number):
     global threads
     threads = number
 
-# Define sigma value
-def defineSigma(sigmaValue):
 
-    global sigma
-    sigma = sigmaValue
+
 
