@@ -46,6 +46,12 @@ def main():
 
 main()
 
+# Log 09.12.2017
+# redefined sigma value after check in the waveforms function
+# Program is adapted to receive code in batches and exports them as pickle files
+# amplitudes and rise time are large, but not too large.
+# New file rise time half maximum is a reference point for 
+
 
 # Available batch numbers:
 # 101, 102, 103, 104, 105, 106, 107, 108

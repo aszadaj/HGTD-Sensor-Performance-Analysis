@@ -37,8 +37,6 @@ def printWaveform(runNumber, entries):
         canvas = dict()
         leg = dict()
         
-       
-
         channels = data.dtype.names
         first = True
         

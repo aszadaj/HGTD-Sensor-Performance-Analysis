@@ -57,7 +57,7 @@ def comparePeakTimes(peak_times):
     
     for chan in channels:
     
-        data_graph[chan] = ROOT.TH1D("timing_"+chan+"_histogram","Time difference distribution between SiPM and " + md.getNameOfSensor(chan) + " "+str(int(chan[-1:])+1),70,0,10)
+        data_graph[chan] = ROOT.TH1D("timing_"+chan+"_histogram","Time difference distribution between SiPM and " + md.getNameOfSensor(chan) + " "+str(int(chan[-1:])+1),3000,0,2)
         # outside the range, if there are filled values
         for entry in range(0, len(peak_times)):
             timeDifference = abs(peak_times[entry][chan]-peak_times[entry][SiPM_index])
