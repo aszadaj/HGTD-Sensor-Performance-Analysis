@@ -20,7 +20,7 @@ def getRunLog():
 
     del metaData[0:2]
     return metaData
-
+    
 
 # Check inside folder which runs should be considered
 def restrictToBatch(metaData, batchNumber):

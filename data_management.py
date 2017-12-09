@@ -30,6 +30,8 @@ def importNoiseFile(dataType):
 
 def exportPulseData(amplitudes, rise_times, half_max_times, criticalValues):
 
+    print "export"
+
     exportPulseFile(amplitudes, "amplitudes")
     exportPulseFile(rise_times, "rise_times")
     exportPulseFile(half_max_times, "half_max_times")
