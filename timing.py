@@ -30,11 +30,11 @@ def timingAnalysis(numberOfBatches):
 def timingAnalysisPerBatch(runLog):
 
     md.defineGlobalVariableRun(runLog[0])
-    peak_times_run = dm.importPulseFile("half_max_times")
-    comparePeakTimes(peak_times_run)
+    pulse_half_max_time_batch = dm.importPulseFile("half_max_times")
+    comparePeakTimes(pulse_half_max_time_batch)
 
 
-def comparePeakTimes(peak_times):
+def comparePeakTimes(half_max_times):
 
     SiPM_name = "SiPM-AFP"
     SiPM_chan = md.getChannelNameForSensor(SiPM_name)
@@ -43,7 +43,7 @@ def comparePeakTimes(peak_times):
     print "SiPM Channel: " + str(SiPM_chan)
     data_graph = dict()
     
-    all_channels = peak_times.dtype.names
+    all_channels = half_max_times.dtype.names
     
     channels = []
     
@@ -53,16 +53,16 @@ def comparePeakTimes(peak_times):
 
     canvas = ROOT.TCanvas("Timing","timing")
     
-    filled_entries = np.zeros(len(peak_times), dtype=peak_times.dtype)
+    filled_entries = np.zeros(len(half_max_times), dtype=half_max_times.dtype)
     
     for chan in channels:
     
         data_graph[chan] = ROOT.TH1D("timing_"+chan+"_histogram","Time difference distribution between SiPM and " + md.getNameOfSensor(chan) + " "+str(int(chan[-1:])+1),3000,0,2)
         # outside the range, if there are filled values
-        for entry in range(0, len(peak_times)):
-            timeDifference = abs(peak_times[entry][chan]-peak_times[entry][SiPM_index])
+        for entry in range(0, len(half_max_times)):
+            timeDifference = abs(half_max_times[entry][chan]-half_max_times[entry][SiPM_index])
 
-            if peak_times[entry][chan] > 0.0 and timeDifference > 0.0:
+            if half_max_times[entry][chan] > 0.0 and timeDifference > 0.0:
                 data_graph[chan].Fill(timeDifference)
                 filled_entries[chan][entry] = 1.0
 
