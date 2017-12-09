@@ -35,7 +35,7 @@ def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber):
     # Time scope is the time difference between two recorded points
     # Assumption: for all events this value is the same.
     timeScope = 0.1
-    sigma = 8
+    sigma = 5
     
     pulse_amplitude = 0
     pulse_rise_time = 0

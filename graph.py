@@ -2,12 +2,8 @@ import ROOT
 import root_numpy as rnm
 import numpy as np
 
-import pulse_calculations as p_calc
-import pulse_plot as p_plot
 import metadata as md
 import data_management as dm
-
-from pathos.multiprocessing import ProcessingPool as Pool
 
 ROOT.gROOT.SetBatch(True)
 
@@ -22,23 +18,13 @@ def printWaveform(runNumber, entries):
         md.defineGlobalVariableRun(row)
         dm.checkIfRepositoryOnStau()
         
-        pedestal = dm.importNoiseFile("pedestal")
-        amplitudes = dm.importPulseFile("amplitudes")
+        noise = dm.importNoiseFile("noise")
+        
+        #amplitudes = dm.importPulseFile("amplitudes")
         
         SiPM_name = "SiPM-AFP"
         SiPM_chan = md.getChannelNameForSensor(SiPM_name)
-        SiPM_index = int(SiPM_chan[-1])
         
-        for entry in range(0,len(amplitudes[chan])):
-            for chan in amplitudes.dtype.names:
-                if chan != SiPM_chan and amplitudes[chan][entry] != 0:
-                    print entry, chan
-                    count += 1
-                    
-            if count == 15:
-                break
-        
-
         dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(timeStamp)+".tree.root"
 
         data = rnm.root2array(dataPath, start=entry, stop=entry+1)
@@ -46,26 +32,36 @@ def printWaveform(runNumber, entries):
         # Structure of data[chan][event][index] = value
 
         graph = dict()
+        graph_line_noise = dict()
         
-        canvas = ROOT.TCanvas("Waveforms","Waveforms")
+        canvas = dict()
+        leg = dict()
         
-        leg = ROOT.TLegend (0.73, 0.6, 0.93, 0.9)
-        leg.SetHeader("Waveforms, sensors")
-        
-        leg.Draw()
+       
 
         channels = data.dtype.names
         first = True
-
+        
+        sigma = 5
+        channels = ["chan2"]
+        
         for chan in channels:
-
+        
+            leg[chan] = ROOT.TLegend (0.73, 0.6, 0.93, 0.9)
+            leg[chan].SetHeader("Waveforms, sensors")
+            
+            leg[chan].Draw()
+        
+        
+            canvas[chan] = ROOT.TCanvas("Waveforms"+chan,"Waveforms"+chan)
+       
             graph[chan] = ROOT.TGraph(1002)
 
             for index in range(0, len(data[chan][0])):
                 
                 graph[chan].SetPoint(index,index*0.1, data[chan][0][index]*-1000)
 
-            titleAbove = "Waveform for run number " +str(runNumber)+ ", entry " + str(entry)
+            titleAbove = "Waveform for run number " +str(runNumber)+ ", batch "+str(md.getBatchNumber(runNumber))+ ", entry " + str(entry)
             
             xAxisTitle = "Time (ns)"
             yAxisTitle = "Voltage (mV)"
@@ -76,22 +72,30 @@ def printWaveform(runNumber, entries):
 
             else:
                 graph[chan].Draw("L")
+      
+            graph_line_noise[chan] = ROOT.TGraph(1002)
+            for index in range(0,1002):
+        
+                graph_line_noise[chan].SetPoint(index, index*0.1, noise[chan]*sigma)
             
+            graph_line_noise[chan].SetLineColor(int(chan[-1])+1)
+            graph_line_noise[chan].SetMarkerColor(2)
+            graph_line_noise[chan].Draw("L")
+            n=str(noise[chan][0])
+            leg[chan].AddEntry(graph_line_noise[chan],"Noise: "+n[:-8]+" mV, \sigma: "+str(sigma),"l")
+
             graph[chan].SetLineColor(int(chan[-1])+1)
             graph[chan].SetMarkerColor(1)
             graph[chan].GetYaxis().SetTitle(yAxisTitle)
             graph[chan].GetXaxis().SetTitle(xAxisTitle)
             graph[chan].GetYaxis().SetRangeUser(-40,400)
-            graph[chan].GetXaxis().SetRangeUser(40,60)
-            leg.AddEntry(graph[chan], md.getNameOfSensor(chan) + " pedestal " + str(pedestal[chan])[:-10] + " mV","l")
+            graph[chan].GetXaxis().SetRangeUser(0,100)
+            leg[chan].AddEntry(graph[chan], md.getNameOfSensor(chan) + " Waveform ","l")
             
             
             graph[chan].SetTitle(titleAbove)
         
-
-        fileName = "plots/waveforms/waveform_"+str(runNumber)+"_entry_"+str(entry)+".pdf"
-        leg.Draw()
-        canvas.Update()
-        canvas.Print(fileName)
-
-
+            fileName = "../../HGTD_material/plots/waveforms/waveform_"+str(runNumber)+"_entry_"+str(entry)+"_"+str(chan)+".pdf"
+            leg[chan].Draw()
+            canvas[chan].Update()
+            canvas[chan].Print(fileName)

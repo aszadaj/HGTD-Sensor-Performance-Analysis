@@ -190,9 +190,15 @@ def getNameOfSensor(chan):
 
 
 # Return batch number
-def getBatchNumber():
+def getBatchNumber(runNumber=""):
 
-    return int(runInfo[5])
+    if runNumber != "":
+        runLog = getRunLog()
+        for row in runLog:
+            if int(row[3]) == runNumber:
+                return int(row[5])
+    else:
+        return int(runInfo[5])
 
 
 def getAllBatchNumbers():

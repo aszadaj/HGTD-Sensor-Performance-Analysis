@@ -19,7 +19,6 @@ def pulseAnalysis(batchNumbers):
     
     startTime = md.getTime()
     runLog_batch = md.getRunLogBatches(batchNumbers)
-   
     print "\nStart pulse analysis, batches:", batchNumbers
 
     for runLog in runLog_batch:
