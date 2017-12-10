@@ -33,7 +33,7 @@ def main():
     
     #noise.noiseAnalysis            (batchNumber)
     
-    #pulse.pulseAnalysis            (batchNumber)
+    pulse.pulseAnalysis            (batchNumber)
     
     #telescope.telescopeAnalysis     (batchNumber)
     

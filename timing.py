@@ -39,8 +39,6 @@ def comparePeakTimes(half_max_times):
     SiPM_name = "SiPM-AFP"
     SiPM_chan = md.getChannelNameForSensor(SiPM_name)
     SiPM_index = int(SiPM_chan[-1])
-    
-    print "SiPM Channel: " + str(SiPM_chan)
     data_graph = dict()
     
     all_channels = half_max_times.dtype.names
@@ -63,10 +61,16 @@ def comparePeakTimes(half_max_times):
             timeDifference = half_max_times[entry][chan]-half_max_times[entry][SiPM_index]
 
             if half_max_times[entry][chan] > 0.0:
+                
                 data_graph[chan].Fill(timeDifference)
-                filled_entries[chan][entry] = 1.0
+                if abs(timeDifference) > 0.3
+                    filled_entries[chan][entry] = 1.0
 
         produceTH1Plot(data_graph[chan], chan, canvas)
+
+    for chan in channels:
+        for entry in range(0, len(filled_entries)):
+            print chan,entry
 
 
 def produceTH1Plot(graph, chan, canvas):
