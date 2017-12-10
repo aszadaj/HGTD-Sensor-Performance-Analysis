@@ -14,7 +14,7 @@ def timingAnalysis(numberOfBatches):
     
     startTime = getTime()
     printTime()
-    print "Start timing analysis batches:", i for i in numberOfBatches,"\n"
+    print "Start timing analysis batches:", numberOfBatches,"\n"
 
     dm.checkIfRepositoryOnStau()
     
