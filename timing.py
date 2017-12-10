@@ -53,6 +53,8 @@ def comparePeakTimes(half_max_times):
     
     filled_entries = np.zeros(len(half_max_times), dtype=half_max_times.dtype)
     
+    channels = channels[0]
+    
     for chan in channels:
     
         data_graph[chan] = ROOT.TH1D("timing_"+chan+"_histogram","Time difference distribution between SiPM and " + md.getNameOfSensor(chan) + " "+str(int(chan[-1:])+1),3000,-0.6,0.6)
