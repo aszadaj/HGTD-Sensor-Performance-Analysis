@@ -14,7 +14,7 @@ def timingAnalysis(numberOfBatches):
     
     startTime = getTime()
     printTime()
-    print "Start timing analysis,",numberOfBatches, "batch(es).\n"
+    print "Start timing analysis batches:",print i for i in numberOfBatches,"\n"
 
     dm.checkIfRepositoryOnStau()
     
@@ -53,7 +53,7 @@ def comparePeakTimes(half_max_times):
     
     filled_entries = np.zeros(len(half_max_times), dtype=half_max_times.dtype)
     
-    channels = channels[0]
+    #channels = [channels[0]]
     
     for chan in channels:
     
