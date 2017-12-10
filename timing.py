@@ -65,7 +65,7 @@ def comparePeakTimes(half_max_times):
             if half_max_times[entry][chan] > 0.0:
                 
                 data_graph[chan].Fill(timeDifference)
-                if abs(timeDifference) > 0.3
+                if abs(timeDifference) > 0.3:
                     filled_entries[chan][entry] = 1.0
 
         produceTH1Plot(data_graph[chan], chan, canvas)
