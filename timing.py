@@ -70,9 +70,14 @@ def comparePeakTimes(half_max_times):
 
         produceTH1Plot(data_graph[chan], chan, canvas)
 
+    count = 0
+
     for chan in channels:
-        for entry in range(0, len(filled_entries)):
+        for entry in range(2000, len(filled_entries)):
+            count += 1
             print chan,entry
+            if count = 100:
+                break
 
 
 def produceTH1Plot(graph, chan, canvas):
