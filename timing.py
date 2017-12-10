@@ -76,7 +76,7 @@ def comparePeakTimes(half_max_times):
         for entry in range(2000, len(filled_entries)):
             count += 1
             print chan,entry
-            if count = 100:
+            if count == 100:
                 break
 
 
