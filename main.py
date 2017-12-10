@@ -20,7 +20,7 @@ def main():
 
     ######  NOISE, PULSE, TELESCOPE AND TIMING   ######
     
-    batchNumber = "all"   # All batches 38, or "all" to consider them all
+    batchNumber = 306   # All batches 38, or "all" to consider them all
     
     ##################################################
     
@@ -31,9 +31,9 @@ def main():
     
     ###########################
     
-    noise.noiseAnalysis            (batchNumber)
+    #noise.noiseAnalysis            (batchNumber)
     
-    pulse.pulseAnalysis            (batchNumber)
+    #pulse.pulseAnalysis            (batchNumber)
     
     #telescope.telescopeAnalysis     (batchNumber)
     

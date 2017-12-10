@@ -60,7 +60,7 @@ def comparePeakTimes(half_max_times):
         data_graph[chan] = ROOT.TH1D("timing_"+chan+"_histogram","Time difference distribution between SiPM and " + md.getNameOfSensor(chan) + " "+str(int(chan[-1:])+1),3000,0,2)
         # outside the range, if there are filled values
         for entry in range(0, len(half_max_times)):
-            timeDifference = abs(half_max_times[entry][chan]-half_max_times[entry][SiPM_index])
+            timeDifference = half_max_times[entry][chan]-half_max_times[entry][SiPM_index]
 
             if half_max_times[entry][chan] > 0.0 and timeDifference > 0.0:
                 data_graph[chan].Fill(timeDifference)
