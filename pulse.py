@@ -56,19 +56,20 @@ def pulseAnalysis(batchNumbers):
         rise_times = np.empty(0, dtype=results_batch[0][1].dtype)
         half_max_times = np.empty(0, dtype=results_batch[0][2].dtype)
         criticalValues = np.empty(0, dtype=results_batch[0][3].dtype)
+        pulse_points = np.empty(0, dtype=results_batch[0][4].dtype)
     
         for results in results_batch:
             amplitudes = np.concatenate((amplitudes, results[0]), axis = 0)
             rise_times = np.concatenate((rise_times, results[1]), axis = 0)
             half_max_times = np.concatenate((half_max_times, results[2]), axis = 0)
             criticalValues = np.concatenate((criticalValues, results[3]), axis = 0)
+            pulse_points = np.concatenate((pulse_points, results[4]), axis = 0)
         
-        print "Check length: ",str(len(runLog)*200000)
-        print len(amplitudes)
         
-        dm.exportPulseData(amplitudes, rise_times, half_max_times, criticalValues)
+        dm.exportPulseData(amplitudes, rise_times, half_max_times, criticalValues, pulse_points)
 
         p_plot.producePulseDistributionPlots(amplitudes, rise_times)
+        p_plot.produceDataPointDistribution(pulse_points)
     
         print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
 
@@ -103,9 +104,9 @@ def pulseAnalysisPerRun(sigma):
 def multiProcess(dataPath, pedestal, noise, begin, end, sigma):
     
     data = rnm.root2array(dataPath, start=begin, stop=end)
-    amplitudes, rise_times, half_max_times = p_calc.pulseAnalysis(data, pedestal, noise, sigma)
+    amplitudes, rise_times, half_max_times, pulse_points = p_calc.pulseAnalysis(data, pedestal, noise, sigma)
     
-    return amplitudes, rise_times, half_max_times
+    return amplitudes, rise_times, half_max_times, pulse_points
 
 
 

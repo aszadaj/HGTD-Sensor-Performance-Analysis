@@ -28,14 +28,13 @@ def importNoiseFile(dataType):
     return dataFile
 
 
-def exportPulseData(amplitudes, rise_times, half_max_times, criticalValues):
-
-    print "export"
+def exportPulseData(amplitudes, rise_times, half_max_times, criticalValues, pulse_points):
 
     exportPulseFile(amplitudes, "amplitudes")
     exportPulseFile(rise_times, "rise_times")
     exportPulseFile(half_max_times, "half_max_times")
     exportPulseFile(criticalValues, "critical_values")
+    exportPulseFile(pulse_points, "pulse_points")
 
 
 def exportPulseFile(data, dataType):
@@ -108,7 +107,7 @@ def exportNoiseData2(pedestal, noise):
     exportROOTFile(noise,"noise", "noise", "file")
 
 
-def exportPulseData2(amplitudes, rise_times, half_max_times, criticalValues):
+def exportROOTPulseData2(amplitudes, rise_times, half_max_times, criticalValues):
 
     exportROOTFile(amplitudes, "pulse", "amplitudes", "file")
     exportROOTFile(rise_times,"pulse", "rise_times", "file")

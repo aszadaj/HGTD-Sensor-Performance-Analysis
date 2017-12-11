@@ -14,14 +14,15 @@ def pulseAnalysis(data, pedestal, noise, sigma):
     amplitudes      =   np.zeros(len(data), dtype = data.dtype)
     rise_times      =   np.zeros(len(data), dtype = data.dtype)
     half_max_times  =   np.zeros(len(data), dtype = data.dtype)
+    pulse_points    =   np.zeros(len(data), dtype = data.dtype)
  
     for event in range(0,len(data)):
     
         for chan in channels:
             # Pedestal and noise are in mV whereas data is in V (and negative). Noise is a standard deviation, hence w/o minus.
-            amplitudes[event][chan], rise_times[event][chan], half_max_times[event][chan] = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[chan]*-0.001, noise[chan]*0.001, event, sigma)
+            amplitudes[event][chan], rise_times[event][chan], half_max_times[event][chan], pulse_points[event][chan] = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[chan]*-0.001, noise[chan]*0.001, event, sigma)
 
-    return amplitudes, rise_times, half_max_times
+    return amplitudes, rise_times, half_max_times, pulse_points
 
 
 # Calculate maximum amplitude value and rise time, if found.
@@ -39,13 +40,17 @@ def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber, sigma):
     pulse_amplitude = 0
     pulse_rise_time = 0
     pulse_half_maximum = 0
+    pulse_data_points = -1
     
     # This sets the condition for seeing a value above the noise.
-    indices_condition = event - pedestal < - noise * sigma # Note, event is negative
-   
+    threshold = noise * sigma - pedestal
+    indices_condition = event < - threshold # Note, event is negative
+ 
     if any(indices_condition):
         
+        pulse_data_points = len(indices_condition)
         
+        # Investigate how many points you can remove
         pulse_first_index = np.where(indices_condition)[0][0] - 1 # Remove three points, just a convention
         pulse_last_index = np.argmin(event) # Peak
         pulse_amplitude = np.amin(event) - pedestal # Amplitude, pedestal corrected (usually few +-mV), not the best option, but
@@ -83,7 +88,7 @@ def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber, sigma):
             pulse_amplitude = 0
             pulse_last_index = 0
 
-    return pulse_amplitude, pulse_rise_time, pulse_half_maximum
+    return pulse_amplitude, pulse_rise_time, pulse_half_maximum, pulse_data_points
 
 
 # Function which removes amplitudes which are in the range being critical amplitude values
@@ -143,15 +148,6 @@ def convertData(data):
         data[chan] = np.multiply(data[chan],-1000)
     
     return data
-
-
-# Have problem with defining this global variable, future fix
-## Define sigma value
-#def defineSigma(sigmaValue):
-#
-#    global sigma
-#    sigma = sigmaValue
-#
 
 
 
