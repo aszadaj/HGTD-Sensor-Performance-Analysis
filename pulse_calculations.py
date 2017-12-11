@@ -46,6 +46,7 @@ def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber, sigma):
     threshold = noise * sigma - pedestal
     indices_condition = event < - threshold # Note, event is negative
  
+    # Indices condition should maybe be in consecutive order?
     if any(indices_condition):
         
         pulse_data_points = len(indices_condition)
@@ -106,6 +107,7 @@ def removeUnphyscialQuantities(results, noise, sigma):
         amplitudes      = np.concatenate((amplitudes, results[index][0]), axis=0)
         rise_times      = np.concatenate((rise_times, results[index][1]), axis=0)
         half_max_times  = np.concatenate((half_max_times, results[index][2]), axis=0)
+        pulse_points    = np.concatenate((pulse_points, results[index][3]), axis=0)
     
     criticalValues = findCriticalValues(amplitudes)
 
