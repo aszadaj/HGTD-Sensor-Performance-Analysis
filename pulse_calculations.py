@@ -112,7 +112,6 @@ def removeUnphyscialQuantities(results, noise, sigma):
     criticalValues = findCriticalValues(amplitudes)
     
     fraction_del_amplitudes = np.zeros(1, dtype=amplitudes.dtype)
-    pri
    
     for chan in amplitudes.dtype.names:
       
