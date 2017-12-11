@@ -96,6 +96,8 @@ def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber, sigma):
 # NOTE THIS FUNCTION HANDLES CONVERTED DATA (I.E. NEGATIVE TO POSITIVE VALUES AND IN mV)
 # NOTE2 Here the amplitude values are pedestal corrected
 def removeUnphyscialQuantities(results, noise, sigma):
+
+    threshold =  noise[chan] * sigma - pedestal[chan]
    
     # There is a more beautiful fix, with nesting for loops, not important for now
     amplitudes      = np.empty(0,dtype=results[0][0].dtype)
@@ -120,7 +122,7 @@ def removeUnphyscialQuantities(results, noise, sigma):
         half_max_times[chan][indices] = 0
         
         # Noise is in mV since imported from earlier program, future fix
-        indices = amplitudes[chan] > 0.001 * noise[chan] * sigma
+        indices = amplitudes[chan] > 0.001 * threshold
         
         amplitudes[chan][indices] = 0
         rise_times[chan][indices] = 0
