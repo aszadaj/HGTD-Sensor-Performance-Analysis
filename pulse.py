@@ -68,8 +68,7 @@ def pulseAnalysis(batchNumbers):
         
         dm.exportPulseData(amplitudes, rise_times, half_max_times, criticalValues, pulse_points)
 
-        p_plot.producePulseDistributionPlots(amplitudes, rise_times)
-        p_plot.produceDataPointDistribution(pulse_points)
+        p_plot.producePulseDistributionPlots(amplitudes, rise_times, pulse_points)
     
         print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
 
@@ -84,6 +83,7 @@ def pulseAnalysisPerRun(sigma):
     p = Pool(dm.threads)
     #max = md.getNumberOfEvents()
     max = 200000 # This is adapted to match the number of telescope files
+    max = 1000
     step = 5000
     ranges = range(0, max, step)
     
