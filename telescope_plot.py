@@ -41,7 +41,7 @@ def produceTelescopeGraphs(data_telescope, data_amplitude):
     
         # 1. Shows the mean amplitude in each filled bin (with or without conditions)
         # 2. Shows efficiency between telescope data and amplitude data
-        if chan == "chan0":
+        if chan == "chan0" or  chan == "chan1" :
             produce2DPlots()
             produceTEfficiencyPlot()
 
@@ -77,10 +77,10 @@ def produce2DPlots():
         if entries <= minEntries:
 
             graphFiltered.SetBinContent(bin, 0)
-            graphFiltered.SetBinEntries(bin, 0)
+            #graphFiltered.SetBinEntries(bin, 0)
             
             graphStdFiltered.SetBinContent(bin, 0)
-            graphStdFiltered.SetBinEntries(bin, 0)
+            #graphStdFiltered.SetBinEntries(bin, 0)
 
 
     # Print original TProfile2D

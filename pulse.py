@@ -15,6 +15,8 @@ ROOT.gROOT.SetBatch(True)
 # Start analysis of selected run numbers
 def pulseAnalysis(batchNumbers):
 
+    sigma = 6
+
     dm.checkIfRepositoryOnStau()
     
     startTime = md.getTime()
@@ -24,6 +26,8 @@ def pulseAnalysis(batchNumbers):
     for runLog in runLog_batch:
     
         results_batch = []
+        
+        runLog = [runLog[0]]
     
         startTimeBatch = md.getTime()
         md.printTime()
@@ -38,7 +42,7 @@ def pulseAnalysis(batchNumbers):
             if (md.isRootFileAvailable(md.getTimeStamp())):
                 
                 print "Run", md.getRunNumber()
-                results_batch.append(pulseAnalysisPerRun())
+                results_batch.append(pulseAnalysisPerRun(sigma))
                 print "Done with run", md.getRunNumber(),"\n"
         
             else:
@@ -71,7 +75,7 @@ def pulseAnalysis(batchNumbers):
     print "Done with batch",runLog[0][5],".\n"
 
 # Perform noise, pulse and telescope analysis
-def pulseAnalysisPerRun():
+def pulseAnalysisPerRun(sigma):
     
     startTimeRun = md.getTime()
     
@@ -87,19 +91,19 @@ def pulseAnalysisPerRun():
     pedestal    = dm.importNoiseFile("pedestal")
     noise       = dm.importNoiseFile("noise")
     
-    results = p.map(lambda chunk: multiProcess(dataPath, pedestal, noise, chunk, chunk+step), ranges)
+    results = p.map(lambda chunk: multiProcess(dataPath, pedestal, noise, chunk, chunk+step, sigma), ranges)
  
     # Note, here the function receives the results from multiprocessing
-    results = p_calc.removeUnphyscialQuantities(results, noise)
+    results = p_calc.removeUnphyscialQuantities(results, noise, sigma)
     
     return results
 
 
 # Start multiprocessing analysis of noises and pulses in ROOT considerOnlyRunsfile
-def multiProcess(dataPath, pedestal, noise, begin, end):
+def multiProcess(dataPath, pedestal, noise, begin, end, sigma):
     
     data = rnm.root2array(dataPath, start=begin, stop=end)
-    amplitudes, rise_times, half_max_times = p_calc.pulseAnalysis(data, pedestal, noise)
+    amplitudes, rise_times, half_max_times = p_calc.pulseAnalysis(data, pedestal, noise, sigma)
     
     return amplitudes, rise_times, half_max_times
 

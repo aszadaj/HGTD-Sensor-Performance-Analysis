@@ -7,7 +7,7 @@ import data_management as dm
 
 # The code obtains amplitudes and rise time for pulses for each channel for all selected entries
 # and orders them in a nested list within "amplitudes" and "rise_time".
-def pulseAnalysis(data, pedestal, noise):
+def pulseAnalysis(data, pedestal, noise, sigma):
 
     channels = data.dtype.names
     
@@ -19,7 +19,7 @@ def pulseAnalysis(data, pedestal, noise):
     
         for chan in channels:
             # Pedestal and noise are in mV whereas data is in V (and negative). Noise is a standard deviation, hence w/o minus.
-            amplitudes[event][chan], rise_times[event][chan], half_max_times[event][chan] = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[chan]*-0.001, noise[chan]*0.001, event)
+            amplitudes[event][chan], rise_times[event][chan], half_max_times[event][chan] = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[chan]*-0.001, noise[chan]*0.001, event, sigma)
 
     return amplitudes, rise_times, half_max_times
 
@@ -30,24 +30,23 @@ def pulseAnalysis(data, pedestal, noise):
 # 2. The pulse cannot be calculated, because of the conditions for polyfit (if for some reason there is a
 #   'flat' function for the pulse
 
-def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber):
+def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber, sigma):
     
     # Time scope is the time difference between two recorded points
     # Assumption: for all events this value is the same.
     timeScope = 0.1
-    sigma = 5
-    
+
     pulse_amplitude = 0
     pulse_rise_time = 0
     pulse_half_maximum = 0
     
     # This sets the condition for seeing a value above the noise.
-    indices_condition = event < - noise * sigma # Note, event is negative
+    indices_condition = event - pedestal < - noise * sigma # Note, event is negative
    
     if any(indices_condition):
         
         
-        pulse_first_index = np.where(indices_condition)[0][0] - 3 # Remove three points, just a convention
+        pulse_first_index = np.where(indices_condition)[0][0] - 1 # Remove three points, just a convention
         pulse_last_index = np.argmin(event) # Peak
         pulse_amplitude = np.amin(event) - pedestal # Amplitude, pedestal corrected (usually few +-mV), not the best option, but
         
@@ -90,10 +89,8 @@ def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber):
 # Function which removes amplitudes which are in the range being critical amplitude values
 # NOTE THIS FUNCTION HANDLES CONVERTED DATA (I.E. NEGATIVE TO POSITIVE VALUES AND IN mV)
 # NOTE2 Here the amplitude values are pedestal corrected
-def removeUnphyscialQuantities(results, noise):
-    
-    sigma = 8
-    
+def removeUnphyscialQuantities(results, noise, sigma):
+   
     # There is a more beautiful fix, with nesting for loops, not important for now
     amplitudes      = np.empty(0,dtype=results[0][0].dtype)
     rise_times      = np.empty(0,dtype=results[0][1].dtype)

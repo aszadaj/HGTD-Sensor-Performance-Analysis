@@ -27,15 +27,15 @@ def main():
     ######  GRAPH ONLY   ######
     
     runNumber = 3791
-    entries = 5925
+    entries = 6854
     
     ###########################
     
     #noise.noiseAnalysis            (batchNumber)
     
-    #pulse.pulseAnalysis            (batchNumber)
+    pulse.pulseAnalysis            (batchNumber)
     
-    telescope.telescopeAnalysis     (batchNumber)
+    #telescope.telescopeAnalysis     (batchNumber)
     
     #timing.timingAnalysis           (batchNumber)
     

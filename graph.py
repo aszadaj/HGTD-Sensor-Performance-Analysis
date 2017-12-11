@@ -17,6 +17,7 @@ def printWaveform(runNumber, entry):
     dm.checkIfRepositoryOnStau()
     
     noise = dm.importNoiseFile("noise")
+    pedestal = dm.importNoiseFile("pedestal")
     
     #amplitudes = dm.importPulseFile("amplitudes")
     
@@ -32,7 +33,7 @@ def printWaveform(runNumber, entry):
     channels = data.dtype.names
     first = True
     
-    sigma = 5
+    sigma = 6
     
     leg = ROOT.TLegend (0.73, 0.6, 0.93, 0.9)
     leg.SetHeader("Waveforms, sensors")
@@ -56,25 +57,28 @@ def printWaveform(runNumber, entry):
         
         if first:
         
-            graph[chan].Draw("AL")
+            graph[chan].Draw("ALP")
             first=False
 
         else:
         
-            graph[chan].Draw("L")
+            graph[chan].Draw("LP")
 
 
         graph_line_noise[chan] = ROOT.TGraph(1002)
         
+        # Check what happens if the limit is pedestal corrected!
         for index in range(0,1002):
     
-            graph_line_noise[chan].SetPoint(index, index*0.1, noise[chan]*sigma)
+            graph_line_noise[chan].SetPoint(index, index*0.1, noise[chan]*sigma-pedestal[chan])
         
         graph_line_noise[chan].SetLineColor(int(chan[-1])+1)
         graph_line_noise[chan].SetMarkerColor(2)
         graph_line_noise[chan].Draw("L")
-        n = str(noise[chan][0])
-        leg.AddEntry(graph_line_noise[chan],"Noise: "+n[:-8]+" mV, \sigma: "+str(sigma),"l")
+      
+        print str(noise[chan]*sigma-pedestal[chan])[1:5]
+      
+        leg.AddEntry(graph_line_noise[chan],"Threshold: noise*\sigma - pedestal = "+str(noise[chan]*sigma-pedestal[chan])[1:5]+" mV, \sigma: "+str(sigma),"l")
 
         graph[chan].SetLineColor(int(chan[-1])+1)
         graph[chan].SetMarkerColor(1)
