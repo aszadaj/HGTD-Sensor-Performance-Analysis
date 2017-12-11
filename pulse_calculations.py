@@ -121,7 +121,7 @@ def removeUnphyscialQuantities(results, noise, sigma):
         rise_times[chan][indices] = 0
         half_max_times[chan][indices] = 0
         print len(pulse_points[chan])
-        pulse_points[chan] = pulse_points[chan][pulse_points[chan] != -1]
+        pulse_points[chan] = pulse_points[chan][np.where(pulse_points[chan] != -1)]
         print len(pulse_points[chan])
         fraction_del_amplitudes[chan] = np.sum(pulse_points[chan][np.where(pulse_points[chan] != -1)])
 
