@@ -2,7 +2,10 @@ import ROOT
 import metadata as md
 
 
-def producePulseDistributionPlots(amplitudes, rise_times, pulse_points):
+def producePulseDistributionPlots(amplitudes, rise_times, pulse_points, del_amplitudes):
+
+    global deleted_amplitudes
+    deleted_amplitudes = del_amplitudes
     
     canvas_amplitude = ROOT.TCanvas("Amplitude Distribution", "amplitude")
     canvas_rise_time = ROOT.TCanvas("Risetime Distribution", "risetime")
@@ -18,7 +21,7 @@ def producePulseDistributionPlots(amplitudes, rise_times, pulse_points):
         
         rise_times_graph[chan] = ROOT.TH1D("Rise time channel "+str(int(chan[-1:])+1), "rise_time" + chan,600,0.3,1.5)
         
-        pulse_points_graph[chan] = ROOT.TH1D("Pulse points, channel "+str(int(chan[-1:])+1), "pulse_points" + chan,600,0,1000)
+        pulse_points_graph[chan] = ROOT.TH1D("Pulse points, channel "+str(int(chan[-1:])+1), "pulse_points" + chan,600,0,130)
         
         index = int(chan[-1:])
         
@@ -59,7 +62,7 @@ def defineAndProduceHistogram(graphList,canvas,typeOfGraph,chan):
     
     elif typeOfGraph == "pulse_point":
     
-        headTitle = "Distribution of pulse points for found pulse, Sep 2017 batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])+1) + ", sensor: " + str(md.getNameOfSensor(chan))
+        headTitle = "Distribution of pulse points for found pulse, Sep 2017 batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])+1) + ", sensor: " + str(md.getNameOfSensor(chan)) + " fraction of removed amplitudes (critical values): " + str(float(deleted_amplitudes[chan])*100) + " %"
         xAxisTitle = "Data points (mV)"
         fileName = "../../HGTD_material/plots_hgtd_efficiency_sep_2017/pulse/pulse_points/pulse_points_distribution_"+str(md.getBatchNumber())+"_"+chan+".pdf"
     

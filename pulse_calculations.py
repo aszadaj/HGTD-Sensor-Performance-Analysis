@@ -49,7 +49,7 @@ def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber, sigma):
     # Indices condition should maybe be in consecutive order?
     if any(indices_condition):
         
-        pulse_data_points = len(indices_condition)
+        pulse_data_points = np.sum(indices_condition)
         
         # Investigate how many points you can remove
         pulse_first_index = np.where(indices_condition)[0][0] - 1 # Remove three points, just a convention
@@ -111,21 +111,19 @@ def removeUnphyscialQuantities(results, noise, sigma):
 
     criticalValues = findCriticalValues(amplitudes)
     
-    fraction_del_amplitudes = np.zeros(1, dtype=amplitudes.dtype)
+    deleted_amplitudes = np.zeros(1, dtype=amplitudes.dtype)
    
     for chan in amplitudes.dtype.names:
       
-        indices = amplitudes[chan] <= criticalValues[chan]
+        indices = amplitudes[chan] == criticalValues[chan]
         
         amplitudes[chan][indices] = 0
         rise_times[chan][indices] = 0
         half_max_times[chan][indices] = 0
-        print len(pulse_points[chan])
-        pulse_points[chan] = pulse_points[chan][np.where(pulse_points[chan] != -1)]
-        print len(pulse_points[chan])
-        fraction_del_amplitudes[chan] = np.sum(pulse_points[chan][np.where(pulse_points[chan] != -1)])
+        
+        deleted_amplitudes[chan] = np.sum(indices)
 
-    return [convertData(amplitudes), rise_times, half_max_times, convertData(criticalValues), pulse_points, fraction_del_amplitudes]
+    return [convertData(amplitudes), rise_times, half_max_times, convertData(criticalValues), pulse_points, deleted_amplitudes]
 
 
 # Search for critical amplitude values

@@ -27,7 +27,7 @@ def pulseAnalysis(batchNumbers):
     
         results_batch = []
         
-        runLog = [runLog[0]]
+        #runLog = [runLog[0], runLog[1]]
     
         startTimeBatch = md.getTime()
         md.printTime()
@@ -55,9 +55,9 @@ def pulseAnalysis(batchNumbers):
         amplitudes = np.empty(0, dtype=results_batch[0][0].dtype)
         rise_times = np.empty(0, dtype=results_batch[0][1].dtype)
         half_max_times = np.empty(0, dtype=results_batch[0][2].dtype)
-        criticalValues = np.empty(0, dtype=results_batch[0][3].dtype)
+        criticalValues = np.empty(0, dtype=results_batch[0][3].dtype) # This should be length 1 per channel!
         pulse_points = np.empty(0, dtype=results_batch[0][4].dtype)
-        fraction_del_amplitudes = np.empty(0, dtype=amplitudes.dtype)
+        deleted_amplitudes = np.zeros(1, dtype=results_batch[0][5].dtype) # This should be length 1 per channel!
     
         for results in results_batch:
             amplitudes = np.concatenate((amplitudes, results[0]), axis = 0)
@@ -65,21 +65,19 @@ def pulseAnalysis(batchNumbers):
             half_max_times = np.concatenate((half_max_times, results[2]), axis = 0)
             criticalValues = np.concatenate((criticalValues, results[3]), axis = 0)
             pulse_points = np.concatenate((pulse_points, results[4]), axis = 0)
-            fraction_del_amplitudes = np.concatenate((pulse_points, results[5]), axis = 0)
+            
+            for chan in amplitudes.dtype.names:
+                deleted_amplitudes[chan] += results[5][chan]
+
+        for chan in criticalValues.dtype.names:
         
-        print fraction_del_amplitudes
-        print "Fraction of removed amplitudes, due to critical value"
+            criticalValues[chan] = np.amax(criticalValues[chan])
+            deleted_amplitudes[chan] = float(deleted_amplitudes[chan])/float(len(amplitudes[chan]))
         
-        for chan in fraction_del_amplitudes.dtype.names:
-        
-            percentage = fraction_del_amplitudes[chan]/(np.count_nonzero(amplitudes[chan])+fraction_del_amplitudes[chan])
-            print percentage, chan
-        
-       
-        
+
         dm.exportPulseData(amplitudes, rise_times, half_max_times, criticalValues, pulse_points)
 
-        p_plot.producePulseDistributionPlots(amplitudes, rise_times, pulse_points)
+        p_plot.producePulseDistributionPlots(amplitudes, rise_times, pulse_points, deleted_amplitudes)
     
         print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
 
@@ -94,8 +92,8 @@ def pulseAnalysisPerRun(sigma):
     p = Pool(dm.threads)
     #max = md.getNumberOfEvents()
     max = 200000 # This is adapted to match the number of telescope files
-    max = 1000
-    step = 500
+    #max = 1000
+    step = 5000
     ranges = range(0, max, step)
     
     dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"

@@ -56,6 +56,17 @@ main()
 # The lowered sigma gives more values but the SiPM have a higher noise and the sigma is
 # too low. There fore testing with sigma = 6 for SiPM and sigma=5 for rest of the sensors
 
+# log3
+# Checked how many values are removed percentually and its about
+#Fraction of removed amplitudes, due to critical value
+#0.001 chan0
+#0.001 chan1
+#0.001 chan2
+#0.001 chan3
+#0.015 chan4
+#0.009 chan5
+#0.0135 chan6
+
 # Available batch numbers:
 # 101, 102, 103, 104, 105, 106, 107, 108
 # 203, 204, 205, 206, 207,
