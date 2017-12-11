@@ -57,7 +57,7 @@ def pulseAnalysis(batchNumbers):
         half_max_times = np.empty(0, dtype=results_batch[0][2].dtype)
         criticalValues = np.empty(0, dtype=results_batch[0][3].dtype)
         pulse_points = np.empty(0, dtype=results_batch[0][4].dtype)
-        fraction_del_amplitudes = np.empty(1, dtype=data.dtype)
+        fraction_del_amplitudes = np.empty(0, dtype=amplitudes.dtype)
     
         for results in results_batch:
             amplitudes = np.concatenate((amplitudes, results[0]), axis = 0)
