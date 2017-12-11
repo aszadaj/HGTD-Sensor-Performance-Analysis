@@ -33,11 +33,11 @@ def main():
     
     #noise.noiseAnalysis            (batchNumber)
     
-    pulse.pulseAnalysis            (batchNumber)
+    #pulse.pulseAnalysis            (batchNumber)
     
     #telescope.telescopeAnalysis     (batchNumber)
     
-    #timing.timingAnalysis           (batchNumber)
+    timing.timingAnalysis           (batchNumber)
     
     #graph.printWaveform            (runNumber, entries)
     
@@ -66,6 +66,8 @@ main()
 #0.015 chan4
 #0.009 chan5
 #0.0135 chan6
+
+# Changed also the way of obtaining the first index when calculating a pulse. I removed earlier three points, now there is only one, deduced that from observing where the threshold is situated
 
 # Available batch numbers:
 # 101, 102, 103, 104, 105, 106, 107, 108

@@ -52,7 +52,7 @@ def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber, sigma):
         pulse_data_points = np.sum(indices_condition)
         
         # Investigate how many points you can remove
-        pulse_first_index = np.where(indices_condition)[0][0] - 1 # Remove three points, just a convention
+        pulse_first_index = np.where(indices_condition)[0][0] - 1 # Remove one point, just a convention
         pulse_last_index = np.argmin(event) # Peak
         pulse_amplitude = np.amin(event) - pedestal # Amplitude, pedestal corrected (usually few +-mV), not the best option, but
         
