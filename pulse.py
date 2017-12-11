@@ -57,7 +57,7 @@ def pulseAnalysis(batchNumbers):
         half_max_times = np.empty(0, dtype=results_batch[0][2].dtype)
         criticalValues = np.empty(0, dtype=results_batch[0][3].dtype)
         pulse_points = np.empty(0, dtype=results_batch[0][4].dtype)
-        fraction_del_amplitudes = dict()
+        fraction_del_amplitudes = np.empty(1, dtype=data.dtype)
     
         for results in results_batch:
             amplitudes = np.concatenate((amplitudes, results[0]), axis = 0)
@@ -65,15 +65,14 @@ def pulseAnalysis(batchNumbers):
             half_max_times = np.concatenate((half_max_times, results[2]), axis = 0)
             criticalValues = np.concatenate((criticalValues, results[3]), axis = 0)
             pulse_points = np.concatenate((pulse_points, results[4]), axis = 0)
-            
-            for chan in fraction_del_amplitudes.keys():
-                fraction_del_amplitudes[chan] += results[5][chan]
+            fraction_del_amplitudes = np.concatenate((pulse_points, results[5]), axis = 0)
         
-        count_amplitudes = dict()
+        
         print "Fraction of removed amplitudes, due to critical value"
-        for chan in fraction_del_amplitudes.keys():
-            count_amplitudes[chan] = np.count_nonzero(amplitudes[chan])
-            percentage = fraction_del_amplitudes[chan]/(count_amplitudes[chan]+fraction_del_amplitudes[chan])
+        
+        for chan in fraction_del_amplitudes.dtype.names:
+        
+            percentage = fraction_del_amplitudes[chan]/(np.count_nonzero(amplitudes[chan])+fraction_del_amplitudes[chan])
             print percentage, chan
         
        
