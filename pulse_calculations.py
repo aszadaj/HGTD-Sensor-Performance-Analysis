@@ -108,7 +108,6 @@ def removeUnphyscialQuantities(results, noise, sigma):
         rise_times      = np.concatenate((rise_times, results[index][1]), axis=0)
         half_max_times  = np.concatenate((half_max_times, results[index][2]), axis=0)
         pulse_points    = np.concatenate((pulse_points, results[index][3]), axis=0)
-    
 
     criticalValues = findCriticalValues(amplitudes)
     
@@ -122,7 +121,8 @@ def removeUnphyscialQuantities(results, noise, sigma):
         rise_times[chan][indices] = 0
         half_max_times[chan][indices] = 0
         print len(pulse_points[chan])
-        print pulse_points[chan][np.where(pulse_points[chan] != -1)]
+        pulse_points[chan] = pulse_points[chan][pulse_points[chan] != -1]
+        print len(pulse_points[chan])
         fraction_del_amplitudes[chan] = np.sum(pulse_points[chan][np.where(pulse_points[chan] != -1)])
 
     return [convertData(amplitudes), rise_times, half_max_times, convertData(criticalValues), pulse_points, fraction_del_amplitudes]
