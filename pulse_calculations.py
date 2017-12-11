@@ -96,8 +96,6 @@ def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber, sigma):
 # NOTE THIS FUNCTION HANDLES CONVERTED DATA (I.E. NEGATIVE TO POSITIVE VALUES AND IN mV)
 # NOTE2 Here the amplitude values are pedestal corrected
 def removeUnphyscialQuantities(results, noise, sigma):
-
-    threshold =  noise[chan] * sigma - pedestal[chan]
    
     # There is a more beautiful fix, with nesting for loops, not important for now
     amplitudes      = np.empty(0,dtype=results[0][0].dtype)
@@ -112,23 +110,21 @@ def removeUnphyscialQuantities(results, noise, sigma):
         pulse_points    = np.concatenate((pulse_points, results[index][3]), axis=0)
     
     criticalValues = findCriticalValues(amplitudes)
+    
+    fraction_del_amplitudes = dict()
 
     for chan in amplitudes.dtype.names:
       
         indices = amplitudes[chan] <= criticalValues[chan]
-      
-        amplitudes[chan][indices] = 0
-        rise_times[chan][indices] = 0
-        half_max_times[chan][indices] = 0
-        
-        # Noise is in mV since imported from earlier program, future fix
-        indices = amplitudes[chan] > 0.001 * threshold
         
         amplitudes[chan][indices] = 0
         rise_times[chan][indices] = 0
         half_max_times[chan][indices] = 0
 
-    return [convertData(amplitudes), rise_times, half_max_times, convertData(criticalValues), pulse_points]
+        fraction_del_amplitudes[chan] += 1
+    
+
+    return [convertData(amplitudes), rise_times, half_max_times, convertData(criticalValues), pulse_points, fraction_del_amplitudes]
 
 
 # Search for critical amplitude values
