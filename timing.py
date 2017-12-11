@@ -41,6 +41,8 @@ def comparePeakTimes(half_max_times):
     SiPM_index = int(SiPM_chan[-1])
     data_graph = dict()
     
+    print "Channel of SiPM",SiPM_chan
+    
     all_channels = half_max_times.dtype.names
     
     channels = []
@@ -63,22 +65,47 @@ def comparePeakTimes(half_max_times):
             if half_max_times[entry][chan] > 0.0:
                 
                 data_graph[chan].Fill(timeDifference)
-                if abs(timeDifference) > 0.3:
-                    filled_entries[chan][entry] = 1.0
+                
+                if chan == "chan0":
+                    if 0.28 < timeDifference < 0.29:
+                        filled_entries[chan][entry] = 1.0
+                elif chan == "chan1":
+                    if 0.32 < timeDifference < 0.33:
+                        filled_entries[chan][entry] = 1.0
+
+                elif chan == "chan2":
+                    if 0.32 < timeDifference < 0.33:
+                        filled_entries[chan][entry] = 1.0
+
+                elif chan == "chan3":
+                    if 0.35 < timeDifference < 0.4:
+                        filled_entries[chan][entry] = 1.0
+
+                elif chan == "chan4":
+                    if 0.53 < timeDifference < 0.54:
+                        filled_entries[chan][entry] = 1.0
+
+                elif chan == "chan5":
+                    if 0.53 < timeDifference < 0.54:
+                        filled_entries[chan][entry] = 1.0
+
 
         produceTH1Plot(data_graph[chan], chan, canvas)
 
     count = 0
-
-    for entry in range(2000, len(filled_entries)):
     
+    print len(filled_entries)
+
+    for entry in range(0, len(filled_entries)):
         for chan in channels:
         
-            if count == 100:
-                break
+            if filled_entries[chan][entry] == 1.0:
+            
+                if count == 100:
+                    break
 
-            count += 1
-            print chan, entry
+                count += 1
+                print chan, entry
 
 
 

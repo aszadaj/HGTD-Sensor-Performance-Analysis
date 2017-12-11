@@ -63,7 +63,7 @@ def importTelescopeDataBatch():
     data_batch = np.empty(0, dtype=[('X', '<f4'), ('Y', '<f4')])
 
     for timeStamp in timeStamps:
-        dataFileName = md.getSourceFolderPath() + "forAntek/tracking"+str(timeStamp)+".root"
+        dataFileName = md.getSourceFolderPath() + "telescope_data_sep_2017/tracking"+str(timeStamp)+".root"
         data_batch = np.concatenate((data_batch, rnm.root2array(dataFileName, start=0, stop=200000)), axis=0)
 
     # Convert into mm

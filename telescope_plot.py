@@ -36,97 +36,161 @@ def produceTelescopeGraphs(data_telescope, data_amplitude):
     
     minEntries = 1
     
+    
     for chan in channels:
     
         # 1. Shows the mean amplitude in each filled bin (with or without conditions)
         # 2. Shows efficiency between telescope data and amplitude data
-        
-        produceTProfile2DPlot()
-        produceTEfficiencyPlot()
+        if chan == "chan0":
+            produceTProfile2DPlot()
+            produceTEfficiencyPlot()
 
 
 def produceTProfile2DPlot():
 
     graphOrignal = ROOT.TProfile2D("telescope_"+chan,"Telescope channel "+str(int(chan[-1:])+1),xBins,xMin,xMax,yBins,yMin,yMax)
 
-    # First, fill the TProfile2D with all data which fulfills conditions
+    # Original mean value TProfile2D
     for index in range(0,len(data)):
          if data['X'][index] > -9.0 and amplitude[chan][index] > 0.0:
             graphOrignal.Fill(data['X'][index], data['Y'][index], amplitude[chan][index])
 
-    graphFiltered = graphOrignal.Clone()
     graphStd = graphOrignal.Clone()
-    graphStd.Reset()
+
+    # Standard deviation TProfile2D
+    for bin in range(0, int(graphStd.GetSize())):
     
-    totalEntries = int(graphFiltered.GetEntries())
-    unwantedEntries = 0
-    setEntries = 0
+        errorPerBin = int(graphOrignal.GetBinError(bin))
+        entriesPerBin = int(graphOrignal.GetBinContent(bin))
+        
+        graphStd.SetBinContent(bin, errorPerBin)
+        #graphStd.SetBinEntries(bin, entriesPerBin)
+
+    # Begin filtering
+    graphFiltered = graphOrignal.Clone()
+    graphStdFiltered =  graphStd.Clone()
+
 
     for bin in range(0, int(graphFiltered.GetSize())):
         entries = int(graphFiltered.GetBinEntries(bin))
         
-        graphFiltered.SetBinContent(bin, 0)
-        graphFiltered.SetBinEntries(bin, 0)
+        if entries <= minEntries:
 
-        graphStd.SetBinContent(bin, graphOrignal.GetBinError(bin))
-        graphStd.SetBinEntries(bin, entries)
-        setEntries +=1
+            graphFiltered.SetBinContent(bin, 0)
+            graphFiltered.SetBinEntries(bin, 0)
+            
+            graphStdFiltered.SetBinContent(bin, 0)
+            graphStdFiltered.SetBinEntries(bin, 0)
 
 
-    headTitle = "Pulse amplitude mean value (mV) in each bin, entries " + str(int(graphFiltered.GetEntries()))
+    # Print original TProfile2D
+    headTitle = "Pulse amplitude mean value (mV) in each bin, entries " + str(int(graphOrignal.GetEntries()))
     fileName = ".pdf"
     produceTH2Plot(graphOrignal, headTitle, fileName)
 
-    # If a problem, then probably its because of the data type
+    # Print filtered TProfile2D
+    headTitle = "Pulse amplitude mean value (mV) in each bin (filtered), entries " + str(int(graphFiltered.GetEntries()))
+    fileName = "filtered.pdf"
+    produceTH2Plot(graphFiltered, headTitle, fileName)
+
+    # Print original std TProfile2D
     headTitle = "Pulse amplitude standard deviation (mV) in each bin, entries " + str(int(graphStd.GetEntries()))
     fileName = "_std.pdf"
     produceTH2Plot(graphStd, headTitle, fileName)
 
-    # Given the filtered values, produce histogram
-    produceTH1MeanPlot(graphFiltered)
-    
-    del graphOrignal, graphFiltered
+    # Print filtered std TProfile2D
+    headTitle = "Pulse amplitude standard deviation (mV) in each bin (filtered), entries " + str(int(graphStdFiltered.GetEntries()))
+    fileName = "_filtered_std.pdf"
+    produceTH2Plot(graphStdFiltered, headTitle, fileName)
+
+    del graphOrignal, graphStd, graphFiltered, graphStdFiltered
 
 
 
 def produceTEfficiencyPlot():
     
-    LGAD_hits_temp = ROOT.TProfile2D("LGAD_particles"+chan+"","LGAD particles channel "+str(int(chan[-1:])+1),xBins,xMin,xMax,yBins,yMin,yMax)
+    LGADHitsOrig = ROOT.TProfile2D("LGAD_particles"+chan+"","LGAD particles channel "+str(int(chan[-1:])+1),xBins,xMin,xMax,yBins,yMin,yMax)
+    MIMOSAHitsOrig = ROOT.TProfile2D("telescope_particles"+chan+"","Telescope particles channel "+str(int(chan[-1:])+1),xBins,xMin,xMax,yBins,yMin,yMax)
     
-    telescope_hits_temp = ROOT.TProfile2D("telescope_particles"+chan+"","Telescope particles channel "+str(int(chan[-1:])+1),xBins,xMin,xMax,yBins,yMin,yMax)
-    
+
+    # Original TEfficiency, efficiency graph
     for index in range(0,len(data)):
         if data['X'][index] > -9.0:
-            telescope_hits_temp.Fill(data['X'][index], data['Y'][index], 1.0)
+            MIMOSAHitsOrig.Fill(data['X'][index], data['Y'][index], 1.0)
             if amplitude[chan][index] > 0.0:
-                LGAD_hits_temp.Fill(data['X'][index], data['Y'][index], 1.0)
+                LGADHitsOrig.Fill(data['X'][index], data['Y'][index], 1.0)
 
-    LGAD_hits = LGAD_hits_temp.Clone()
-    telescope_hits = telescope_hits_temp.Clone()
 
-    for bin in range(0, int(LGAD_hits.GetSize())):
+    LGADNoHitsOrig = LGADHitsOrig.Clone()
     
-        entries_LGAD = int(LGAD_hits.GetBinEntries(bin))
-        entries_telescope = int(telescope_hits.GetBinEntries(bin))
+    # Orginial TEfficiency, inefficiency graph
+    for index in range(0,len(data)):
+        if data['X'][index] > -9.0:
+            MIMOSAHitsOrig.Fill(data['X'][index], data['Y'][index], 1.0)
+            if amplitude[chan][index] == 0.0:
+                LGADNoHitsOrig.Fill(data['X'][index], data['Y'][index], 1.0)
+
+    # Filter the results
+
+    LGADHits = LGADHitsOrig.Clone()
+    MIMOSAHits = MIMOSAHitsOrig.Clone()
+    LGADNoHits = LGADNoHitsOrig.Clone()
+
+    for bin in range(0, int(LGADHitsOrig.GetSize())):
+    
+        entries_LGAD = int(LGADHits.GetBinEntries(bin))
+        entries_telescope = int(MIMOSAHits.GetBinEntries(bin))
+        entries_LGAD_no_hits = int(LGADNoHits.GetBinEntries(bin))
         
         if 0 < entries_LGAD <= minEntries:
 
-            LGAD_hits.SetBinContent(bin, 0)
-            LGAD_hits.SetBinEntries(bin, 0)
+            LGADHits.SetBinContent(bin, 0)
+            LGADHits.SetBinEntries(bin, 0)
         
         if 0 < entries_telescope <= minEntries:
 
-            telescope_hits.SetBinContent(bin, 0)
-            telescope_hits.SetBinEntries(bin, 0)
+            MIMOSAHits.SetBinContent(bin, 0)
+            MIMOSAHits.SetBinEntries(bin, 0)
 
+        if 0 < entries_LGAD_no_hits <= minEntries:
+            
+            LGADNoHits.SetBinContent(bin, 0)
+            LGADNoHits.SetBinEntries(bin, 0)
 
-    graph = ROOT.TEfficiency(LGAD_hits_temp, telescope_hits_temp)
-    
+    # Orginial efficiency graph
+    efficiencyOrig = ROOT.TEfficiency(LGADHitsOrig, MIMOSAHitsOrig)
     headTitle = "Efficiency of hit particles in each bin"
     fileName = "_eff.pdf"
-    produceTH2Plot(graph, headTitle, fileName)
+    #efficiency.GetHistogram().GetZAxis().SetRangeUser(0.9, 1.0)
+    produceTH2Plot(efficiencyOrig, headTitle, fileName)
+    
+    # Original inefficiency graph
+    inEfficiencyOrig = ROOT.TEfficiency(LGADNoHitsOrig, MIMOSAHitsOrig)
+    headTitle = "Infficiency of hit particles in each bin"
+    fileName = "_ineff.pdf"
+    #efficiency.GetHistogram().GetZAxis().SetRangeUser(0.9, 1.0)
+    produceTH2Plot(inEfficiencyOrig, headTitle, fileName)
 
-    del LGAD_hits, LGAD_hits_temp, telescope_hits, telescope_hits_temp, graph
+
+    # Filtered results
+    
+    # Modified efficiency graph
+    efficiencyMod = ROOT.TEfficiency(LGADHits, MIMOSAHits)
+    headTitle = "Efficiency of hit particles in each bin (filtered)"
+    fileName = "_eff_mod.pdf"
+    #efficiency.GetHistogram().GetZAxis().SetRangeUser(0.9, 1.0)
+    produceTH2Plot(efficiencyMod, headTitle, fileName)
+    
+    
+    # Modified inefficiency graph
+    inEfficiencyMod = ROOT.TEfficiency(LGADNoHits, MIMOSAHits)
+    headTitle = "Inefficiency of hit particles in each bin (filtered)"
+    fileName = "_ineff_mod.pdf"
+    #inEfficiency.GetHistogram().GetZAxis().SetRangeUser(0.9, 1.0)
+    produceTH2Plot(inEfficiencyMod, headTitle, fileName)
+
+
+    del efficiencyOrig, inEfficiencyOrig, efficiencyMod, inEfficiencyMod, LGADHitsOrig, MIMOSAHitsOrig, LGADNoHitsOrig, LGADHits, MIMOSAHits, LGADNoHits
 
 
 def produceTH1MeanPlot(graphTH2):
@@ -156,7 +220,7 @@ def produceTH1Plot(graph, headTitle, fileName):
     canvas.cd()
     graph.Draw()
     canvas.Update()
-    canvas.Print("../../HGTD_material/plots_hgtd_efficiency_sep_2017/telescope_2d_distributions/telescope_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
+    canvas.Print("../../HGTD_material/plots_hgtd_efficiency_sep_2017/telescope/telescope_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
     canvas.Clear()
 
 
@@ -168,7 +232,7 @@ def produceTH2Plot(graph, headTitle, fileName):
     canvas.cd()
     graph.Draw("COLZ")
     canvas.Update()
-    canvas.Print("../../HGTD_material/plots_hgtd_efficiency_sep_2017/telescope_2d_distributions/telescope_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
+    canvas.Print("../../HGTD_material/plots_hgtd_efficiency_sep_2017/telescope/telescope_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
     canvas.Clear()
 
 
