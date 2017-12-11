@@ -62,7 +62,7 @@ def comparePeakTimes(half_max_times):
         for entry in range(0, len(half_max_times)):
             timeDifference = half_max_times[entry][chan]-half_max_times[entry][SiPM_index]
 
-            if half_max_times[entry][chan] > 0.0:
+            if half_max_times[entry][chan] > 0.0 and timeDifference < 0.3:
                 
                 data_graph[chan].Fill(timeDifference)
                 

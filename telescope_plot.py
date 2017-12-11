@@ -34,7 +34,7 @@ def produceTelescopeGraphs(data_telescope, data_amplitude):
     canvas = ROOT.TCanvas("Telescope","telescope")
     channels = amplitude.dtype.names
     
-    minEntries = 1
+    minEntries = 2
     
     
     for chan in channels:
@@ -42,11 +42,11 @@ def produceTelescopeGraphs(data_telescope, data_amplitude):
         # 1. Shows the mean amplitude in each filled bin (with or without conditions)
         # 2. Shows efficiency between telescope data and amplitude data
         if chan == "chan0":
-            produceTProfile2DPlot()
+            produce2DPlots()
             produceTEfficiencyPlot()
 
 
-def produceTProfile2DPlot():
+def produce2DPlots():
 
     graphOrignal = ROOT.TProfile2D("telescope_"+chan,"Telescope channel "+str(int(chan[-1:])+1),xBins,xMin,xMax,yBins,yMin,yMax)
 
@@ -88,20 +88,43 @@ def produceTProfile2DPlot():
     fileName = ".pdf"
     produceTH2Plot(graphOrignal, headTitle, fileName)
 
+    # Efficiency and inefficiency
+    headTitle = "Efficiency of hit particles in each bin"
+    fileName = ".pdf_eff"
+    #produceEfficiencyPlot(graphOrignal)
+
+    headTitle = "Efficiency of hit particles in each bin"
+    fileName = ".pdf_eff"
+    #produceInefficiencyPlot(graphOrignal)
+
+
     # Print filtered TProfile2D
     headTitle = "Pulse amplitude mean value (mV) in each bin (filtered), entries " + str(int(graphFiltered.GetEntries()))
     fileName = "filtered.pdf"
     produceTH2Plot(graphFiltered, headTitle, fileName)
+
+    # Efficiency and inefficiency
+    headTitle = "Efficiency of hit particles in each bin (filtered)"
+    fileName = "filtered_eff.pdf"
+    #produceEfficiencyPlot(graphFiltered)
+
+    headTitle = "Efficiency of hit particles in each bin (filtered)"
+    fileName = "filtered_eff.pdf"
+    #produceInefficiencyPlot(graphFiltered)
+
+
 
     # Print original std TProfile2D
     headTitle = "Pulse amplitude standard deviation (mV) in each bin, entries " + str(int(graphStd.GetEntries()))
     fileName = "_std.pdf"
     produceTH2Plot(graphStd, headTitle, fileName)
 
+
     # Print filtered std TProfile2D
     headTitle = "Pulse amplitude standard deviation (mV) in each bin (filtered), entries " + str(int(graphStdFiltered.GetEntries()))
     fileName = "_filtered_std.pdf"
     produceTH2Plot(graphStdFiltered, headTitle, fileName)
+
 
     del graphOrignal, graphStd, graphFiltered, graphStdFiltered
 
