@@ -100,6 +100,7 @@ def removeUnphyscialQuantities(results, noise, sigma):
     amplitudes      = np.empty(0,dtype=results[0][0].dtype)
     rise_times      = np.empty(0,dtype=results[0][1].dtype)
     half_max_times  = np.empty(0,dtype=results[0][2].dtype)
+    pulse_points    = np.empty(0,dtype=results[0][3].dtype)
     
     for index in range(0, len(results)):
         amplitudes      = np.concatenate((amplitudes, results[index][0]), axis=0)
@@ -123,7 +124,7 @@ def removeUnphyscialQuantities(results, noise, sigma):
         rise_times[chan][indices] = 0
         half_max_times[chan][indices] = 0
 
-    return [convertData(amplitudes), rise_times, half_max_times, convertData(criticalValues)]
+    return [convertData(amplitudes), rise_times, half_max_times, convertData(criticalValues), pulse_points]
 
 
 # Search for critical amplitude values
