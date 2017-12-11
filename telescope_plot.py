@@ -23,10 +23,10 @@ def produceTelescopeGraphs(data_telescope, data_amplitude):
     
     xMin = -6
     xMax = 2.0
-    xBins = 200
+    xBins = 1000
     yMin = 10
     yMax = 15
-    yBins = 200
+    yBins = 1000
     
     data = data_telescope
     amplitude = data_amplitude
@@ -47,55 +47,45 @@ def produceTelescopeGraphs(data_telescope, data_amplitude):
 
 def produceTProfile2DPlot():
 
-    graph = ROOT.TProfile2D("telescope_"+chan,"Telescope channel "+str(int(chan[-1:])+1),xBins,xMin,xMax,yBins,yMin,yMax)
+    graphOrignal = ROOT.TProfile2D("telescope_"+chan,"Telescope channel "+str(int(chan[-1:])+1),xBins,xMin,xMax,yBins,yMin,yMax)
 
     # First, fill the TProfile2D with all data which fulfills conditions
     for index in range(0,len(data)):
          if data['X'][index] > -9.0 and amplitude[chan][index] > 0.0:
-            graph.Fill(data['X'][index], data['Y'][index], amplitude[chan][index])
+            graphOrignal.Fill(data['X'][index], data['Y'][index], amplitude[chan][index])
 
-    graphFiltered = graph.Clone()
-    graph_std = graph.Clone()
-    graph_std.Reset()
+    graphFiltered = graphOrignal.Clone()
+    graphStd = graphOrignal.Clone()
+    graphStd.Reset()
     
     totalEntries = int(graphFiltered.GetEntries())
     unwantedEntries = 0
     setEntries = 0
 
-    # Remove bins which have less than x entries
     for bin in range(0, int(graphFiltered.GetSize())):
         entries = int(graphFiltered.GetBinEntries(bin))
         
-        if 0 < entries <= minEntries:
-        
-            graphFiltered.SetBinContent(bin, 0)
-            graphFiltered.SetBinEntries(bin, 0)
-            
-            unwantedEntries += 1
-        
-        else:
-            graph_std.SetBinContent(bin, graph.GetBinError(bin))
-            graph_std.SetBinEntries(bin, entries)
-            setEntries +=1
+        graphFiltered.SetBinContent(bin, 0)
+        graphFiltered.SetBinEntries(bin, 0)
 
-    print unwantedEntries
+        graphStd.SetBinContent(bin, graphOrignal.GetBinError(bin))
+        graphStd.SetBinEntries(bin, entries)
+        setEntries +=1
 
-#    graph_std.SetEntries(setEntries)
-#    graphFiltered.SetEntries((totalEntries-unwantedEntries))
 
     headTitle = "Pulse amplitude mean value (mV) in each bin, entries " + str(int(graphFiltered.GetEntries()))
     fileName = ".pdf"
-    produceTH2Plot(graphFiltered, headTitle, fileName)
+    produceTH2Plot(graphOrignal, headTitle, fileName)
 
     # If a problem, then probably its because of the data type
-    headTitle = "Pulse amplitude standard deviation (mV) in each bin, entries " + str(int(graph_std.GetEntries()))
+    headTitle = "Pulse amplitude standard deviation (mV) in each bin, entries " + str(int(graphStd.GetEntries()))
     fileName = "_std.pdf"
-    produceTH2Plot(graph_std, headTitle, fileName)
+    produceTH2Plot(graphStd, headTitle, fileName)
 
     # Given the filtered values, produce histogram
     produceTH1MeanPlot(graphFiltered)
     
-    del graph, graphFiltered
+    del graphOrignal, graphFiltered
 
 
 
@@ -108,7 +98,7 @@ def produceTEfficiencyPlot():
     for index in range(0,len(data)):
         if data['X'][index] > -9.0:
             telescope_hits_temp.Fill(data['X'][index], data['Y'][index], 1.0)
-            if amplitude[chan][index] > 0:
+            if amplitude[chan][index] > 0.0:
                 LGAD_hits_temp.Fill(data['X'][index], data['Y'][index], 1.0)
 
     LGAD_hits = LGAD_hits_temp.Clone()
@@ -130,7 +120,7 @@ def produceTEfficiencyPlot():
             telescope_hits.SetBinEntries(bin, 0)
 
 
-    graph = ROOT.TEfficiency(LGAD_hits, telescope_hits)
+    graph = ROOT.TEfficiency(LGAD_hits_temp, telescope_hits_temp)
     
     headTitle = "Efficiency of hit particles in each bin"
     fileName = "_eff.pdf"
@@ -166,7 +156,7 @@ def produceTH1Plot(graph, headTitle, fileName):
     canvas.cd()
     graph.Draw()
     canvas.Update()
-    canvas.Print("../../HGTD_material/plots/telescope_2d_distributions/telescope_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
+    canvas.Print("../../HGTD_material/plots_hgtd_efficiency_sep_2017/telescope_2d_distributions/telescope_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
     canvas.Clear()
 
 
@@ -178,7 +168,7 @@ def produceTH2Plot(graph, headTitle, fileName):
     canvas.cd()
     graph.Draw("COLZ")
     canvas.Update()
-    canvas.Print("/../../HGTD_material/plots/telescope_2d_distributions/telescope_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
+    canvas.Print("../../HGTD_material/plots_hgtd_efficiency_sep_2017/telescope_2d_distributions/telescope_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
     canvas.Clear()
 
 

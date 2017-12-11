@@ -29,18 +29,12 @@ def telescopeAnalysis(batchNumbers):
 
 
 def telescopeAnalysisPerBatch(runLog):
-
-    for row in runLog:
-        print row[3]
     
     md.defineGlobalVariableRun(runLog[0])
     
     telescope_data_batch = dm.importTelescopeDataBatch()
 
     amplitudes_batch = dm.importPulseFile("amplitudes")
-    
-    print "telescope data", len(telescope_data_batch)
-    print "amplitude data", len(amplitudes_batch)
     
     if len(amplitudes_batch) == len(amplitudes_batch):
         tplot.produceTelescopeGraphs(telescope_data_batch, amplitudes_batch)

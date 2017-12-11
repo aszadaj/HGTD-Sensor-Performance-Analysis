@@ -32,11 +32,15 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
         yAxisTitle = "Number of entries (N)"
         setGraphAttributes(noise_graph[chan],titleAbove,xAxisTitle,yAxisTitle)
         
-        fileName = "../../HGTD_material/plots/noise_distributions/pedestal_plots/pedestal_"+str(md.getBatchNumber())+"_"+chan+".pdf"
-        exportGraph(pedestal_graph[chan],canvas_pedestal,fileName)
+        fileName = str(md.getSourceFolderPath())+"plots_hgtd_efficiency_sep_2017/noise/pedestal_plots/pedestal_"+str(md.getBatchNumber())+"_"+chan+".pdf"
         
-        fileName = "../../HGTD_material/plots/noise_distributions/noise_plots/noise_"+str(md.getBatchNumber())+"_"+chan+".pdf"
+        exportGraph(pedestal_graph[chan],canvas_pedestal,fileName)
+        #exportROOTFile(pedestal_graph[chan],"noise","pedestal","plots", chan)
+        
+        fileName = str(md.getSourceFolderPath())+"plots_hgtd_efficiency_sep_2017/noise/noise_plots/noise_"+str(md.getBatchNumber())+"_"+chan+".pdf"
+        
         exportGraph(noise_graph[chan],canvas_noise,fileName)
+        #exportROOTFile(noise_graph[chan],"noise","noise","plots", chan)
 
 
 # Define the setup for graphs

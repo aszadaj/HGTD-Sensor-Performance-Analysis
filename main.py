@@ -27,17 +27,17 @@ def main():
     ######  GRAPH ONLY   ######
     
     runNumber = 3791
-    entries = [10001]
+    entries = 2010
     
     ###########################
     
-    #noise.noiseAnalysis            (batchNumber)
+    noise.noiseAnalysis            (batchNumber)
     
     #pulse.pulseAnalysis            (batchNumber)
     
     #telescope.telescopeAnalysis     (batchNumber)
     
-    timing.timingAnalysis           (batchNumber)
+    #timing.timingAnalysis           (batchNumber)
     
     #graph.printWaveform            (runNumber, entries)
     

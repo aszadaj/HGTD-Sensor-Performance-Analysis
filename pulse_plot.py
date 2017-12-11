@@ -39,14 +39,14 @@ def defineAndProduceHistogram(graphList,canvas,typeOfGraph,chan):
     headTitle = "Distribution of pulse rise times, Sep 2017 batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])+1) + ", sensor: " + str(md.getNameOfSensor(chan))
     xAxisTitle = "Time (ns)"
     yAxisTitle = "Number (N)"
-    fileName = "../../HGTD_material/plots/pulse_distributions/rise_time_plots/rise_time_distribution_"+str(md.getBatchNumber())+"_"+chan+".pdf"
+    fileName = "../../HGTD_material/plots_hgtd_efficiency_sep_2017/pulse/rise_time_plots/rise_time_distribution_"+str(md.getBatchNumber())+"_"+chan+".pdf"
     
     
     if typeOfGraph == "amplitude":
     
         headTitle = "Distribution of pulse amplitudes, Sep 2017 batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])+1) + ", sensor: " + str(md.getNameOfSensor(chan))
         xAxisTitle = "Amplitude (mV)"
-        fileName = "../../HGTD_material/plots/pulse_distributions/amplitude_plots/amplitude_distribution_"+str(md.getBatchNumber())+"_"+chan+".pdf"
+        fileName = "../../HGTD_material/plots_hgtd_efficiency_sep_2017/pulse/amplitude_plots/amplitude_distribution_"+str(md.getBatchNumber())+"_"+chan+".pdf"
     
 
     graphList.SetLineColor(1)
