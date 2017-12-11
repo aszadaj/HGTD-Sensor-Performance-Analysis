@@ -67,7 +67,7 @@ def pulseAnalysis(batchNumbers):
             pulse_points = np.concatenate((pulse_points, results[4]), axis = 0)
             fraction_del_amplitudes = np.concatenate((pulse_points, results[5]), axis = 0)
         
-        
+        print fraction_del_amplitudes
         print "Fraction of removed amplitudes, due to critical value"
         
         for chan in fraction_del_amplitudes.dtype.names:

@@ -121,7 +121,7 @@ def removeUnphyscialQuantities(results, noise, sigma):
         rise_times[chan][indices] = 0
         half_max_times[chan][indices] = 0
 
-        fraction_del_amplitudes[chan] = 1 + fraction_del_amplitudes[chan]
+        fraction_del_amplitudes[chan] = np.sum(indices)
     
 
     return [convertData(amplitudes), rise_times, half_max_times, convertData(criticalValues), pulse_points, fraction_del_amplitudes]
