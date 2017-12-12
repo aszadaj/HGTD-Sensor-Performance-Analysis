@@ -35,7 +35,7 @@ def main():
     
     pulse.pulseAnalysis            (batchNumber)
     
-    telescope.telescopeAnalysis     (batchNumber)
+    #telescope.telescopeAnalysis     (batchNumber)
     
     #timing.timingAnalysis           (batchNumber)
     
