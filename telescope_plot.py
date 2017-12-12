@@ -36,12 +36,11 @@ def produceTelescopeGraphs(data_telescope, data_amplitude):
     
     minEntries = 2
     
-    
     for chan in channels:
     
         # 1. Shows the mean amplitude in each filled bin (with or without conditions)
         # 2. Shows efficiency between telescope data and amplitude data
-        if chan == "chan0" or  chan == "chan1" :
+        if chan == "chan0" or chan == "chan1":
             produce2DPlots()
             produceTEfficiencyPlot()
 
@@ -97,7 +96,7 @@ def produce2DPlots():
     fileName = ".pdf_eff"
     #produceInefficiencyPlot(graphOrignal)
 
-
+ 
     # Print filtered TProfile2D
     headTitle = "Pulse amplitude mean value (mV) in each bin (filtered), entries " + str(int(graphFiltered.GetEntries()))
     fileName = "filtered.pdf"
@@ -111,7 +110,6 @@ def produce2DPlots():
     headTitle = "Efficiency of hit particles in each bin (filtered)"
     fileName = "filtered_eff.pdf"
     #produceInefficiencyPlot(graphFiltered)
-
 
 
     # Print original std TProfile2D

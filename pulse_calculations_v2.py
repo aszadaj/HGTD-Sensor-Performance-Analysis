@@ -1,3 +1,4 @@
+
 import numpy as np
 
 import metadata as md
@@ -24,13 +25,21 @@ def pulseAnalysis(data, pedestal, noise, sigma):
     return amplitudes, rise_times, half_max_times, pulse_points
 
 
+
+
+
+
+
+
+
+
 # Calculate maximum amplitude value and rise time, if found.
 # Function results zero values if
 # 1. The pulse is not found
 # 2. The pulse cannot be calculated, because of the conditions for polyfit (if for some reason there is a
 #   'flat' function for the pulse
 
-def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber, sigma):
+def getAmplitudeAndRiseTimeDEBUG (event, chan, pedestal, noise, eventNumber, sigma):
     
     # Time scope is the time difference between two recorded points
     # Assumption: for all events this value is the same.
@@ -46,7 +55,37 @@ def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber, sigma):
     indices_condition = event < - threshold # Note, event is negative
  
     # Indices condition should maybe be in consecutive order?
-    if any(indices_condition):
+    if np.sum(indices_condition) > 5:
+    
+        # 12.12.2017: implemention of better method of avoiding noises:
+        # These lines, take out 1. groups of points in consecutive order
+        # selects one which have the most points, which is the pulse
+        # Defines these points, and only those, as the position of the pulse
+        
+        ############### NEW ####################
+        
+        
+        group_points = group_consecutives(np.where(indices_condition)[0])
+        group_points_length = [len(group) for group in group_points]
+        pulse_indices = group_points[group_points_length.index(max(group_points_length))] # array which contain indices for the whole pulse, the most "relevant" one
+        
+        peak_index = np.argmin(event)
+
+        point_difference = 4 # This defines how many points from the peak the fit should be considered
+        peak_fit_first_index = peak_index - point_difference
+        peak_fit_last_index = peak_index + point_difference
+
+        peak_indices = np.argwhere(event[peak_fit_first_index:peak_fit_last_index]).flatten()
+        peak_truth   = event[peak_fit_first_index:peak_fit_last_index]
+        
+        pulse_peak_fit = np.polyfit(pulse_indices.flatten()*timeScope, event[peak_fit_first_index:peak_fit_last_index], 2)
+        
+        pulse_amplitude = 0
+        
+        
+
+        
+        #########################################
         
         pulse_data_points = np.sum(indices_condition)
         
@@ -65,6 +104,7 @@ def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber, sigma):
             # Make a linear fit, first degree
             # U = K*t + U_0
             [K, U_0] = np.polyfit(amplitude_indices.flatten()*timeScope, event[pulse_first_index:pulse_last_index][amplitude_truth].flatten(), 1)
+       
             
             # This happens occasionally, if the
             if K == 0:
@@ -89,6 +129,7 @@ def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber, sigma):
             pulse_last_index = 0
 
     return pulse_amplitude, pulse_rise_time, pulse_half_maximum, pulse_data_points
+
 
 
 # Function which removes amplitudes which are in the range being critical amplitude values
@@ -147,3 +188,10 @@ def convertData(data):
         data[chan] = np.multiply(data[chan],-1000)
     
     return data
+
+
+def group_consecutives(data, stepsize=1):
+    return np.split(data, np.where(np.diff(data) != stepsize)[0]+1)
+
+
+

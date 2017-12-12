@@ -27,19 +27,19 @@ def main():
     ######  GRAPH ONLY   ######
     
     runNumber = 3791
-    entries = 6854
+    entry = 780
     
     ###########################
     
     #noise.noiseAnalysis            (batchNumber)
     
-    #pulse.pulseAnalysis            (batchNumber)
+    pulse.pulseAnalysis            (batchNumber)
     
-    #telescope.telescopeAnalysis     (batchNumber)
+    telescope.telescopeAnalysis     (batchNumber)
     
-    timing.timingAnalysis           (batchNumber)
+    #timing.timingAnalysis           (batchNumber)
     
-    #graph.printWaveform            (runNumber, entries)
+    #graph.printWaveform            (runNumber, entry)
     
     exit()
 
