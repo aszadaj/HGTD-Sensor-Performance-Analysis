@@ -27,7 +27,7 @@ def main():
     ######  GRAPH ONLY   ######
     
     runNumber = 3791
-    entry = 572
+    entry = 1013
     
     ##################################################
     
@@ -37,7 +37,7 @@ def main():
     
     #telescope.telescopeAnalysis     (batchNumber)
     
-    timing.timingAnalysis           (batchNumber)
+    #timing.timingAnalysis           (batchNumber)
     
     graph.printWaveform            (runNumber, entry)
     

@@ -42,7 +42,7 @@ def printWaveform(runNumber, entry):
     
     # SiPM chan6
     
-    channels = ["chan1"]
+    channels = ["chan2", "chan6"]
     
     for chan in channels:
 
@@ -103,7 +103,7 @@ def printWaveform(runNumber, entry):
     
     
     fileName = "../../HGTD_material/plots_hgtd_efficiency_sep_2017/waveforms/waveform_"+str(runNumber)+"_entry_"+str(entry)+".pdf"
-    leg.Draw()
+    #leg.Draw()
     canvas.Update()
     canvas.Print(fileName)
 
