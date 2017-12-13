@@ -57,14 +57,14 @@ def comparePeakTimes(half_max_times):
     
     for chan in channels:
     
-        data_graph[chan] = ROOT.TH1D("timing_"+chan+"_histogram","Time difference distribution between SiPM and " + md.getNameOfSensor(chan) + " "+str(int(chan[-1:])+1),3000,-0.6,0.6)
+        data_graph[chan] = ROOT.TH1D("timing_"+chan+"_histogram","Time difference distribution between SiPM and " + md.getNameOfSensor(chan) + " "+str(int(chan[-1:])+1),3000,-300,300)
         # outside the range, if there are filled values
         for entry in range(0, len(half_max_times)):
             timeDifference = half_max_times[entry][chan]-half_max_times[entry][SiPM_index]
 
-            if half_max_times[entry][chan] > 0.0 and half_max_times[entry][SiPM_index]:
+            if half_max_times[entry][chan] > 0.0:
                 
-                data_graph[chan].Fill(timeDifference)
+                data_graph[chan].Fill(timeDifference*100)
 
 
         for entry in range(0, len(half_max_times)):
@@ -99,7 +99,7 @@ def produceTH1Plot(graph, chan, canvas):
     headTitle = "Time difference between SiPM and " + md.getNameOfSensor(chan)
     fileName = ".pdf"
 
-    title = headTitle + ", Sep 2017 batch " + str(md.getBatchNumber())+";" + "Time (ns)" + "; " + "Entries (N)"
+    title = headTitle + ", Sep 2017 batch " + str(md.getBatchNumber())+";" + "Time (ps)" + "; " + "Entries (N)"
     graph.SetTitle(title)
     
     canvas.cd()
