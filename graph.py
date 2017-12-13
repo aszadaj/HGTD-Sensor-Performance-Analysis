@@ -42,7 +42,7 @@ def printWaveform(runNumber, entry):
     
     # SiPM chan6
     
-    channels = ["chan6"]
+    channels = ["chan1"]
     
     for chan in channels:
 
@@ -74,15 +74,15 @@ def printWaveform(runNumber, entry):
         # Check what happens if the limit is pedestal corrected!
         for index in range(0,1002):
     
-            graph_line_noise[chan].SetPoint(index, index*0.1, 25)
+            graph_line_noise[chan].SetPoint(index, index*0.1, noise[chan]*sigma-pedestal[chan])
         
-        graph_line_noise[chan].SetLineColor(int(chan[-1])+1)
+        graph_line_noise[chan].SetLineColor(int(chan[-1])+2)
         graph_line_noise[chan].SetMarkerColor(2)
         graph_line_noise[chan].Draw("L")
       
-        leg.AddEntry(graph_line_noise[chan],"Limit: 25 mV","l")
+        #leg.AddEntry(graph_line_noise[chan],"Limit: 25 mV","l")
         
-        #leg.AddEntry(graph_line_noise[chan],"Threshold="+str(noise[chan]*sigma-pedestal[chan])[1:5]+" mV, \sigma: "+str(sigma),"l")
+        leg.AddEntry(graph_line_noise[chan],"Threshold="+str(noise[chan]*sigma-pedestal[chan])[1:5]+" mV, \sigma: "+str(sigma),"l")
 
         graph[chan].SetLineColor(int(chan[-1])+1)
         graph[chan].SetMarkerColor(1)
@@ -93,10 +93,10 @@ def printWaveform(runNumber, entry):
 #        graph[chan].GetYaxis().SetRangeUser(-40,400)
 #        graph[chan].GetXaxis().SetRangeUser(0,100)
 
-        graph[chan].GetYaxis().SetRangeUser(-40,40)
+        graph[chan].GetYaxis().SetRangeUser(-30,400)
         graph[chan].GetXaxis().SetRangeUser(0,100)
 
-        leg.AddEntry(graph[chan], md.getNameOfSensor(chan) + " Waveform ","l")
+        #leg.AddEntry(graph[chan], md.getNameOfSensor(chan) + " Waveform ","l")
     
         graph[chan].SetTitle(titleAbove)
         canvas.Update()

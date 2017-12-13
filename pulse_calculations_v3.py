@@ -25,14 +25,6 @@ def pulseAnalysis(data, pedestal, noise, sigma):
     return amplitudes, rise_times, half_max_times, pulse_points
 
 
-
-
-
-
-
-
-
-
 # Calculate maximum amplitude value and rise time, if found.
 # Function results zero values if
 # 1. The pulse is not found
@@ -59,55 +51,6 @@ def getAmplitudeAndRiseTime (data_event, chan, pedestal, noise, eventNumber, sig
 
     if np.sum(indices_condition) > point_difference * 4:
     
-    
-    
-        # 12.12.2017: implemention of better method of avoiding noises:
-        # These lines, take out 1. groups of points in consecutive order
-        # selects one which have the most points, which is the pulse
-        # Defines these points, and only those, as the position of the pulse
-        
-        ############### NEW ####################
-        
-        group_points = group_consecutives(np.where(indices_condition)[0])
-        group_points_length = [len(group) for group in group_points]
-        pulse_indices = group_points[group_points_length.index(max(group_points_length))]
-         # array which contain indices for the whole pulse, the most "relevant" one
-        
-        
-        
-        
-        peak_index = np.argmin(data_event)
-        
-        # This defines how many points from the peak the fit should be considered
-        peak_fit_first_index = peak_index - point_difference
-        peak_fit_last_index = peak_index + point_difference
-       
-        peak_indices = pulse_indices[np.where((pulse_indices >= peak_fit_first_index) & (pulse_indices < peak_fit_last_index))[0]]
-        
-        peak_points = data_event[peak_fit_first_index:peak_fit_last_index]
-    
-        # Check why the polyfit fails
-        if len(peak_indices) != len(peak_points):
-            print "different"
-            print peak_indices
-            print peak_points
-            print np.sum(indices_condition)
-            print np.amin(data_event)
-            print np.argmin(data_event)
-            print group_points
-            print len (group_points_length)
-            print "event",eventNumber
-            print chan, "\n"
-        peak_fit = np.polyfit(peak_indices*timeScope, peak_points, 2)
-       
-        pulse_amplitude = peak_fit[0]*np.power(peak_index*timeScope,2) + peak_fit[1]*peak_index*timeScope+peak_fit[2]
-        
-      
-        
-
-        
-        #########################################
-        
         pulse_data_points = np.sum(indices_condition)
         
         # Investigate how many points you can remove
@@ -124,8 +67,7 @@ def getAmplitudeAndRiseTime (data_event, chan, pedestal, noise, eventNumber, sig
             # Make a linear fit, first degree
             # U = K*t + U_0
             [K, U_0] = np.polyfit(amplitude_indices.flatten()*timeScope, data_event[pulse_first_index:pulse_last_index][amplitude_truth].flatten(), 1)
-       
-            
+
             # This happens occasionally, if the
             if K == 0:
                 print "WARNING polyfit gives a flat function! Batch",md.getRunNumber(),"data_event", eventNumber

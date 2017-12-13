@@ -27,7 +27,7 @@ def pulseAnalysis(batchNumbers):
     
         results_batch = []
         
-        #runLog = [runLog[0], runLog[1]] # restrict to two files
+        runLog = [runLog[0], runLog[1]] # restrict to two files
     
         startTimeBatch = md.getTime()
         md.printTime()
@@ -91,7 +91,7 @@ def pulseAnalysisPerRun(sigma):
     p = Pool(1) #dm.threads
     #max = md.getNumberOfEvents()
     max = 200000 # This is adapted to match the number of telescope files
-    #max = 5000
+    max = 5000
     step = 5000
     ranges = range(0, max, step)
     
