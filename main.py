@@ -37,7 +37,7 @@ def main():
     
     #telescope.telescopeAnalysis     (batchNumber)
     
-    #timing.timingAnalysis           (batchNumber)
+    timing.timingAnalysis           (batchNumber)
     
     graph.printWaveform            (runNumber, entry)
     
