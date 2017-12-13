@@ -7,6 +7,11 @@ import metadata as md
 ROOT.gStyle.SetPalette(1)
 ROOT.gStyle.SetNumberContours(255)
 
+
+# The function receives two arrays, for a specific batch. They are structured as
+# data[event][chan], where event spans along all run files. Example for B306 the max event is
+# 11 files * 200 000 = 2 200 000 events
+
 def produceTelescopeGraphs(data_telescope, data_amplitude):
    
     global xMin
@@ -23,15 +28,15 @@ def produceTelescopeGraphs(data_telescope, data_amplitude):
     
     xMin = -6
     xMax = 2.0
-    xBins = 1000
+    xBins = 500
     yMin = 10
     yMax = 15
-    yBins = 1000
+    yBins = 500
     
     data = data_telescope
     amplitude = data_amplitude
 
-    canvas = ROOT.TCanvas("Telescope","telescope")
+    canvas = ROOT.TCanvas("Telescope", "telescope")
     channels = amplitude.dtype.names
     
     minEntries = 2
@@ -48,7 +53,7 @@ def produceTelescopeGraphs(data_telescope, data_amplitude):
 def produce2DPlots():
 
     graphOrignal = ROOT.TProfile2D("telescope_"+chan,"Telescope channel "+str(int(chan[-1:])+1),xBins,xMin,xMax,yBins,yMin,yMax)
-
+    
     # Original mean value TProfile2D
     for index in range(0,len(data)):
          if data['X'][index] > -9.0 and amplitude[chan][index] > 0.0:
@@ -59,16 +64,15 @@ def produce2DPlots():
     # Standard deviation TProfile2D
     for bin in range(0, int(graphStd.GetSize())):
     
-        errorPerBin = int(graphOrignal.GetBinError(bin))
+        errorPerBin   = int(graphOrignal.GetBinError(bin))
         entriesPerBin = int(graphOrignal.GetBinContent(bin))
         
         graphStd.SetBinContent(bin, errorPerBin)
-        #graphStd.SetBinEntries(bin, entriesPerBin)
+        graphStd.SetBinEntries(bin, entriesPerBin)
 
     # Begin filtering
     graphFiltered = graphOrignal.Clone()
     graphStdFiltered =  graphStd.Clone()
-
 
     for bin in range(0, int(graphFiltered.GetSize())):
         entries = int(graphFiltered.GetBinEntries(bin))
@@ -96,7 +100,7 @@ def produce2DPlots():
     fileName = ".pdf_eff"
     #produceInefficiencyPlot(graphOrignal)
 
- 
+
     # Print filtered TProfile2D
     headTitle = "Pulse amplitude mean value (mV) in each bin (filtered), entries " + str(int(graphFiltered.GetEntries()))
     fileName = "filtered.pdf"
@@ -130,16 +134,26 @@ def produce2DPlots():
 
 def produceTEfficiencyPlot():
     
+    efficiencyOrig = ROOT.TEfficiency("Efficiency_particles"+chan+"","Effciency particles channel "+str(int(chan[-1:])+1),xBins,xMin,xMax,yBins,yMin,yMax)
+    
     LGADHitsOrig = ROOT.TProfile2D("LGAD_particles"+chan+"","LGAD particles channel "+str(int(chan[-1:])+1),xBins,xMin,xMax,yBins,yMin,yMax)
     MIMOSAHitsOrig = ROOT.TProfile2D("telescope_particles"+chan+"","Telescope particles channel "+str(int(chan[-1:])+1),xBins,xMin,xMax,yBins,yMin,yMax)
     
+
 
     # Original TEfficiency, efficiency graph
     for index in range(0,len(data)):
         if data['X'][index] > -9.0:
             MIMOSAHitsOrig.Fill(data['X'][index], data['Y'][index], 1.0)
+            
+            efficiencyOrig.Fill(amplitude[chan][index] > 0.0, data['X'][index], data['Y'][index] ) # New TEfficiency object
+            
             if amplitude[chan][index] > 0.0:
                 LGADHitsOrig.Fill(data['X'][index], data['Y'][index], 1.0)
+#
+#    for bin in range(0, int(efficiencyOrig.GetTotalHistogram().GetSize())):
+
+
 
 
     LGADNoHitsOrig = LGADHitsOrig.Clone()
@@ -178,12 +192,19 @@ def produceTEfficiencyPlot():
             LGADNoHits.SetBinContent(bin, 0)
             LGADNoHits.SetBinEntries(bin, 0)
 
+
+
+
     # Orginial efficiency graph
-    efficiencyOrig = ROOT.TEfficiency(LGADHitsOrig, MIMOSAHitsOrig)
+    
     headTitle = "Efficiency of hit particles in each bin"
     fileName = "_eff.pdf"
     #efficiency.GetHistogram().GetZAxis().SetRangeUser(0.9, 1.0)
     produceTH2Plot(efficiencyOrig, headTitle, fileName)
+    
+    
+    
+    
     
     # Original inefficiency graph
     inEfficiencyOrig = ROOT.TEfficiency(LGADNoHitsOrig, MIMOSAHitsOrig)

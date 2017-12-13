@@ -9,6 +9,7 @@ import telescope_plot as tplot
 import data_management as dm
 
 #md.setupATLAS()
+
 ROOT.gROOT.SetBatch(True)
 
 
@@ -16,6 +17,7 @@ def telescopeAnalysis(batchNumbers):
     
     startTime = getTime()
     printTime()
+
     print "Start telescope analysis, batch",batchNumbers[0],"\n"
 
     dm.checkIfRepositoryOnStau()
@@ -36,10 +38,12 @@ def telescopeAnalysisPerBatch(runLog):
 
     amplitudes_batch = dm.importPulseFile("amplitudes")
     
-    if len(amplitudes_batch) == len(amplitudes_batch):
+    if len(telescope_data_batch) == len(amplitudes_batch):
         tplot.produceTelescopeGraphs(telescope_data_batch, amplitudes_batch)
+
     else:
-        print "Mismatch! Must be the same!"
+    
+        tplot.produceTelescopeGraphs(telescope_data_batch[0:len(amplitudes_batch)], amplitudes_batch)
 
 
 # Get actual time
