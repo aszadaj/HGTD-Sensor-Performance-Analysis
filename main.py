@@ -67,6 +67,11 @@ main()
 #0.009 chan5
 #0.0135 chan6
 
+
+# log
+
+# improved the polyfit analysis, now check how the distributions look like
+
 # Changed also the way of obtaining the first index when calculating a pulse. I removed earlier three points, now there is only one, deduced that from observing where the threshold is situated
 
 # Available batch numbers:

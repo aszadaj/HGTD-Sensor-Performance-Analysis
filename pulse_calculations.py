@@ -56,9 +56,7 @@ def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber, sigma):
     point_difference = 3
  
     # Indices condition should maybe be in consecutive order?
-    print "condt"
-    print np.sum(indices_condition)
-    print point_difference * 2
+
     if np.sum(indices_condition) > point_difference * 2:
     
         # 12.12.2017: implemention of better method of avoiding noises:
@@ -81,20 +79,14 @@ def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber, sigma):
        
         peak_indices = pulse_indices[np.where((pulse_indices >= peak_fit_first_index) & (pulse_indices < peak_fit_last_index))[0]]
         
-        print peak_fit_first_index
-        print peak_fit_last_index
         peak_points = event[peak_fit_first_index:peak_fit_last_index]
     
      
         peak_fit = np.polyfit(peak_indices*timeScope, peak_points, 2)
-        
-        print np.power(peak_index,2)
-        
+       
         pulse_amplitude = peak_fit[0]*np.power(peak_index*timeScope,2) + peak_fit[1]*peak_index*timeScope+peak_fit[2]
         
-        print "new method"
-        print pulse_amplitude
-        
+      
         
 
         
@@ -106,10 +98,6 @@ def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber, sigma):
         pulse_first_index = np.where(indices_condition)[0][0] - 1 # Remove one point, just a convention
         pulse_last_index = np.argmin(event) # Peak
         pulse_amplitude = np.amin(event) - pedestal # Amplitude, pedestal corrected (usually few +-mV), not the best option, but
-        
-        print "old method"
-        print pulse_amplitude
-        
         
         amplitude_truth = (event[pulse_first_index:pulse_last_index] > 0.9*pulse_amplitude ) & (event[pulse_first_index:pulse_last_index] < 0.1*pulse_amplitude)
         amplitude_indices = np.argwhere((event[pulse_first_index:pulse_last_index] > 0.9*pulse_amplitude) & (event[pulse_first_index:pulse_last_index] < 0.1*pulse_amplitude))
