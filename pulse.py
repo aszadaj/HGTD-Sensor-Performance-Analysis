@@ -15,7 +15,7 @@ ROOT.gROOT.SetBatch(True)
 # Start analysis of selected run numbers
 def pulseAnalysis(batchNumbers):
 
-    sigma = 5
+    sigma = 6
 
     dm.checkIfRepositoryOnStau()
     
@@ -27,7 +27,7 @@ def pulseAnalysis(batchNumbers):
     
         results_batch = []
         
-        runLog = [runLog[0], runLog[1]] # restrict to two files
+        #runLog = [runLog[0], runLog[1]] # restrict to two files
     
         startTimeBatch = md.getTime()
         md.printTime()
@@ -88,9 +88,9 @@ def pulseAnalysisPerRun(sigma):
     startTimeRun = md.getTime()
     
     # Configure inputs for multiprocessing
-    p = Pool(dm.threads) #dm.threads
+    p = Pool(1) #dm.threads
     #max = md.getNumberOfEvents()
-    max = 20000 # This is adapted to match the number of telescope files
+    max = 200000 # This is adapted to match the number of telescope files
     #max = 5000
     step = 5000
     ranges = range(0, max, step)

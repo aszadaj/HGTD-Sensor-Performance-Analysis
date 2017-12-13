@@ -33,7 +33,7 @@ def printWaveform(runNumber, entry):
     channels = data.dtype.names
     first = True
     
-    sigma = 5.0
+    sigma = 6.0
     
     leg = ROOT.TLegend (0.73, 0.6, 0.93, 0.9)
     leg.SetHeader("Waveforms, sensors")
@@ -42,7 +42,7 @@ def printWaveform(runNumber, entry):
     
     # SiPM chan6
     
-    channels = ["chan1"]
+    channels = ["chan6"]
     
     for chan in channels:
 
