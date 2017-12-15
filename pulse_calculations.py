@@ -43,6 +43,17 @@ def pulseAnalysis(data, pedestal, noise, sigma):
 # 2. The pulse cannot be calculated, because of the conditions for polyfit (if for some reason there is a
 #   'flat' function for the pulse
 
+
+#############################
+#
+#
+# This function is made to implement
+# second degree fit
+#
+#
+#
+#############################
+
 def getAmplitudeAndRiseTime (data_event, chan, pedestal, noise, eventNumber, sigma):
    
     # Time scope is the time difference between two recorded points
@@ -57,11 +68,11 @@ def getAmplitudeAndRiseTime (data_event, chan, pedestal, noise, eventNumber, sig
     # This sets the condition for seeing a value above the noise.
     threshold = noise * sigma - pedestal
     indices_condition = data_event < - threshold # Note, event is negative
-    point_difference = 3
+    point_difference = 3 # This is to choose how many poins the second linear fit should be made
  
     # Indices condition should maybe be in consecutive order?
 
-    if np.sum(indices_condition) > point_difference * 2 and np.amin(data_event) < -threshold*10:
+    if np.sum(indices_condition) > point_difference * 2:
     
         pulse_data_points = np.sum(indices_condition)
         
@@ -106,30 +117,30 @@ def getAmplitudeAndRiseTime (data_event, chan, pedestal, noise, eventNumber, sig
         
             # Check why the polyfit fails
             if len(peak_indices) > len(peak_points):
+            
                 print "larger"
                 print peak_indices
                 print peak_points
-                print np.sum(indices_condition)
                 print np.amin(data_event)
                 print np.argmin(data_event)
-                print group_points
-                print len (group_points_length)
-                
+                print "threshold", threshold[0]
                 print "event",eventNumber
                 print chan, "\n"
+            
             
             elif len(peak_indices) < len(peak_points):
             
                 print "smaller"
                 print peak_indices
                 print peak_points
-                print np.sum(indices_condition)
                 print np.amin(data_event)
                 print np.argmin(data_event)
                 print group_points
                 print len (group_points_length)
+                print "threshold", threshold[0]
                 print "event",eventNumber
                 print chan, "\n"
+                
             
             
             

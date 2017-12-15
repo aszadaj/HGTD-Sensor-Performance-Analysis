@@ -24,7 +24,7 @@ def importNoiseFile(dataType):
     with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/noise/noise_"+str(dataType)+"/noise_"+str(dataType)+"_"+str(md.getBatchNumber())+".pkl","rb") as input:
        
         dataFile = pickle.load(input)
-
+    
     return dataFile
 
 

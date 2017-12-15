@@ -30,6 +30,8 @@ def pulseAnalysis(data, pedestal, noise, sigma):
 # 2. The pulse cannot be calculated, because of the conditions for polyfit (if for some reason there is a
 #   'flat' function for the pulse
 
+
+# BACKUP METHOD #
 def getAmplitudeAndRiseTime (event, chan, pedestal, noise, eventNumber, sigma):
     
     # Time scope is the time difference between two recorded points
@@ -147,3 +149,10 @@ def convertData(data):
         data[chan] = np.multiply(data[chan],-1000)
     
     return data
+
+def group_consecutives(data, stepsize=1):
+    return np.split(data, np.where(np.diff(data) != stepsize)[0]+1)
+
+
+
+

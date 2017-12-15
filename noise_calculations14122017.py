@@ -1,4 +1,3 @@
-
 import ROOT
 import pickle
 import numpy as np
@@ -7,28 +6,17 @@ import os
 
 import metadata as md
 
-# Data input description
-#
-# x-value = time: ranges between 0 and 100.2 ns
-# difference between two points is 0.1 ns -> 1002 data points in each entry)
-
-# y-value = voltage: expressed in V, with negative values as pulses
-# difference betwen two points is 1.31651759148e-05 V ~ 0.013 mV
-# Data have the structure per channels (up to 8 different) and each with 200 000 entries, can be
-# customizable
-
+# Calculate the noise for all channels
 def findNoiseAverageAndStd(data):
-
 
     channels = data.dtype.names
     
     noise_average = np.zeros(len(data), dtype = data.dtype)
     noise_std = np.zeros(len(data), dtype = data.dtype)
-  
+    
     for event in range(0,len(data)):
         for chan in channels:
         
-            
             ####################################################################
             #
             #   Two conditions of selecting the pedestal and noise:
@@ -39,39 +27,15 @@ def findNoiseAverageAndStd(data):
             #   correction is a convention to make the code more reliable
             #
             ####################################################################
-            
-            # The SiPM behaves differently, in general I think that the limits should be adapted for each sensor
-            # W4-RD01 in batch 306 behaves strange, choose different batch to make different analysis, since
-            # the waveforms behaves differently than predicted
-            
-            if md.getNameOfSensor(chan) == "SiPM-AFP":
-            
-                # Consider points until a pulse
-                pulse_limit = 15 * 0.001 # mV
-                data_point_correction = 1
-                
-                pulse_compatible_samples = np.absolute(data[event][chan]) < pulse_limit
-                
-                if np.sum(pulse_compatible_samples) == 0:
-                    print "SIPM NOISE POINTS ZERO INVESTIGATE"
 
-                max_index = np.where(pulse_compatible_samples)[0][0] - data_point_correction if len( np.where(pulse_compatible_samples)[0] ) else 1002
-                
-                noise_average[event][chan] = np.average(data[event][chan][0:max_index])
-                noise_std[event][chan] = np.std(data[event][chan][0:max_index])
-                
-            else:
-                
-                # Consider all points
-                pulse_limit = 10 * 0.001 # mV
-                pulse_compatible_samples = np.absolute(data[event][chan]) < pulse_limit
-                
-                if np.sum(pulse_compatible_samples) == 0:
-                    print "DUT NOISE POINTS ZERO INVESTIGATE"
-                
-
-                noise_average[event][chan] = np.average(data[event][chan][pulse_compatible_samples])
-                noise_std[event][chan] = np.std(data[event][chan][pulse_compatible_samples])
+            pulse_limit = -20 * 0.001 # mV
+            data_point_correction = 3
+            
+            pulse_compatible_samples = data[event][chan] < pulse_limit
+            max_index = np.where(pulse_compatible_samples)[0][0] - data_point_correction if len( np.where(pulse_compatible_samples)[0] ) else 1002
+            
+            noise_average[event][chan] = np.average(data[event][chan][0:max_index])
+            noise_std[event][chan] = np.std(data[event][chan][0:max_index])
 
 
     return noise_average, noise_std

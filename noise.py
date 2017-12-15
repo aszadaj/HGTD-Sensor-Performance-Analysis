@@ -58,8 +58,6 @@ def noiseAnalysis(batchNumbers):
             noise_average = np.concatenate((noise_average, results_run[0]), axis = 0)
             noise_std = np.concatenate((noise_std, results_run[1]), axis = 0)
 
-        print "Check length: ",str(len(runLog)*200000)
-        print len(noise_average)
         
         pedestal, noise = n_calc.getPedestalAndNoisePerChannel(noise_average, noise_std)
         dm.exportNoiseData(pedestal, noise)
@@ -76,7 +74,7 @@ def noiseAnalysisPerRun():
     startTime = md.getTime()
     
     # Configure inputs for multiprocessing
-    p = Pool(dm.threads)
+    p = Pool(dm.threads) #dm.threads
     #max = md.getNumberOfEvents()
     max = 200000 # This is adapted to match the number of telescope files
     #max = 5000 # debug
