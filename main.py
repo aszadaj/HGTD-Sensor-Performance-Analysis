@@ -26,8 +26,8 @@ def main():
     
     ######  GRAPH ONLY   ######
     
-    runNumber = 3791
-    entry = 120
+    runNumber = 3793
+    entry = 13130
     
     ##################################################
     
@@ -73,6 +73,11 @@ main()
 # improved the polyfit analysis, now check how the distributions look like
 
 # Changed also the way of obtaining the first index when calculating a pulse. I removed earlier three points, now there is only one, deduced that from observing where the threshold is situated
+
+
+# log 15122017 changed analysis of noise, noted that there is a problem with selecting the area
+# and how the dataset is chosen
+# noted that the fix will be better if condition set on len of data points which should be 1002.
 
 # Available batch numbers:
 # 101, 102, 103, 104, 105, 106, 107, 108

@@ -26,7 +26,7 @@ def noiseAnalysis(batchNumbers):
     for runLog in runLog_batch:
         results_batch = []
         
-        #runLog = [runLog[0]] # debug
+        runLog = [runLog[2]] # debug, run number 3793
     
         startTimeBatch = md.getTime()
         md.printTime()
@@ -74,11 +74,12 @@ def noiseAnalysisPerRun():
     startTime = md.getTime()
     
     # Configure inputs for multiprocessing
-    p = Pool(dm.threads) #dm.threads
+    p = Pool(1) #dm.threads
     #max = md.getNumberOfEvents()
     max = 200000 # This is adapted to match the number of telescope files
-    #max = 5000 # debug
     step = 5000
+    max = 40000 # debug
+    step = 40000 # debug
     ranges = range(0, max, step)
     
     dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
