@@ -27,7 +27,7 @@ def noiseAnalysis(batchNumbers):
         results_batch = []
         
          # DEBUG # Comment line to get all files in batch
-        runLog = [runLog[2]] # Consider only run number 3793 if batch 306 is selected in main.py
+        #runLog = [runLog[2]] # Consider only run number 3793 if batch 306 is selected in main.py
     
         startTimeBatch = md.getTime()
         md.printTime()
