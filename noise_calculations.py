@@ -18,13 +18,14 @@ import metadata as md
 # customizable
 
 def findNoiseAverageAndStd(data):
-    
-    print len(data)
+   
     channels = data.dtype.names
     
     noise_average = np.zeros(len(data), dtype = data.dtype)
     noise_std = np.zeros(len(data), dtype = data.dtype)
- 
+    
+    count = 0
+    
     for event in range(0,len(data)):
         for chan in channels:
         
@@ -47,41 +48,33 @@ def findNoiseAverageAndStd(data):
             if md.getNameOfSensor(chan) == "SiPM-AFP":
                 
                 # Consider points until a pulse
-                pulse_limit = 15 * 0.001 # mV
-                data_point_correction = 1
+                pulse_limit = -20 * 0.001 # mV
+                data_point_correction = 3
                 
-                pulse_compatible_samples = np.absolute(data[event][chan]) < pulse_limit
+                pulse_compatible_samples = data[event][chan] > pulse_limit
                 
-                if np.sum(pulse_compatible_samples) == 0:
-                    print "SIPM NOISE POINTS ZERO INVESTIGATE", chan, event
-
                 max_index = np.where(pulse_compatible_samples)[0][0] - data_point_correction if len( np.where(pulse_compatible_samples)[0] ) else 1002
                 
-                if event == 13130:
-                    print len(data[chan][event])
-                    print "ERROR"
-                    print max_index
-                    print data[event][chan]
-                    print np.average(data[event][chan][0:max_index])
-                    print np.std(data[event][chan][0:max_index])
-                    print "ERROR"
-                
-                noise_average[event][chan] = np.average(data[event][chan][0:max_index])
-                noise_std[event][chan] = np.std(data[event][chan][0:max_index])
+                if max_index != 0:
+                    noise_average[event][chan] = np.average(data[event][chan][0:max_index])
+                    noise_std[event][chan] = np.std(data[event][chan][0:max_index])
+                else:
+                    print "\nPROBLEM CALCULATING ", chan, event
+                    count += 1
                 
             else:
                 
                 # Consider all points
-                pulse_limit = 10 * 0.001 # mV
-                pulse_compatible_samples = np.absolute(data[event][chan]) < pulse_limit
-                
-                if np.sum(pulse_compatible_samples) == 0:
-                    print "DUT NOISE POINTS ZERO INVESTIGATE", chan, event
+                pulse_limit = -13 * 0.001 # mV
+                pulse_compatible_samples = data[event][chan] > pulse_limit
                 
                 # Fix an if statement catching Nan values, happens if there is a critical value
                 noise_average[event][chan] = np.average(data[event][chan][pulse_compatible_samples])
                 noise_std[event][chan] = np.std(data[event][chan][pulse_compatible_samples])
 
+    if count > 0:
+        print count
+        print "\npercentage of problematic noises", str(float(count/len(data))*100)
 
     return noise_average, noise_std
 
@@ -89,14 +82,16 @@ def findNoiseAverageAndStd(data):
 # Calculates pedestal and noise mean values per channel for all entries
 def getPedestalAndNoisePerChannel(noise_average, noise_std):
     
+    channels = noise_average.dtype.names
+    
     pedestal = np.empty(1, dtype=noise_average.dtype)
     noise = np.empty(1, dtype=noise_average.dtype)
 
-    for chan in noise_average.dtype.names:
-        
+    for chan in channels:
+    
         pedestal[chan] = np.mean(noise_average[chan])
         noise[chan] = np.mean(noise_std[chan])
-    
+
     return pedestal, noise
 
 

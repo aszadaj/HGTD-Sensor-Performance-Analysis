@@ -11,15 +11,17 @@ ROOT.gROOT.SetBatch(True)
 # Start analysis of selected run numbers
 def printWaveform(runNumber, entry):
 
-    entries = 3
+    entries = 2
 
     timeStamp = md.getTimeStamp(runNumber)
     row = md.getRowForRunNumber(runNumber)
     md.defineGlobalVariableRun(row)
     dm.checkIfRepositoryOnStau()
     
-    noise = dm.importNoiseFile("noise")
-    pedestal = dm.importNoiseFile("pedestal")
+    noise_batch = dm.importNoiseFile("noise")
+    pedestal_batch = dm.importNoiseFile("pedestal")
+    noise = noise_batch[entry]
+    pedestal = pedestal_batch[entry]
     #amplitudes = dm.importPulseFile("amplitudes")
     
     dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(timeStamp)+".tree.root"
@@ -110,7 +112,7 @@ def printWaveform(runNumber, entry):
         graph_waveform[chan].GetXaxis().SetTitle(xAxisTitle)
         graph_waveform[chan].SetTitle(titleAbove)
         
-        graph_waveform[chan].GetYaxis().SetRangeUser(-50,50)
+        graph_waveform[chan].GetYaxis().SetRangeUser(-50,450)
         graph_waveform[chan].GetXaxis().SetRangeUser(0,100*entries)
 
         canvas.Update()

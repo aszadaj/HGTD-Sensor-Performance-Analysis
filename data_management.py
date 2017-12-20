@@ -59,7 +59,7 @@ def importTelescopeDataBatch():
     batchNumber = md.getBatchNumber()
     timeStamps = md.getTimeStampsForBatch(batchNumber)
     
-    data_batch = np.empty(0, dtype=[('X', '<f4'), ('Y', '<f4')])
+    data_batch = np.empty(0, dtype=[('X', '<f8'), ('Y', '<f8')])
 
     for timeStamp in timeStamps:
         dataFileName = md.getSourceFolderPath() + "telescope_data_sep_2017/tracking"+str(timeStamp)+".root"
@@ -96,17 +96,20 @@ def defineNumberOfThreads(number):
 
 
 
-# DEBUG!
+
+### NEW IMPORT FUNCTIONS ###
 
 
 
+# EXPORT ROOT FILES #
 
+# Export noise data
 def exportNoiseData2(pedestal, noise):
 
     exportROOTFile(pedestal, "noise", "pedestal", "file")
     exportROOTFile(noise,"noise", "noise", "file")
 
-
+# Export pulse data
 def exportROOTPulseData2(amplitudes, rise_times, half_max_times, criticalValues):
 
     exportROOTFile(amplitudes, "pulse", "amplitudes", "file")
@@ -114,8 +117,17 @@ def exportROOTPulseData2(amplitudes, rise_times, half_max_times, criticalValues)
     exportROOTFile(half_max_times,"pulse", "half_max_times", "file")
     exportROOTFile(criticalValues,"pulse", "critical_values", "file")
 
+# Export plot information
+def exportROOTPulsePlot(amplitudes, rise_times, half_max_times, criticalValues):
+
+    exportROOTFile(amplitudes, "pulse", "amplitudes", "plots")
+    exportROOTFile(rise_times,"pulse", "rise_times", "plots")
+    exportROOTFile(half_max_times,"pulse", "half_max_times", "plots")
+    exportROOTFile(criticalValues,"pulse", "critical_values", "plots")
 
 
+
+# Export ROOT file with selected information
 def exportROOTFile(data, group, category, dataType, channelName=""):
     
     fileLocation = "data_hgtd_efficiency_sep_2017"
@@ -126,12 +138,38 @@ def exportROOTFile(data, group, category, dataType, channelName=""):
     
     else:
         chan = ""
-    fileName = md.getSourceFolderPath()+str(fileLocation)+"/"+str(group)+"/"+str(category)+"_"+str(dataType)+"/"+str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())+".root"
-    treeName = str(category)+"_"+str(chan)+str(md.getBatchNumber())
+    fileName = md.getSourceFolderPath()+str(fileLocation)+"/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())+".root"
+
+    if len(data.dtype.names) == 7:
+        data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ,('chan4', '<f8') ,('chan5', '<f8') ,('chan6', '<f8')] )
+
+    else:
+        data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ,('chan4', '<f8') ,('chan5', '<f8') ,('chan6', '<f8') ,('chan7', '<f8')] )
+
+    rnm.array2root(data, fileName)
+
+
+# IMPORT ROOT FILES #
+
+# Import noise data file
+def importNoiseFile2(category):
     
-    rnm.array2root(fileName, treeName)
+    return importROOTFile("noise", category, "file")
+
+# Import pulse data file
+def importPulseFile2(category):
+
+    return importROOTFile("pulse", category, "file")
 
 
+# Import plot information
+# Future fix, adapt the code to import plots which are dependent on channel
+def importPulsePlot(dataType):
+
+    return importROOTFile("pulse", "plots", dataType)
+
+
+# Import selected ROOT file
 def importROOTFile(group, category, dataType):
   
     fileLocation = "data_hgtd_efficiency_sep_2017"
@@ -139,10 +177,10 @@ def importROOTFile(group, category, dataType):
     if category == "plots":
         fileLocation = "plots_hgtd_efficiency_sep_2017"
 
-    fileName = md.getSourceFolderPath()+str(fileLocation)+"/"+str(group)+"/"+str(category)+"_"+str(dataType)+"/"+str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())+".root"
-    treeName = str(category)+"_"+str(chan)+str(md.getBatchNumber())
+    # ../../HGTD_material/data_hgtd_efficiency_sep_2017/noise/noise_pedestal/noise_pedestal_306.root
+    fileName = md.getSourceFolderPath()+str(fileLocation)+"/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())+".root"
 
-    data = rnm.root2array(fileName)
+    treeName = str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())
 
-    return data, treeName
+    return rnm.root2array(fileName)
 

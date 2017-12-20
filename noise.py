@@ -26,7 +26,8 @@ def noiseAnalysis(batchNumbers):
     for runLog in runLog_batch:
         results_batch = []
         
-        runLog = [runLog[2]] # debug, run number 3793
+         # DEBUG # Comment line to get all files in batch
+        runLog = [runLog[2]] # Consider only run number 3793 if batch 306 is selected in main.py
     
         startTimeBatch = md.getTime()
         md.printTime()
@@ -60,7 +61,7 @@ def noiseAnalysis(batchNumbers):
 
         
         pedestal, noise = n_calc.getPedestalAndNoisePerChannel(noise_average, noise_std)
-        dm.exportNoiseData(pedestal, noise)
+        dm.exportNoiseData2(pedestal, noise)
         
         n_plot.produceNoiseDistributionPlots(noise_average, noise_std)
     
@@ -74,12 +75,15 @@ def noiseAnalysisPerRun():
     startTime = md.getTime()
     
     # Configure inputs for multiprocessing
-    p = Pool(1) #dm.threads
-    #max = md.getNumberOfEvents()
-    max = 200000 # This is adapted to match the number of telescope files
+    p = Pool(dm.threads)
+    max = 200000 # Restrict to match the file of the telescope
     step = 5000
-    max = 40000 # debug
-    step = 40000 # debug
+
+#    # DEBUG #
+#    p = Pool(1)
+#    max = 1000 # Restrict to match the file of the telescope
+#    step = 1000
+
     ranges = range(0, max, step)
     
     dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
@@ -96,6 +100,7 @@ def noiseAnalysisPerRun():
 def multiProcess(dataPath, begin, end):
     
     data = rnm.root2array(dataPath, start=begin, stop=end)
+ 
     noise_average, noise_std = n_calc.findNoiseAverageAndStd(data)
     
     return noise_average, noise_std

@@ -27,7 +27,8 @@ def pulseAnalysis(batchNumbers):
     
         results_batch = []
         
-        runLog = [runLog[0], runLog[1]] # restrict to two files
+        # DEBUG # Comment out this line to consider all files in batch
+        runLog = [runLog[0]] # restrict to one files
     
         startTimeBatch = md.getTime()
         md.printTime()
@@ -88,17 +89,25 @@ def pulseAnalysisPerRun(sigma):
     startTimeRun = md.getTime()
     
     # Configure inputs for multiprocessing
-    p = Pool(1) #dm.threads
-    #max = md.getNumberOfEvents()
-    max = 200000 # This is adapted to match the number of telescope files
-    max = 5000
-    step = 5000
+#    p = Pool(dm.threads)
+#    max = 200000
+#    step = 5000
+
+    # DEBUG #
+    p = Pool(1)
+    max = 1000
+    step = 1000
+
     ranges = range(0, max, step)
+    print ranges
     
     dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
     
-    pedestal    = dm.importNoiseFile("pedestal")
-    noise       = dm.importNoiseFile("noise")
+    pedestal    = dm.importNoiseFile2("pedestal")
+    noise       = dm.importNoiseFile2("noise")
+    
+    print pedestal
+    print noise
     
     results = p.map(lambda chunk: multiProcess(dataPath, pedestal, noise, chunk, chunk+step, sigma), ranges)
  
@@ -111,7 +120,10 @@ def pulseAnalysisPerRun(sigma):
 # Start multiprocessing analysis of noises and pulses in ROOT considerOnlyRunsfile
 def multiProcess(dataPath, pedestal, noise, begin, end, sigma):
     
+    print "importing"
     data = rnm.root2array(dataPath, start=begin, stop=end)
+    print data
+    print data.dtype
     amplitudes, rise_times, half_max_times, pulse_points = p_calc.pulseAnalysis(data, pedestal, noise, sigma)
     
     return amplitudes, rise_times, half_max_times, pulse_points
