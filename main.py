@@ -39,7 +39,7 @@ def main():
     
     #timing.timingAnalysis         (batchNumber)
     
-    #graph.printWaveform            (runNumber, entry)
+    graph.printWaveform            (runNumber, entry)
     
     exit()
 

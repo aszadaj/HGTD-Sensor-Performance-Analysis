@@ -23,9 +23,7 @@ def findNoiseAverageAndStd(data):
     
     noise_average = np.zeros(len(data), dtype = data.dtype)
     noise_std = np.zeros(len(data), dtype = data.dtype)
-    
-    count = 0
-    
+  
     for event in range(0,len(data)):
         for chan in channels:
         
@@ -44,41 +42,15 @@ def findNoiseAverageAndStd(data):
             # The SiPM behaves differently, in general I think that the limits should be adapted for each sensor
             # W4-RD01 in batch 306 behaves strange, choose different batch to make different analysis, since
             # the waveforms behaves differently than predicted
+          
+            # Consider points until a pulse
+            pulse_limit = 25 * 0.001 # mV
+            data_point_correction = 2
+            # Take out points which are above the noise level
+            pulse_compatible_samples = -data[event][chan] > pulse_limit
             
-            if md.getNameOfSensor(chan) == "SiPM-AFP":
-                
-                # Consider points until a pulse
-                pulse_limit = 25 * 0.001 # mV
-                data_point_correction = 3
-                # Take out points which are above the noise level
-                pulse_compatible_samples = -data[event][chan] > pulse_limit
-                
-                # Select the "last index" which defines the range of the noise selection
-                max_index = np.where(pulse_compatible_samples)[0][0] - data_point_correction if len( np.where(pulse_compatible_samples)[0] ) else 1002
-      
-      
-                # Calculate the average and std based on selection
-                if max_index != 0:
-                    noise_average[event][chan] = np.average(data[event][chan][0:max_index])
-                    noise_std[event][chan] = np.std(data[event][chan][0:max_index])
-                else:
-                    print "\nPROBLEM CALCULATING ", chan, event
-                    count += 1
-                
-            else:
-                
-                # Consider all points
-                pulse_limit = 20 * 0.001 # mV
-                # Select all points within the noise level
-                pulse_compatible_samples = -data[event][chan] < pulse_limit
-
-                # Calculate the average and std based on selection
-                noise_average[event][chan] = np.average(data[event][chan][pulse_compatible_samples])
-                noise_std[event][chan] = np.std(data[event][chan][pulse_compatible_samples])
-
-    if count > 0:
-        print count
-        print "\npercentage of problematic noises", str(float(count/len(data))*100)
+            # Select the "last index" which defines the range of the noise selection
+            max_index = np.where(pulse_compatible_samples)[0][0] - data_point_correction if len( np.where(pulse_compatible_samples)[0] ) else 1002
 
     return noise_average, noise_std
 

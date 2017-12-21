@@ -81,8 +81,8 @@ def noiseAnalysisPerRun():
 
 #    # DEBUG #
 #    p = Pool(1)
-#    max = 1000 # Restrict to match the file of the telescope
-#    step = 1000
+#    max = 20000 # Restrict to match the file of the telescope
+#    step = 20000
 
     ranges = range(0, max, step)
     
