@@ -140,8 +140,9 @@ def importROOTFile(group, category, dataType):
         fileLocation = "plots_hgtd_efficiency_sep_2017"
 
     # ../../HGTD_material/data_hgtd_efficiency_sep_2017/noise/noise_pedestal/noise_pedestal_306.root
-    print fileName
+
     fileName = md.getSourceFolderPath()+str(fileLocation)+"/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())+".root"
+    print fileName
 
     treeName = str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())
 
