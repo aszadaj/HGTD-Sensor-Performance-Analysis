@@ -107,7 +107,7 @@ def exportROOTFile(data, group, category, dataType, channelName=""):
     else:
         data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ,('chan4', '<f8') ,('chan5', '<f8') ,('chan6', '<f8') ,('chan7', '<f8')] )
 
-    rnm.array2root(data, fileName)
+    rnm.array2root(data, fileName, mode="recreate")
 
 
 # IMPORT ROOT FILES #
@@ -143,7 +143,9 @@ def importROOTFile(group, category, dataType):
 
     treeName = str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())
 
-    return rnm.root2array(fileName)
+    data = rnm.root2array(fileName)
+    
+    return data
 
 
 # Note, the file have only 200K entries

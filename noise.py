@@ -59,7 +59,7 @@ def noiseAnalysis(batchNumbers):
             noise_average = np.concatenate((noise_average, results_run[0]), axis = 0)
             noise_std = np.concatenate((noise_std, results_run[1]), axis = 0)
 
-        
+
         pedestal, noise = n_calc.getPedestalAndNoisePerChannel(noise_average, noise_std)
         dm.exportNoiseData(pedestal, noise)
         

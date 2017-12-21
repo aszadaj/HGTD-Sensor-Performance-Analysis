@@ -18,10 +18,9 @@ def printWaveform(runNumber, entry):
     md.defineGlobalVariableRun(row)
     dm.checkIfRepositoryOnStau()
     
-    noise_batch = dm.importNoiseFile("noise")
-    pedestal_batch = dm.importNoiseFile("pedestal")
-    noise = noise_batch[entry]
-    pedestal = pedestal_batch[entry]
+    noise = dm.importNoiseFile("noise")
+    pedestal = dm.importNoiseFile("pedestal")
+    
     #amplitudes = dm.importPulseFile("amplitudes")
     
     dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(timeStamp)+".tree.root"
@@ -48,12 +47,14 @@ def printWaveform(runNumber, entry):
     channels = ["chan1", "chan6"]
     
     for chan in channels:
+    
+        print noise[chan], "noise", chan
+        print pedestal[chan], "pedestal", chan
 
         graph_waveform[chan] = ROOT.TGraph(1002*entries)
         graph_line_threshold[chan] = ROOT.TGraph(1002*entries)
         graph_line_pedestal[chan] = ROOT.TGraph(1002*entries)
         graph_line_noise[chan] = ROOT.TGraph(1002*entries)
-        
         
         i = 0
         
@@ -68,9 +69,9 @@ def printWaveform(runNumber, entry):
         for index in range(0,1002*entries):
     
             graph_line_threshold[chan].SetPoint(index, index*0.1, noise[chan]*sigma-pedestal[chan])
-            graph_line_pedestal[chan].SetPoint(index, index*0.1, pedestal[chan])
-            graph_line_noise[chan].SetPoint(index, index*0.1, noise[chan])
-            
+#            graph_line_pedestal[chan].SetPoint(index, index*0.1, pedestal[chan])
+#            graph_line_noise[chan].SetPoint(index, index*0.1, noise[chan])
+
             
         drawOpt = "LP"
         if first:
@@ -99,8 +100,8 @@ def printWaveform(runNumber, entry):
         graph_line_noise[chan].Draw("L")
 
         leg.AddEntry(graph_line_threshold[chan],"Threshold "+str(chan)+ "="+str(noise[chan]*sigma-pedestal[chan])[1:5]+" mV, \sigma: "+str(sigma),"l")
-        leg.AddEntry(graph_line_pedestal[chan],"Pedestal "+str(chan)+ "="+str(pedestal[chan])[1:5]+" mV","l")
-        leg.AddEntry(graph_line_noise[chan],"Noise "+str(chan)+ "="+str(noise[chan])[1:5]+" mV","l")
+#        leg.AddEntry(graph_line_pedestal[chan],"Pedestal "+str(chan)+ "="+str(pedestal[chan])[1:5]+" mV","l")
+#        leg.AddEntry(graph_line_noise[chan],"Noise "+str(chan)+ "="+str(noise[chan])[1:5]+" mV","l")
 
 
         titleAbove = "Waveform, sensor "+str(md.getNameOfSensor(chan))+", batch "+str(md.getBatchNumber(runNumber))

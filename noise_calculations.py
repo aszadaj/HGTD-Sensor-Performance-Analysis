@@ -49,14 +49,15 @@ def findNoiseAverageAndStd(data):
                 
                 # Consider points until a pulse
                 pulse_limit = 25 * 0.001 # mV
-                data_point_correction = 3
-                pulse_compatible_samples = -data[event][chan] < pulse_limit
-
-                max_index = np.where(pulse_compatible_samples)[0][0] - data_point_correction if len( np.where(pulse_compatible_samples)[0] ) else 1002
+                data_point_correction = 2
+                # Take out points which are above the noise level
+                pulse_compatible_samples = -data[event][chan] > pulse_limit
                 
-#                if np.sum(pulse_compatible_samples) != 1002:
-#                    print np.sum(pulse_compatible_samples), md.getNameOfSensor(chan), chan
-#
+                # Select the "last index" which defines the range of the noise selection
+                max_index = np.where(pulse_compatible_samples)[0][0] - data_point_correction if len( np.where(pulse_compatible_samples)[0] ) else 1002
+      
+      
+                # Calculate the average and std based on selection
                 if max_index != 0:
                     noise_average[event][chan] = np.average(data[event][chan][0:max_index])
                     noise_std[event][chan] = np.std(data[event][chan][0:max_index])
@@ -68,14 +69,10 @@ def findNoiseAverageAndStd(data):
                 
                 # Consider all points
                 pulse_limit = 15 * 0.001 # mV
+                # Select all points within the noise level
                 pulse_compatible_samples = -data[event][chan] < pulse_limit
-                
-                
-#                if np.sum(pulse_compatible_samples) != 1002:
-#                    print np.sum(pulse_compatible_samples), md.getNameOfSensor(chan), chan
-                
-                
-                # Fix an if statement catching Nan values, happens if there is a critical value
+
+                # Calculate the average and std based on selection
                 noise_average[event][chan] = np.average(data[event][chan][pulse_compatible_samples])
                 noise_std[event][chan] = np.std(data[event][chan][pulse_compatible_samples])
 
