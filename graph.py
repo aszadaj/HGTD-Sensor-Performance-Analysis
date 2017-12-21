@@ -119,7 +119,7 @@ def printWaveform(runNumber, entry):
         canvas.Update()
     
     
-    fileName = "../../HGTD_material/plots_hgtd_efficiency_sep_2017/waveforms/waveform_"+str(runNumber)+"_entry_"+str(entry)+"_"+str(channels)+".pdf"
+    fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/waveforms/waveform_"+str(runNumber)+"_entry_"+str(entry)+"_"+str(channels)+".pdf"
     leg.Draw()
     canvas.Update()
     canvas.Print(fileName)
