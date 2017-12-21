@@ -47,7 +47,7 @@ def findNoiseAverageAndStd(data):
         
             # Consider points until a pulse
             pulse_limit = 25 * 0.001 # mV
-            data_point_correction = 3
+            data_point_correction =
             # Take out points which are above the noise level
             pulse_compatible_samples = -data[event][chan] > pulse_limit
             
