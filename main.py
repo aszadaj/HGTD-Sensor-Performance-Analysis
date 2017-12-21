@@ -31,7 +31,7 @@ def main():
     
     ##################################################
     
-    #noise.noiseAnalysis           (batchNumber)
+    noise.noiseAnalysis           (batchNumber)
     
     #pulse.pulseAnalysis            (batchNumber)
     
@@ -39,7 +39,7 @@ def main():
     
     #timing.timingAnalysis         (batchNumber)
     
-    graph.printWaveform            (runNumber, entry)
+    #graph.printWaveform            (runNumber, entry)
     
     exit()
 
