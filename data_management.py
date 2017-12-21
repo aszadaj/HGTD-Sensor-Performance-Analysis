@@ -108,6 +108,7 @@ def exportROOTFile(data, group, category, dataType, channelName=""):
         data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ,('chan4', '<f8') ,('chan5', '<f8') ,('chan6', '<f8') ,('chan7', '<f8')] )
 
     print "export", fileName
+    print data
     rnm.array2root(data, fileName, mode="recreate")
 
 
@@ -143,12 +144,13 @@ def importROOTFile(group, category, dataType):
     # ../../HGTD_material/data_hgtd_efficiency_sep_2017/noise/noise_pedestal/noise_pedestal_306.root
 
     fileName = md.getSourceFolderPath()+str(fileLocation)+"/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())+".root"
-    print "import", fileName
+    
 
     treeName = str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())
 
     data = rnm.root2array(fileName)
-    
+    print "import", fileName
+    print data
     return data
 
 
