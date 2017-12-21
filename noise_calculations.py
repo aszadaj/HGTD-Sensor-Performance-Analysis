@@ -48,12 +48,15 @@ def findNoiseAverageAndStd(data):
             if md.getNameOfSensor(chan) == "SiPM-AFP":
                 
                 # Consider points until a pulse
-                pulse_limit = -25 * 0.001 # mV
+                pulse_limit = 25 * 0.001 # mV
                 data_point_correction = 3
-                pulse_compatible_samples = data[event][chan] < pulse_limit
+                pulse_compatible_samples = -data[event][chan] < pulse_limit
 
                 max_index = np.where(pulse_compatible_samples)[0][0] - data_point_correction if len( np.where(pulse_compatible_samples)[0] ) else 1002
-             
+                
+#                if np.sum(pulse_compatible_samples) != 1002:
+#                    print np.sum(pulse_compatible_samples), md.getNameOfSensor(chan), chan
+#
                 if max_index != 0:
                     noise_average[event][chan] = np.average(data[event][chan][0:max_index])
                     noise_std[event][chan] = np.std(data[event][chan][0:max_index])
@@ -64,8 +67,13 @@ def findNoiseAverageAndStd(data):
             else:
                 
                 # Consider all points
-                pulse_limit = -15 * 0.001 # mV
-                pulse_compatible_samples = data[event][chan] < pulse_limit
+                pulse_limit = 15 * 0.001 # mV
+                pulse_compatible_samples = -data[event][chan] < pulse_limit
+                
+                
+#                if np.sum(pulse_compatible_samples) != 1002:
+#                    print np.sum(pulse_compatible_samples), md.getNameOfSensor(chan), chan
+                
                 
                 # Fix an if statement catching Nan values, happens if there is a critical value
                 noise_average[event][chan] = np.average(data[event][chan][pulse_compatible_samples])
