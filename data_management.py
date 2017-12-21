@@ -6,51 +6,144 @@ import numpy as np
 import metadata as md
 
 
+#def exportNoiseData(pedestal, noise):
+#
+#    exportNoiseFile(pedestal, "pedestal")
+#    exportNoiseFile(noise, "noise")
+#
+#
+#def exportNoiseFile(data, dataType):
+#
+#    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/noise/noise_"+str(dataType)+"/noise_"+str(dataType)+"_"+str(md.getBatchNumber())+".pkl","wb") as output:
+#
+#        pickle.dump(data,output,pickle.HIGHEST_PROTOCOL)
+#
+#
+#def importNoiseFile(dataType):
+#
+#    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/noise/noise_"+str(dataType)+"/noise_"+str(dataType)+"_"+str(md.getBatchNumber())+".pkl","rb") as input:
+#
+#        dataFile = pickle.load(input)
+#
+#    return dataFile
+#
+#
+#def exportPulseData(amplitudes, rise_times, half_max_times, criticalValues, pulse_points):
+#
+#    exportPulseFile(amplitudes, "amplitudes")
+#    exportPulseFile(rise_times, "rise_times")
+#    exportPulseFile(half_max_times, "half_max_times")
+#    exportPulseFile(criticalValues, "critical_values")
+#    exportPulseFile(pulse_points, "pulse_points")
+#
+#
+#def exportPulseFile(data, dataType):
+#
+#    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/pulse/pulse_"+str(dataType)+"/pulse_"+str(dataType)+"_"+str(md.getBatchNumber())+".pkl","wb") as output:
+#
+#        pickle.dump(data,output,pickle.HIGHEST_PROTOCOL)
+#
+#
+#def importPulseFile(dataType):
+#
+#    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/pulse/pulse_"+str(dataType)+"/pulse_"+str(dataType)+"_"+str(md.getBatchNumber())+".pkl","rb") as input:
+#
+#        dataFile = pickle.load(input)
+#
+#    return dataFile
+
+
+
+
+
+
+
+### NEW IMPORT FUNCTIONS ###
+
+
+
+# EXPORT ROOT FILES #
+
+# Export noise data
 def exportNoiseData(pedestal, noise):
 
-    exportNoiseFile(pedestal, "pedestal")
-    exportNoiseFile(noise, "noise")
+    exportROOTFile(pedestal, "noise", "pedestal", "file")
+    exportROOTFile(noise,"noise", "noise", "file")
+
+# Export pulse data
+def exportPulseData(amplitudes, rise_times, half_max_times, criticalValues):
+
+    exportROOTFile(amplitudes, "pulse", "amplitudes", "file")
+    exportROOTFile(rise_times,"pulse", "rise_times", "file")
+    exportROOTFile(half_max_times,"pulse", "half_max_times", "file")
+    exportROOTFile(criticalValues,"pulse", "critical_values", "file")
+
+# Export plot information
+def exportPulsePlot(amplitudes, rise_times, half_max_times, criticalValues):
+
+    exportROOTFile(amplitudes, "pulse", "amplitudes", "plots")
+    exportROOTFile(rise_times,"pulse", "rise_times", "plots")
+    exportROOTFile(half_max_times,"pulse", "half_max_times", "plots")
+    exportROOTFile(criticalValues,"pulse", "critical_values", "plots")
 
 
-def exportNoiseFile(data, dataType):
 
-    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/noise/noise_"+str(dataType)+"/noise_"+str(dataType)+"_"+str(md.getBatchNumber())+".pkl","wb") as output:
-        
-        pickle.dump(data,output,pickle.HIGHEST_PROTOCOL)
-
-
-def importNoiseFile(dataType):
+# Export ROOT file with selected information
+def exportROOTFile(data, group, category, dataType, channelName=""):
     
-    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/noise/noise_"+str(dataType)+"/noise_"+str(dataType)+"_"+str(md.getBatchNumber())+".pkl","rb") as input:
-       
-        dataFile = pickle.load(input)
+    fileLocation = "data_hgtd_efficiency_sep_2017"
+    chan = channelName + "_"
     
-    return dataFile
+    if category == "plots":
+        fileLocation = "plots_hgtd_efficiency_sep_2017"
+    
+    else:
+        chan = ""
+    fileName = md.getSourceFolderPath()+str(fileLocation)+"/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())+".root"
+
+    if len(data.dtype.names) == 7:
+        data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ,('chan4', '<f8') ,('chan5', '<f8') ,('chan6', '<f8')] )
+
+    else:
+        data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ,('chan4', '<f8') ,('chan5', '<f8') ,('chan6', '<f8') ,('chan7', '<f8')] )
+
+    rnm.array2root(data, fileName)
 
 
-def exportPulseData(amplitudes, rise_times, half_max_times, criticalValues, pulse_points):
+# IMPORT ROOT FILES #
 
-    exportPulseFile(amplitudes, "amplitudes")
-    exportPulseFile(rise_times, "rise_times")
-    exportPulseFile(half_max_times, "half_max_times")
-    exportPulseFile(criticalValues, "critical_values")
-    exportPulseFile(pulse_points, "pulse_points")
+# Import noise data file
+def importNoiseFile(category):
+    
+    return importROOTFile("noise", category, "file")
 
+# Import pulse data file
+def importPulseFile(category):
 
-def exportPulseFile(data, dataType):
-
-    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/pulse/pulse_"+str(dataType)+"/pulse_"+str(dataType)+"_"+str(md.getBatchNumber())+".pkl","wb") as output:
-        
-        pickle.dump(data,output,pickle.HIGHEST_PROTOCOL)
+    return importROOTFile("pulse", category, "file")
 
 
-def importPulseFile(dataType):
+# Import plot information
+# Future fix, adapt the code to import plots which are dependent on channel
+def importPulsePlot(dataType):
 
-    with open(md.getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/pulse/pulse_"+str(dataType)+"/pulse_"+str(dataType)+"_"+str(md.getBatchNumber())+".pkl","rb") as input:
-       
-        dataFile = pickle.load(input)
+    return importROOTFile("pulse", "plots", dataType)
 
-    return dataFile
+
+# Import selected ROOT file
+def importROOTFile(group, category, dataType):
+  
+    fileLocation = "data_hgtd_efficiency_sep_2017"
+    
+    if category == "plots":
+        fileLocation = "plots_hgtd_efficiency_sep_2017"
+
+    # ../../HGTD_material/data_hgtd_efficiency_sep_2017/noise/noise_pedestal/noise_pedestal_306.root
+    fileName = md.getSourceFolderPath()+str(fileLocation)+"/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())+".root"
+
+    treeName = str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())
+
+    return rnm.root2array(fileName)
 
 
 # Note, the file have only 200K entries
@@ -93,94 +186,3 @@ def defineNumberOfThreads(number):
 
     global threads
     threads = number
-
-
-
-
-### NEW IMPORT FUNCTIONS ###
-
-
-
-# EXPORT ROOT FILES #
-
-# Export noise data
-def exportNoiseData2(pedestal, noise):
-
-    exportROOTFile(pedestal, "noise", "pedestal", "file")
-    exportROOTFile(noise,"noise", "noise", "file")
-
-# Export pulse data
-def exportROOTPulseData2(amplitudes, rise_times, half_max_times, criticalValues):
-
-    exportROOTFile(amplitudes, "pulse", "amplitudes", "file")
-    exportROOTFile(rise_times,"pulse", "rise_times", "file")
-    exportROOTFile(half_max_times,"pulse", "half_max_times", "file")
-    exportROOTFile(criticalValues,"pulse", "critical_values", "file")
-
-# Export plot information
-def exportROOTPulsePlot(amplitudes, rise_times, half_max_times, criticalValues):
-
-    exportROOTFile(amplitudes, "pulse", "amplitudes", "plots")
-    exportROOTFile(rise_times,"pulse", "rise_times", "plots")
-    exportROOTFile(half_max_times,"pulse", "half_max_times", "plots")
-    exportROOTFile(criticalValues,"pulse", "critical_values", "plots")
-
-
-
-# Export ROOT file with selected information
-def exportROOTFile(data, group, category, dataType, channelName=""):
-    
-    fileLocation = "data_hgtd_efficiency_sep_2017"
-    chan = channelName + "_"
-    
-    if category == "plots":
-        fileLocation = "plots_hgtd_efficiency_sep_2017"
-    
-    else:
-        chan = ""
-    fileName = md.getSourceFolderPath()+str(fileLocation)+"/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())+".root"
-
-    if len(data.dtype.names) == 7:
-        data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ,('chan4', '<f8') ,('chan5', '<f8') ,('chan6', '<f8')] )
-
-    else:
-        data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ,('chan4', '<f8') ,('chan5', '<f8') ,('chan6', '<f8') ,('chan7', '<f8')] )
-
-    rnm.array2root(data, fileName)
-
-
-# IMPORT ROOT FILES #
-
-# Import noise data file
-def importNoiseFile2(category):
-    
-    return importROOTFile("noise", category, "file")
-
-# Import pulse data file
-def importPulseFile2(category):
-
-    return importROOTFile("pulse", category, "file")
-
-
-# Import plot information
-# Future fix, adapt the code to import plots which are dependent on channel
-def importPulsePlot(dataType):
-
-    return importROOTFile("pulse", "plots", dataType)
-
-
-# Import selected ROOT file
-def importROOTFile(group, category, dataType):
-  
-    fileLocation = "data_hgtd_efficiency_sep_2017"
-    
-    if category == "plots":
-        fileLocation = "plots_hgtd_efficiency_sep_2017"
-
-    # ../../HGTD_material/data_hgtd_efficiency_sep_2017/noise/noise_pedestal/noise_pedestal_306.root
-    fileName = md.getSourceFolderPath()+str(fileLocation)+"/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())+".root"
-
-    treeName = str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())
-
-    return rnm.root2array(fileName)
-
