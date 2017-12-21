@@ -61,7 +61,7 @@ def noiseAnalysis(batchNumbers):
 
         
         pedestal, noise = n_calc.getPedestalAndNoisePerChannel(noise_average, noise_std)
-        dm.exportNoiseData2(pedestal, noise)
+        dm.exportNoiseData(pedestal, noise)
         
         n_plot.produceNoiseDistributionPlots(noise_average, noise_std)
     
