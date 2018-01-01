@@ -1,219 +1,141 @@
-
 import numpy as np
-
 import metadata as md
 import data_management as dm
 
-
-# The code obtains amplitudes and rise time for pulses for each channel for all selected entries
-# and orders them in a nested list within "amplitudes" and "rise_time".
 def pulseAnalysis(data, pedestal, noise, sigma):
 
     channels = data.dtype.names
     
     amplitudes      =   np.zeros(len(data), dtype = data.dtype)
     rise_times      =   np.zeros(len(data), dtype = data.dtype)
-    half_max_times  =   np.zeros(len(data), dtype = data.dtype)
-    pulse_points    =   np.zeros(len(data), dtype = data.dtype)
+    times = [0,0,0,0,0]
+    
+    # This function lists max amplitude values for each channel among all data points
+    
+    criticalValues = findCriticalValues(data)
 
     for event in range(0,len(data)):
     
         for chan in channels:
             # Pedestal and noise are in mV whereas data is in V (and negative). Noise is a standard deviation, hence w/o minus.
-            amplitudes[event][chan], rise_times[event][chan], half_max_times[event][chan], pulse_points[event][chan] = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[chan]*-0.001, noise[chan]*0.001, event, sigma)
+            amplitudes[event][chan], rise_times[event][chan], times_new = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[chan]*-0.001, noise[chan]*0.001, event, sigma, criticalValues[chan])
+            
+            for i in range(0, len(times)):
+                times[i] += times_new[i]
 
-    return amplitudes, rise_times, half_max_times, pulse_points
+     # DEBUG
+    if times[0] > 0:
+        print "large", times[0]
+    if times[1] > 0:
+        print "small", times[1]
+    if times[2] > 0:
+        print "crit", times[2]
+    if times[3] > 0:
+        print "lin fail", times[3]
+    if times[4] > 0:
+        print "2nd fit fail", times[4]
 
+    
 
-
-################################
-#
-# Future idea, make a second degree fit from there the pulse starts, and around 5-6 points after the pulse amplitude
-#
-######################
-
-
-
-
-
-
-# Calculate maximum amplitude value and rise time, if found.
-# Function results zero values if
-# 1. The pulse is not found
-# 2. The pulse cannot be calculated, because of the conditions for polyfit (if for some reason there is a
-#   'flat' function for the pulse
+    return amplitudes, rise_times
 
 
-#############################
-#
-#
-# This function is made to implement
-# second degree fit
-#
-#
-#
-#############################
+def getAmplitudeAndRiseTime (data_event, chan, pedestal, noise, eventNumber, sigma, criticalValue):
 
-def getAmplitudeAndRiseTime (data_event, chan, pedestal, noise, eventNumber, sigma):
-   
     # Time scope is the time difference between two recorded points
     # Assumption: for all events this value is the same.
     timeScope = 0.1
-
-    pulse_amplitude = 0
-    pulse_rise_time = 0
-    pulse_half_maximum = 0
-    pulse_data_points = -1
     
-    # This sets the condition for seeing a value above the noise.
-    threshold = noise * sigma - pedestal
-    indices_condition = data_event < - threshold # Note, event is negative
-    point_difference = 3 # This is to choose how many poins the second linear fit should be made
- 
-    # Indices condition should maybe be in consecutive order?
-
-    if np.sum(indices_condition) > point_difference * 2:
+    max_amplitude = 0
+    rise_time = 0
     
-        pulse_data_points = np.sum(indices_condition)
-        
-        # Investigate how many points you can remove
-        pulse_first_index = np.where(indices_condition)[0][0] - 1 # Remove one point, just a convention
-        pulse_last_index = np.argmin(data_event) # Peak
-        pulse_amplitude = np.amin(data_event) - pedestal # Amplitude, pedestal corrected (usually few +-mV), not the best option, but
-        
-        amplitude_truth = (data_event[pulse_first_index:pulse_last_index] > 0.9*pulse_amplitude ) & (data_event[pulse_first_index:pulse_last_index] < 0.1*pulse_amplitude)
-        amplitude_indices = np.argwhere((data_event[pulse_first_index:pulse_last_index] > 0.9*pulse_amplitude) & (data_event[pulse_first_index:pulse_last_index] < 0.1*pulse_amplitude))
-        
-        # Check if there are more than two points in the polyfit
-        if len(amplitude_indices) > 4:
-            
-            # Make a linear fit, first degree
-            # U = K*t + U_0
-            [K, U_0] = np.polyfit(amplitude_indices.flatten()*timeScope, data_event[pulse_first_index:pulse_last_index][amplitude_truth].flatten(), 1)
-            
- 
-        # 12.12.2017: implemention of better method of avoiding noises:
-        # These lines, take out 1. groups of points in consecutive order
-        # selects one which have the most points, which is the pulse
-        # Defines these points, and only those, as the position of the pulse
-        
-        ############### NEW ####################
-        
-            group_points = group_consecutives(np.where(indices_condition)[0])
-            group_points_length = [len(group) for group in group_points]
-            pulse_indices = group_points[group_points_length.index(max(group_points_length))]
-             # array which contain indices for the whole pulse, the most "relevant" one
-        
-        
-            peak_index = np.argmin(data_event)
-            
-            # This defines how many points from the peak the fit should be considered
-            peak_fit_first_index = peak_index - point_difference
-            peak_fit_last_index = peak_index + point_difference
-           
-            peak_indices = pulse_indices[np.where((pulse_indices >= peak_fit_first_index) & (pulse_indices < peak_fit_last_index))[0]]
-            
-            peak_points = data_event[peak_fit_first_index:peak_fit_last_index]
-        
-            # Check why the polyfit fails
-            if len(peak_indices) > len(peak_points):
-            
-                print "larger"
-                print peak_indices
-                print peak_points
-                print np.amin(data_event)
-                print np.argmin(data_event)
-                print "threshold", threshold[0]
-                print "event",eventNumber
-                print chan, "\n"
-            
-            
-            elif len(peak_indices) < len(peak_points):
-            
-                print "smaller"
-                print peak_indices
-                print peak_points
-                print np.amin(data_event)
-                print np.argmin(data_event)
-                print group_points
-                print len (group_points_length)
-                print "threshold", threshold[0]
-                print "event",eventNumber
-                print chan, "\n"
-                
-            
-            
-            
-            peak_fit = np.polyfit(peak_indices*timeScope, peak_points, 2)
-           
-            pulse_amplitude = peak_fit[0]*np.power(peak_index*timeScope,2) + peak_fit[1]*peak_index*timeScope+peak_fit[2]
-      
+    # DEBUG
+    count_small = 0
+    count_large = 0
+    count_crit = 0
+    count_lin_fail = 0
+    count_2fit_fail = 0
+    
+    threshold = noise * sigma # This sets the condition for seeing a value above the noise.
+    
+    threshold_indices = np.where(data_event < - threshold) # Note, event is negative
+    
+    point_difference = 2 # This is to choose how many poins the second linear fit should be made
 
+    # Check if there are points above the threshold
+    if threshold_indices[0].size != 0:
+        
+        # Select the consecutive points, which have the highest peak
+        group_points = group_consecutives(threshold_indices[0])
+        group_points_amplitude = [np.amin(data_event[group]) for group in group_points]
+        threshold_indices = group_points[group_points_amplitude.index(min(group_points_amplitude))]
+        
+        # With this peak, check if it is high enough and cointain sufficient amount of points
+        if -np.amin(data_event) > 40*0.001 and len(threshold_indices) > point_difference * 2:
+        
+            # Check if the data of the event is "corrupted" meaning that it reaches a critical amplitude value
 
-        #########################################
-            
-            
-       
-       
-            
-            # This happens occasionally, if the
-            if K == 0:
-                print "WARNING polyfit gives a flat function! Batch",md.getRunNumber(),"data_event", eventNumber
-                pulse_rise_time = 0
-                pulse_amplitude = 0
-                pulse_last_index = 0
+            if np.amin(data_event) == criticalValue:
+                count_crit = 1
+                max_amplitude = 0
+                rise_time = 0
             
             else:
+            
+                # Create linear fit, to calculate rise time
+                pulse_first_index = threshold_indices[0]
+                pulse_last_index = np.argmin(data_event)
+                max_amplitude = np.amin(data_event)
+                amplitude_truth = (data_event[pulse_first_index:pulse_last_index] > 0.9*max_amplitude ) & (data_event[pulse_first_index:pulse_last_index] < 0.1*max_amplitude)
+                amplitude_indices = np.argwhere((data_event[pulse_first_index:pulse_last_index] > 0.9*max_amplitude) & (data_event[pulse_first_index:pulse_last_index] < 0.1*max_amplitude))
                 
-                # Solution for first degree polynomial fit, y_amplitude = p[0]*x_time + p[1], where p is from polyfit
-                # Rise time: time when the pulse is between 90% and 10% of the amplitude
-                # 0.9*pulse_amplitude = K*pulse_rise_time_1 + U_0
-                # 0.1*pulse_amplitude = K*pulse_rise_time_2 + U_0
-                # -> delta pulse_rise_time = 0.8*pulse_amplitde/K
+                # If the linear fit fails, exit the calculation
+                if len(amplitude_indices) == 0:
+                    count_lin_fail = 1
+                    print "linear fail", eventNumber, chan
+                    max_amplitude = 0
+                    rise_time = 0
+                    times = [0,0,0,0,0]
+                    return max_amplitude, rise_time, times
                 
-                pulse_rise_time = (pulse_amplitude*0.8)/K
-                pulse_half_maximum = (pulse_amplitude*0.5)/K
+                
+                linear_fit = np.polyfit(amplitude_indices.flatten()*timeScope, data_event[pulse_first_index:pulse_last_index][amplitude_truth].flatten(), 1)
+              
+                ## Get rise time for pulse ##
+                rise_time = (max_amplitude*0.8)/linear_fit[0]
+                
+                
+                # Create 2nd degree fit on the peak, for a reference point and have a better amplitude value
+                peak_fit_first_index = pulse_last_index - point_difference
+                peak_fit_last_index = pulse_last_index + point_difference
+                peak_indices = threshold_indices[np.where((threshold_indices >= peak_fit_first_index) & (threshold_indices < peak_fit_last_index))[0]]
+                peak_data_points = data_event[peak_fit_first_index:peak_fit_last_index]
+                
+                # If the second degree linear fit fails, use the old max_amplitude value
+                if len(peak_indices) != len(peak_data_points):
+                    count_2fit_fail = 1
+                    peak_fit = np.polyfit(peak_indices*timeScope, peak_data_points, 2)
+                    ## Get max amplitude value for the pulse ##
+                    max_amplitude = peak_fit[0]*np.power(pulse_last_index*timeScope,2) + peak_fit[1]*pulse_last_index*timeScope + peak_fit[2]
+    
+    
+        # If we have a small amplitude value, check if there are sufficient amount of points
+        elif len(threshold_indices) > 5:
         
+            # Here an approximation of the rise time is given
+            max_amplitude = np.amin(data_event)
+            rise_time = (np.argmin(data_event) - threshold_indices[0])*timeScope
+            
+            #print "small", chan, eventNumber, np.argmin(data_event), threshold_indices[0], max_amplitude, rise_time
+        
+        # Otherwise, disregard the pulse
         else:
-            pulse_amplitude = 0
-            pulse_last_index = 0
+            count_small = 1
+            max_amplitude = 0
+            rise_time = 0
 
-    return pulse_amplitude, pulse_rise_time, pulse_half_maximum, pulse_data_points
-
-
-
-# Function which removes amplitudes which are in the range being critical amplitude values
-# NOTE THIS FUNCTION HANDLES CONVERTED DATA (I.E. NEGATIVE TO POSITIVE VALUES AND IN mV)
-# NOTE2 Here the amplitude values are pedestal corrected
-def removeUnphyscialQuantities(results, noise, sigma):
-   
-    # There is a more beautiful fix, with nesting for loops, not important for now
-    amplitudes      = np.empty(0,dtype=results[0][0].dtype)
-    rise_times      = np.empty(0,dtype=results[0][1].dtype)
-    half_max_times  = np.empty(0,dtype=results[0][2].dtype)
-    pulse_points    = np.empty(0,dtype=results[0][3].dtype)
-    
-    for index in range(0, len(results)):
-        amplitudes      = np.concatenate((amplitudes, results[index][0]), axis=0)
-        rise_times      = np.concatenate((rise_times, results[index][1]), axis=0)
-        half_max_times  = np.concatenate((half_max_times, results[index][2]), axis=0)
-        pulse_points    = np.concatenate((pulse_points, results[index][3]), axis=0)
-
-    criticalValues = findCriticalValues(amplitudes)
-    
-    deleted_amplitudes = np.zeros(1, dtype=amplitudes.dtype)
-   
-    for chan in amplitudes.dtype.names:
-      
-        indices = amplitudes[chan] == criticalValues[chan]
-        
-        amplitudes[chan][indices] = 0
-        rise_times[chan][indices] = 0
-        half_max_times[chan][indices] = 0
-        
-        deleted_amplitudes[chan] = np.sum(indices)
-
-    return [convertData(amplitudes), rise_times, half_max_times, convertData(criticalValues), pulse_points, deleted_amplitudes]
+    times = [count_large, count_small, count_crit, count_lin_fail, count_2fit_fail]
+    return max_amplitude, rise_time, times
 
 
 # Search for critical amplitude values
@@ -221,25 +143,32 @@ def removeUnphyscialQuantities(results, noise, sigma):
 def findCriticalValues(data):
 
     channels = data.dtype.names
-    
     criticalValues = np.empty(1, dtype=data.dtype)
     
     for chan in channels:
-        criticalValues[chan] = np.amin(data[chan])
-    
+        criticalValues[chan] = np.amin(np.concatenate(data[chan]))
+
     return criticalValues
 
+
 # Convert to positive values in mV
-def convertData(data):
-  
-    channels = data.dtype.names
-  
-    for chan in channels:
-        data[chan] = np.multiply(data[chan],-1000)
+def convertPulseData(results):
+
+    channels = results[0][0].dtype.names
     
-    return data
+    amplitudes = np.empty(0, dtype=results[0][0].dtype)
+    rise_times = np.empty(0, dtype=results[0][1].dtype)
+    
+    for index in range(0, len(results)):
+        amplitudes = np.concatenate((amplitudes, results[index][0]), axis = 0)
+        rise_times = np.concatenate((rise_times, results[index][1]), axis = 0)
+    
+    for chan in channels:
+        amplitudes[chan] = np.multiply(amplitudes[chan], -1000)
+    
+    return [amplitudes, rise_times]
 
-
+# Group each consequential numbers in each separate list
 def group_consecutives(data, stepsize=1):
     return np.split(data, np.where(np.diff(data) != stepsize)[0]+1)
 

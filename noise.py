@@ -52,15 +52,15 @@ def noiseAnalysis(batchNumbers):
         # Done with the for loop and appending results, export and produce files
         print "Done with batch", md.getBatchNumber(),"producing plots and exporting file.\n"
         
-        noise_average = np.empty(0, dtype=results_batch[0][0].dtype)
-        noise_std = np.empty(0, dtype=results_batch[0][1].dtype)
+        noise_average   = np.empty(0, dtype=results_batch[0][0].dtype)
+        noise_std       = np.empty(0, dtype=results_batch[0][1].dtype)
       
         for results_run in results_batch:
             noise_average = np.concatenate((noise_average, results_run[0]), axis = 0)
             noise_std = np.concatenate((noise_std, results_run[1]), axis = 0)
 
-
         pedestal, noise = n_calc.getPedestalAndNoisePerChannel(noise_average, noise_std)
+       
         dm.exportNoiseData(pedestal, noise)
         
         n_plot.produceNoiseDistributionPlots(noise_average, noise_std)
@@ -75,14 +75,14 @@ def noiseAnalysisPerRun():
     startTime = md.getTime()
     
 #    # Configure inputs for multiprocessing
-    p = Pool(dm.threads)
-    max = 200000 # Restrict to match the file of the telescope
-    step = 5000
+#    p = Pool(dm.threads)
+#    max = 200000 # Restrict to match the file of the telescope
+#    step = 5000
 
 #    # DEBUG #
-#    p = Pool(1)
-#    max = 20000 # Restrict to match the file of the telescope
-#    step = 20000
+    p = Pool(1)
+    max = 20000 # Restrict to match the file of the telescope
+    step = 20000
 
     ranges = range(0, max, step)
     

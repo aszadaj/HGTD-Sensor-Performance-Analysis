@@ -10,7 +10,6 @@ import noise
 import pulse
 import telescope
 import timing
-import graph
 
 import metadata as md
 
@@ -20,26 +19,18 @@ def main():
 
     ######  NOISE, PULSE, TELESCOPE AND TIMING   ######
     
-    batchNumber = [507]   # All batches 38, or "all" to consider them all
-    
+    batchNumber = [306]   # All batches 38, or "all" to consider them all
+ 
     ##################################################
     
-    ######  GRAPH ONLY   ######
+    #noise.noiseAnalysis           (batchNumber)
     
-    runNumber = 3793
-    entry = 13130
-    
-    ##################################################
-    
-    noise.noiseAnalysis           (batchNumber)
-    
-    #pulse.pulseAnalysis            (batchNumber)
+    pulse.pulseAnalysis            (batchNumber)
     
     #telescope.telescopeAnalysis   (batchNumber)
     
     #timing.timingAnalysis         (batchNumber)
     
-    graph.printWaveform            (runNumber, entry)
     
     exit()
 

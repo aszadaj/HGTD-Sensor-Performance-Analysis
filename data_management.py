@@ -71,20 +71,16 @@ def exportNoiseData(pedestal, noise):
     exportROOTFile(noise,"noise", "noise", "file")
 
 # Export pulse data
-def exportPulseData(amplitudes, rise_times, half_max_times, criticalValues):
+def exportPulseData(amplitudes, rise_times):
 
     exportROOTFile(amplitudes, "pulse", "amplitudes", "file")
     exportROOTFile(rise_times,"pulse", "rise_times", "file")
-    exportROOTFile(half_max_times,"pulse", "half_max_times", "file")
-    exportROOTFile(criticalValues,"pulse", "critical_values", "file")
 
 # Export plot information
 def exportPulsePlot(amplitudes, rise_times, half_max_times, criticalValues):
 
     exportROOTFile(amplitudes, "pulse", "amplitudes", "plots")
     exportROOTFile(rise_times,"pulse", "rise_times", "plots")
-    exportROOTFile(half_max_times,"pulse", "half_max_times", "plots")
-    exportROOTFile(criticalValues,"pulse", "critical_values", "plots")
 
 
 
@@ -101,11 +97,7 @@ def exportROOTFile(data, group, category, dataType, channelName=""):
         chan = ""
     fileName = md.getSourceFolderPath()+str(fileLocation)+"/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())+".root"
 
-    if len(data.dtype.names) == 7:
-        data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ,('chan4', '<f8') ,('chan5', '<f8') ,('chan6', '<f8')] )
-
-    else:
-        data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ,('chan4', '<f8') ,('chan5', '<f8') ,('chan6', '<f8') ,('chan7', '<f8')] )
+    data = changeDTYPEOfData(data)
 
     rnm.array2root(data, fileName, mode="recreate")
 
@@ -140,7 +132,7 @@ def importROOTFile(group, category, dataType):
         fileLocation = "plots_hgtd_efficiency_sep_2017"
 
     fileName = md.getSourceFolderPath()+str(fileLocation)+"/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())+".root"
-
+    
     data = rnm.root2array(fileName)
 
     return data
@@ -163,6 +155,42 @@ def importTelescopeDataBatch():
         data_batch[dimension] = np.multiply(data_batch[dimension], 0.001)
   
     return data_batch
+
+
+def changeDTYPEOfData(data):
+
+    if len(data.dtype.names) == 1:
+    
+        data = data.astype(  [('chan0', '<f8')] )
+
+    elif len(data.dtype.names) == 2:
+    
+        data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8')]  )
+
+    elif len(data.dtype.names) == 3:
+    
+        data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ] )
+
+    elif len(data.dtype.names) == 4:
+    
+        data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ] )
+
+    elif len(data.dtype.names) == 5:
+    
+        data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ,('chan4', '<f8') ] )
+
+    elif len(data.dtype.names) == 6:
+    
+        data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ,('chan4', '<f8') ,('chan5', '<f8') ] )
+
+    elif len(data.dtype.names) == 7:
+    
+        data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ,('chan4', '<f8') ,('chan5', '<f8') ,('chan6', '<f8') ] )
+
+    else:
+        data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ,('chan4', '<f8') ,('chan5', '<f8') ,('chan6', '<f8') ,('chan7', '<f8')] )
+
+    return data
 
 
 # Check if the repository is on the stau server

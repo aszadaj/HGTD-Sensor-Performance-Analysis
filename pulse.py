@@ -28,7 +28,7 @@ def pulseAnalysis(batchNumbers):
         results_batch = []
         
         # DEBUG # Comment out this line to consider all files in batch
-        runLog = [runLog[0]] # restrict to one files
+        runLog = [runLog[0]] # restrict to one file(s)
     
         startTimeBatch = md.getTime()
         md.printTime()
@@ -50,34 +50,18 @@ def pulseAnalysis(batchNumbers):
                 print "WARNING! There is no root file for run number: " + str(runNumber) + "\n"
     
         # Done with the for loop and appending results, export and produce files
-        
         print "Done with batch", md.getBatchNumber(),"producing plots and exporting file.\n"
         
         amplitudes = np.empty(0, dtype=results_batch[0][0].dtype)
         rise_times = np.empty(0, dtype=results_batch[0][1].dtype)
-        half_max_times = np.empty(0, dtype=results_batch[0][2].dtype)
-        criticalValues = np.empty(0, dtype=results_batch[0][3].dtype) # This should be length 1 per channel!
-        pulse_points = np.empty(0, dtype=results_batch[0][4].dtype)
-        deleted_amplitudes = np.zeros(1, dtype=results_batch[0][5].dtype) # This should be length 1 per channel!
     
-        for results in results_batch:
-            amplitudes = np.concatenate((amplitudes, results[0]), axis = 0)
-            rise_times = np.concatenate((rise_times, results[1]), axis = 0)
-            half_max_times = np.concatenate((half_max_times, results[2]), axis = 0)
-            criticalValues = np.concatenate((criticalValues, results[3]), axis = 0)
-            pulse_points = np.concatenate((pulse_points, results[4]), axis = 0)
-            
-            for chan in amplitudes.dtype.names:
-                deleted_amplitudes[chan] += results[5][chan]
-
-        for chan in criticalValues.dtype.names:
+        for results_run in results_batch:
+            amplitudes = np.concatenate((amplitudes, results_run[0]), axis = 0)
+            rise_times = np.concatenate((rise_times, results_run[1]), axis = 0)
+     
+        dm.exportPulseData(amplitudes, rise_times)
         
-            criticalValues[chan] = np.amax(criticalValues[chan])
-            deleted_amplitudes[chan] = float(deleted_amplitudes[chan])/float(len(amplitudes[chan]))
-        
-        dm.exportPulseData(amplitudes, rise_times, half_max_times, criticalValues, pulse_points)
-
-        p_plot.producePulseDistributionPlots(amplitudes, rise_times, pulse_points, deleted_amplitudes)
+        p_plot.producePulseDistributionPlots(amplitudes, rise_times)
     
         print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
 
@@ -95,38 +79,31 @@ def pulseAnalysisPerRun(sigma):
 
     # DEBUG #
     p = Pool(1)
-    max = 1000
-    step = 1000
+    max = 3000
+    step = 3000
 
     ranges = range(0, max, step)
-    print ranges
     
     dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
     
-    pedestal    = dm.importNoiseFile2("pedestal")
-    noise       = dm.importNoiseFile2("noise")
-    
-    print pedestal
-    print noise
+    pedestal    = dm.importNoiseFile("pedestal")
+    noise       = dm.importNoiseFile("noise")
     
     results = p.map(lambda chunk: multiProcess(dataPath, pedestal, noise, chunk, chunk+step, sigma), ranges)
- 
-    # Note, here the function receives the results from multiprocessing
-    results = p_calc.removeUnphyscialQuantities(results, noise, sigma)
     
-    return results
+    # results change form, now each element is a variable
+    results_variables = p_calc.convertPulseData(results)
+
+    return results_variables
 
 
 # Start multiprocessing analysis of noises and pulses in ROOT considerOnlyRunsfile
 def multiProcess(dataPath, pedestal, noise, begin, end, sigma):
-    
-    print "importing"
+
     data = rnm.root2array(dataPath, start=begin, stop=end)
-    print data
-    print data.dtype
-    amplitudes, rise_times, half_max_times, pulse_points = p_calc.pulseAnalysis(data, pedestal, noise, sigma)
+    amplitudes, rise_times = p_calc.pulseAnalysis(data, pedestal, noise, sigma)
     
-    return amplitudes, rise_times, half_max_times, pulse_points
+    return amplitudes, rise_times
 
 
 
