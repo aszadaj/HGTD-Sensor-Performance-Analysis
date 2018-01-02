@@ -262,7 +262,7 @@ def produceTH1Plot(graph, headTitle, fileName):
     canvas.cd()
     graph.Draw()
     canvas.Update()
-    canvas.Print("../../HGTD_material/plots_hgtd_efficiency_sep_2017/telescope/telescope_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
+    canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/telescope/telescope_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
     canvas.Clear()
 
 
@@ -274,7 +274,7 @@ def produceTH2Plot(graph, headTitle, fileName):
     canvas.cd()
     graph.Draw("COLZ")
     canvas.Update()
-    canvas.Print("../../HGTD_material/plots_hgtd_efficiency_sep_2017/telescope/telescope_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
+    canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/telescope/telescope_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
     canvas.Clear()
 
 
