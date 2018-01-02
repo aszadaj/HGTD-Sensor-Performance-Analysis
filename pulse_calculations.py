@@ -63,6 +63,7 @@ def getAmplitudeAndRiseTime (data_event, chan, pedestal, noise, eventNumber, sig
     count_critical = 0
     count_curve = 0
     count_2nd_deg_poor_fit = 0
+    count_2nd_deg_poor_fit_catch = 0
     
     threshold = noise * sigma # This sets the condition for seeing a value above the noise.
     
