@@ -114,7 +114,6 @@ def getAmplitudeAndRiseTime (data_event, chan, pedestal, noise, eventNumber, sig
         else:
             
             impulse_fit = np.polyfit(impulse_indices.flatten()*timeScope, impulse_data[impulse_truth].flatten(), 1)
-            peak_fit = np.polyfit(peak_indices*timeScope, peak_data_points, 2)
            
             # If the linear fit is strange, omit it
             if impulse_fit[0] > -0.01 or np.isnan(impulse_fit[0]):
@@ -122,19 +121,21 @@ def getAmplitudeAndRiseTime (data_event, chan, pedestal, noise, eventNumber, sig
                 count_linear_poor_fit = 1
                 max_amplitude = 0
                 rise_time = 0
-            
-            # If the second degree fit is strange, omit it
-            elif peak_fit[0] < 0.02:
-            
-                count_2nd_deg_poor_fit = 1
-                max_amplitude = 0
-                rise_time = 0
         
-            
             else:
             
-                max_amplitude = peak_fit[0]*np.power(impulse_last*timeScope,2) + peak_fit[1]*impulse_last*timeScope + peak_fit[2]
-                rise_time = (impulse_min*0.8)/impulse_fit[0]
+                peak_fit = np.polyfit(peak_indices*timeScope, peak_data_points, 2)
+                
+                # If the second degree fit is strange, omit it
+                if peak_fit[0] < 0.02:
+            
+                    count_2nd_deg_poor_fit = 1
+                    max_amplitude = 0
+                    rise_time = 0
+                
+                else:
+                    max_amplitude = peak_fit[0]*np.power(impulse_last*timeScope,2) + peak_fit[1]*impulse_last*timeScope + peak_fit[2]
+                    rise_time = (impulse_min*0.8)/impulse_fit[0]
 
             
 
