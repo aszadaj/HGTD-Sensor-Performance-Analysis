@@ -144,11 +144,7 @@ def getAmplitudeAndRiseTime (data_event, chan, pedestal, noise, eventNumber, sig
                 max_amplitude = 0
                 rise_time = 0
             
-        
-
-            
-
-
+    # DEBUG
     times = [count_linear, count_critical, count_curve, count_linear_poor_fit, count_2nd_deg_poor_fit, count_2nd_deg_poor_fit_catch]
     return max_amplitude, rise_time, times
 
