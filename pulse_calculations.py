@@ -13,7 +13,7 @@ def pulseAnalysis(data, pedestal, noise, sigma):
     rise_times      =   np.zeros(len(data), dtype = data.dtype)
     
     # DEBUG
-    count = [0,0,0,0,0]
+    count = [0,0,0,0,0,0]
     
     criticalValues = findCriticalValues(data)
 
@@ -38,6 +38,8 @@ def pulseAnalysis(data, pedestal, noise, sigma):
         print "linear poor fit", float(count[3])/(len(data)*8)
     if float(count[4])/(len(data)*8) > 0.0:
         print "2nd deg poor fit", float(count[3])/(len(data)*8)
+    if float(count[5])/(len(data)*8) > 0.0:
+        print "2nd deg poor fit try", float(count[3])/(len(data)*8)
 
     if sum(count) > 0:
         print "total", float(sum(count))/(len(data)*8), "\n"
@@ -137,8 +139,7 @@ def getAmplitudeAndRiseTime (data_event, chan, pedestal, noise, eventNumber, sig
                     rise_time = (impulse_min*0.8)/impulse_fit[0]
                     
             except ValueError:
-                print "error caught"
-                count_2nd_deg_poor_fit = 1
+                count_2nd_deg_poor_fit_catch = 1
                 max_amplitude = 0
                 rise_time = 0
             
@@ -147,7 +148,7 @@ def getAmplitudeAndRiseTime (data_event, chan, pedestal, noise, eventNumber, sig
             
 
 
-    times = [count_linear, count_critical, count_curve, count_linear_poor_fit, count_2nd_deg_poor_fit]
+    times = [count_linear, count_critical, count_curve, count_linear_poor_fit, count_2nd_deg_poor_fit, count_2nd_deg_poor_fit_catch]
     return max_amplitude, rise_time, times
 
 
