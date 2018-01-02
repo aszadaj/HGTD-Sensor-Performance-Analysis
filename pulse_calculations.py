@@ -27,21 +27,21 @@ def pulseAnalysis(data, pedestal, noise, sigma):
                 count[i] += count_new[i]
 
 
-    # DEBUG check how many pulses are disregarded
-    if float(count[0])/(len(data)*8) > 0.0:
-        print "linear condition", float(count[0])/(len(data)*8)
-    if float(count[1])/(len(data)*8) > 0.0:
-        print "crit", float(count[1])/(len(data)*8)
-    if float(count[2])/(len(data)*8) > 0.0:
-        print "curve condition", float(count[2])/(len(data)*8)
-    if float(count[3])/(len(data)*8) > 0.0:
-        print "linear poor fit", float(count[3])/(len(data)*8)
-    if float(count[4])/(len(data)*8) > 0.0:
-        print "2nd deg poor fit", float(count[3])/(len(data)*8)
-    if float(count[5])/(len(data)*8) > 0.0:
-        print "2nd deg poor fit try", float(count[3])/(len(data)*8)
-
-    if sum(count) > 0:
+#    # DEBUG check how many pulses are disregarded
+#    if float(count[0])/(len(data)*8) > 0.0:
+#        print "linear condition", float(count[0])/(len(data)*8)
+#    if float(count[1])/(len(data)*8) > 0.0:
+#        print "crit", float(count[1])/(len(data)*8)
+#    if float(count[2])/(len(data)*8) > 0.0:
+#        print "curve condition", float(count[2])/(len(data)*8)
+#    if float(count[3])/(len(data)*8) > 0.0:
+#        print "linear poor fit", float(count[3])/(len(data)*8)
+#    if float(count[4])/(len(data)*8) > 0.0:
+#        print "2nd deg poor fit", float(count[3])/(len(data)*8)
+#    if float(count[5])/(len(data)*8) > 0.0:
+#        print "2nd deg poor fit try", float(count[3])/(len(data)*8)
+#
+    if sum(count) > 0.03:
         print "total", float(sum(count))/(len(data)*8), "\n"
 
 
