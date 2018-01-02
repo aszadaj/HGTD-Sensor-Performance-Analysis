@@ -8,7 +8,7 @@ def pulseAnalysis(data, pedestal, noise, sigma):
     
     amplitudes      =   np.zeros(len(data), dtype = data.dtype)
     rise_times      =   np.zeros(len(data), dtype = data.dtype)
-    times = [0,0,0,0,0]
+    count = [0,0,0,0,0]
     
     # This function lists max amplitude values for each channel among all data points
     
@@ -18,22 +18,22 @@ def pulseAnalysis(data, pedestal, noise, sigma):
     
         for chan in channels:
             # Pedestal and noise are in mV whereas data is in V (and negative). Noise is a standard deviation, hence w/o minus.
-            amplitudes[event][chan], rise_times[event][chan], times_new = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[chan]*-0.001, noise[chan]*0.001, event, sigma, criticalValues[chan])
+            amplitudes[event][chan], rise_times[event][chan], count_new = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[chan]*-0.001, noise[chan]*0.001, event, sigma, criticalValues[chan])
             
-            for i in range(0, len(times)):
-                times[i] += times_new[i]
+            for i in range(0, len(count)):
+                count[i] += count_new[i]
 
-     # DEBUG
-    if times[0] > 0:
-        print "large", times[0]
-    if times[1] > 0:
-        print "small", times[1]
-    if times[2] > 0:
-        print "crit", times[2]
-    if times[3] > 0:
-        print "lin fail", times[3]
-    if times[4] > 0:
-        print "2nd fit fail", times[4]
+     # DEBUG check how many pulses are disregarded
+    if count[0] > 0:
+        print "large", float(count[0])/(len(data)*8)
+    if count[1] > 0:
+        print "small", float(count[1])/(len(data)*8)
+    if count[2] > 0:
+        print "crit", float(count[2])/(len(data)*8)
+    if count[3] > 0:
+        print "lin fail", float(count[3])/(len(data)*8)
+    if count[4] > 0:
+        print "2nd fit fail", float(count[4])/(len(data)*8)
 
     
 
@@ -71,7 +71,7 @@ def getAmplitudeAndRiseTime (data_event, chan, pedestal, noise, eventNumber, sig
         threshold_indices = group_points[group_points_amplitude.index(min(group_points_amplitude))]
         
         # With this peak, check if it is high enough and cointain sufficient amount of points
-        if -np.amin(data_event) > 40*0.001 and len(threshold_indices) > point_difference * 2:
+        if -np.amin(data_event) > 30*0.001 and len(threshold_indices) > point_difference * 2:
         
             # Check if the data of the event is "corrupted" meaning that it reaches a critical amplitude value
 
@@ -100,6 +100,8 @@ def getAmplitudeAndRiseTime (data_event, chan, pedestal, noise, eventNumber, sig
                 
                 
                 linear_fit = np.polyfit(amplitude_indices.flatten()*timeScope, data_event[pulse_first_index:pulse_last_index][amplitude_truth].flatten(), 1)
+                
+                print linear_fit
               
                 ## Get rise time for pulse ##
                 rise_time = (max_amplitude*0.8)/linear_fit[0]
