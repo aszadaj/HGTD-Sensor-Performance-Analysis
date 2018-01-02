@@ -2,6 +2,8 @@ import numpy as np
 import metadata as md
 import data_management as dm
 import warnings as wr
+wr.simplefilter('ignore', np.RankWarning)
+np.seterr(divide='ignore', invalid='ignore')
 
 def pulseAnalysis(data, pedestal, noise, sigma):
 
