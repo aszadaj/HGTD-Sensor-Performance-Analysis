@@ -13,17 +13,13 @@ def producePulseDistributionPlots(amplitudes, rise_times):
     
     for chan in amplitudes.dtype.names:
         
-        amplitudes_graph[chan] = ROOT.TH1D("Amplitude channel "+str(int(chan[-1:])+1), "amplitude" + chan,1000,0,400)
-        
-        #rise_times_graph[chan] = ROOT.TH1D("Rise time channel "+str(int(chan[-1:])+1), "rise_time" + chan,600,0.3,1.5)
-        rise_times_graph[chan] = ROOT.TH1D("Rise time channel "+str(int(chan[-1:])+1), "rise_time" + chan,200,0,100)
+        amplitudes_graph[chan] = ROOT.TH1D("Amplitude channel "+str(int(chan[-1:])+1), "amplitude" + chan,1000 , 0, 400)
+        rise_times_graph[chan] = ROOT.TH1D("Rise time channel "+str(int(chan[-1:])+1), "rise_time" + chan,600 , 0, 1.5)
         
         index = int(chan[-1:])
         
         # Exclude filling histograms with critical amplitude values
         for entry in range(0,len(amplitudes[chan])):
-            #if amplitudes[chan][entry] != 0 and rise_times[chan][entry] != 0:
-            #if amplitudes[chan][entry] != 0:
             if amplitudes[chan][entry] != 0:
                 amplitudes_graph[chan].Fill(amplitudes[chan][entry])
             if rise_times[chan][entry] != 0:
