@@ -27,7 +27,7 @@ def noiseAnalysis(batchNumbers):
         results_batch = []
         
         # DEBUG # Comment line to get all files in batch
-        runLog = [runLog[0]] # Restrict to some run numbers
+        runLog = [runLog[0], runLog[1], runLog[2]] # Restrict to some run numbers
     
         startTimeBatch = md.getTime()
         md.printTime()
@@ -80,7 +80,7 @@ def noiseAnalysisPerRun():
 #    step = 8000
 
 #    # DEBUG #
-    p = Pool(1)
+    p = Pool(dm.threads)
     max = 10000 # Restrict to match the file of the telescope
     step = 10000
 
