@@ -125,8 +125,8 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
 
         elif 0 < threshold_indices[0].size <= 4:
             count += 1
-            
-    except Error:
+
+    except:
     
         print Error
         
