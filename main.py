@@ -23,7 +23,7 @@ def main():
  
     ##################################################
     
-    noise.noiseAnalysis           (batchNumber)
+    #noise.noiseAnalysis           (batchNumber)
     
     pulse.pulseAnalysis            (batchNumber)
     

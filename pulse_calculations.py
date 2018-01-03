@@ -43,55 +43,55 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
     threshold_indices = np.where(data < -threshold)
     
     # Check if there are points above the threshold
-    if threshold_indices[0].size > 4:
-        
-        # Consider consecutive points, with lowest peak value
-        group_points = group_consecutives(threshold_indices[0])
-        group_points_amplitude = [np.amin(data[group]) for group in group_points]
-        threshold_indices = group_points[group_points_amplitude.index(min(group_points_amplitude))]
-        
-        # Data selection for linear fit
-        impulse_indices = np.arange(threshold_indices[0], np.argmin(data)+1)
-        impulse_data = data[impulse_indices]
-        
-        # Data selection for polynomial fit
-        point_difference = 3
-        peak_first_index = np.argmin(data) - point_difference
-        peak_last_index = np.argmin(data) + point_difference
-        peak_indices = np.arange(peak_first_index, peak_last_index+1)
-        peak_data = data[peak_indices]
-        
-        # Corrupted event
-        if np.amin(data) == criticalValue:
-          
-            count += 1
+    
+    try:
+        if threshold_indices[0].size > 4:
             
-            peak_value = 0
-            peak_time = 0
-            rise_time = 0
-        
-        # Linear fit condition
-        elif len(impulse_indices) < 3:
-
-            count += 1
+            # Consider consecutive points, with lowest peak value
+            group_points = group_consecutives(threshold_indices[0])
+            group_points_amplitude = [np.amin(data[group]) for group in group_points]
+            threshold_indices = group_points[group_points_amplitude.index(min(group_points_amplitude))]
             
-            peak_value = 0
-            peak_time = 0
-            rise_time = 0
-
-        # Second degree fit condition
-        elif data[peak_first_index] > threshold:
-        
-            count += 1
+            # Data selection for linear fit
+            impulse_indices = np.arange(threshold_indices[0], np.argmin(data)+1)
+            impulse_data = data[impulse_indices]
             
-            peak_value = 0
-            peak_time = 0
-            rise_time = 0
+            # Data selection for polynomial fit
+            point_difference = 3
+            peak_first_index = np.argmin(data) - point_difference
+            peak_last_index = np.argmin(data) + point_difference
+            peak_indices = np.arange(peak_first_index, peak_last_index+1)
+            peak_data = data[peak_indices]
+            
+            # Corrupted event
+            if np.amin(data) == criticalValue:
+              
+                count += 1
+                
+                peak_value = 0
+                peak_time = 0
+                rise_time = 0
+            
+            # Linear fit condition
+            elif len(impulse_indices) < 3:
 
-        else:
-        
-            try:
+                count += 1
+                
+                peak_value = 0
+                peak_time = 0
+                rise_time = 0
 
+            # Second degree fit condition
+            elif data[peak_first_index] > threshold:
+            
+                count += 1
+                
+                peak_value = 0
+                peak_time = 0
+                rise_time = 0
+
+            else:
+            
                 impulse_fit = np.polyfit(impulse_indices*timeScope, impulse_data, 1)
                 peak_fit = np.polyfit(peak_indices*timeScope, peak_data, 2)
                 
@@ -112,7 +112,7 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
                     peak_value = 0
                     peak_time = 0
                     rise_time = 0
-                    
+                
                 else:
                 
                     peak_value = peak_fit[0]*np.power(np.argmin(data)*timeScope,2) + peak_fit[1]*np.argmin(data)*timeScope + peak_fit[2] - pedestal
@@ -122,17 +122,19 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
                     
                     rise_time = (np.amin(data)-pedestal)*0.8/impulse_fit[0]
         
-        
-            except ValueError:
-            
-                count += 1
-            
-                peak_value = 0
-                peak_time = 0
-                rise_time = 0
 
-    elif 0 < threshold_indices[0].size <= 4:
+        elif 0 < threshold_indices[0].size <= 4:
+            count += 1
+            
+    except Error:
+    
+        print Error
+        
         count += 1
+        peak_value = 0
+        peak_time = 0
+        rise_time = 0
+    
     
     return peak_value, rise_time, peak_time, count
 
