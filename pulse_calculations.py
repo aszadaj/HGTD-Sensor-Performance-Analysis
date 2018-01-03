@@ -127,9 +127,7 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
             count += 1
 
     except:
-    
-        print Error
-        
+        print "Error caught \n" 
         count += 1
         peak_value = 0
         peak_time = 0
