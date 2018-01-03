@@ -30,20 +30,17 @@ def timingAnalysis(numberOfBatches):
 def timingAnalysisPerBatch(runLog):
 
     md.defineGlobalVariableRun(runLog[0])
-    pulse_half_max_time_batch = dm.importPulseFile("half_max_times")
-    comparePeakTimes(pulse_half_max_time_batch)
+    peak_times_batch = dm.importPulseFile("peak_time")
+    comparePeakTimes(peak_times_batch)
 
 
-def comparePeakTimes(half_max_times):
+def comparePeakTimes(peak_times):
 
-    SiPM_name = "SiPM-AFP"
-    SiPM_chan = md.getChannelNameForSensor(SiPM_name)
+    SiPM_chan = md.getChannelNameForSensor("SiPM-AFP")
     SiPM_index = int(SiPM_chan[-1])
     data_graph = dict()
     
-    print "Channel of SiPM",SiPM_chan
-    
-    all_channels = half_max_times.dtype.names
+    all_channels = peak_times.dtype.names
     
     channels = []
     
@@ -53,45 +50,24 @@ def comparePeakTimes(half_max_times):
 
     canvas = ROOT.TCanvas("Timing","timing")
     
-    filled_entries = np.zeros(len(half_max_times), dtype=half_max_times.dtype)
+    mean_time_SiPM = np.average(np.take(peak_times[SiPM_chan], np.nonzero(peak_times[SiPM_chan]))[0])
     
     for chan in channels:
     
-        data_graph[chan] = ROOT.TH1D("timing_"+chan+"_histogram","Time difference distribution between SiPM and " + md.getNameOfSensor(chan) + " "+str(int(chan[-1:])+1),3000,-300,300)
-        # outside the range, if there are filled values
-        for entry in range(0, len(half_max_times)):
-            timeDifference = half_max_times[entry][chan]-half_max_times[entry][SiPM_index]
-
-            if half_max_times[entry][chan] > 0.0 and half_max_times[entry][SiPM_index] > 0.0:
-                
-                data_graph[chan].Fill(timeDifference*1000)
-
-
-        for entry in range(0, len(half_max_times)):
-            timeDifference = half_max_times[entry][chan]-half_max_times[entry][SiPM_index]
-
-            if half_max_times[entry][chan] > 0.0 and half_max_times[entry][SiPM_index]:
-                if abs(timeDifference) < data_graph[chan].GetMean():
-                    filled_entries[entry][chan] = 1.0
-                    
-                    
-        produceTH1Plot(data_graph[chan], chan, canvas)
-
-    count = 0
-    
-    print len(filled_entries)
-
-    for entry in range(0, len(filled_entries)):
-        for chan in channels:
+        mean_time_chan = np.average(np.take(peak_times[chan], np.nonzero(peak_times[chan]))[0])
+        mean_time = mean_time_SiPM - mean_time_chan
+       
+        data_graph[chan] = ROOT.TH1D("timing_"+chan+"_histogram","Time difference distribution between SiPM and " + md.getNameOfSensor(chan) + " " + str(int(chan[-1:])+1),3000,mean_time*0.7,mean_time*1.3)
         
-            if filled_entries[chan][entry] == 1.0:
+        for entry in range(0, len(peak_times)):
+        
+            if peak_times[entry][chan] != 0.0 and peak_times[entry][SiPM_chan] != 0.0:
             
-                if count == 30:
-                    break
+                timeDifference = peak_times[entry][SiPM_chan] - peak_times[entry][chan]
+             
+                data_graph[chan].Fill(timeDifference)
 
-                count += 1
-                print chan, entry
-
+        produceTH1Plot(data_graph[chan], chan, canvas)
 
 
 def produceTH1Plot(graph, chan, canvas):
@@ -99,13 +75,13 @@ def produceTH1Plot(graph, chan, canvas):
     headTitle = "Time difference between SiPM and " + md.getNameOfSensor(chan)
     fileName = ".pdf"
 
-    title = headTitle + ", Sep 2017 batch " + str(md.getBatchNumber())+";" + "Time (ps)" + "; " + "Entries (N)"
+    title = headTitle + ", Sep 2017 batch " + str(md.getBatchNumber())+";" + "Time (ns)" + "; " + "Entries (N)"
     graph.SetTitle(title)
     
     canvas.cd()
     graph.Draw()
     canvas.Update()
-    canvas.Print("../../HGTD_material/plots_hgtd_efficiency_sep_2017/timing/timing_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
+    canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/timing/timing_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
     canvas.Clear()
 
 

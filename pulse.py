@@ -28,7 +28,7 @@ def pulseAnalysis(batchNumbers):
         results_batch = []
         
         # DEBUG # Comment out this line to consider all files in batch
-        #runLog = [runLog[9], runLog[10]] # restrict to two file(s)
+        runLog = [runLog[0]] # Restrict to some run numbers
     
         startTimeBatch = md.getTime()
         md.printTime()
@@ -52,16 +52,18 @@ def pulseAnalysis(batchNumbers):
         # Done with the for loop and appending results, export and produce files
         print "Done with batch", md.getBatchNumber(),"producing plots and exporting file.\n"
         
-        amplitudes = np.empty(0, dtype=results_batch[0][0].dtype)
-        rise_times = np.empty(0, dtype=results_batch[0][1].dtype)
+        peak_values = np.empty(0, dtype=results_batch[0][0].dtype)
+        peak_times  = np.empty(0, dtype=results_batch[0][1].dtype)
+        rise_times  = np.empty(0, dtype=results_batch[0][2].dtype)
     
         for results_run in results_batch:
-            amplitudes = np.concatenate((amplitudes, results_run[0]), axis = 0)
-            rise_times = np.concatenate((rise_times, results_run[1]), axis = 0)
+            peak_values = np.concatenate((peak_values, results_run[0]), axis = 0)
+            peak_times  = np.concatenate((peak_times,  results_run[1]), axis = 0)
+            rise_times  = np.concatenate((rise_times,  results_run[2]), axis = 0)
      
-        dm.exportPulseData(amplitudes, rise_times)
+        dm.exportPulseData(peak_values, peak_times, rise_times)
         
-        p_plot.producePulseDistributionPlots(amplitudes, rise_times)
+        p_plot.producePulseDistributionPlots(peak_values, peak_times, rise_times)
     
         print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
 
@@ -73,14 +75,14 @@ def pulseAnalysisPerRun(sigma):
     startTimeRun = md.getTime()
     
     # Configure inputs for multiprocessing
-    p = Pool(dm.threads)
-    max = 200000
-    step = 7000
+#    p = Pool(dm.threads)
+#    max = 200000
+#    step = 8000
 
 #    # DEBUG #
-#    p = Pool(1)
-#    max = 1000
-#    step = 1000
+    p = Pool(1)
+    max = 10000
+    step = 10000
 
     ranges = range(0, max, step)
     
@@ -88,7 +90,7 @@ def pulseAnalysisPerRun(sigma):
     
     pedestal    = dm.importNoiseFile("pedestal")
     noise       = dm.importNoiseFile("noise")
-    
+
     results = p.map(lambda chunk: multiProcess(dataPath, pedestal, noise, chunk, chunk+step, sigma), ranges)
     
     # results change form, now each element is a variable
@@ -101,9 +103,9 @@ def pulseAnalysisPerRun(sigma):
 def multiProcess(dataPath, pedestal, noise, begin, end, sigma):
 
     data = rnm.root2array(dataPath, start=begin, stop=end)
-    amplitudes, rise_times = p_calc.pulseAnalysis(data, pedestal, noise, sigma)
+    peak_values, peak_times, rise_times = p_calc.pulseAnalysis(data, pedestal, noise, sigma)
     
-    return amplitudes, rise_times
+    return peak_values, peak_times, rise_times
 
 
 

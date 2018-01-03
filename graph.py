@@ -11,8 +11,8 @@ ROOT.gROOT.SetBatch(True)
 # Start analysis of selected run numbers
 def printWaveform():
 
-    runNumber = 3791
-    startEntry = 323
+    runNumber = 3870
+    startEntry = 122
     entries = 1
 
     timeStamp = md.getTimeStamp(runNumber)
@@ -22,6 +22,21 @@ def printWaveform():
     
     noise = dm.importNoiseFile("noise")
     pedestal = dm.importNoiseFile("pedestal")
+    rise_time = dm.importPulseFile("rise_time")
+    
+    
+    count = 0
+    
+    for event in range(100, len(rise_time)):
+        for chan in rise_time.dtype.names:
+    
+            if 0.845 <= rise_time[event][chan] <= 0.855 and chan == "chan4":
+                print event, chan
+                print rise_time[event][chan]
+                count += 1
+                
+        if count == 40:
+            break
     
     #amplitudes = dm.importPulseFile("amplitudes")
     
@@ -41,14 +56,14 @@ def printWaveform():
     
     for chan in channels:
     
-        #threshold = noise[chan]*sigma + pedestal[chan]
-        threshold = noise[chan]*sigma
+        threshold = noise[chan]*sigma - pedestal[chan]
+        #threshold = noise[chan]*sigma
     
-        #print noise[chan], threshold
+        print noise[chan], threshold
     
         canvas = ROOT.TCanvas("Waveforms","Waveforms")
         leg = ROOT.TLegend (0.73, 0.6, 0.93, 0.9)
-        leg.SetHeader("Senors, \sigma = "+str(sigma))
+        leg.SetHeader("\sigma = "+str(sigma))
     
     
     
@@ -105,6 +120,7 @@ def printWaveform():
         
         graph_waveform[chan].GetYaxis().SetRangeUser(-30,450)
         graph_waveform[chan].GetXaxis().SetRangeUser(0,100*entries)
+        
 
         fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/waveforms/waveform_"+str(runNumber)+"_entry_"+str(startEntry)+"_"+str(chan)+".pdf"
         leg.Draw()
