@@ -25,7 +25,7 @@ def pulseAnalysis(data, pedestal, noise, sigma):
         
             peak_values[event][chan], rise_times[event][chan], peak_times[event][chan], count = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[chan]*-0.001, noise[chan]*0.001, event, sigma, criticalValues[chan], count)
 
-    print float(count)/(len(data)*8)
+    #print float(count)/(len(data)*len(channels))
 
     return peak_values, peak_times, rise_times
 
@@ -78,18 +78,13 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
                     impulse_fit = np.polyfit(impulse_indices*timeScope, impulse_data, 1)
                     peak_fit = np.polyfit(peak_indices*timeScope, peak_data, 2)
                     
-                    #print impulse_fit[0], chan, event, len(impulse_indices)
-                    
-                    if impulse_fit[0] < 0:
+                    if impulse_fit[0] < 0 and peak_fit[0] > 0.05:
                 
                         peak_value = peak_fit[0]*np.power(np.argmin(data)*timeScope,2) + peak_fit[1]*np.argmin(data)*timeScope + peak_fit[2] - pedestal
                         
                         # Derivative polynomial fit
                         peak_time = -peak_fit[1]/(2*peak_fit[0])
-                        
-                        # Reference: half time of the linear fit/rise time
-                        #peak_time = ((np.amin(data)-pedestal)*0.5-impulse_fit[1])/impulse_fit[0]
-                       
+                     
                         rise_time = (np.amin(data)-pedestal)*0.8/impulse_fit[0]
                         
                     else:

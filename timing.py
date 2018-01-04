@@ -39,28 +39,26 @@ def comparePeakTimes(peak_times):
     SiPM_chan = md.getChannelNameForSensor("SiPM-AFP")
     SiPM_index = int(SiPM_chan[-1])
     data_graph = dict()
-    
+
     all_channels = peak_times.dtype.names
     
     channels = []
     
     for chan in all_channels:
     
-        peak_times[chan] = np.multiply(peak_times[chan], 1000) # convert to picoseconds
-        
         if chan != all_channels[SiPM_index]:
             channels.append(chan)
 
     canvas = ROOT.TCanvas("Timing","timing")
     
-    mean_time_SiPM = np.average(np.take(peak_times[SiPM_chan], np.nonzero(peak_times[SiPM_chan]))[0])
-    
+    mean_SiPM = np.average(peak_times[SiPM_chan][np.nonzero(peak_times[SiPM_chan])])
+ 
     for chan in channels:
+        
+        mean_chan = np.average(peak_times[chan][np.nonzero(peak_times[chan])])
+        mean = mean_SiPM - mean_chan
     
-        mean_time_chan = np.average(np.take(peak_times[chan], np.nonzero(peak_times[chan]))[0])
-        mean_time = mean_time_SiPM - mean_time_chan
-       
-        data_graph[chan] = ROOT.TH1D("timing_"+chan+"_histogram","Time difference distribution between SiPM and " + md.getNameOfSensor(chan) + " " + str(int(chan[-1:])+1),1000,mean_time*0.8,mean_time*1.2)
+        data_graph[chan] = ROOT.TH1D("timing_"+chan+"_histogram","Time difference distribution between SiPM and " + md.getNameOfSensor(chan) + " " + str(int(chan[-1:])+1),1000, mean*0.7, mean*1.3)
         
         for entry in range(0, len(peak_times)):
         
