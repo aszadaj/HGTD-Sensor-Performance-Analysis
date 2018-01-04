@@ -23,13 +23,13 @@ def main():
  
     ##################################################
     
-    noise.noiseAnalysis           (batchNumber)
+    #noise.noiseAnalysis           (batchNumber)
     
-    #pulse.pulseAnalysis            (batchNumber)
+    pulse.pulseAnalysis            (batchNumber)
     
     #telescope.telescopeAnalysis   (batchNumber)
     
-    #timing.timingAnalysis         (batchNumber)
+    timing.timingAnalysis         (batchNumber)
     
     
     exit()

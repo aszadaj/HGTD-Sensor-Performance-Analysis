@@ -123,8 +123,9 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
                     
                     # Derivative polynomial fit
                     peak_time = -peak_fit[1]/(2*peak_fit[0])
-                     # Y = ax+b, x = (y-b)/a
-                    #peak_time = ((np.amin(data)-pedestal)*0.5-impulse_fit[1])/impulse_fit[0] # peak half time
+                    
+                    # Reference: half time of the linear fit/rise time
+                    #peak_time = ((np.amin(data)-pedestal)*0.5-impulse_fit[1])/impulse_fit[0]
                    
                     rise_time = (np.amin(data)-pedestal)*0.8/impulse_fit[0]
                 
