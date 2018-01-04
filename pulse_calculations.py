@@ -50,7 +50,7 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
             threshold_indices = group_points[group_points_amplitude.index(min(group_points_amplitude))]
      
             # Data selection for linear fit
-            skip_index = -1
+            skip_index = 0
             if chan == md.getChannelNameForSensor("SiPM-AFP"):
                 skip_index = 1
             
