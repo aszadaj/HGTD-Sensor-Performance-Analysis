@@ -25,7 +25,7 @@ def pulseAnalysis(data, pedestal, noise, sigma):
         
             peak_values[event][chan], rise_times[event][chan], peak_times[event][chan], count = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[chan]*-0.001, noise[chan]*0.001, event, sigma, criticalValues[chan], count)
 
-    #print float(count)/(len(data)*8)
+    print float(count)/(len(data)*8)
 
     return peak_values, peak_times, rise_times
 
@@ -57,7 +57,7 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
             if len(threshold_indices) > 5:
                 
                 # Data selection for linear fit
-                skip_index = -1
+                skip_index = 0
                 
                 if chan == md.getChannelNameForSensor("SiPM-AFP"):
                     skip_index = 1
@@ -73,7 +73,7 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
                 peak_data = data[peak_indices]
                 
                 # Corrupted event
-                if np.amin(data) != criticalValue and len(impulse_indices) > 2:
+                if np.amin(data) != criticalValue and len(impulse_indices) > 3:
                 
                     impulse_fit = np.polyfit(impulse_indices*timeScope, impulse_data, 1)
                     peak_fit = np.polyfit(peak_indices*timeScope, peak_data, 2)
