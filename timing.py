@@ -64,7 +64,7 @@ def comparePeakTimes(peak_times):
         
         for entry in range(0, len(peak_times)):
         
-            if peak_times[entry][SiPM_chan] != 0.0:
+            if peak_times[entry][chan] != 0.0:
             
                 timeDifference = peak_times[entry][SiPM_chan] - peak_times[entry][chan]
              
@@ -78,7 +78,7 @@ def produceTH1Plot(graph, chan, canvas):
     headTitle = "Time difference between SiPM and " + md.getNameOfSensor(chan)
     fileName = ".pdf"
 
-    title = headTitle + ", Sep 2017 batch " + str(md.getBatchNumber())+";" + "Time (ns)" + "; " + "Entries (N)"
+    title = headTitle + ", Sep 2017 batch " + str(md.getBatchNumber())+";" + "Time (ps)" + "; " + "Entries (N)"
     graph.SetTitle(title)
     
     canvas.cd()
