@@ -34,16 +34,13 @@ def telescopeAnalysisPerBatch(runLog):
     
     md.defineGlobalVariableRun(runLog[0])
     
-    telescope_data_batch = dm.importTelescopeDataBatch()
-
-    amplitudes_batch = dm.importPulseFile("amplitudes")
+    telescope_data_batch, peak_value_batch = dm.importFilesForTracking()
     
-    if len(telescope_data_batch) == len(amplitudes_batch):
-        tplot.produceTelescopeGraphs(telescope_data_batch, amplitudes_batch)
+    if len(telescope_data_batch) == len(peak_value_batch):
+        tplot.produceTelescopeGraphs(telescope_data_batch, peak_value_batch)
 
     else:
-    
-        tplot.produceTelescopeGraphs(telescope_data_batch[0:len(amplitudes_batch)], amplitudes_batch)
+        print "This should not occur, check importFilesForTracking()"
 
 
 # Get actual time

@@ -76,7 +76,7 @@ def pulseAnalysisPerRun(sigma):
     
     # Configure inputs for multiprocessing
     p = Pool(dm.threads)
-    max = 200000
+    max = md.getNumberOfEvents()
     step = 8000
 
 #    # DEBUG #

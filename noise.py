@@ -75,7 +75,7 @@ def noiseAnalysisPerRun():
     
     # Configure inputs for multiprocessing
     p = Pool(dm.threads)
-    max = 200000 # Restrict to match the file of the telescope
+    max = md.getNumberOfEvents()
     step = 8000
 
 #    # DEBUG #
@@ -87,7 +87,7 @@ def noiseAnalysisPerRun():
     
     dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
     
-    results = p.map(lambda chunk: multiProcess(dataPath,chunk,chunk+step),ranges)
+    results = p.map(lambda chunk: multiProcess(dataPath, chunk, chunk+step), ranges)
 
     # results change form, now each element is a variable
     results_variables = n_calc.convertNoise(results)

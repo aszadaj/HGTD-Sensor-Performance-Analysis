@@ -80,24 +80,34 @@ def importROOTFile(group, category, dataType):
 
     return data
 
+# This function is adapted for matching run numbers
+def importFilesForTracking():
 
-# Note, the file have only 200K entries
-def importTelescopeDataBatch():
-
-    batchNumber = md.getBatchNumber()
-    timeStamps = md.getTimeStampsForBatch(batchNumber)
+    timeStamps = md.getTimeStampsForBatch(md.getBatchNumber())
     
-    data_batch = np.empty(0, dtype=[('X', '<f8'), ('Y', '<f8')])
+    peak_value_batch = importPulseFile("peak_value")
+    data_telescope_batch = np.empty(0, dtype=[('X', '<f4'), ('Y', '<f4')])
+    
+    matching_indices = np.empty(0, dtype=int)
 
-    for timeStamp in timeStamps:
-        dataFileName = md.getSourceFolderPath() + "telescope_data_sep_2017/tracking"+str(timeStamp)+".root"
-        data_batch = np.concatenate((data_batch, rnm.root2array(dataFileName, start=0, stop=200000)), axis=0)
-
+    for index in range(0, len(timeStamps)):
+    
+        dataFileName = md.getSourceFolderPath() + "telescope_data_sep_2017/tracking"+str(timeStamps[index])+".root"
+        
+        data = rnm.root2array(dataFileName)
+        
+        if index == 0:
+            matching_indices = np.concatenate( (matching_indices, np.arange(0, len(data))))
+        else:
+            matching_indices = np.concatenate((matching_indices, np.arange(md.getNumberOfEvents(timeStamps[index-1]), md.getNumberOfEvents(timeStamps[index-1]) + len(data))))
+        
+        data_telescope_batch = np.concatenate((data_telescope_batch, data), axis=0)
+    
     # Convert into mm
-    for dimension in data_batch.dtype.names:
-        data_batch[dimension] = np.multiply(data_batch[dimension], 0.001)
-  
-    return data_batch
+    for dimension in data_telescope_batch.dtype.names:
+        data_telescope_batch[dimension] = np.multiply(data_telescope_batch[dimension], 0.001)
+
+    return data_telescope_batch, peak_value_batch[matching_indices]
 
 
 def changeDTYPEOfData(data):

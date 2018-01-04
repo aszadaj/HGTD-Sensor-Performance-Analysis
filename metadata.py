@@ -169,10 +169,17 @@ def getTimeStampsForBatch(batchNumber):
 
 
 # Get number of events inside the current ROOT file
-def getNumberOfEvents():
+def getNumberOfEvents(timeStamp=""):
     
-    return int(runInfo[6])
+    if timeStamp == "":
+        return int(runInfo[6])
+    
+    else:
+        runLog = getRunLog()
 
+        for row in runLog:
+            if int(row[4]) == timeStamp:
+                return int(row[6])
 
 # Get index for the name of the sensor in run log
 def getChannelNameForSensor(sensor):

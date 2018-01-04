@@ -58,7 +58,7 @@ def comparePeakTimes(peak_times):
         mean_chan = np.average(peak_times[chan][np.nonzero(peak_times[chan])])
         mean = mean_SiPM - mean_chan
     
-        data_graph[chan] = ROOT.TH1D("timing_"+chan+"_histogram","Time difference distribution between SiPM and " + md.getNameOfSensor(chan) + " " + str(int(chan[-1:])+1),1000, mean*0.7, mean*1.3)
+        data_graph[chan] = ROOT.TH1D("timing_"+chan+"_histogram","Time difference distribution between SiPM and " + md.getNameOfSensor(chan) + " " + str(int(chan[-1:])+1),1000, mean*0.9, mean*1.1)
         
         for entry in range(0, len(peak_times)):
         
