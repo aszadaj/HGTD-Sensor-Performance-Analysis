@@ -28,7 +28,7 @@ def pulseAnalysis(batchNumbers):
         results_batch = []
         
         # DEBUG # Comment out this line to consider all files in batch
-        runLog = [runLog[0], runLog[1], runLog[2]] # Restrict to some run numbers
+        runLog = [runLog[0]] # Restrict to some run numbers
     
         startTimeBatch = md.getTime()
         md.printTime()
@@ -75,14 +75,14 @@ def pulseAnalysisPerRun(sigma):
     startTimeRun = md.getTime()
     
     # Configure inputs for multiprocessing
-    p = Pool(dm.threads)
-    max = 200000
-    step = 5000
+#    p = Pool(dm.threads)
+#    max = 200000
+#    step = 5000
 
 #    # DEBUG #
-#    p = Pool(1)
-#    max = 10000
-#    step = 10000
+    p = Pool(4)
+    max = 60000
+    step = 15000
 
     ranges = range(0, max, step)
     

@@ -2,12 +2,15 @@ import numpy as np
 import metadata as md
 import data_management as dm
 import warnings as wr
+import sys
+
 wr.simplefilter('ignore', np.RankWarning)
 np.seterr(divide='ignore', invalid='ignore')
 
 def pulseAnalysis(data, pedestal, noise, sigma):
 
     count = 0
+    count_crit = 0
 
     channels = data.dtype.names
     
@@ -21,13 +24,14 @@ def pulseAnalysis(data, pedestal, noise, sigma):
     
         for chan in channels:
         
-            peak_values[event][chan], rise_times[event][chan], peak_times[event][chan], count = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[chan]*-0.001, noise[chan]*0.001, event, sigma, criticalValues[chan] ,count)
+            peak_values[event][chan], rise_times[event][chan], peak_times[event][chan], count, count_crit = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[chan]*-0.001, noise[chan]*0.001, event, sigma, criticalValues[chan], count, count_crit)
 
-    print float(count)/(len(data)*8)
+    print float(count)/(len(data)*8)*100, "% removed pulses"
+    print float(count_crit)/(len(data)*8)*100, "% removed pulses, critical"
     return peak_values, peak_times, rise_times
 
 
-def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, criticalValue, count):
+def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, criticalValue, count, count_crit):
 
     # Time scope is the time difference between two recorded points
     # Assumption: for all events this value is the same.
@@ -42,8 +46,6 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
     threshold = noise * sigma - pedestal
     threshold_indices = np.where(data < -threshold)
     
-    # Check if there are points above the threshold
-    
     try:
         if threshold_indices[0].size > 4:
             
@@ -51,13 +53,14 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
             group_points = group_consecutives(threshold_indices[0])
             group_points_amplitude = [np.amin(data[group]) for group in group_points]
             threshold_indices = group_points[group_points_amplitude.index(min(group_points_amplitude))]
-            
+     
             # Data selection for linear fit
             impulse_indices = np.arange(threshold_indices[0], np.argmin(data)+1)
             impulse_data = data[impulse_indices]
             
+            
             # Data selection for polynomial fit
-            point_difference = 3
+            point_difference = 2
             peak_first_index = np.argmin(data) - point_difference
             peak_last_index = np.argmin(data) + point_difference
             peak_indices = np.arange(peak_first_index, peak_last_index+1)
@@ -65,15 +68,15 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
             
             # Corrupted event
             if np.amin(data) == criticalValue:
-              
-                count += 1
+                
+                count_crit += 1
                 
                 peak_value = 0
                 peak_time = 0
                 rise_time = 0
             
             # Linear fit condition
-            elif len(impulse_indices) < 3:
+            elif len(impulse_indices) < 2:
 
                 count += 1
                 
@@ -83,7 +86,7 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
 
             # Second degree fit condition
             elif data[peak_first_index] > threshold:
-            
+                
                 count += 1
                 
                 peak_value = 0
@@ -96,7 +99,8 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
                 peak_fit = np.polyfit(peak_indices*timeScope, peak_data, 2)
                 
                 # If the linear fit is strange, omit it
-                if impulse_fit[0] > -0.01 or np.isnan(impulse_fit[0]):
+                # Note that the linear are almost vertical for most of the cases
+                if impulse_fit[0] > 0 or np.isnan(impulse_fit[0]):
             
                     count += 1
             
@@ -118,23 +122,24 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
                     peak_value = peak_fit[0]*np.power(np.argmin(data)*timeScope,2) + peak_fit[1]*np.argmin(data)*timeScope + peak_fit[2] - pedestal
                     
                     # Derivative polynomial fit
-                    peak_time = -peak_fit[1]/(2*peak_fit[0])
+                    #peak_time = -peak_fit[1]/(2*peak_fit[0])
                     
+                    
+                     # Y = ax+b, x = (y-b)/a
+                    peak_time = ((np.amin(data)-pedestal)*0.5-impulse_fit[1])/impulse_fit[0]
+                   
                     rise_time = (np.amin(data)-pedestal)*0.8/impulse_fit[0]
-        
-
-        elif 0 < threshold_indices[0].size <= 4:
-            count += 1
-
+                
+                
     except:
-        print "Error caught \n" 
+    
+        print "Error caught \n"
+        print sys.exc_info()[0]
+        print event, chan
+        
         count += 1
-        peak_value = 0
-        peak_time = 0
-        rise_time = 0
     
-    
-    return peak_value, rise_time, peak_time, count
+    return peak_value, rise_time, peak_time, count, count_crit
 
 
 # Search for critical amplitude values

@@ -1,5 +1,6 @@
 import ROOT
 import metadata as md
+import numpy as np
 
 
 def produceNoiseDistributionPlots(noise_average, noise_std):
@@ -9,13 +10,24 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
     noise_graph = dict()
     
     for chan in channels:
+    
+        pedestal_mean   = np.average(np.take(noise_average[chan], np.nonzero(noise_average[chan]))[0])
+        noise_mean      = np.average(np.take(noise_std[chan], np.nonzero(noise_std[chan]))[0])
         
-        pedestal_graph[chan] = ROOT.TH1D("Pedestal channel "+str(int(chan[-1:])+1),"pedestal"+chan,800,-3,3.5)
-        noise_graph[chan] = ROOT.TH1D("Noise channel "+str(int(chan[-1:])+1),"noise"+chan,800,1,6)
+        print pedestal_mean
+        print noise_mean
+        
+#        pedestal_graph[chan] = ROOT.TH1D("Pedestal channel "+str(int(chan[-1:])+1),"pedestal"+chan,1000,pedestal_mean*0.75,pedestal_mean*1.25)
+#        noise_graph[chan]    = ROOT.TH1D("Noise channel "+str(int(chan[-1:])+1),"noise"+chan,1000,noise_mean*0.75,noise_mean*1.25)
+
+        pedestal_graph[chan] = ROOT.TH1D("Pedestal channel "+str(int(chan[-1:])+1),"pedestal"+chan,1000,-5,5)
+        noise_graph[chan]    = ROOT.TH1D("Noise channel "+str(int(chan[-1:])+1),"noise"+chan,1000,0,10)
     
         for entry in range(0,len(noise_average)):
-            pedestal_graph[chan].Fill(noise_average[entry][chan])
-            noise_graph[chan].Fill(noise_std[entry][chan])
+        
+            if noise_average[entry][chan] != 0:
+                pedestal_graph[chan].Fill(noise_average[entry][chan])
+                noise_graph[chan].Fill(noise_std[entry][chan])
     
     canvas_pedestal = ROOT.TCanvas("Pedestal per channel", "Pedestal per channel")
     canvas_noise = ROOT.TCanvas("Noise per channel", "Noise per channel")

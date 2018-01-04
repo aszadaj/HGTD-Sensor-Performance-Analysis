@@ -14,11 +14,11 @@ def producePulseDistributionPlots(peak_values, peak_times, rise_times):
     
     for chan in peak_values.dtype.names:
         
-        peak_values_graph[chan] = ROOT.TH1D("Peak value channel "+str(int(chan[-1:])+1), "peak_value" + chan,1000 , 0, 400)
+        peak_values_graph[chan] = ROOT.TH1D("Peak value channel "+str(int(chan[-1:])+1), "peak_value" + chan, 1000, 0, 400)
         
-        peak_times_graph[chan] = ROOT.TH1D("Peak time channel "+str(int(chan[-1:])+1), "peak_time" + chan,600 , 0, 100)
+        peak_times_graph[chan] = ROOT.TH1D("Peak time channel "+str(int(chan[-1:])+1), "peak_time" + chan, 600, 0, 100)
         
-        rise_times_graph[chan] = ROOT.TH1D("Rise time channel "+str(int(chan[-1:])+1), "rise_time" + chan,600 , 0, 1.5)
+        rise_times_graph[chan] = ROOT.TH1D("Rise time channel "+str(int(chan[-1:])+1), "rise_time" + chan, 600, 0, 1.5)
         
         index = int(chan[-1:])
         

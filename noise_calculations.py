@@ -3,7 +3,6 @@ import ROOT
 import pickle
 import numpy as np
 import root_numpy as rnm
-import os
 
 import metadata as md
 
@@ -24,12 +23,11 @@ def findNoiseAverageAndStd(data):
     noise_average = np.zeros(len(data), dtype = data.dtype)
     noise_std = np.zeros(len(data), dtype = data.dtype)
     
-    count = 0
-    
-    for event in range(0,len(data)):
+    criticalValues = findCriticalValues(data)
+ 
+    for event in range(0, len(data)):
         for chan in channels:
         
-            
             ####################################################################
             #
             #   Two conditions of selecting the pedestal and noise:
@@ -41,22 +39,24 @@ def findNoiseAverageAndStd(data):
             #
             ####################################################################
             
-            # The SiPM behaves differently, in general I think that the limits should be adapted for each sensor
-            # W4-RD01 in batch 306 behaves strange, choose different batch to make different analysis, since
-            # the waveforms behaves differently than predicted
-        
-            # Consider points until a pulse
-            pulse_limit = 25 * 0.001 # mV
-            data_point_correction = 3
-            # Take out points which are above the noise level
-            pulse_compatible_samples = -data[event][chan] > pulse_limit
-            
-            # Select the "last index" which defines the range of the noise selection
-            max_index = np.where(pulse_compatible_samples)[0][0] - data_point_correction if len( np.where(pulse_compatible_samples)[0] ) else 1002
+            if np.amin(data[event][chan]) != criticalValues[chan]:
+                
+                # Consider points until a pulse
+                pulse_limit = -25 * 0.001 # mV
+                data_point_correction = 5
+                
+                # Take out points which are below the noise level
+                pulse_compatible_samples = data[event][chan] < pulse_limit
+                
+                # Select the "last index" which defines the range of the noise selection
+                max_index = np.where(pulse_compatible_samples)[0][0] - data_point_correction if len( np.where(pulse_compatible_samples)[0] ) else 1002
 
-            noise_average[event][chan] = np.average(data[event][chan][0:max_index])
-            noise_std[event][chan] = np.std(data[event][chan][0:max_index])
+                noise_average[event][chan]  = np.average(data[event][chan][0:max_index])
+                noise_std[event][chan]      = np.std(data[event][chan][0:max_index])
 
+                if chan == "chan4" and noise_std[event][chan] > 0.0027:
+                    print event
+                    print pulse_compatible_samples
 
     return noise_average, noise_std
 
@@ -66,13 +66,13 @@ def getPedestalAndNoisePerChannel(noise_average, noise_std):
     
     channels = noise_average.dtype.names
     
-    pedestal = np.empty(1, dtype=noise_average.dtype)
-    noise = np.empty(1, dtype=noise_average.dtype)
+    pedestal    = np.empty(1, dtype=noise_average.dtype)
+    noise       = np.empty(1, dtype=noise_average.dtype)
 
     for chan in channels:
     
-        pedestal[chan] = np.mean(noise_average[chan])
-        noise[chan] = np.mean(noise_std[chan])
+        pedestal[chan]  = np.mean(noise_average[chan])
+        noise[chan]     = np.mean(noise_std[chan])
 
     return pedestal, noise
 
@@ -91,9 +91,20 @@ def convertNoise(results):
     
     for chan in channels:
         noise_average[chan] = np.multiply(noise_average[chan], -1000)
-        noise_std[chan] = np.multiply(noise_std[chan], 1000)
+        noise_std[chan]     = np.multiply(noise_std[chan], 1000)
     
     return [noise_average, noise_std]
+
+
+def findCriticalValues(data):
+
+    channels = data.dtype.names
+    criticalValues = np.empty(1, dtype=data.dtype)
+    
+    for chan in channels:
+        criticalValues[chan] = np.amin(np.concatenate(data[chan]))
+
+    return criticalValues
 
 
 

@@ -131,7 +131,6 @@ def produce2DPlots():
     del graphOrignal, graphStd, graphFiltered, graphStdFiltered
 
 
-
 def produceTEfficiencyPlot():
     
     efficiencyOrig = ROOT.TEfficiency("Efficiency_particles"+chan+"","Effciency particles channel "+str(int(chan[-1:])+1),xBins,xMin,xMax,yBins,yMin,yMax)

@@ -12,7 +12,7 @@ ROOT.gROOT.SetBatch(True)
 def printWaveform():
 
     runNumber = 3870
-    startEntry = 122
+    startEntry = 1042
     entries = 1
 
     timeStamp = md.getTimeStamp(runNumber)
@@ -20,52 +20,31 @@ def printWaveform():
     md.defineGlobalVariableRun(row)
     dm.checkIfRepositoryOnStau()
     
+    dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(timeStamp)+".tree.root"
+    data = rnm.root2array(dataPath, start=startEntry, stop=startEntry+entries)
+    channels = data.dtype.names
+    
+    #channels = ["chan3"]
+    
     noise = dm.importNoiseFile("noise")
     pedestal = dm.importNoiseFile("pedestal")
     rise_time = dm.importPulseFile("rise_time")
-    
-    
-    count = 0
-    
-    for event in range(100, len(rise_time)):
-        for chan in rise_time.dtype.names:
-    
-            if 0.845 <= rise_time[event][chan] <= 0.855 and chan == "chan4":
-                print event, chan
-                print rise_time[event][chan]
-                count += 1
-                
-        if count == 40:
-            break
-    
-    #amplitudes = dm.importPulseFile("amplitudes")
-    
-    dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(timeStamp)+".tree.root"
-
-    data = rnm.root2array(dataPath, start=startEntry, stop=startEntry+entries)
     
     graph_waveform = dict()
     graph_line_threshold = dict()
     graph_line_noise = dict()
     graph_line_pedestal = dict()
     
-    channels = data.dtype.names
-    first = True
-    
-    sigma = 5.0
+
+    sigma = 5
     
     for chan in channels:
-    
-        threshold = noise[chan]*sigma - pedestal[chan]
-        #threshold = noise[chan]*sigma
-    
-        print noise[chan], threshold
-    
+        
+        threshold = noise[chan]*sigma + pedestal[chan]
+     
         canvas = ROOT.TCanvas("Waveforms","Waveforms")
         leg = ROOT.TLegend (0.73, 0.6, 0.93, 0.9)
         leg.SetHeader("\sigma = "+str(sigma))
-    
-    
     
         graph_waveform[chan] = ROOT.TGraph(1002*entries)
         graph_line_threshold[chan] = ROOT.TGraph(1002*entries)
