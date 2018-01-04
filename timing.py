@@ -65,10 +65,7 @@ def comparePeakTimes(peak_times):
         for entry in range(0, len(peak_times)):
         
             if peak_times[entry][chan] != 0.0 and peak_times[entry][chan] != 0.0:
-            
-#                if peak_times[entry][chan] > 0.8 and chan == "chan5" and entry < 200000:
-#                    print entry
-                
+
                 timeDifference = peak_times[entry][SiPM_chan] - peak_times[entry][chan]
              
                 data_graph[chan].Fill(timeDifference)

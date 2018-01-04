@@ -13,14 +13,16 @@ def producePulseDistributionPlots(peak_values, peak_times, rise_times):
     rise_times_graph = dict()
     
     for chan in peak_values.dtype.names:
-        
-        peak_values_graph[chan] = ROOT.TH1D("Peak value channel "+str(int(chan[-1:])+1), "peak_value" + chan, 1000, 0, 400)
-        
-        peak_times_graph[chan] = ROOT.TH1D("Peak time channel "+str(int(chan[-1:])+1), "peak_time" + chan, 600, 0, 100)
-        
-        rise_times_graph[chan] = ROOT.TH1D("Rise time channel "+str(int(chan[-1:])+1), "rise_time" + chan, 600, 0, 1.5)
-        
+    
         index = int(chan[-1:])
+        
+        peak_values_graph[chan] = ROOT.TH1D("Peak value channel "+str(index+1), "peak_value" + chan, 1000, 0, 400)
+        
+        peak_times_graph[chan] = ROOT.TH1D("Peak time channel "+str(index+1), "peak_time" + chan, 1000, 0, 100)
+        
+        rise_times_graph[chan] = ROOT.TH1D("Rise time channel "+str(index+1), "rise_time" + chan, 1000, 0, 2)
+        
+        
         
         # Exclude filling histograms with critical amplitude values
         for entry in range(0,len(peak_values[chan])):
@@ -43,6 +45,7 @@ def producePulseDistributionPlots(peak_values, peak_times, rise_times):
         
         typeOfGraph = "rise_time"
         defineAndProduceHistogram(rise_times_graph[chan],canvas_rise_times,typeOfGraph,chan)
+
 
 # Produce TH1 plots and export them as a PDF file
 def defineAndProduceHistogram(graphList,canvas,typeOfGraph,chan):

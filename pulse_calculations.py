@@ -25,7 +25,7 @@ def pulseAnalysis(data, pedestal, noise, sigma):
         
             peak_values[event][chan], rise_times[event][chan], peak_times[event][chan], count = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[chan]*-0.001, noise[chan]*0.001, event, sigma, criticalValues[chan], count)
 
-    #print float(count)/(len(data)*8)
+    print float(count)/(len(data)*8)
 
     return peak_values, peak_times, rise_times
 
@@ -73,14 +73,14 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
                 peak_data = data[peak_indices]
                 
                 # Corrupted event
-                if np.amin(data) != criticalValue and len(impulse_indices) > 3:
+                if np.amin(data) != criticalValue and len(impulse_indices) > 4:
                 
                     impulse_fit = np.polyfit(impulse_indices*timeScope, impulse_data, 1)
                     peak_fit = np.polyfit(peak_indices*timeScope, peak_data, 2)
                     
                     #print impulse_fit[0], chan, event, len(impulse_indices)
                     
-                    if impulse_fit[0] < 0 and not np.isnan(impulse_fit[0]) and peak_fit[0] > 0.02:
+                    if impulse_fit[0] < 0:
                 
                         peak_value = peak_fit[0]*np.power(np.argmin(data)*timeScope,2) + peak_fit[1]*np.argmin(data)*timeScope + peak_fit[2] - pedestal
                         
