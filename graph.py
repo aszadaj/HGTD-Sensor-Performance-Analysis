@@ -11,8 +11,8 @@ ROOT.gROOT.SetBatch(True)
 # Start analysis of selected run numbers
 def printWaveform():
 
-    runNumber = 3871
-    startEntry = 7267
+    runNumber = 3870
+    startEntry = 198874
     entries = 1
 
     timeStamp = md.getTimeStamp(runNumber)
@@ -24,7 +24,7 @@ def printWaveform():
     data = rnm.root2array(dataPath, start=startEntry, stop=startEntry+entries)
     channels = data.dtype.names
     
-    #channels = ["chan3"]
+    channels = ["chan5"]
     
     noise = dm.importNoiseFile("noise")
     pedestal = dm.importNoiseFile("pedestal")
