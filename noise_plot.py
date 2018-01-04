@@ -11,14 +11,14 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
     
     for chan in channels:
     
-        pedestal_mean   = np.average(np.take(noise_average[chan], np.nonzero(noise_average[chan]))[0])
-        noise_mean      = np.average(np.take(noise_std[chan], np.nonzero(noise_std[chan]))[0])
+        pedestal_low   = np.amin(np.take(noise_average[chan], np.nonzero(noise_average[chan]))[0])*0.9
+        pedestal_max   = np.amax(np.take(noise_average[chan], np.nonzero(noise_average[chan]))[0])*1.1
+        noise_low      = np.amin(np.take(noise_std[chan], np.nonzero(noise_std[chan]))[0])*0.9
+        noise_max      = np.amax(np.take(noise_std[chan], np.nonzero(noise_std[chan]))[0])*1.1
         
-        pedestal_graph[chan] = ROOT.TH1D("Pedestal channel "+str(int(chan[-1:])+1),"pedestal"+chan,1000,pedestal_mean*0.5,pedestal_mean*1.5)
-        noise_graph[chan]    = ROOT.TH1D("Noise channel "+str(int(chan[-1:])+1),"noise"+chan,1000,0,noise_mean*2)
+        pedestal_graph[chan] = ROOT.TH1D("Pedestal, channel "+str(int(chan[-1:])+1), "pedestal"+chan, 1000, pedestal_low, pedestal_max)
+        noise_graph[chan]    = ROOT.TH1D("Noise, channel "+str(int(chan[-1:])+1), "noise"+chan, 1000, noise_low, noise_max)
 
-#        pedestal_graph[chan] = ROOT.TH1D("Pedestal channel "+str(int(chan[-1:])+1),"pedestal"+chan,1000,-5,5)
-#        noise_graph[chan]    = ROOT.TH1D("Noise channel "+str(int(chan[-1:])+1),"noise"+chan,1000,0,10)
 
         for entry in range(0,len(noise_average)):
         
@@ -31,24 +31,25 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
    
     for chan in channels:
     
-        titleAbove = "Distribution of noise mean values (pedestal) from each entry, batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])+1) +", sensor: " + str(md.getNameOfSensor(chan))
-        xAxisTitle = "Noise mean value (mV)"
-        yAxisTitle = "Number of entries (N)"
-        setGraphAttributes(pedestal_graph[chan],titleAbove,xAxisTitle,yAxisTitle)
-        
         titleAbove = "Distribution of standard deviation values (noise) from each entry, Sep 2017 batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])+1) + ", sensor: " + str(md.getNameOfSensor(chan))
         xAxisTitle = "Standard deviation (mV)"
         yAxisTitle = "Number of entries (N)"
-        setGraphAttributes(noise_graph[chan],titleAbove,xAxisTitle,yAxisTitle)
+        setGraphAttributes(noise_graph[chan], titleAbove, xAxisTitle, yAxisTitle)
+        
+        
+        titleAbove = "Distribution of noise mean values (pedestal) from each entry, batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])+1) +", sensor: " + str(md.getNameOfSensor(chan))
+        xAxisTitle = "Mean value (mV)"
+        yAxisTitle = "Number of entries (N)"
+        setGraphAttributes(pedestal_graph[chan], titleAbove, xAxisTitle, yAxisTitle)
         
         fileName = str(md.getSourceFolderPath()) + "plots_hgtd_efficiency_sep_2017/noise/pedestal_plots/pedestal_"+str(md.getBatchNumber())+"_"+chan+".pdf"
         
-        exportGraph(pedestal_graph[chan],canvas_pedestal,fileName)
+        exportGraph(pedestal_graph[chan], canvas_pedestal, fileName)
         #exportROOTFile(pedestal_graph[chan],"noise","pedestal","plots", chan)
         
         fileName = str(md.getSourceFolderPath()) + "plots_hgtd_efficiency_sep_2017/noise/noise_plots/noise_"+str(md.getBatchNumber())+"_"+chan+".pdf"
         
-        exportGraph(noise_graph[chan],canvas_noise,fileName)
+        exportGraph(noise_graph[chan], canvas_noise, fileName)
         #exportROOTFile(noise_graph[chan],"noise","noise","plots", chan)
 
 
