@@ -28,7 +28,7 @@ def pulseAnalysis(batchNumbers):
         results_batch = []
         
         # DEBUG # Comment out this line to consider all files in batch
-        runLog = [runLog[0], runLog[1], runLog[2]] # Restrict to some run numbers
+        #runLog = [runLog[0], runLog[1], runLog[2], runLog[3]] # Restrict to some run numbers
     
         startTimeBatch = md.getTime()
         md.printTime()
