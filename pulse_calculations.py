@@ -27,7 +27,7 @@ def pulseAnalysis(data, pedestal, noise, sigma):
             peak_values[event][chan], rise_times[event][chan], peak_times[event][chan], count, count_crit = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[chan]*-0.001, noise[chan]*0.001, event, sigma, criticalValues[chan], count, count_crit)
 
     print float(count)/(len(data)*8)*100, "% removed pulses"
-    print float(count_crit)/(len(data)*8)*100, "% removed pulses, critical"
+    print float(count_crit)/(len(data)*8)*100, "% removed pulses, critical\n"
     return peak_values, peak_times, rise_times
 
 
@@ -123,10 +123,8 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
                     
                     # Derivative polynomial fit
                     #peak_time = -peak_fit[1]/(2*peak_fit[0])
-                    
-                    
                      # Y = ax+b, x = (y-b)/a
-                    peak_time = ((np.amin(data)-pedestal)*0.5-impulse_fit[1])/impulse_fit[0]
+                    peak_time = ((np.amin(data)-pedestal)*0.5-impulse_fit[1])/impulse_fit[0] # peak half time
                    
                     rise_time = (np.amin(data)-pedestal)*0.8/impulse_fit[0]
                 

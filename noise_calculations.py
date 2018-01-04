@@ -43,7 +43,7 @@ def findNoiseAverageAndStd(data):
                 
                 # Consider points until a pulse
                 pulse_limit = -25 * 0.001 # mV
-                data_point_correction = 5
+                data_point_correction = 3
                 
                 # Take out points which are below the noise level
                 pulse_compatible_samples = data[event][chan] < pulse_limit
@@ -53,10 +53,6 @@ def findNoiseAverageAndStd(data):
 
                 noise_average[event][chan]  = np.average(data[event][chan][0:max_index])
                 noise_std[event][chan]      = np.std(data[event][chan][0:max_index])
-
-                if chan == "chan4" and noise_std[event][chan] > 0.0027:
-                    print event
-                    print pulse_compatible_samples
 
     return noise_average, noise_std
 
