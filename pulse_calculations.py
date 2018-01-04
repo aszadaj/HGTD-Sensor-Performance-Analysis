@@ -14,6 +14,8 @@ def pulseAnalysis(data, pedestal, noise, sigma):
     peak_values     =   np.zeros(len(data), dtype = data.dtype)
     peak_times      =   np.zeros(len(data), dtype = data.dtype)
     rise_times      =   np.zeros(len(data), dtype = data.dtype)
+    
+    count = 0
    
     criticalValues = findCriticalValues(data)
 
@@ -21,12 +23,14 @@ def pulseAnalysis(data, pedestal, noise, sigma):
     
         for chan in channels:
         
-            peak_values[event][chan], rise_times[event][chan], peak_times[event][chan] = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[chan]*-0.001, noise[chan]*0.001, event, sigma, criticalValues[chan])
+            peak_values[event][chan], rise_times[event][chan], peak_times[event][chan], count = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[chan]*-0.001, noise[chan]*0.001, event, sigma, criticalValues[chan], count)
+
+    print float(count)/(len(data)*8)
 
     return peak_values, peak_times, rise_times
 
 
-def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, criticalValue):
+def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, criticalValue, count):
 
     # Time scope is the time difference between two recorded points
     # Assumption: for all events this value is the same.
@@ -69,10 +73,12 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
                 peak_data = data[peak_indices]
                 
                 # Corrupted event
-                if np.amin(data) != criticalValue or len(impulse_indices) > 2:
+                if np.amin(data) != criticalValue and len(impulse_indices) > 2:
                 
                     impulse_fit = np.polyfit(impulse_indices*timeScope, impulse_data, 1)
                     peak_fit = np.polyfit(peak_indices*timeScope, peak_data, 2)
+                    
+                    #print impulse_fit[0], chan, event, len(impulse_indices)
                     
                     if impulse_fit[0] < 0 and not np.isnan(impulse_fit[0]) and peak_fit[0] > 0.02:
                 
@@ -85,6 +91,13 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
                         #peak_time = ((np.amin(data)-pedestal)*0.5-impulse_fit[1])/impulse_fit[0]
                        
                         rise_time = (np.amin(data)-pedestal)*0.8/impulse_fit[0]
+                        
+                    else:
+                        count +=1
+                else:
+                    count+=1
+            else:
+                count += 1
                 
                 
     except:
@@ -93,7 +106,7 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
         print sys.exc_info()[0]
         print event, chan, "\n"
     
-    return peak_value, rise_time, peak_time
+    return peak_value, rise_time, peak_time, count
 
 
 # Search for critical amplitude values
