@@ -4,13 +4,10 @@ import data_management as dm
 import warnings as wr
 import sys
 
-wr.simplefilter('ignore', np.RankWarning)
-np.seterr(divide='ignore', invalid='ignore')
+#wr.simplefilter('ignore', np.RankWarning)
+#np.seterr(divide='ignore', invalid='ignore')
 
 def pulseAnalysis(data, pedestal, noise, sigma):
-
-    count = 0
-    count_crit = 0
 
     channels = data.dtype.names
     
@@ -24,14 +21,12 @@ def pulseAnalysis(data, pedestal, noise, sigma):
     
         for chan in channels:
         
-            peak_values[event][chan], rise_times[event][chan], peak_times[event][chan], count, count_crit = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[chan]*-0.001, noise[chan]*0.001, event, sigma, criticalValues[chan], count, count_crit)
+            peak_values[event][chan], rise_times[event][chan], peak_times[event][chan] = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[chan]*-0.001, noise[chan]*0.001, event, sigma, criticalValues[chan])
 
-#    print float(count)/(len(data)*8)*100, "% removed pulses"
-#    print float(count_crit)/(len(data)*8)*100, "% removed pulses, critical\n"
     return peak_values, peak_times, rise_times
 
 
-def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, criticalValue, count, count_crit):
+def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, criticalValue):
 
     # Time scope is the time difference between two recorded points
     # Assumption: for all events this value is the same.
@@ -55,9 +50,8 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
             threshold_indices = group_points[group_points_amplitude.index(min(group_points_amplitude))]
      
             # Data selection for linear fit
-            impulse_indices = np.arange(threshold_indices[0]-1, np.argmin(data)+1)
+            impulse_indices = np.arange(threshold_indices[0]+1, np.argmin(data)+1)
             impulse_data = data[impulse_indices]
-            
             
             # Data selection for polynomial fit
             point_difference = 2
@@ -67,51 +61,19 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
             peak_data = data[peak_indices]
             
             # Corrupted event
-            if np.amin(data) == criticalValue:
-                
-                count_crit += 1
-                
-                peak_value = 0
-                peak_time = 0
-                rise_time = 0
+            if np.amin(data) == criticalValue or len(impulse_indices) < 2:
             
-            # Linear fit condition
-            elif len(impulse_indices) < 2:
-
-                count += 1
-                
                 peak_value = 0
                 peak_time = 0
                 rise_time = 0
-
-            # Second degree fit condition
-            elif data[peak_first_index] > threshold:
-                
-                count += 1
-                
-                peak_value = 0
-                peak_time = 0
-                rise_time = 0
-
+      
             else:
             
                 impulse_fit = np.polyfit(impulse_indices*timeScope, impulse_data, 1)
                 peak_fit = np.polyfit(peak_indices*timeScope, peak_data, 2)
                 
-                # If the linear fit is strange, omit it
-                # Note that the linear are almost vertical for most of the cases
-                if impulse_fit[0] > 0 or np.isnan(impulse_fit[0]):
-            
-                    count += 1
-            
-                    peak_value = 0
-                    peak_time = 0
-                    rise_time = 0
-
-                # If the second degree fit is strange, omit it
-                elif peak_fit[0] < 0.02:
-        
-                    count += 1
+                
+                if impulse_fit[0] > 0 or np.isnan(impulse_fit[0]) or peak_fit[0] < 0.02:
             
                     peak_value = 0
                     peak_time = 0
@@ -135,10 +97,8 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
         print "Error caught"
         print sys.exc_info()[0]
         print event, chan, "\n"
-        
-        count += 1
     
-    return peak_value, rise_time, peak_time, count, count_crit
+    return peak_value, rise_time, peak_time
 
 
 # Search for critical amplitude values
