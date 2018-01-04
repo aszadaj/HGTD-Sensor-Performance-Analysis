@@ -55,7 +55,7 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
             threshold_indices = group_points[group_points_amplitude.index(min(group_points_amplitude))]
      
             # Data selection for linear fit
-            impulse_indices = np.arange(threshold_indices[0], np.argmin(data)+1)
+            impulse_indices = np.arange(threshold_indices[0]-1, np.argmin(data)+1)
             impulse_data = data[impulse_indices]
             
             
