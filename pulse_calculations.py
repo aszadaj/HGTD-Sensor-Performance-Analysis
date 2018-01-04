@@ -25,7 +25,7 @@ def pulseAnalysis(data, pedestal, noise, sigma):
         
             peak_values[event][chan], rise_times[event][chan], peak_times[event][chan], count = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[chan]*-0.001, noise[chan]*0.001, event, sigma, criticalValues[chan], count)
 
-    print float(count)/(len(data)*8)
+    #print float(count)/(len(data)*8)
 
     return peak_values, peak_times, rise_times
 
