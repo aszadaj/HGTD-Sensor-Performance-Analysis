@@ -47,7 +47,7 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
     threshold_indices = np.where(data < -threshold)
     
     try:
-        if threshold_indices[0].size > 4:
+        if threshold_indices[0].size > 5:
             
             # Consider consecutive points, with lowest peak value
             group_points = group_consecutives(threshold_indices[0])
@@ -60,7 +60,7 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
             
             
             # Data selection for polynomial fit
-            point_difference = 3
+            point_difference = 2
             peak_first_index = np.argmin(data) - point_difference
             peak_last_index = np.argmin(data) + point_difference
             peak_indices = np.arange(peak_first_index, peak_last_index+1)
@@ -132,9 +132,9 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
                 
     except:
     
-        print "Error caught \n"
+        print "Error caught"
         print sys.exc_info()[0]
-        print event, chan
+        print event, chan, "\n"
         
         count += 1
     
