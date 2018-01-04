@@ -60,7 +60,7 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
             
             
             # Data selection for polynomial fit
-            point_difference = 2
+            point_difference = 3
             peak_first_index = np.argmin(data) - point_difference
             peak_last_index = np.argmin(data) + point_difference
             peak_indices = np.arange(peak_first_index, peak_last_index+1)
