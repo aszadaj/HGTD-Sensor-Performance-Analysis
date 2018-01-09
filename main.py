@@ -19,7 +19,7 @@ def main():
 
     ######  NOISE, PULSE, TELESCOPE AND TIMING   ######
     
-    batchNumber = [101, 207, 401, 701]
+    batchNumber = [707]
  
     ##################################################
     
