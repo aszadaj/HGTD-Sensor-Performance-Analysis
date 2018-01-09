@@ -18,7 +18,7 @@ def getRunLog():
         for row in fileData:
             metaData.append(row)
 
-    del metaData[0:2]
+    del metaData[0]
     return metaData
 
 
