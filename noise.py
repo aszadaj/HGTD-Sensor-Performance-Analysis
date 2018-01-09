@@ -76,14 +76,14 @@ def noiseAnalysisPerRun():
     startTime = md.getTime()
     
     # Configure inputs for multiprocessing
-#    p = Pool(dm.threads)
-#    max = md.getNumberOfEvents()
-#    step = 8000
+    p = Pool(dm.threads)
+    max = md.getNumberOfEvents()
+    step = 8000
 
 #    # DEBUG #
-    p = Pool(1)
-    max = 1000 # Restrict to match the file of the telescope
-    step = 1000
+#    p = Pool(1)
+#    max = 1000 # Restrict to match the file of the telescope
+#    step = 1000
 
     ranges = range(0, max, step)
     
