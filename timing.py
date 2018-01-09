@@ -24,7 +24,7 @@ def timingAnalysis(batchNumbers):
         time_difference_batch = np.empty(0)
         
         # DEBUG # Comment out this line to consider all files in batch
-        runLog = [runLog[0], runLog[1]] # Restrict to some run numbers
+        runLog = runLog[0:2] # Restrict to some run numbers
     
         startTimeBatch = md.getTime()
         md.printTime()
@@ -36,7 +36,7 @@ def timingAnalysis(batchNumbers):
             md.defineGlobalVariableRun(row)
             runNumber = md.getRunNumber()
             
-            if (md.isRootFileAvailable(md.getTimeStamp())):
+            if (md.isTimingDataFilesAvailable(md.getTimeStamp())):
                 
                 print "Run", md.getRunNumber()
                 peak_time_run = dm.importPulseFile("peak_time")
@@ -57,8 +57,9 @@ def timingAnalysis(batchNumbers):
     
         # Done with the for loop and appending results, produce plots
         print "Done with batch", md.getBatchNumber(),"producing plots and exporting file.\n"
-      
-        t_plot.produceTimingDistributionPlots(time_difference_batch)
+        
+        if len(time_difference_batch) != 0:
+            t_plot.produceTimingDistributionPlots(time_difference_batch)
     
         print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
 

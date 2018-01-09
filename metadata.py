@@ -57,11 +57,10 @@ def getRunLogBatches(batchNumbers):
     return runLog
 
 
-# Check if repository is on the stau server
+
 def isRootFileAvailable(timeStamp):
 
-    folderPath = "oscilloscope_data_sep_2017/"
-    availableFiles = readFileNames(folderPath, "")
+    availableFiles = readFileNames("oscilloscope")
     
     found = False
     
@@ -73,21 +72,66 @@ def isRootFileAvailable(timeStamp):
     return found
 
 
-# Check which files are available (either on stau or local)
-def availableRunFiles():
 
-    folderPath = "oscilloscope_data_sep_2017/"
-    availableFiles = readFileNames(folderPath, "")
+def isTimingDataFilesAvailable(timeStamp):
 
-    runLog = getRunLog()
 
-    availableRuns = []
+    availableFilesPulse         = readFileNames("peak_value")
+    availableFilesTelescope     = readFileNames("telescope")
 
-    for row in runLog:
-        if int(row[4]) in availableFiles:
-            availableRuns.append(int(row[3]))
+    found = False
+    
+    for file_name in availableFilesPulse:
+        if file_name == int(timeStamp):
+            for file_name in availableFilesTelescope:
+                if file_name == int(timeStamp):
+                    return True
+    return False
 
-    return availableRuns
+
+## Check which files are available (either on stau or local)
+#def availableRunFiles():
+#
+#    folderPath = "oscilloscope_data_sep_2017/"
+#    availableFiles = readFileNames("oscilloscope")
+#
+#    runLog = getRunLog()
+#
+#    availableRuns = []
+#
+#    for row in runLog:
+#        if int(row[4]) in availableFiles:
+#            availableRuns.append(int(row[3]))
+#
+#    return availableRuns
+
+
+def readFileNames(fileType):
+
+    folderPath = ""
+    
+    if fileType == "telescope": #tracking1504949898.root
+        folderPath = "telescope_data_sep_2017/"
+        first_index = 8
+        last_index = 18
+
+    elif fileType == "peak_value": #pulse_peak_value_3656.root
+        folderPath = "data_hgtd_efficiency_sep_2017/pulse/pulse_peak_value/"
+        first_index = 17
+        last_index = 21
+
+
+    elif fileType == "oscilloscope": #data_1504949898.tree.root
+        folderPath = "oscilloscope_data_sep_2017/"
+        first_index = 5
+        last_index = 15
+    
+    folderPath = getSourceFolderPath() + folderPath
+
+    availableFiles = [int(f[first_index:last_index]) for f in os.listdir(folderPath) if os.path.isfile(os.path.join(folderPath, f)) and f != '.DS_Store']
+    availableFiles.sort()
+
+    return availableFiles
 
 
 
@@ -102,32 +146,6 @@ def defineDataFolderPath(source):
 def getSourceFolderPath():
 
     return sourceFolderPath
-
-
-def readFileNames(folderPath, fileType):
-    
-    if fileType == "telescope": #tracking1504949898.root
-        first_index = 8
-        last_index = 18
-    
-    elif fileType == "noise": #noise_noise_3656 or pulse_amplitudes_3656
-        first_index = 12
-        last_index = 16
-
-    elif fileType == "pulse":
-        first_index = 17
-        last_index = 21
-
-    # Else, return timestamp of converted ROOT files data_'timestamp'.tree.root
-    else:
-        first_index = 5
-        last_index = -10
-    
-    folderPath = getSourceFolderPath() + folderPath
-    availableFiles = [int(f[first_index:last_index]) for f in os.listdir(folderPath) if os.path.isfile(os.path.join(folderPath, f)) and f != '.DS_Store']
-    availableFiles.sort()
-
-    return availableFiles
 
 
 # Get current run number

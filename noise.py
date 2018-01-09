@@ -27,7 +27,7 @@ def noiseAnalysis(batchNumbers):
         results_batch = []
         
         # DEBUG # Comment line to get all files in batch
-        runLog = [runLog[0], runLog[1]] # Restrict to some run numbers
+        runLog = runLog[0:2] # Restrict to some run numbers
     
         startTimeBatch = md.getTime()
         md.printTime()

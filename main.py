@@ -19,13 +19,14 @@ def main():
 
     ######  NOISE, PULSE, TELESCOPE AND TIMING   ######
     
-    batchNumber = [101, 207, 401, 707]
+    #batchNumber = [101, 207, 401, 707]
+    batchNumber = "all"
  
     ##################################################
     
-    noise.noiseAnalysis           (batchNumber)
+    #noise.noiseAnalysis           (batchNumber)
     
-    pulse.pulseAnalysis            (batchNumber)
+    #pulse.pulseAnalysis            (batchNumber)
     
     #telescope.telescopeAnalysis   (batchNumber)
     
