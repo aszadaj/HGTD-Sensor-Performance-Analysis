@@ -43,7 +43,8 @@ def noiseAnalysis(batchNumbers):
             if (md.isRootFileAvailable(md.getTimeStamp())):
             
                 print "Run", md.getRunNumber()
-                results_batch.append(noiseAnalysisPerRun())
+                [noise_average, noise_std] = noiseAnalysisPerRun()
+                results_batch.append([noise_average, noise_std])
                 
                 # Export per run number
                 pedestal, noise = n_calc.getPedestalAndNoisePerChannel(noise_average, noise_std)
