@@ -65,12 +65,12 @@ def pulseAnalysis(batchNumbers):
             peak_times  = np.concatenate((peak_times,  results_run[1]), axis = 0)
             rise_times  = np.concatenate((rise_times,  results_run[2]), axis = 0)
      
-     
         p_plot.producePulseDistributionPlots(peak_values, peak_times, rise_times)
     
         print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
 
     print "Done with batch",runLog[0][5],".\n"
+
 
 # Perform noise, pulse and telescope analysis
 def pulseAnalysisPerRun(sigma):

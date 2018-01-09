@@ -186,6 +186,7 @@ def getNumberOfEvents(timeStamp=""):
 def getChannelNameForSensor(sensor):
 
     for index in range(0,7):
+        
         if runInfo[13+index*5] == sensor:
             return "chan"+str(index)
 

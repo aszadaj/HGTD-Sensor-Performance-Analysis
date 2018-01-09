@@ -5,85 +5,83 @@ from datetime import datetime
 
 import metadata as md
 import data_management as dm
+import timing_plot as t_plot
 
 
 ROOT.gROOT.SetBatch(True)
 
-
-def timingAnalysis(numberOfBatches):
-    
-    startTime = getTime()
-    printTime()
-    print "Start timing analysis batches:", numberOfBatches,"\n"
+# Start analysis of selected run numbers
+def timingAnalysis(batchNumbers):
 
     dm.checkIfRepositoryOnStau()
     
-    # Structure: each element is a run log consisting of all runs
-    runLogs = md.getRunLogBatches(numberOfBatches)
+    startTime = md.getTime()
+    runLog_batch = md.getRunLogBatches(batchNumbers)
+    print "\nStart timing analysis, batches:", batchNumbers
+
+    for runLog in runLog_batch:
     
-    for runLog in runLogs:
-        timingAnalysisPerBatch(runLog)
+        time_difference_batch = np.empty(0)
+        
+        # DEBUG # Comment out this line to consider all files in batch
+        runLog = [runLog[0], runLog[1]] # Restrict to some run numbers
     
-    print "\nDone analysing, time analysing: " + str(getTime()-startTime) + "\n"
+        startTimeBatch = md.getTime()
+        md.printTime()
+        print "Analysing batch:", runLog[0][5], "with", len(runLog),"run files.\n"
+      
+        for index in range(0, len(runLog)):
+            
+            row = runLog[index]
+            md.defineGlobalVariableRun(row)
+            runNumber = md.getRunNumber()
+            
+            if (md.isRootFileAvailable(md.getTimeStamp())):
+                
+                print "Run", md.getRunNumber()
+                peak_time_run = dm.importPulseFile("peak_time")
+                time_difference_run = timingAnalysisPerRun(peak_time_run)
+                
+                if len(time_difference_batch) == 0:
+                    time_difference_batch = time_difference_batch.astype(time_difference_run.dtype)
+          
+                # Export per run number
+                dm.exportTimingData(time_difference_run)
+                
+                # Concatenate to plot all results
+                time_difference_batch = np.concatenate((time_difference_batch, time_difference_run))
+                print "Done with run", md.getRunNumber(), "\n"
+        
+            else:
+                print "WARNING! There is no root file for run number: " + str(runNumber) + "\n"
+    
+        # Done with the for loop and appending results, produce plots
+        print "Done with batch", md.getBatchNumber(),"producing plots and exporting file.\n"
+      
+        t_plot.produceTimingDistributionPlots(time_difference_batch)
+    
+        print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
+
+    print "Done with batch",runLog[0][5],".\n"
 
 
-def timingAnalysisPerBatch(runLog):
 
-    md.defineGlobalVariableRun(runLog[0])
-    peak_times_batch = dm.importPulseFile("peak_time")
-    comparePeakTimes(peak_times_batch)
-
-
-def comparePeakTimes(peak_times):
-
+def timingAnalysisPerRun(data):
+    
     SiPM_chan = md.getChannelNameForSensor("SiPM-AFP")
+   
     SiPM_index = int(SiPM_chan[-1])
-    data_graph = dict()
 
-    all_channels = peak_times.dtype.names
-    
-    channels = []
-    
-    for chan in all_channels:
-    
-        if chan != all_channels[SiPM_index]:
-            channels.append(chan)
+    time_difference = np.zeros(len(data), dtype = data.dtype)
 
-    canvas = ROOT.TCanvas("Timing","timing")
-    
-    mean_SiPM = np.average(peak_times[SiPM_chan][np.nonzero(peak_times[SiPM_chan])])
- 
-    for chan in channels:
-        
-        mean_chan = np.average(peak_times[chan][np.nonzero(peak_times[chan])])
-        mean = mean_SiPM - mean_chan
-    
-        data_graph[chan] = ROOT.TH1D("timing_"+chan+"_histogram","Time difference distribution between SiPM and " + md.getNameOfSensor(chan) + " " + str(int(chan[-1:])+1),1000, mean*0.9, mean*1.1)
-        
-        for entry in range(0, len(peak_times)):
-        
-            if peak_times[entry][chan] != 0.0 and peak_times[entry][chan] != 0.0:
-
-                timeDifference = peak_times[entry][SiPM_chan] - peak_times[entry][chan]
-             
-                data_graph[chan].Fill(timeDifference)
-
-        produceTH1Plot(data_graph[chan], chan, canvas)
+    for event in range (0, len(data)):
+        for chan in data.dtype.names:
+            if chan != SiPM_chan and data[chan][event] != 0 and data[SiPM_chan][event]:
+                time_difference[chan][event] = (data[chan][event] - data[SiPM_chan][event])*1000
 
 
-def produceTH1Plot(graph, chan, canvas):
 
-    headTitle = "Time difference between SiPM and " + md.getNameOfSensor(chan)
-    fileName = ".pdf"
-
-    title = headTitle + ", Sep 2017 batch " + str(md.getBatchNumber())+";" + "Time (ps)" + "; " + "Entries (N)"
-    graph.SetTitle(title)
-    
-    canvas.cd()
-    graph.Draw()
-    canvas.Update()
-    canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/timing/timing_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
-    canvas.Clear()
+    return time_difference
 
 
 # Get actual time

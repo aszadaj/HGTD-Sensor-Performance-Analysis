@@ -6,6 +6,10 @@ import numpy as np
 import metadata as md
 
 
+def exportTimingData(time_difference):
+
+    exportROOTFile(time_difference, "timing","")
+
 # Export noise data
 def exportNoiseData(pedestal, noise):
 
@@ -22,9 +26,13 @@ def exportPulseData(peak_value, peak_time, rise_time):
 
 
 # Export ROOT file with selected information
-def exportROOTFile(data, group, category):
- 
-    fileName = md.getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
+def exportROOTFile(data, group, category=""):
+    
+    if category == "":
+    
+        fileName = md.getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
+    else:
+        fileName = md.getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
 
     data = changeDTYPEOfData(data)
 
@@ -42,39 +50,31 @@ def importPulseFile(category):
 
     return importROOTFile("pulse", category)
 
+def importTelescopeFile():
+
+    return importROOTFile("telescope")
+
+
 
 # Import selected ROOT file
-def importROOTFile(group, category):
+def importROOTFile(group, category=""):
 
-    fileName = md.getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
-
-    return rnm.root2array(fileName)
-
-
-# This function is adapted for matching run numbers
-def importFilesForTracking(batchNumber):
-
-    # The timestamps are selected which are not corrupted
-    timeStamps = md.getTimeStampsForBatch(batchNumber)
+    if category == "":
     
-    data_telescope_batch = np.empty(0, dtype=[('X', '<f4'), ('Y', '<f4')])
-
-    for index in range(0, len(timeStamps)):
+        fileName = md.getSourceFolderPath()+"telescope_data_sep_2017/tracking"+md.getTimeStamp()+".root"
         
-        dataFileName = md.getSourceFolderPath() + "telescope_data_sep_2017/tracking"+str(timeStamps[index])+".root"
+        data = rnm.root2array(fileName)
         
-        peak_value_run = importPulseFile("peak_value", md.getRunNumber(timeStamps[index]))
+        # Convert into mm
+        for dimension in data.dtype.names:
+            data[dimension] = np.multiply(data[dimension], 0.001)
         
-        telescope_data_run = rnm.root2array(dataFileName)
-        
+        return data
     
-        data_telescope_batch = np.concatenate((data_telescope_batch, data), axis=0)
-    
-    # Convert into mm
-    for dimension in data_telescope_batch.dtype.names:
-        data_telescope_batch[dimension] = np.multiply(data_telescope_batch[dimension], 0.001)
+    else:
+        fileName = md.getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
 
-    return data_telescope_batch, peak_value_batch
+        return rnm.root2array(fileName)
 
 
 def changeDTYPEOfData(data):

@@ -43,12 +43,13 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
         fileName = str(md.getSourceFolderPath()) + "plots_hgtd_efficiency_sep_2017/noise/pedestal_plots/pedestal_"+str(md.getBatchNumber())+"_"+chan+".pdf"
         
         exportGraph(pedestal_graph[chan], canvas_pedestal, fileName)
-        #exportROOTFile(pedestal_graph[chan],"noise","pedestal","plots", chan)
         
         fileName = str(md.getSourceFolderPath()) + "plots_hgtd_efficiency_sep_2017/noise/noise_plots/noise_"+str(md.getBatchNumber())+"_"+chan+".pdf"
         
         exportGraph(noise_graph[chan], canvas_noise, fileName)
-        #exportROOTFile(noise_graph[chan],"noise","noise","plots", chan)
+    
+    del canvas_pedestal, canvas_noise
+
 
 
 # Define the setup for graphs

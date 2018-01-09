@@ -46,6 +46,8 @@ def producePulseDistributionPlots(peak_values, peak_times, rise_times):
         typeOfGraph = "rise_time"
         defineAndProduceHistogram(rise_times_graph[chan],canvas_rise_times,typeOfGraph,chan)
 
+    del canvas_peak_values, canvas_peak_times, canvas_rise_times
+
 
 # Produce TH1 plots and export them as a PDF file
 def defineAndProduceHistogram(graphList,canvas,typeOfGraph,chan):

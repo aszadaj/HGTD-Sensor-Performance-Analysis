@@ -20,16 +20,17 @@ def main():
     ######  NOISE, PULSE, TELESCOPE AND TIMING   ######
     
     batchNumber = [306, 507]
+    batchNumber = "all"
  
     ##################################################
     
-    noise.noiseAnalysis           (batchNumber)
+    #noise.noiseAnalysis           (batchNumber)
     
-    pulse.pulseAnalysis            (batchNumber)
+    #pulse.pulseAnalysis            (batchNumber)
     
     #telescope.telescopeAnalysis   (batchNumber)
     
-    #timing.timingAnalysis         (batchNumber)
+    timing.timingAnalysis         (batchNumber)
     
     
     exit()
