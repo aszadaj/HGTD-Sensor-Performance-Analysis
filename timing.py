@@ -22,9 +22,9 @@ def timingAnalysis(batchNumbers):
     for runLog in runLog_batch:
     
         time_difference_batch = np.empty(0)
-        
-        # DEBUG # Comment out this line to consider all files in batch
-        runLog = runLog[0:2] # Restrict to some run numbers
+      
+        if md.limitRunNumbers != 0:
+            runLog = runLog[0:md.limitRunNumbers]
     
         startTimeBatch = md.getTime()
         md.printTime()
@@ -36,7 +36,7 @@ def timingAnalysis(batchNumbers):
             md.defineGlobalVariableRun(row)
             runNumber = md.getRunNumber()
             
-            if (md.isTimingDataFilesAvailable(md.getTimeStamp())):
+            if (md.isTimingDataFilesAvailable()):
                 
                 print "Run", md.getRunNumber()
                 peak_time_run = dm.importPulseFile("peak_time")
@@ -63,7 +63,7 @@ def timingAnalysis(batchNumbers):
     
         print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
 
-    print "Done with batch",runLog[0][5],".\n"
+    print "Done with batch",runLog[0][5],"\n"
 
 
 
@@ -77,9 +77,8 @@ def timingAnalysisPerRun(data):
 
     for event in range (0, len(data)):
         for chan in data.dtype.names:
-            if chan != SiPM_chan and data[chan][event] != 0 and data[SiPM_chan][event]:
+            if chan != SiPM_chan and data[chan][event] != 0 and data[SiPM_chan][event] != 0:
                 time_difference[chan][event] = (data[chan][event] - data[SiPM_chan][event])*1000
-
 
 
     return time_difference

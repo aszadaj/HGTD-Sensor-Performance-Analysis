@@ -18,26 +18,28 @@ def telescopeAnalysis(batchNumbers):
     
     startTime = md.getTime()
     runLog_batch = md.getRunLogBatches(batchNumbers)
-    print "\nStart pulse analysis, batches:", batchNumbers
+    print "\nStart telescope analysis, batches:", batchNumbers
 
     for runLog in runLog_batch:
     
         results_batch = []
         
         # DEBUG # Comment out this line to consider all files in batch
-        runLog = runLog[0:2] # Restrict to some run numbers
+        
+        if md.limitRunNumbers != 0:
+            runLog = runLog[0:md.limitRunNumbers] # Restrict to some run numbers
     
         startTimeBatch = md.getTime()
-        md.printTime()
-        print "Analysing batch:", runLog[0][5], "with", len(runLog),"run files.\n"
-      
+        
         for index in range(0, len(runLog)):
             
             row = runLog[index]
             md.defineGlobalVariableRun(row)
             runNumber = md.getRunNumber()
             
-            if (md.isRootFileAvailable(md.getTimeStamp())):
+            if (md.isTelescopeFileAvailable()):
+                
+                print "Analysing batch:", runLog[0][5], "with", len(runLog),"run files.\n"
                 
                 print "Run", md.getRunNumber()
                 peak_values_run = dm.importPulseFile("peak_value")
@@ -49,23 +51,22 @@ def telescopeAnalysis(batchNumbers):
                 results_batch.append([peak_values_run, telescope_data_run])
                 print "Done with run", md.getRunNumber(), "\n"
         
-            else:
-                print "WARNING! There is no root file for run number: " + str(runNumber) + "\n"
-    
-        # Done with the for loop and appending results, produce plots
-        print "Done with batch", md.getBatchNumber(),"producing plots and exporting file.\n"
         
-        peak_values     = np.empty(0, dtype=results_batch[0][0].dtype)
-        telescope_data  = np.empty(0, dtype=results_batch[0][1].dtype)
+        # Done with the for loop and appending results, produce plots
+       
+        if len(results_batch) != 0:
+            print "Done with batch", md.getBatchNumber(),"producing plots and exporting file.\n"
+            peak_values     = np.empty(0, dtype=results_batch[0][0].dtype)
+            telescope_data  = np.empty(0, dtype=results_batch[0][1].dtype)
+        
+            for results_run in results_batch:
+                peak_values     = np.concatenate((peak_values, results_run[0]), axis = 0)
+                telescope_data  = np.concatenate((telescope_data,  results_run[1]), axis = 0)
+         
+         
+            tplot.produceTelescopeGraphs(telescope_data, peak_values)
     
-        for results_run in results_batch:
-            peak_values     = np.concatenate((peak_values, results_run[0]), axis = 0)
-            telescope_data  = np.concatenate((telescope_data,  results_run[1]), axis = 0)
-     
-     
-        tplot.produceTelescopeGraphs(telescope_data, peak_values)
-    
-        print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
+            print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
 
     print "Done with batch",runLog[0][5],".\n"
 

@@ -10,8 +10,7 @@ import noise
 import pulse
 import telescope
 import timing
-
-import metadata as md
+import metadata
 
 #md.setupATLAS()
 
@@ -19,16 +18,15 @@ def main():
 
     ######  NOISE, PULSE, TELESCOPE AND TIMING   ######
     
-    #batchNumber = [101, 207, 401, 707]
-    batchNumber = "all"
- 
-    ##################################################
+    batchNumber = [306]
+    metadata.setLimitRunNumbers(3) # How many run numbers in each batch
+    metadata.setQuickParameter(False) # Quick check
     
-    #noise.noiseAnalysis           (batchNumber)
+    noise.noiseAnalysis           (batchNumber)
     
-    #pulse.pulseAnalysis            (batchNumber)
+    pulse.pulseAnalysis           (batchNumber)
     
-    #telescope.telescopeAnalysis   (batchNumber)
+    telescope.telescopeAnalysis   (batchNumber)
     
     timing.timingAnalysis         (batchNumber)
     

@@ -28,10 +28,11 @@ def pulseAnalysis(batchNumbers):
         results_batch = []
         
         # DEBUG # Comment out this line to consider all files in batch
-        runLog = runLog[0:2] # Restrict to some run numbers
+        if md.limitRunNumbers != 0:
+            runLog = runLog[0:md.limitRunNumbers] # Restrict to some run numbers
     
         startTimeBatch = md.getTime()
-        md.printTime()
+        
         print "Analysing batch:", runLog[0][5], "with", len(runLog),"run files.\n"
       
         for index in range(0, len(runLog)):
@@ -40,8 +41,9 @@ def pulseAnalysis(batchNumbers):
             md.defineGlobalVariableRun(row)
             runNumber = md.getRunNumber()
             
-            if (md.isRootFileAvailable(md.getTimeStamp())):
-                
+            if (md.isRootFileAvailable()):
+            
+                md.printTime()
                 print "Run", md.getRunNumber()
                 [peak_values, peak_times, rise_times] = pulseAnalysisPerRun(sigma)
                 results_batch.append([peak_values, peak_times, rise_times])
@@ -49,25 +51,23 @@ def pulseAnalysis(batchNumbers):
                 # Export per run number
                 dm.exportPulseData(peak_values, peak_times, rise_times)
                 print "Done with run", md.getRunNumber(), "\n"
+    
+        if len(results_batch) != 0:
+            # Done with the for loop and appending results, produce plots
+            print "Done with batch", md.getBatchNumber(),"producing plots and exporting file.\n"
+            
+            peak_values = np.empty(0, dtype=results_batch[0][0].dtype)
+            peak_times  = np.empty(0, dtype=results_batch[0][1].dtype)
+            rise_times  = np.empty(0, dtype=results_batch[0][2].dtype)
         
-            else:
-                print "WARNING! There is no root file for run number: " + str(runNumber) + "\n"
-    
-        # Done with the for loop and appending results, produce plots
-        print "Done with batch", md.getBatchNumber(),"producing plots and exporting file.\n"
+            for results_run in results_batch:
+                peak_values = np.concatenate((peak_values, results_run[0]), axis = 0)
+                peak_times  = np.concatenate((peak_times,  results_run[1]), axis = 0)
+                rise_times  = np.concatenate((rise_times,  results_run[2]), axis = 0)
+         
+            p_plot.producePulseDistributionPlots(peak_values, peak_times, rise_times)
         
-        peak_values = np.empty(0, dtype=results_batch[0][0].dtype)
-        peak_times  = np.empty(0, dtype=results_batch[0][1].dtype)
-        rise_times  = np.empty(0, dtype=results_batch[0][2].dtype)
-    
-        for results_run in results_batch:
-            peak_values = np.concatenate((peak_values, results_run[0]), axis = 0)
-            peak_times  = np.concatenate((peak_times,  results_run[1]), axis = 0)
-            rise_times  = np.concatenate((rise_times,  results_run[2]), axis = 0)
-     
-        p_plot.producePulseDistributionPlots(peak_values, peak_times, rise_times)
-    
-        print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
+            print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
 
     print "Done with batch",runLog[0][5],".\n"
 
@@ -82,10 +82,9 @@ def pulseAnalysisPerRun(sigma):
     max = md.getNumberOfEvents()
     step = 8000
 
-##    # DEBUG #
-#    p = Pool(1)
-#    max = 1000
-#    step = 1000
+    if md.quick:
+        max = 3000
+        step = 3000
 
     ranges = range(0, max, step)
     

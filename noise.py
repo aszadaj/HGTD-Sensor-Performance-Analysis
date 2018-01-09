@@ -27,7 +27,8 @@ def noiseAnalysis(batchNumbers):
         results_batch = []
         
         # DEBUG # Comment line to get all files in batch
-        runLog = runLog[0:2] # Restrict to some run numbers
+        if md.limitRunNumbers != 0:
+            runLog = runLog[0:md.limitRunNumbers] # Restrict to some run numbers
     
         startTimeBatch = md.getTime()
         md.printTime()
@@ -40,7 +41,7 @@ def noiseAnalysis(batchNumbers):
             md.defineGlobalVariableRun(row)
             runNumber = md.getRunNumber()
             
-            if (md.isRootFileAvailable(md.getTimeStamp())):
+            if (md.isRootFileAvailable()):
             
                 print "Run", md.getRunNumber()
                 [noise_average, noise_std] = noiseAnalysisPerRun()
@@ -68,7 +69,7 @@ def noiseAnalysis(batchNumbers):
     
         print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
 
-    print "Done with batch",runLog[0][5],".\n"
+    print "Done with batch",runLog[0][5],"\n"
 
 
 def noiseAnalysisPerRun():
@@ -79,11 +80,11 @@ def noiseAnalysisPerRun():
     p = Pool(dm.threads)
     max = md.getNumberOfEvents()
     step = 8000
+    
+    if md.quick:
+        max = 3000
+        step = 3000
 
-#    # DEBUG #
-#    p = Pool(1)
-#    max = 1000 # Restrict to match the file of the telescope
-#    step = 1000
 
     ranges = range(0, max, step)
     

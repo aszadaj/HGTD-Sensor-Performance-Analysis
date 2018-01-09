@@ -58,22 +58,31 @@ def getRunLogBatches(batchNumbers):
 
 
 
-def isRootFileAvailable(timeStamp):
+def isRootFileAvailable():
 
     availableFiles = readFileNames("oscilloscope")
     
+    for file_name in availableFiles:
+        if file_name == int(getTimeStamp()):
+            return True
+
+    return False
+
+
+def isTimingDataFilesAvailable():
+
+
+    availableFilesPulse         = readFileNames("peak_value")
     found = False
     
-    for file_name in availableFiles:
-        if file_name == int(timeStamp):
-            found = True
-            break
+    for pulse_file in availableFilesPulse:
+        if pulse_file == int(getRunNumber()):
+            return True
 
-    return found
-
+    return False
 
 
-def isTimingDataFilesAvailable(timeStamp):
+def isTelescopeFileAvailable():
 
 
     availableFilesPulse         = readFileNames("peak_value")
@@ -82,10 +91,11 @@ def isTimingDataFilesAvailable(timeStamp):
     found = False
     
     for pulse_file in availableFilesPulse:
-        if pulse_file == int(getRunNumber(timeStamp)):
+        if pulse_file == int(getRunNumber()):
             for telescope_file in availableFilesTelescope:
-                if telescope_file == int(timeStamp):
+                if telescope_file == int(getTimeStamp()):
                     return True
+
     return False
 
 
@@ -275,6 +285,16 @@ def setupATLAS():
     ROOT.gROOT.SetBatch()
     ROOT.gROOT.LoadMacro("./resources/style/AtlasStyle.C")
     ROOT.SetAtlasStyle()
+
+def setLimitRunNumbers(number):
+    global limitRunNumbers
+    limitRunNumbers = number
+
+def setQuickParameter(debug):
+    global quick
+    quick = debug
+
+
 
 
 
