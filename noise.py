@@ -27,7 +27,7 @@ def noiseAnalysis(batchNumbers):
         results_batch = []
         
         # DEBUG # Comment line to get all files in batch
-        runLog = [runLog[0]] # Restrict to some run numbers
+        runLog = [runLog[0], runLog[1]] # Restrict to some run numbers
     
         startTimeBatch = md.getTime()
         md.printTime()
@@ -44,6 +44,9 @@ def noiseAnalysis(batchNumbers):
             
                 print "Run", md.getRunNumber()
                 results_batch.append(noiseAnalysisPerRun())
+                
+                # Export per run number
+                dm.exportNoiseData(pedestal, noise)
                 print "Done with run", md.getRunNumber(),"\n"
         
             else:
@@ -60,7 +63,7 @@ def noiseAnalysis(batchNumbers):
             noise_std = np.concatenate((noise_std, results_run[1]), axis = 0)
 
         pedestal, noise = n_calc.getPedestalAndNoisePerChannel(noise_average, noise_std)
-        dm.exportNoiseData(pedestal, noise)
+        
         
         n_plot.produceNoiseDistributionPlots(noise_average, noise_std)
     
