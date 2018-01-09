@@ -41,13 +41,14 @@ def getRunLogBatches(batchNumbers):
         batchNumbers = getAllBatchNumbers()
 
     metaData = getRunLog()
-    
+ 
     runLog = []
     
     for batch in batchNumbers:
         runLog_batch = []
         
         for row in metaData:
+            
             if batch == int(row[5]):
                 runLog_batch.append(row)
                 
