@@ -28,16 +28,17 @@ def produceTelescopeGraphs(data_telescope, data_peak_value):
     
     xMin = -6
     xMax = 2.0
-    xBins = 200
+    xBins = 800
     yMin = 10
     yMax = 15
-    yBins = 200
+    yBins = 800
     
     data = data_telescope
     peak_value = data_peak_value
 
     canvas = ROOT.TCanvas("Telescope", "telescope")
     channels = peak_value.dtype.names
+    channels = ["chan0"]
     
     minEntries = 2
     
@@ -53,11 +54,11 @@ def produce2DPlots():
 
     graphOrignal = ROOT.TProfile2D("telescope_"+chan,"Telescope channel "+str(int(chan[-1:])+1),xBins,xMin,xMax,yBins,yMin,yMax)
 
-
     # Original mean value TProfile2D
     for index in range(0, len(data)):
-         if peak_value[chan][index] != 0.0:
+         if data['X'][index] > -9.0 and peak_value[chan][index] != 0.0:
             graphOrignal.Fill(data['X'][index], data['Y'][index], peak_value[chan][index])
+    
 
 #
 #    graphStd = graphOrignal.Clone()

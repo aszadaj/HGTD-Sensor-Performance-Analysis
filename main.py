@@ -19,11 +19,11 @@ def main():
 
     ######  NOISE, PULSE, TELESCOPE AND TIMING   ######
     
-    batchNumber = [306]
+    batchNumber = [306, 507]
  
     ##################################################
     
-    noise.noiseAnalysis           (batchNumber)
+    #noise.noiseAnalysis           (batchNumber)
     
     pulse.pulseAnalysis            (batchNumber)
     

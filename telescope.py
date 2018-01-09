@@ -31,10 +31,10 @@ def telescopeAnalysis(batchNumbers):
 
 
 def telescopeAnalysisPerBatch(runLog):
+
+    batchNumber = runLog[0][5]
     
-    md.defineGlobalVariableRun(runLog[0])
-    
-    telescope_data_batch, peak_value_batch = dm.importFilesForTracking()
+    telescope_data_batch, peak_value_batch = dm.importFilesForTracking(batchNumber)
     
     if len(telescope_data_batch) == len(peak_value_batch):
         tplot.produceTelescopeGraphs(telescope_data_batch, peak_value_batch)

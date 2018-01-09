@@ -1,4 +1,4 @@
-import ROOT
+import ROOT
 import root_numpy as rnm
 import numpy as np
 
