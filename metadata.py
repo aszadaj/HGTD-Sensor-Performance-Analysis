@@ -81,10 +81,10 @@ def isTimingDataFilesAvailable(timeStamp):
 
     found = False
     
-    for file_name in availableFilesPulse:
-        if file_name == int(timeStamp):
-            for file_name in availableFilesTelescope:
-                if file_name == int(timeStamp):
+    for pulse_file in availableFilesPulse:
+        if pulse_file == int(getRunNumber(timeStamp)):
+            for telescope_file in availableFilesTelescope:
+                if telescope_file == int(timeStamp):
                     return True
     return False
 
