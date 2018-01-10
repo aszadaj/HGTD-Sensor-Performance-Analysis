@@ -40,12 +40,14 @@ def timingAnalysis(batchNumbers):
                 
                 print "Run", md.getRunNumber()
                 peak_time_run = dm.importPulseFile("peak_time")
+                print peak_time_run
                 time_difference_run = timingAnalysisPerRun(peak_time_run)
                 
                 if len(time_difference_batch) == 0:
                     time_difference_batch = time_difference_batch.astype(time_difference_run.dtype)
           
                 # Export per run number
+                
                 dm.exportTimingData(time_difference_run)
                 
                 # Concatenate to plot all results
@@ -78,8 +80,7 @@ def timingAnalysisPerRun(data):
     for event in range (0, len(data)):
         for chan in data.dtype.names:
             if chan != SiPM_chan and data[chan][event] != 0 and data[SiPM_chan][event] != 0:
-                time_difference[chan][event] = (data[chan][event] - data[SiPM_chan][event])*1000
-
+                time_difference[chan][event] = data[event][chan] - data[event][SiPM_chan]
 
     return time_difference
 

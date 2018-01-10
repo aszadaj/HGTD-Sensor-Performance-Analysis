@@ -14,11 +14,9 @@ def produceTimingDistributionPlots(time_difference):
         
         if chan != md.getChannelNameForSensor("SiPM-AFP"):
             
-            mean = np.average( time_difference[chan][np.nonzero(time_difference)] )
-            
             index = int(chan[-1:])
             
-            time_difference_graph[chan] = ROOT.TH1D("Time Difference channel "+str(index+1), "time_difference" + chan, 800, mean*0.5, mean*1.5)
+            time_difference_graph[chan] = ROOT.TH1D("Time Difference channel "+str(index+1), "time_difference" + chan, 2000, -30, 30)
      
             for entry in range(0, len(time_difference[chan])):
             
