@@ -21,7 +21,8 @@ def produceTimingDistributionPlots(time_difference):
             
                 if time_difference[chan][entry] != 0:
                     time_difference_graph[chan].Fill(time_difference[chan][entry])
-            #print time_difference_graph[chan].Fit("gaus")
+        
+            #time_difference_graph[chan].Fit("gaus")
         
             defineAndProduceHistogram(time_difference_graph[chan], canvas,chan)
 
