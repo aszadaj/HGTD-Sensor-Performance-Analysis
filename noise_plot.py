@@ -14,7 +14,7 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
         pedestal_mean   = np.average(np.take(noise_average[chan], np.nonzero(noise_average[chan]))[0])
         noise_mean      = np.average(np.take(noise_std[chan], np.nonzero(noise_std[chan]))[0])
         
-        pedestal_graph[chan] = ROOT.TH1D("Pedestal, channel "+str(int(chan[-1:])+1), "pedestal"+chan, 1000, pedestal_mean-1.5, pedestal_mean+1.5)
+        pedestal_graph[chan] = ROOT.TH1D("Pedestal, channel "+str(int(chan[-1:])+1), "pedestal"+chan, 1000, pedestal_mean-3, pedestal_mean+3)
         noise_graph[chan]    = ROOT.TH1D("Noise, channel "+str(int(chan[-1:])+1), "noise"+chan, 1000, noise_mean-2, noise_mean+2)
 
 

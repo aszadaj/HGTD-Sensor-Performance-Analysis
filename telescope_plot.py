@@ -47,7 +47,7 @@ def produceTelescopeGraphs(data_telescope, data_peak_value):
         # 1. Shows the mean amplitude in each filled bin (with or without conditions)
         # 2. Shows efficiency between telescope data and amplitude data
         produce2DPlots()
-            #produceTEfficiencyPlot()
+        produceTEfficiencyPlot()
 
 
 def produce2DPlots():
@@ -60,32 +60,32 @@ def produce2DPlots():
             graphOrignal.Fill(data['X'][index], data['Y'][index], peak_value[chan][index])
     
 
-#
-#    graphStd = graphOrignal.Clone()
-#
-#    # Standard deviation TProfile2D
-#    for bin in range(0, int(graphStd.GetSize())):
-#
-#        errorPerBin   = int(graphOrignal.GetBinError(bin))
-#        entriesPerBin = int(graphOrignal.GetBinContent(bin))
-#
-#        graphStd.SetBinContent(bin, errorPerBin)
-#        graphStd.SetBinEntries(bin, entriesPerBin)
-#
-#    # Begin filtering
-#    graphFiltered = graphOrignal.Clone()
-#    graphStdFiltered =  graphStd.Clone()
-#
-#    for bin in range(0, int(graphFiltered.GetSize())):
-#        entries = int(graphFiltered.GetBinEntries(bin))
-#
-#        if entries <= minEntries:
-#
-#            graphFiltered.SetBinContent(bin, 0)
-#            #graphFiltered.SetBinEntries(bin, 0)
-#
-#            graphStdFiltered.SetBinContent(bin, 0)
-#            #graphStdFiltered.SetBinEntries(bin, 0)
+
+    graphStd = graphOrignal.Clone()
+
+    # Standard deviation TProfile2D
+    for bin in range(0, int(graphStd.GetSize())):
+
+        errorPerBin   = int(graphOrignal.GetBinError(bin))
+        entriesPerBin = int(graphOrignal.GetBinContent(bin))
+
+        graphStd.SetBinContent(bin, errorPerBin)
+        graphStd.SetBinEntries(bin, entriesPerBin)
+
+    # Begin filtering
+    graphFiltered = graphOrignal.Clone()
+    graphStdFiltered =  graphStd.Clone()
+
+    for bin in range(0, int(graphFiltered.GetSize())):
+        entries = int(graphFiltered.GetBinEntries(bin))
+
+        if entries <= minEntries:
+
+            graphFiltered.SetBinContent(bin, 0)
+            #graphFiltered.SetBinEntries(bin, 0)
+
+            graphStdFiltered.SetBinContent(bin, 0)
+            #graphStdFiltered.SetBinEntries(bin, 0)
 
 
     # Print original TProfile2D
@@ -93,41 +93,41 @@ def produce2DPlots():
     fileName = ".pdf"
     produceTH2Plot(graphOrignal, headTitle, fileName)
 
-#    # Efficiency and inefficiency
-#    headTitle = "Efficiency of hit particles in each bin"
-#    fileName = ".pdf_eff"
-#    #produceEfficiencyPlot(graphOrignal)
-#
-#    headTitle = "Efficiency of hit particles in each bin"
-#    fileName = ".pdf_eff"
-#    #produceInefficiencyPlot(graphOrignal)
-#
-#
-#    # Print filtered TProfile2D
-#    headTitle = "Pulse amplitude mean value (mV) in each bin (filtered), entries " + str(int(graphFiltered.GetEntries()))
-#    fileName = "filtered.pdf"
-#    #produceTH2Plot(graphFiltered, headTitle, fileName)
-#
-#    # Efficiency and inefficiency
-#    headTitle = "Efficiency of hit particles in each bin (filtered)"
-#    fileName = "filtered_eff.pdf"
-#    #produceEfficiencyPlot(graphFiltered)
-#
-#    headTitle = "Efficiency of hit particles in each bin (filtered)"
-#    fileName = "filtered_eff.pdf"
-#    #produceInefficiencyPlot(graphFiltered)
-#
-#
-#    # Print original std TProfile2D
-#    headTitle = "Pulse amplitude standard deviation (mV) in each bin, entries " + str(int(graphStd.GetEntries()))
-#    fileName = "_std.pdf"
-#    #produceTH2Plot(graphStd, headTitle, fileName)
-#
-#
-#    # Print filtered std TProfile2D
-#    headTitle = "Pulse amplitude standard deviation (mV) in each bin (filtered), entries " + str(int(graphStdFiltered.GetEntries()))
-#    fileName = "_filtered_std.pdf"
-#    #produceTH2Plot(graphStdFiltered, headTitle, fileName)
+    # Efficiency and inefficiency
+    headTitle = "Efficiency of hit particles in each bin"
+    fileName = ".pdf_eff"
+    #produceEfficiencyPlot(graphOrignal)
+
+    headTitle = "Efficiency of hit particles in each bin"
+    fileName = ".pdf_eff"
+    #produceInefficiencyPlot(graphOrignal)
+
+
+    # Print filtered TProfile2D
+    headTitle = "Pulse amplitude mean value (mV) in each bin (filtered), entries " + str(int(graphFiltered.GetEntries()))
+    fileName = "filtered.pdf"
+    #produceTH2Plot(graphFiltered, headTitle, fileName)
+
+    # Efficiency and inefficiency
+    headTitle = "Efficiency of hit particles in each bin (filtered)"
+    fileName = "filtered_eff.pdf"
+    #produceEfficiencyPlot(graphFiltered)
+
+    headTitle = "Efficiency of hit particles in each bin (filtered)"
+    fileName = "filtered_eff.pdf"
+    #produceInefficiencyPlot(graphFiltered)
+
+
+    # Print original std TProfile2D
+    headTitle = "Pulse amplitude standard deviation (mV) in each bin, entries " + str(int(graphStd.GetEntries()))
+    fileName = "_std.pdf"
+    #produceTH2Plot(graphStd, headTitle, fileName)
+
+
+    # Print filtered std TProfile2D
+    headTitle = "Pulse amplitude standard deviation (mV) in each bin (filtered), entries " + str(int(graphStdFiltered.GetEntries()))
+    fileName = "_filtered_std.pdf"
+    #produceTH2Plot(graphStdFiltered, headTitle, fileName)
 
 
     del graphOrignal
