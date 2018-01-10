@@ -23,7 +23,7 @@ def main():
     metadata.setLimitRunNumbers(4) # How many run numbers in each batch
     metadata.setQuickParameter(False) # Quick check
     
-    noise.noiseAnalysis           (batchNumber)
+    #noise.noiseAnalysis           (batchNumber)
     
     pulse.pulseAnalysis           (batchNumber)
     
