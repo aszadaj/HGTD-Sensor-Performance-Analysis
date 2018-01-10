@@ -20,10 +20,10 @@ def main():
     
     batchNumber = [306]
     
-    metadata.setLimitRunNumbers(3) # How many run numbers in each batch #max 50
+    metadata.setLimitRunNumbers(4) # How many run numbers in each batch #max 50
     metadata.setQuickParameter(False) # Quick check
     
-    #noise.noiseAnalysis           (batchNumber)
+    noise.noiseAnalysis           (batchNumber)
     
     pulse.pulseAnalysis           (batchNumber)
     

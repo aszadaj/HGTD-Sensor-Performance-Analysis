@@ -41,13 +41,8 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
     peak_time = 0
     rise_time = 0
     
-    threshold = 0
     # Set threshold, note data have negative pulse values
-    if chan == md.getChannelNameForSensor("SiPM-AFP"):
-        threshold = -200*0.001
-    else:
-        threshold = noise * sigma - pedestal
-
+    threshold = noise * sigma - pedestal
     threshold_indices = np.where(data < -threshold)
     
     try:
