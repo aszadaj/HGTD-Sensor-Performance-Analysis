@@ -11,12 +11,11 @@ def produceTimingDistributionPlots(time_difference):
     SiPM_chan = md.getChannelNameForSensor("SiPM-AFP")
     
     for chan in time_difference.dtype.names:
-        
         if chan != md.getChannelNameForSensor("SiPM-AFP"):
             
             index = int(chan[-1:])
             
-            time_difference_graph[chan] = ROOT.TH1D("Time Difference channel "+str(index+1), "time_difference" + chan, 2000, -30, 30)
+            time_difference_graph[chan] = ROOT.TH1D("Time Difference channel "+str(index+1), "time_difference" + chan, 1000, -10, 0)
      
             for entry in range(0, len(time_difference[chan])):
             
@@ -33,7 +32,7 @@ def produceTimingDistributionPlots(time_difference):
 def defineAndProduceHistogram(graphList, canvas, chan):
 
     headTitle = "Distribution of timing difference, Sep 2017 batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])+1) + ", sensor: " + str(md.getNameOfSensor(chan))
-    xAxisTitle = "Time (ps)"
+    xAxisTitle = "Time (ns)"
     yAxisTitle = "Number (N)"
     fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/timing/timing_distribution_"+str(md.getBatchNumber())+"_"+chan+".pdf"
 

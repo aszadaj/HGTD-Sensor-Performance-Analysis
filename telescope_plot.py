@@ -38,7 +38,7 @@ def produceTelescopeGraphs(data_telescope, data_peak_value):
 
     canvas = ROOT.TCanvas("Telescope", "telescope")
     channels = peak_value.dtype.names
-    channels = ["chan0"]
+    #channels = ["chan0"]
     
     minEntries = 2
     
