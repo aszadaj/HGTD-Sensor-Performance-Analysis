@@ -40,7 +40,7 @@ def timingAnalysis(batchNumbers):
                 
                 print "Run", md.getRunNumber()
                 peak_time_run = dm.importPulseFile("peak_time")
-                print peak_time_run
+                
                 time_difference_run = timingAnalysisPerRun(peak_time_run)
                 
                 if len(time_difference_batch) == 0:
