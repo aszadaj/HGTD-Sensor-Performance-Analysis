@@ -18,16 +18,16 @@ def main():
 
     ######  NOISE, PULSE, TELESCOPE AND TIMING   ######
     
-    batchNumber = [101]
+    batchNumber = [507]
     
     metadata.setLimitRunNumbers(4) # How many run numbers in each batch
     metadata.setQuickParameter(False) # Quick check
     
-    #noise.noiseAnalysis           (batchNumber)
+    noise.noiseAnalysis           (batchNumber)
     
     pulse.pulseAnalysis           (batchNumber)
     
-    #telescope.telescopeAnalysis   (batchNumber)
+    telescope.telescopeAnalysis   (batchNumber)
     
     timing.timingAnalysis         (batchNumber)
     
