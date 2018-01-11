@@ -14,8 +14,8 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
         pedestal_mean   = np.average(np.take(noise_average[chan], np.nonzero(noise_average[chan]))[0])
         noise_mean      = np.average(np.take(noise_std[chan], np.nonzero(noise_std[chan]))[0])
         
-        pedestal_graph[chan] = ROOT.TH1D("Pedestal, channel "+str(int(chan[-1:])+1), "pedestal"+chan, 1000, pedestal_mean-3, pedestal_mean+3)
-        noise_graph[chan]    = ROOT.TH1D("Noise, channel "+str(int(chan[-1:])+1), "noise"+chan, 1000, noise_mean-2, noise_mean+2)
+        pedestal_graph[chan] = ROOT.TH1D("Pedestal, channel "+str(int(chan[-1:])), "pedestal"+chan, 1000, pedestal_mean-3, pedestal_mean+3)
+        noise_graph[chan]    = ROOT.TH1D("Noise, channel "+str(int(chan[-1:])), "noise"+chan, 1000, noise_mean-2, noise_mean+2)
 
 
         for entry in range(0,len(noise_average)):
@@ -29,13 +29,13 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
    
     for chan in channels:
     
-        titleAbove = "Distribution of standard deviation values (noise) from each entry, Sep 2017 batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])+1) + ", sensor: " + str(md.getNameOfSensor(chan))
+        titleAbove = "Distribution of standard deviation values (noise) from each entry, Sep 2017 batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])) + ", sensor: " + str(md.getNameOfSensor(chan))
         xAxisTitle = "Standard deviation (mV)"
         yAxisTitle = "Number of entries (N)"
         setGraphAttributes(noise_graph[chan], titleAbove, xAxisTitle, yAxisTitle)
         
         
-        titleAbove = "Distribution of noise mean values (pedestal) from each entry, batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])+1) +", sensor: " + str(md.getNameOfSensor(chan))
+        titleAbove = "Distribution of noise mean values (pedestal) from each entry, batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])) +", sensor: " + str(md.getNameOfSensor(chan))
         xAxisTitle = "Mean value (mV)"
         yAxisTitle = "Number of entries (N)"
         setGraphAttributes(pedestal_graph[chan], titleAbove, xAxisTitle, yAxisTitle)

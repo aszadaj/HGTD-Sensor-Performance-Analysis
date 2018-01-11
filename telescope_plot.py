@@ -52,7 +52,7 @@ def produceTelescopeGraphs(data_telescope, data_peak_value):
 
 def produce2DPlots():
 
-    graphOrignal = ROOT.TProfile2D("telescope_"+chan,"Telescope channel "+str(int(chan[-1:])+1),xBins,xMin,xMax,yBins,yMin,yMax)
+    graphOrignal = ROOT.TProfile2D("telescope_"+chan,"Telescope channel "+str(int(chan[-1:])),xBins,xMin,xMax,yBins,yMin,yMax)
 
     # Original mean value TProfile2D
     for index in range(0, len(data)):
@@ -136,10 +136,10 @@ def produce2DPlots():
 
 def produceTEfficiencyPlot():
     
-    efficiencyOrig = ROOT.TEfficiency("Efficiency_particles"+chan+"","Effciency particles channel "+str(int(chan[-1:])+1),xBins,xMin,xMax,yBins,yMin,yMax)
+    efficiencyOrig = ROOT.TEfficiency("Efficiency_particles"+chan+"","Effciency particles channel "+str(int(chan[-1:])),xBins,xMin,xMax,yBins,yMin,yMax)
     
-    LGADHitsOrig = ROOT.TProfile2D("LGAD_particles"+chan+"","LGAD particles channel "+str(int(chan[-1:])+1),xBins,xMin,xMax,yBins,yMin,yMax)
-    MIMOSAHitsOrig = ROOT.TProfile2D("telescope_particles"+chan+"","Telescope particles channel "+str(int(chan[-1:])+1),xBins,xMin,xMax,yBins,yMin,yMax)
+    LGADHitsOrig = ROOT.TProfile2D("LGAD_particles"+chan+"","LGAD particles channel "+str(int(chan[-1:])),xBins,xMin,xMax,yBins,yMin,yMax)
+    MIMOSAHitsOrig = ROOT.TProfile2D("telescope_particles"+chan+"","Telescope particles channel "+str(int(chan[-1:])),xBins,xMin,xMax,yBins,yMin,yMax)
     
 
 
@@ -231,7 +231,7 @@ def produceTEfficiencyPlot():
 
 def produceTH1MeanPlot(graphTH2):
 
-    graphTH1 = ROOT.TH1F("distribution_"+chan+"_histogram","Mean value distribution "+str(int(chan[-1:])+1),200,0,400)
+    graphTH1 = ROOT.TH1F("distribution_"+chan+"_histogram","Mean value distribution "+str(int(chan[-1:])),200,0,400)
 
 
     for bin in range(0, int(graphTH2.GetSize())):
@@ -250,7 +250,7 @@ def produceTH1MeanPlot(graphTH2):
 
 def produceTH1Plot(graph, headTitle, fileName):
 
-    title = headTitle + ", Sep 2017 batch " + str(md.getBatchNumber())+", channel " + str(int(chan[-1:])+1) + ", sensor: " + str(md.getNameOfSensor(chan)) + "; " + "Mean amplitude value per bin" + "; " + "Entries (N)"
+    title = headTitle + ", Sep 2017 batch " + str(md.getBatchNumber())+", channel " + str(int(chan[-1:])) + ", sensor: " + str(md.getNameOfSensor(chan)) + "; " + "Mean amplitude value per bin" + "; " + "Entries (N)"
     graph.SetTitle(title)
     
     canvas.cd()
@@ -262,7 +262,7 @@ def produceTH1Plot(graph, headTitle, fileName):
 
 def produceTH2Plot(graph, headTitle, fileName):
     
-    title = headTitle + ", Sep 2017 batch " + str(md.getBatchNumber())+", channel " + str(int(chan[-1:])+1) + ", sensor: " + str(md.getNameOfSensor(chan)) + "; " + "X position (mm)" + "; " + "Y position (mm)"
+    title = headTitle + ", Sep 2017 batch " + str(md.getBatchNumber())+", channel " + str(int(chan[-1:])) + ", sensor: " + str(md.getNameOfSensor(chan)) + "; " + "X position (mm)" + "; " + "Y position (mm)"
     graph.SetTitle(title)
     
     canvas.cd()
