@@ -119,11 +119,15 @@ def timingAnalysisPerRun(data, peak_value):
             canvas_sipm[chan] = ROOT.TCanvas("Telescope3"+chan, "telescope")
         
             for event in range (0, len(data)):
-            
-                if data[chan][event] != 0 and data[SiPM_chan][event] != 0:
-                #if data[chan][event] != 0 and data[SiPM_chan][event] != 0 and peak_value[SiPM_chan][event] > 120:
+                
+                # Here, this is adapted especially for 
+                if data[chan][event] != 0 and data[SiPM_chan][event] != 0 and peak_value[chan][event] > 200:
+#                if data[chan][event] != 0 and data[SiPM_chan][event] != 0 and peak_value[chan][event] > 200:
+
+                    # Here calculate the time difference
                     time_difference[chan][event] = data[event][chan] - data[event][SiPM_chan]
                     
+                    # Plot 2D plots
                     times_2d[chan].Fill(time_difference[chan][event], data[chan][event], 1)
                     
                     time_diff_2d_lgad[chan].Fill(time_difference[chan][event], peak_value[chan][event], 1)
@@ -178,9 +182,9 @@ def produceTH2Plot(graph, headTitle, fileName, chan, canvas, num):
     canvas.Update()
     
     if num == 2:
-        canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/timing/timing_2d_diff_sipm"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
+        canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/timing/timing_2d_diff_sipm_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
     elif num == 3:
-        canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/timing/timing_2d_diff_lgad"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
+        canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/timing/timing_2d_diff_lgad_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
     else:
         canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/timing/timing_2d_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
 
