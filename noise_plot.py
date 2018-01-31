@@ -44,6 +44,7 @@ def noisePlots(batchNumbers):
 
 def produceNoiseDistributionPlots(noise_average, noise_std):
     
+    
     channels = noise_average.dtype.names
     pedestal_graph = dict()
     noise_graph = dict()
@@ -51,13 +52,13 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
     noise_average, noise_std = dm.convertNoiseData(noise_average, noise_std)
     
     for chan in channels:
-    
+        
         pedestal_mean   = np.average(np.take(noise_average[chan], np.nonzero(noise_average[chan]))[0])
         noise_mean      = np.average(np.take(noise_std[chan], np.nonzero(noise_std[chan]))[0])
         
-        
-        noise_graph[chan]    = ROOT.TH1D("Noise, channel "+str(int(chan[-1:])), "noise"+chan, 1000, noise_mean-5, noise_mean+5)
-        pedestal_graph[chan] = ROOT.TH1D("Pedestal, channel "+str(int(chan[-1:])), "pedestal"+chan, 1000, pedestal_mean-5, pedestal_mean+5)
+    
+        noise_graph[chan]    = ROOT.TH1D("Noise, channel "+str(int(chan[-1:])), "noise"+chan, 1000, noise_mean-3, noise_mean+3)
+        pedestal_graph[chan] = ROOT.TH1D("Pedestal, channel "+str(int(chan[-1:])), "pedestal"+chan, 1000, pedestal_mean-3, pedestal_mean+3)
 
 
         for entry in range(0, len(noise_average)):
@@ -65,6 +66,7 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
             if noise_average[entry][chan] != 0:
                 pedestal_graph[chan].Fill(noise_average[entry][chan])
                 noise_graph[chan].Fill(noise_std[entry][chan])
+    
 
         pedestal_graph[chan].Fit("gaus","","", pedestal_graph[chan].GetMean()-3, pedestal_graph[chan].GetMean()+3)
         noise_graph[chan].Fit("gaus","","", noise_graph[chan].GetMean()-3, noise_graph[chan].GetMean()+3)
