@@ -24,8 +24,8 @@ def main():
     
     batchNumber = [306, 507, 707] # For now available 306, 507 and 707
     
-    metadata.setLimitRunNumbers(1) # How many run numbers in each batch #max 50
-    metadata.setQuickParameter(True) # Quick check
+    metadata.setLimitRunNumbers(0) # How many run numbers in each batch #max 50
+    metadata.setQuickParameter(False) # Quick check
     metadata.setEntriesForQuickAnalysis(5000) # Amount of entries considered in quick
     metadata.setSigma(5) # Used for pulse analysis
     
