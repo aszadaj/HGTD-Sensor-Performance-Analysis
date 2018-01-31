@@ -10,7 +10,7 @@ import sys
 def pulseAnalysis(data, pedestal, noise):
 
     channels = data.dtype.names
-    
+
     peak_values     =   np.zeros(len(data), dtype = data.dtype)
     peak_times      =   np.zeros(len(data), dtype = data.dtype)
     rise_times      =   np.zeros(len(data), dtype = data.dtype)
@@ -23,7 +23,8 @@ def pulseAnalysis(data, pedestal, noise):
     
         for chan in channels:
         
-            peak_values[event][chan], rise_times[event][chan], peak_times[event][chan], count = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[event][chan], noise[event][chan], event, criticalValues[chan], count)
+            #peak_values[event][chan], rise_times[event][chan], peak_times[event][chan], count = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[event][chan], noise[event][chan], event, criticalValues[chan], count)
+            peak_values[event][chan], rise_times[event][chan], peak_times[event][chan], count = getAmplitudeAndRiseTime(data[chan][event], chan, np.average(pedestal[chan]), np.average(noise[chan]), event, criticalValues[chan], count)
 
     #print float(count)/(len(data)*len(channels))
 
@@ -54,7 +55,7 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, criticalValue, 
             group_points_amplitude = [np.amin(data[group]) for group in group_points]
             threshold_indices = group_points[group_points_amplitude.index(min(group_points_amplitude))]
             
-            if len(threshold_indices) > 5:
+            if len(threshold_indices) > 6:
                 
                 # Data selection for linear fit
                 skip_index = 0

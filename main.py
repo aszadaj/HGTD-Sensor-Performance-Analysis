@@ -24,22 +24,22 @@ def main():
     
     batchNumber = [306, 507] # For now available 306, 507 and 707
     
-    metadata.setLimitRunNumbers(0) # How many run numbers in each batch #max 50
-    metadata.setQuickParameter(False) # Quick check
-    metadata.setEntriesForQuickAnalysis(3000) # Amount of entries considered in quick
+    metadata.setLimitRunNumbers(2) # How many run numbers in each batch #max 50
+    metadata.setQuickParameter(True) # Quick check
+    metadata.setEntriesForQuickAnalysis(5000) # Amount of entries considered in quick
     metadata.setSigma(5) # Used for pulse analysis
     
     # METHODS #
     
-    #noise.noiseAnalysis           (batchNumber)
-    #noise_plot.noisePlots           (batchNumber)
+    noise.noiseAnalysis           (batchNumber)
+    noise_plot.noisePlots           (batchNumber)
     
-    #pulse.pulseAnalysis           (batchNumber)
-    #pulse_plot.pulsePlots           (batchNumber)
+    pulse.pulseAnalysis           (batchNumber)
+    pulse_plot.pulsePlots           (batchNumber)
     
     tracking.trackingAnalysis   (batchNumber)
     
-    #timing.timingAnalysis         (batchNumber)
+    timing.timingAnalysis         (batchNumber)
     
     ###########
     
