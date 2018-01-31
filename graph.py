@@ -11,7 +11,7 @@ ROOT.gROOT.SetBatch(True)
 def printWaveform():
 
     runNumber = 3791
-    startEntry = 13801
+    startEntry = 13806
     entries = 1
 
     timeStamp = md.getTimeStamp(runNumber)

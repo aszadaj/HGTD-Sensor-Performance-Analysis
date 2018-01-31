@@ -99,23 +99,6 @@ def isTrackingFileAvailable():
     return False
 
 
-## Check which files are available (either on stau or local)
-#def availableRunFiles():
-#
-#    folderPath = "oscilloscope_data_sep_2017/"
-#    availableFiles = readFileNames("oscilloscope")
-#
-#    runLog = getRunLog()
-#
-#    availableRuns = []
-#
-#    for row in runLog:
-#        if int(row[4]) in availableFiles:
-#            availableRuns.append(int(row[3]))
-#
-#    return availableRuns
-
-
 def readFileNames(fileType):
 
     folderPath = ""
@@ -130,11 +113,36 @@ def readFileNames(fileType):
         first_index = 17
         last_index = 21
 
-
     elif fileType == "oscilloscope": #data_1504949898.tree.root
         folderPath = "oscilloscope_data_sep_2017/"
         first_index = 5
         last_index = 15
+
+    elif fileType == "noise_noise": #noise_noise_3791.root
+        folderPath = "data_hgtd_efficiency_sep_2017/noise/noise_noise/"
+        first_index = 12
+        last_index = 16
+
+    elif fileType == "noise_pedestal": #noise_pedestal_3791.root
+        folderPath = "data_hgtd_efficiency_sep_2017/noise/noise_pedestal/"
+        first_index = 15
+        last_index = 19
+
+    elif fileType == "pulse_peak_time": #pulse_peak_time_3791.root
+        folderPath = "data_hgtd_efficiency_sep_2017/pulse/pulse_peak_time/"
+        first_index = 16
+        last_index = 20
+
+    elif fileType == "pulse_peak_value": #pulse_peak_value_3791.root
+        folderPath = "data_hgtd_efficiency_sep_2017/pulse/pulse_peak_value/"
+        first_index = 17
+        last_index = 21
+
+    elif fileType == "pulse_rise_time": #pulse_rise_time_3791.root
+        folderPath = "data_hgtd_efficiency_sep_2017/pulse/pulse_rise_time/"
+        first_index = 16
+        last_index = 20
+
     
     folderPath = getSourceFolderPath() + folderPath
 
@@ -170,6 +178,20 @@ def getRunNumber(timeStamp=""):
         for row in runLog:
             if int(row[4]) == timeStamp:
                 return int(row[3])
+
+# Return all run numbers for given batch
+
+def getAllRunNumbers(batchNumber):
+
+    runLog = getRunLog()
+    
+    runNumbers = []
+    
+    for row in runLog:
+        if int(row[5]) == batchNumber:
+            runNumbers.append(int(row[3]))
+
+    return runNumbers
 
 
 # Get current time stamp (which corresponds to the run number)

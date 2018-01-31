@@ -6,10 +6,6 @@ import numpy as np
 import metadata as md
 
 
-def exportTimingData(time_difference):
-
-    exportROOTFile(time_difference, "timing","")
-
 # Export noise data
 def exportNoiseData(pedestal, noise):
 
@@ -24,6 +20,11 @@ def exportPulseData(peak_value, peak_time, rise_time):
     exportROOTFile(peak_time, "pulse", "peak_time")
     exportROOTFile(rise_time, "pulse", "rise_time")
 
+# Export timing data
+def exportTimingData(time_difference):
+
+    exportROOTFile(time_difference, "timing","")
+
 
 # Export ROOT file with selected information
 def exportROOTFile(data, group, category=""):
@@ -37,6 +38,8 @@ def exportROOTFile(data, group, category=""):
     data = changeDTYPEOfData(data)
 
     rnm.array2root(data, fileName, mode="recreate")
+
+
 
 
 # Import noise data file
@@ -62,16 +65,11 @@ def importROOTFile(group, category=""):
     if group == "tracking":
     
         fileName = md.getSourceFolderPath()+"tracking_data_sep_2017/tracking"+md.getTimeStamp()+".root"
-        
-        data = rnm.root2array(fileName)
-        
-        # Convert into mm
-        for dimension in data.dtype.names:
-            data[dimension] = np.multiply(data[dimension], 0.001)
-        
-        return data
+
+        return rnm.root2array(fileName)
     
     else:
+    
         fileName = md.getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
 
         return rnm.root2array(fileName)

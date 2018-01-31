@@ -7,7 +7,9 @@
 #############################################
 
 import noise
+import noise_plot
 import pulse
+import pulse_plot
 import tracking
 import timing
 import metadata
@@ -20,18 +22,20 @@ def main():
     
     ######  NOISE, PULSE, TELESCOPE AND TIMING   ######
     
-    batchNumber = [306, 507, 707] # For now available 306, 507 and 707
+    batchNumber = [306, 507] # For now available 306, 507 and 707
     
-    metadata.setLimitRunNumbers(50) # How many run numbers in each batch #max 50
+    metadata.setLimitRunNumbers(0) # How many run numbers in each batch #max 50
     metadata.setQuickParameter(False) # Quick check
-    metadata.setEntriesForQuickAnalysis(20000) # Amount of entries considered in quick
+    metadata.setEntriesForQuickAnalysis(3000) # Amount of entries considered in quick
     metadata.setSigma(5) # Used for pulse analysis
     
     # METHODS #
     
     #noise.noiseAnalysis           (batchNumber)
+    #noise_plot.noisePlots           (batchNumber)
     
     #pulse.pulseAnalysis           (batchNumber)
+    #pulse_plot.pulsePlots           (batchNumber)
     
     tracking.trackingAnalysis   (batchNumber)
     

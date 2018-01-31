@@ -3,7 +3,50 @@ import metadata as md
 import numpy as np
 import data_management as dm
 
-def producePulseDistributionPlots(peak_values, peak_times, rise_times):
+
+ROOT.gStyle.SetOptFit()
+
+def pulsePlots(batchNumbers):
+    
+    for batchNumber in batchNumbers:
+        
+        dm.checkIfRepositoryOnStau()
+        
+        peak_times = np.empty(0)
+        peak_values = np.empty(0)
+        rise_times = np.empty(0)
+
+        runNumbers = md.getAllRunNumbers(batchNumber)
+        
+        availableRunNumbersPeakTimes    = md.readFileNames("pulse_peak_time")
+        availableRunNumbersPeakValues   = md.readFileNames("pulse_peak_value")
+        availableRunNumbersRiseTimes    = md.readFileNames("pulse_rise_time")
+        
+        
+        count = 0
+        for runNumber in runNumbers:
+            
+            if runNumber in availableRunNumbersPeakTimes and count < 1:
+                md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
+                
+                if peak_times.size == 0:
+                
+                    peak_times  = dm.importPulseFile("peak_time")
+                    peak_values = dm.importPulseFile("peak_value")
+                    rise_times  = dm.importPulseFile("rise_time")
+
+                else:
+
+                    peak_times = np.concatenate((peak_times, dm.importNoiseFile("peak_time")), axis = 0)
+                    peak_values = np.concatenate((peak_values, dm.importNoiseFile("peak_value")), axis = 0)
+                    rise_times = np.concatenate((rise_times, dm.importNoiseFile("rise_time")), axis = 0)
+            
+            count +=1
+        
+        producePulseDistributionPlots(peak_times, peak_values, rise_times)
+
+
+def producePulseDistributionPlots(peak_times, peak_values, rise_times):
 
     # Continue adapt code for negative values
     

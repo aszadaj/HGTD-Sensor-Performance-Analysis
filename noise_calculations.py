@@ -42,7 +42,7 @@ def findNoiseAverageAndStd(data):
             if np.amin(data[event][chan]) != criticalValues[chan]:
                 
                 # Consider points until a pulse
-                pulse_limit = -20 * 0.001 # mV
+                pulse_limit = -15 * 0.001 # mV
                 
                 data_point_correction = 3
                 
