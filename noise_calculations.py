@@ -42,7 +42,8 @@ def findNoiseAverageAndStd(data):
             if np.amin(data[event][chan]) != criticalValues[chan]:
                 
                 # Consider points until a pulse
-                pulse_limit = -25 * 0.001 # mV
+                pulse_limit = -20 * 0.001 # mV
+                
                 data_point_correction = 3
                 
                 # Take out points which are below the noise level
@@ -50,9 +51,11 @@ def findNoiseAverageAndStd(data):
                 
                 # Select the "last index" which defines the range of the noise selection
                 max_index = np.where(pulse_compatible_samples)[0][0] - data_point_correction if len( np.where(pulse_compatible_samples)[0] ) else 1002
-
+                
+                
                 noise_average[event][chan]  = np.average(data[event][chan][0:max_index])
                 noise_std[event][chan]      = np.std(data[event][chan][0:max_index])
+    
 
     return noise_average, noise_std
 
@@ -73,8 +76,8 @@ def getPedestalAndNoisePerChannel(noise_average, noise_std):
     return pedestal, noise
 
 
-# Convert to positive values in mV
-def convertNoise(results):
+
+def concatenateResults(results):
 
     channels = results[0][0].dtype.names
     
@@ -84,10 +87,6 @@ def convertNoise(results):
     for index in range(0, len(results)):
         noise_average   = np.concatenate((noise_average, results[index][0]), axis = 0)
         noise_std       = np.concatenate((noise_std, results[index][1]), axis = 0)
-    
-    for chan in channels:
-        noise_average[chan] = np.multiply(noise_average[chan], -1000)
-        noise_std[chan]     = np.multiply(noise_std[chan], 1000)
     
     return [noise_average, noise_std]
 

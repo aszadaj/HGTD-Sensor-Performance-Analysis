@@ -21,7 +21,7 @@ def noiseAnalysis(batchNumbers):
    
     runLog_batch = md.getRunLogBatches(batchNumbers)
     
-    print "\nStart noise analysis, batches:", batchNumbers
+    print "\nStart NOISE analysis, batches:", batchNumbers
  
     for runLog in runLog_batch:
         results_batch = []
@@ -48,26 +48,26 @@ def noiseAnalysis(batchNumbers):
                 results_batch.append([noise_average, noise_std])
                 
                 # Export per run number
-                pedestal, noise = n_calc.getPedestalAndNoisePerChannel(noise_average, noise_std)
-                dm.exportNoiseData(pedestal, noise)
+                # Export now pedestal and noise for each run number and match with data
+                dm.exportNoiseData(noise_average, noise_std)
                 print "Done with run", md.getRunNumber(),"\n"
-        
-            else:
-                print "WARNING! There is no root file for run number: " + str(runNumber) + "\n"
-    
-        # Done with the for loop and appending results, export and produce files
-        print "Done with batch", md.getBatchNumber(),"producing plots and exporting file.\n"
-        
-        noise_average   = np.empty(0, dtype=results_batch[0][0].dtype)
-        noise_std       = np.empty(0, dtype=results_batch[0][1].dtype)
-      
-        for results_run in results_batch:
-            noise_average = np.concatenate((noise_average, results_run[0]), axis = 0)
-            noise_std = np.concatenate((noise_std, results_run[1]), axis = 0)
 
-        n_plot.produceNoiseDistributionPlots(noise_average, noise_std)
-    
-        print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
+
+        if len(results_batch) != 0:
+        
+            # Done with the for loop and appending results, export and produce files
+            print "Done with batch", md.getBatchNumber(),"producing plots and exporting file.\n"
+            
+            noise_average   = np.empty(0, dtype=results_batch[0][0].dtype)
+            noise_std       = np.empty(0, dtype=results_batch[0][1].dtype)
+          
+            for results_run in results_batch:
+                noise_average = np.concatenate((noise_average, results_run[0]), axis = 0)
+                noise_std = np.concatenate((noise_std, results_run[1]), axis = 0)
+
+            n_plot.produceNoiseDistributionPlots(noise_average, noise_std)
+        
+            print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
 
     print "Done with batch",runLog[0][5],"\n"
 
@@ -81,10 +81,9 @@ def noiseAnalysisPerRun():
     max = md.getNumberOfEvents()
     step = 8000
     
+    # Quick Analysis
     if md.quick:
-        max = 3000
-        step = 3000
-
+        max = step = md.maxEntries
 
     ranges = range(0, max, step)
     
@@ -93,7 +92,7 @@ def noiseAnalysisPerRun():
     results = p.map(lambda chunk: multiProcess(dataPath, chunk, chunk+step), ranges)
 
     # results change form, now each element is a variable
-    results_variables = n_calc.convertNoise(results)
+    results_variables = n_calc.concatenateResults(results)
     
     return results_variables
 

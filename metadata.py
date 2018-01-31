@@ -82,18 +82,18 @@ def isTimingDataFilesAvailable():
     return False
 
 
-def isTelescopeFileAvailable():
+def isTrackingFileAvailable():
 
 
     availableFilesPulse         = readFileNames("peak_value")
-    availableFilesTelescope     = readFileNames("telescope")
+    availableFilesTracking     = readFileNames("tracking")
 
     found = False
     
     for pulse_file in availableFilesPulse:
         if pulse_file == int(getRunNumber()):
-            for telescope_file in availableFilesTelescope:
-                if telescope_file == int(getTimeStamp()):
+            for tracking_file in availableFilesTracking:
+                if tracking_file == int(getTimeStamp()):
                     return True
 
     return False
@@ -120,8 +120,8 @@ def readFileNames(fileType):
 
     folderPath = ""
     
-    if fileType == "telescope": #tracking1504949898.root
-        folderPath = "telescope_data_sep_2017/"
+    if fileType == "tracking": #tracking1504949898.root
+        folderPath = "tracking_data_sep_2017/"
         first_index = 8
         last_index = 18
 
@@ -293,6 +293,15 @@ def setLimitRunNumbers(number):
 def setQuickParameter(debug):
     global quick
     quick = debug
+
+def setEntriesForQuickAnalysis(value):
+    global maxEntries
+    maxEntries = value
+
+
+def setSigma(value):
+    global sigma
+    sigma = value
 
 
 

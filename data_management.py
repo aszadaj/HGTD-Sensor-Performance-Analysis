@@ -50,18 +50,18 @@ def importPulseFile(category):
 
     return importROOTFile("pulse", category)
 
-def importTelescopeFile():
+def importTrackingFile():
 
-    return importROOTFile("telescope")
+    return importROOTFile("tracking")
 
 
 
 # Import selected ROOT file
 def importROOTFile(group, category=""):
 
-    if category == "":
+    if group == "tracking":
     
-        fileName = md.getSourceFolderPath()+"telescope_data_sep_2017/tracking"+md.getTimeStamp()+".root"
+        fileName = md.getSourceFolderPath()+"tracking_data_sep_2017/tracking"+md.getTimeStamp()+".root"
         
         data = rnm.root2array(fileName)
         
@@ -117,7 +117,7 @@ def changeDTYPEOfData(data):
 def checkIfRepositoryOnStau():
 
     number = 4
-    # sourceFolderPath is for plots, data, telescope data etc
+    # sourceFolderPath is for plots, data, tracking data etc
     sourceFolderPath = "../../HGTD_material/"
     
     if os.path.dirname(os.path.realpath(__file__)) == "/home/aszadaj/Gitlab/HGTD-Efficiency-analysis":
@@ -135,3 +135,24 @@ def defineNumberOfThreads(number):
 
     global threads
     threads = number
+
+
+
+def convertNoiseData(noise_std, noise_average):
+    
+    for chan in noise_std.dtype.names:
+        noise_average[chan] =  np.multiply(noise_average[chan], -1000)
+        noise_std[chan] = np.multiply(noise_std[chan], 1000)
+
+    return noise_average, noise_std
+
+
+
+def convertPulseData(peak_values):
+    
+    for chan in peak_values.dtype.names:
+        peak_values[chan] =  np.multiply(peak_values[chan], -1000)
+
+    return peak_values
+
+

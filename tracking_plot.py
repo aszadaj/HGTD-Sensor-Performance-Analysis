@@ -12,7 +12,7 @@ ROOT.gStyle.SetNumberContours(255)
 # data[event][chan], where event spans along all run files. Example for B306 the max event is
 # 11 files * 200 000 = 2 200 000 events
 
-def produceTelescopeGraphs(data_telescope, data_peak_value):
+def produceTrackingGraphs(data_tracking, data_peak_value):
    
     global xMin
     global xMax
@@ -33,26 +33,33 @@ def produceTelescopeGraphs(data_telescope, data_peak_value):
     yMax = 15
     yBins = 800
     
-    data = data_telescope
+    # Convert the amplitude values to positive mV values
+    for chan in data_peak_value.dtype.names:
+        data_peak_value[chan] = np.multiply(data_peak_value[chan], -1000)
+
+    
+    data = data_tracking
     peak_value = data_peak_value
 
-    canvas = ROOT.TCanvas("Telescope", "telescope")
+    canvas = ROOT.TCanvas("tracking", "tracking")
     channels = peak_value.dtype.names
-    #channels = ["chan0"]
     
     minEntries = 2
+    
+    #channels = ["chan0"]
     
     for chan in channels:
     
         # 1. Shows the mean amplitude in each filled bin (with or without conditions)
-        # 2. Shows efficiency between telescope data and amplitude data
+        # 2. Shows efficiency between tracking data and amplitude data
         produce2DPlots()
         produceTEfficiencyPlot()
 
 
+
 def produce2DPlots():
 
-    graphOrignal = ROOT.TProfile2D("telescope_"+chan,"Telescope channel "+str(int(chan[-1:])),xBins,xMin,xMax,yBins,yMin,yMax)
+    graphOrignal = ROOT.TProfile2D("tracking_"+chan,"Tracking channel "+str(int(chan[-1:])),xBins,xMin,xMax,yBins,yMin,yMax)
 
     # Original mean value TProfile2D
     for index in range(0, len(data)):
@@ -139,7 +146,7 @@ def produceTEfficiencyPlot():
     efficiencyOrig = ROOT.TEfficiency("Efficiency_particles"+chan+"","Effciency particles channel "+str(int(chan[-1:])),xBins,xMin,xMax,yBins,yMin,yMax)
     
     LGADHitsOrig = ROOT.TProfile2D("LGAD_particles"+chan+"","LGAD particles channel "+str(int(chan[-1:])),xBins,xMin,xMax,yBins,yMin,yMax)
-    MIMOSAHitsOrig = ROOT.TProfile2D("telescope_particles"+chan+"","Telescope particles channel "+str(int(chan[-1:])),xBins,xMin,xMax,yBins,yMin,yMax)
+    MIMOSAHitsOrig = ROOT.TProfile2D("tracking_particles"+chan+"","tracking particles channel "+str(int(chan[-1:])),xBins,xMin,xMax,yBins,yMin,yMax)
     
 
 
@@ -171,7 +178,7 @@ def produceTEfficiencyPlot():
     for bin in range(0, int(LGADHitsOrig.GetSize())):
     
         entries_LGAD = int(LGADHits.GetBinEntries(bin))
-        entries_telescope = int(MIMOSAHits.GetBinEntries(bin))
+        entries_tracking = int(MIMOSAHits.GetBinEntries(bin))
         entries_LGAD_no_hits = int(LGADNoHits.GetBinEntries(bin))
         
         if 0 < entries_LGAD <= minEntries:
@@ -179,7 +186,7 @@ def produceTEfficiencyPlot():
             LGADHits.SetBinContent(bin, 0)
             LGADHits.SetBinEntries(bin, 0)
         
-        if 0 < entries_telescope <= minEntries:
+        if 0 < entries_tracking <= minEntries:
 
             MIMOSAHits.SetBinContent(bin, 0)
             MIMOSAHits.SetBinEntries(bin, 0)
@@ -256,8 +263,9 @@ def produceTH1Plot(graph, headTitle, fileName):
     canvas.cd()
     graph.Draw()
     canvas.Update()
-    canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/telescope/telescope_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
+    canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/tracking/tracking_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
     canvas.Clear()
+
 
 
 def produceTH2Plot(graph, headTitle, fileName):
@@ -268,7 +276,8 @@ def produceTH2Plot(graph, headTitle, fileName):
     canvas.cd()
     graph.Draw("COLZ")
     canvas.Update()
-    canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/telescope/telescope_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
+    canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/tracking/tracking_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
     canvas.Clear()
+
 
 

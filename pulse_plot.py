@@ -1,8 +1,14 @@
 import ROOT
 import metadata as md
 import numpy as np
+import data_management as dm
 
 def producePulseDistributionPlots(peak_values, peak_times, rise_times):
+
+    # Continue adapt code for negative values
+    
+    peak_values = dm.convertPulseData(peak_values)
+    
 
     canvas_peak_values = ROOT.TCanvas("Peak value Distribution", "peak_value")
     canvas_peak_times = ROOT.TCanvas("Peak time Distribution", "peak_time")

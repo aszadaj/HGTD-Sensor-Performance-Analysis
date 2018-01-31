@@ -8,34 +8,54 @@
 
 import noise
 import pulse
-import telescope
+import tracking
 import timing
 import metadata
 
 #md.setupATLAS()
 
 def main():
-
+    
+    metadata.printTime()
+    
     ######  NOISE, PULSE, TELESCOPE AND TIMING   ######
     
-    batchNumber = [306]
+    batchNumber = [306, 507, 707] # For now available 306, 507 and 707
     
-    metadata.setLimitRunNumbers(4) # How many run numbers in each batch #max 50
+    metadata.setLimitRunNumbers(50) # How many run numbers in each batch #max 50
     metadata.setQuickParameter(False) # Quick check
+    metadata.setEntriesForQuickAnalysis(20000) # Amount of entries considered in quick
+    metadata.setSigma(5) # Used for pulse analysis
+    
+    # METHODS #
     
     #noise.noiseAnalysis           (batchNumber)
     
     #pulse.pulseAnalysis           (batchNumber)
     
-    #telescope.telescopeAnalysis   (batchNumber)
+    tracking.trackingAnalysis   (batchNumber)
     
-    timing.timingAnalysis         (batchNumber)
+    #timing.timingAnalysis         (batchNumber)
     
+    ###########
     
+    metadata.printTime()
     exit()
 
 
 main()
+
+# Log 19.01.2018
+
+# Noise and pulse analysis converted to receive and export originial data
+# Exported data are in V and "negative" values
+# Conversion is made inside plot functions
+# Continue with adapting timing functions
+# Check why the noise and pedestal plot gives a not gaussian form
+# Add fit functions to those plots
+# Check if setupATLAS is ok or not
+
+
 
 # Log1 09.12.2017
 # redefined sigma value after check in the waveforms function

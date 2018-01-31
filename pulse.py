@@ -15,13 +15,11 @@ ROOT.gROOT.SetBatch(True)
 # Start analysis of selected run numbers
 def pulseAnalysis(batchNumbers):
 
-    sigma = 5
-
     dm.checkIfRepositoryOnStau()
     
     startTime = md.getTime()
     runLog_batch = md.getRunLogBatches(batchNumbers)
-    print "\nStart pulse analysis, batches:", batchNumbers
+    print "\nStart PULSE analysis, batches:", batchNumbers
 
     for runLog in runLog_batch:
     
@@ -45,7 +43,7 @@ def pulseAnalysis(batchNumbers):
             
                 md.printTime()
                 print "Run", md.getRunNumber()
-                [peak_values, peak_times, rise_times] = pulseAnalysisPerRun(sigma)
+                [peak_values, peak_times, rise_times] = pulseAnalysisPerRun()
                 results_batch.append([peak_values, peak_times, rise_times])
                 
                 # Export per run number
@@ -53,6 +51,7 @@ def pulseAnalysis(batchNumbers):
                 print "Done with run", md.getRunNumber(), "\n"
     
         if len(results_batch) != 0:
+        
             # Done with the for loop and appending results, produce plots
             print "Done with batch", md.getBatchNumber(),"producing plots and exporting file.\n"
             
@@ -73,7 +72,7 @@ def pulseAnalysis(batchNumbers):
 
 
 # Perform noise, pulse and telescope analysis
-def pulseAnalysisPerRun(sigma):
+def pulseAnalysisPerRun():
     
     startTimeRun = md.getTime()
     
@@ -82,30 +81,31 @@ def pulseAnalysisPerRun(sigma):
     max = md.getNumberOfEvents()
     step = 8000
 
+    # Quick Analysis
     if md.quick:
-        max = 3000
-        step = 3000
+        max = step = md.maxEntries
 
     ranges = range(0, max, step)
     
     dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
     
+    # NOTE! Now pedestal and noise are event and channel dependent
     pedestal    = dm.importNoiseFile("pedestal")
     noise       = dm.importNoiseFile("noise")
 
-    results = p.map(lambda chunk: multiProcess(dataPath, pedestal, noise, chunk, chunk+step, sigma), ranges)
+    results = p.map(lambda chunk: multiProcess(dataPath, pedestal, noise, chunk, chunk+step), ranges)
     
     # results change form, now each element is a variable
-    results_variables = p_calc.convertPulseData(results)
+    results_variables = p_calc.concatenateResults(results)
 
     return results_variables
 
 
 # Start multiprocessing analysis of noises and pulses in ROOT considerOnlyRunsfile
-def multiProcess(dataPath, pedestal, noise, begin, end, sigma):
+def multiProcess(dataPath, pedestal, noise, begin, end):
 
     data = rnm.root2array(dataPath, start=begin, stop=end)
-    peak_values, peak_times, rise_times = p_calc.pulseAnalysis(data, pedestal, noise, sigma)
+    peak_values, peak_times, rise_times = p_calc.pulseAnalysis(data, pedestal, noise)
     
     return peak_values, peak_times, rise_times
 

@@ -18,7 +18,6 @@ def timingAnalysisPerRun(peak_time):
     time_difference = np.zeros(len(peak_time), dtype = peak_time.dtype)
     
     channels = peak_time.dtype.names
-    channels = ["chan4"]
 
     for chan in channels:
 

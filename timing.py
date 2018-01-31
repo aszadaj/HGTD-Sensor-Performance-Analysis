@@ -18,7 +18,7 @@ def timingAnalysis(batchNumbers):
     
     startTime = md.getTime()
     runLog_batch = md.getRunLogBatches(batchNumbers)
-    print "\nStart timing analysis, batches:", batchNumbers
+    print "\nStart TIMING analysis, batches:", batchNumbers
 
     for runLog in runLog_batch:
  

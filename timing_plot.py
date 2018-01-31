@@ -18,21 +18,24 @@ def produceTimingDistributionPlots(time_difference, peak_value, peak_time):
     SiPM_chan = md.getChannelNameForSensor("SiPM-AFP")
     
     channels = time_difference.dtype.names
-    channels = ["chan4"]
     
     for chan in channels:
-        if chan != md.getChannelNameForSensor("SiPM-AFP"):
+        if chan != SiPM_chan:
             
             index = int(chan[-1:])
-
-            time_difference_graph[chan] = ROOT.TH1D("Time Difference channel "+str(index), "time_difference" + chan, 1000, -4, -2)
-            times_2d[chan] = ROOT.TH2F("telescope_"+chan,"Times channel "+str(int(chan[-1:])+1),500,-14,0,500,5,80)
-            time_diff_2d_lgad[chan] = ROOT.TH2F("telescope_1"+chan,"Time difference, lgad channel "+str(int(chan[-1:])+1), 500,-18,3,500,-50,500)
-            time_diff_2d_sipm[chan] = ROOT.TH2F("telescope_2"+chan,"Time diffence, sipm channel "+str(int(chan[-1:])+1),500,-18,3,500,-50,500)
             
-            canvas[chan] = ROOT.TCanvas("Telescope"+chan, "telescope")
-            canvas_lgad[chan] = ROOT.TCanvas("Telescope2"+chan, "telescope")
-            canvas_sipm[chan] = ROOT.TCanvas("Telescope3"+chan, "telescope")
+            timing_mean = np.average(np.take(time_difference[chan], np.nonzero(time_difference[chan]))[0])
+
+            time_difference_graph[chan] = ROOT.TH1D("Time Difference channel "+str(index), "time_difference" + chan, 1000, timing_mean-2, timing_mean+2)
+            
+            times_2d[chan] = ROOT.TH2F("tracking_"+chan,"Times channel "+str(int(chan[-1:])+1),500,-14,0,500,5,80)
+
+            time_diff_2d_lgad[chan] = ROOT.TH2F("tracking_1"+chan,"Time difference, lgad channel "+str(int(chan[-1:])+1), 500,-18,3,500,-50,500)
+            time_diff_2d_sipm[chan] = ROOT.TH2F("tracking_2"+chan,"Time diffence, sipm channel "+str(int(chan[-1:])+1),500,-18,3,500,-50,500)
+            
+            canvas[chan] = ROOT.TCanvas("Tracking "+chan, "tracking")
+            canvas_lgad[chan] = ROOT.TCanvas("Tracking 2 "+chan, "tracking2")
+            canvas_sipm[chan] = ROOT.TCanvas("Tracking 3 "+chan, "tracking3")
 
             for entry in range(0, len(time_difference[chan])):
 
@@ -43,10 +46,11 @@ def produceTimingDistributionPlots(time_difference, peak_value, peak_time):
                     
                     times_2d[chan].Fill(time_difference[chan][entry], peak_time[chan][entry], 1)
                     
-                    time_diff_2d_lgad[chan].Fill(time_difference[chan][entry], peak_value[chan][entry], 1)
+                    time_diff_2d_lgad[chan].Fill(time_difference[chan][entry], peak_value[chan][entry]*-1000, 1)
                
-                    time_diff_2d_sipm[chan].Fill(time_difference[chan][entry], peak_value[SiPM_chan][entry], 1)
+                    time_diff_2d_sipm[chan].Fill(time_difference[chan][entry], peak_value[SiPM_chan][entry]*-1000, 1)
 
+            # Create a gaus fit where one considers only points +-0.3 ns from the main point
             time_difference_graph[chan].Fit("gaus","","", time_difference_graph[chan].GetMean()-0.3, time_difference_graph[chan].GetMean()+0.3)
             
             produceTH1Plot(time_difference_graph[chan], canvas[chan], chan)

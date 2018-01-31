@@ -7,7 +7,7 @@ import sys
 #wr.simplefilter('ignore', np.RankWarning)
 #np.seterr(divide='ignore', invalid='ignore')
 
-def pulseAnalysis(data, pedestal, noise, sigma):
+def pulseAnalysis(data, pedestal, noise):
 
     channels = data.dtype.names
     
@@ -23,14 +23,14 @@ def pulseAnalysis(data, pedestal, noise, sigma):
     
         for chan in channels:
         
-            peak_values[event][chan], rise_times[event][chan], peak_times[event][chan], count = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[chan]*-0.001, noise[chan]*0.001, event, sigma, criticalValues[chan], count)
+            peak_values[event][chan], rise_times[event][chan], peak_times[event][chan], count = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[event][chan], noise[event][chan], event, criticalValues[chan], count)
 
     #print float(count)/(len(data)*len(channels))
 
     return peak_values, peak_times, rise_times
 
 
-def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, criticalValue, count):
+def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, criticalValue, count):
 
     # Time scope is the time difference between two recorded points
     # Assumption: for all events this value is the same.
@@ -42,7 +42,7 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, sigma, critical
     rise_time = 0
     
     # Set threshold, note data have negative pulse values
-    threshold = noise * sigma - pedestal
+    threshold = noise * md.sigma - pedestal
     threshold_indices = np.where(data < -threshold)
     
     try:
@@ -118,7 +118,7 @@ def findCriticalValues(data):
 
 
 # Convert to positive values in mV
-def convertPulseData(results):
+def concatenateResults(results):
 
     channels = results[0][0].dtype.names
     
@@ -131,16 +131,12 @@ def convertPulseData(results):
         peak_times  = np.concatenate((peak_times,  results[index][1]), axis = 0)
         rise_times = np.concatenate((rise_times, results[index][2]), axis = 0)
     
-    for chan in channels:
-        peak_values[chan] = np.multiply(peak_values[chan], -1000)
-    
+
     return [peak_values, peak_times, rise_times]
 
 
 # Group each consequential numbers in each separate list
 def group_consecutives(data, stepsize=1):
     return np.split(data, np.where(np.diff(data) != stepsize)[0]+1)
-
-
 
 
