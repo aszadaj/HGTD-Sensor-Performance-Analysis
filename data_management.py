@@ -136,7 +136,7 @@ def defineNumberOfThreads(number):
 
 
 
-def convertNoiseData(noise_std, noise_average):
+def convertNoiseData(noise_average, noise_std):
     
     for chan in noise_std.dtype.names:
         noise_average[chan] =  np.multiply(noise_average[chan], -1000)

@@ -30,10 +30,10 @@ def main():
     
     # METHODS #
     
-    noise.noiseAnalysis()
-    noise_plot.noisePlots()
+    #noise.noiseAnalysis()
+    #noise_plot.noisePlots()
     
-    #pulse.pulseAnalysis()
+    pulse.pulseAnalysis()
     #pulse_plot.pulsePlots()
     
     #tracking.trackingAnalysis()

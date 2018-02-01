@@ -41,6 +41,7 @@ def noisePlots():
 
 def produceNoiseDistributionPlots(noise_average, noise_std):
     
+ 
     channels = noise_average.dtype.names
     pedestal_graph = dict()
     noise_graph = dict()
@@ -48,20 +49,23 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
     noise_average, noise_std = dm.convertNoiseData(noise_average, noise_std)
     
     for chan in channels:
-       
-        noise_graph[chan]    = ROOT.TH1D("Noise, channel "+str(int(chan[-1:])), "noise"+chan, 1000, noise_mean-1, noise_mean+1)
-        pedestal_graph[chan] = ROOT.TH1D("Pedestal, channel "+str(int(chan[-1:])), "pedestal"+chan, 1000, pedestal_mean-1, pedestal_mean+1)
+        
+        pedestal_center = np.average(noise_average[chan])
+        noise_center = np.average(noise_std[chan])
+        
+        pedestal_graph[chan] = ROOT.TH1D("Pedestal, channel "+str(int(chan[-1:])), "pedestal"+chan, 1000, pedestal_center*0.5, pedestal_center*1.5)
+        noise_graph[chan]    = ROOT.TH1D("Noise, channel "+str(int(chan[-1:])), "noise"+chan, 1000, noise_center*0.5, noise_center*1.5)
 
 
         for entry in range(0, len(noise_average)):
         
-            if noise_average[entry][chan]:
+            if noise_std[entry][chan] != 0:
                 pedestal_graph[chan].Fill(noise_average[entry][chan])
                 noise_graph[chan].Fill(noise_std[entry][chan])
     
     
-        pedestal_graph[chan].Fit("gaus","","", pedestal_graph[chan].GetMean()-1, pedestal_graph[chan].GetMean()+1)
-        noise_graph[chan].Fit("gaus","","", noise_graph[chan].GetMean()-1, noise_graph[chan].GetMean()+1)
+        pedestal_graph[chan].Fit("gaus","","", pedestal_graph[chan].GetMean()*0.7, pedestal_graph[chan].GetMean()*1.3)
+        noise_graph[chan].Fit("gaus","","", noise_graph[chan].GetMean()*0.7, noise_graph[chan].GetMean()*1.3)
 
 
     canvas_pedestal = ROOT.TCanvas("Pedestal per channel", "Pedestal per channel")
@@ -115,12 +119,3 @@ def exportGraph(graphList,canvas,fileName):
     canvas.Update()
     canvas.Print(fileName)
 
-
-
-def convertNoiseData(noise_std, noise_average):
-    
-    for chan in noise_std.dtype.names:
-        noise_average[chan] =  np.multiply(noise_average[chan], -1000)
-        noise_std[chan] = np.multiply(noise_std[chan], 1000)
-
-    return noise_average, noise_std
