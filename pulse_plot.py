@@ -22,11 +22,10 @@ def pulsePlots():
         availableRunNumbersPeakValues   = md.readFileNames("pulse_peak_value")
         availableRunNumbersRiseTimes    = md.readFileNames("pulse_rise_time")
         
-        
-        count = 0
+    
         for runNumber in runNumbers:
             
-            if runNumber in availableRunNumbersPeakTimes and count < 1:
+            if runNumber in availableRunNumbersPeakTimes:
                 md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
                 
                 if peak_times.size == 0:
@@ -40,9 +39,7 @@ def pulsePlots():
                     peak_times = np.concatenate((peak_times, dm.importNoiseFile("peak_time")), axis = 0)
                     peak_values = np.concatenate((peak_values, dm.importNoiseFile("peak_value")), axis = 0)
                     rise_times = np.concatenate((rise_times, dm.importNoiseFile("rise_time")), axis = 0)
-            
-            count +=1
-        
+    
         producePulseDistributionPlots(peak_times, peak_values, rise_times)
 
 

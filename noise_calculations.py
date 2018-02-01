@@ -52,15 +52,14 @@ def findNoiseAverageAndStd(data):
                 # Select the "last index" which defines the range of the noise selection
                 max_index = np.where(pulse_compatible_samples)[0][0] - data_point_correction if len( np.where(pulse_compatible_samples)[0] ) else 1002
                 
-                
                 noise_average[event][chan]  = np.average(data[event][chan][0:max_index])
                 noise_std[event][chan]      = np.std(data[event][chan][0:max_index])
-
+                
                 if np.isnan(noise_average[event][chan]) or np.isnan(noise_average[event][chan]):
-                    print "isnan"
+                
                     noise_average[event][chan]  = 0
                     noise_std[event][chan]      = 0
-    
+
 
     return noise_average, noise_std
 

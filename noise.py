@@ -30,7 +30,7 @@ def noiseAnalysis():
         startTimeBatch = md.getTime()
         md.printTime()
         
-        print "Batch: ", runLog[0][5], len(runLog), "run files.\n"
+        print "Batch:", runLog[0][5], len(runLog), "run files.\n"
       
         for index in range(0, len(runLog)):
      
@@ -41,6 +41,7 @@ def noiseAnalysis():
                 print "Run", md.getRunNumber()
                 
                 [noise_average, noise_std] = noiseAnalysisPerRun()
+                
                 dm.exportNoiseData(noise_average, noise_std)
                 
                 print "Done with run", md.getRunNumber(),"\n"

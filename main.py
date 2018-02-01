@@ -22,8 +22,8 @@ def main():
     
     ######  NOISE, PULSE, TELESCOPE AND TIMING   ######
     
-    metadata.setBatchNumbers([306])           # For now available 306, 507 and 707
-    metadata.setLimitRunNumbers(3)            # Run numbers to be considered (0 = all)
+    metadata.setBatchNumbers([306])      # For now available 306, 507 and 707
+    metadata.setLimitRunNumbers(1)            # Run numbers to be considered (0 = all)
     metadata.setEntriesForQuickAnalysis(0)    # Entries to be considered (0 = all)
     metadata.setSigma(5)                      # Define sigma variable
  
@@ -33,12 +33,12 @@ def main():
     noise.noiseAnalysis()
     noise_plot.noisePlots()
     
-    pulse.pulseAnalysis()
-    pulse_plot.pulsePlots()
+    #pulse.pulseAnalysis()
+    #pulse_plot.pulsePlots()
     
-    tracking.trackingAnalysis()
+    #tracking.trackingAnalysis()
     
-    timing.timingAnalysis()
+    #timing.timingAnalysis()
     
     ###########
     

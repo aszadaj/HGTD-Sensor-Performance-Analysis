@@ -10,8 +10,8 @@ ROOT.gROOT.SetBatch(True)
 # Start analysis of selected run numbers
 def printWaveform():
 
-    runNumber = 3791
-    startEntry = 13806
+    runNumber = 3870
+    startEntry = 14799
     entries = 1
 
     timeStamp = md.getTimeStamp(runNumber)
@@ -41,8 +41,7 @@ def printWaveform():
     for chan in channels:
         pedestal[chan]     = np.average(np.take(noise_average[chan], np.nonzero(noise_average[chan]))[0])*-1000
         noise[chan]  = np.average(np.take(noise_std[chan], np.nonzero(noise_std[chan]))[0])*1000
-    
-    channels = ["chan6"]
+
     
     for chan in channels:
         
@@ -89,7 +88,7 @@ def printWaveform():
         leg.AddEntry(graph_line_noise[chan],"Noise  = "+str(noise[chan])[1:7]+" mV","l")
 
 
-        titleAbove = "Waveform, sensor "+str(md.getNameOfSensor(chan))+", batch "+str(md.getBatchNumber(runNumber))
+        titleAbove = "Waveform, sensor "+str(md.getNameOfSensor(chan))+", channel: "+str(int(chan[-1:]))+", batch "+str(md.getBatchNumber(runNumber))
         xAxisTitle = "Time (ns)"
         yAxisTitle = "Voltage (mV)"
 

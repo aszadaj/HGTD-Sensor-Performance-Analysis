@@ -20,11 +20,10 @@ def noisePlots():
 
         availableRunNumbersNoise        = md.readFileNames("noise_noise")
         availableRunNumbersPedestal     = md.readFileNames("noise_pedestal")
-        
-        count = 0
+      
         for runNumber in runNumbers:
             
-            if runNumber in availableRunNumbersPedestal and count < 1:
+            if runNumber in availableRunNumbersPedestal:
                 md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
                 
                 if noise_average.size == 0:
@@ -36,14 +35,11 @@ def noisePlots():
 
                     noise_average = np.concatenate((noise_average, dm.importNoiseFile("pedestal")), axis = 0)
                     noise_std = np.concatenate((noise_std, dm.importNoiseFile("noise")), axis = 0)
-                    
-            count +=1
-            
+    
         produceNoiseDistributionPlots(noise_average, noise_std)
 
 
 def produceNoiseDistributionPlots(noise_average, noise_std):
-    
     
     channels = noise_average.dtype.names
     pedestal_graph = dict()
@@ -52,24 +48,20 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
     noise_average, noise_std = dm.convertNoiseData(noise_average, noise_std)
     
     for chan in channels:
-        
-        pedestal_mean   = np.average(np.take(noise_average[chan], np.nonzero(noise_average[chan]))[0])
-        noise_mean      = np.average(np.take(noise_std[chan], np.nonzero(noise_std[chan]))[0])
-        
-    
-        noise_graph[chan]    = ROOT.TH1D("Noise, channel "+str(int(chan[-1:])), "noise"+chan, 1000, noise_mean-3, noise_mean+3)
-        pedestal_graph[chan] = ROOT.TH1D("Pedestal, channel "+str(int(chan[-1:])), "pedestal"+chan, 1000, pedestal_mean-3, pedestal_mean+3)
+       
+        noise_graph[chan]    = ROOT.TH1D("Noise, channel "+str(int(chan[-1:])), "noise"+chan, 1000, noise_mean-1, noise_mean+1)
+        pedestal_graph[chan] = ROOT.TH1D("Pedestal, channel "+str(int(chan[-1:])), "pedestal"+chan, 1000, pedestal_mean-1, pedestal_mean+1)
 
 
         for entry in range(0, len(noise_average)):
         
-            if noise_average[entry][chan] != 0:
+            if noise_average[entry][chan]:
                 pedestal_graph[chan].Fill(noise_average[entry][chan])
                 noise_graph[chan].Fill(noise_std[entry][chan])
     
-        
-        pedestal_graph[chan].Fit("gaus","","", pedestal_graph[chan].GetMean()-3, pedestal_graph[chan].GetMean()+3)
-        noise_graph[chan].Fit("gaus","","", noise_graph[chan].GetMean()-3, noise_graph[chan].GetMean()+3)
+    
+        pedestal_graph[chan].Fit("gaus","","", pedestal_graph[chan].GetMean()-1, pedestal_graph[chan].GetMean()+1)
+        noise_graph[chan].Fit("gaus","","", noise_graph[chan].GetMean()-1, noise_graph[chan].GetMean()+1)
 
 
     canvas_pedestal = ROOT.TCanvas("Pedestal per channel", "Pedestal per channel")
@@ -128,7 +120,7 @@ def exportGraph(graphList,canvas,fileName):
 def convertNoiseData(noise_std, noise_average):
     
     for chan in noise_std.dtype.names:
-        noise_average[chan] =  np.multiply(noise_average[chan], 1000)
+        noise_average[chan] =  np.multiply(noise_average[chan], -1000)
         noise_std[chan] = np.multiply(noise_std[chan], 1000)
 
     return noise_average, noise_std

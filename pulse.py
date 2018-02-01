@@ -31,7 +31,7 @@ def pulseAnalysis():
         startTimeBatch = md.getTime()
         md.printTime()
     
-        print "Batch: ", runLog[0][5], len(runLog), "run files.\n"
+        print "Batch:", runLog[0][5], len(runLog), "run files.\n"
       
         for index in range(0, len(runLog)):
       
