@@ -14,8 +14,7 @@ def pulseAnalysis(data, pedestal, noise):
     peak_values     =   np.zeros(len(data), dtype = data.dtype)
     peak_times      =   np.zeros(len(data), dtype = data.dtype)
     rise_times      =   np.zeros(len(data), dtype = data.dtype)
-    
-    count = 0
+
    
     criticalValues = findCriticalValues(data)
 
@@ -23,15 +22,20 @@ def pulseAnalysis(data, pedestal, noise):
     
         for chan in channels:
         
-            #peak_values[event][chan], rise_times[event][chan], peak_times[event][chan], count = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[event][chan], noise[event][chan], event, criticalValues[chan], count)
-            peak_values[event][chan], rise_times[event][chan], peak_times[event][chan], count = getAmplitudeAndRiseTime(data[chan][event], chan, np.average(pedestal[chan]), np.average(noise[chan]), event, criticalValues[chan], count)
+            peak_values[event][chan],
+            rise_times[event][chan],
+            peak_times[event][chan] = getAmplitudeAndRiseTime(  data[chan][event],
+                                                                chan,
+                                                                np.average(pedestal[chan]),
+                                                                np.average(noise[chan]),
+                                                                event,
+                                                                criticalValues[chan])
 
-    #print float(count)/(len(data)*len(channels))
 
     return peak_values, peak_times, rise_times
 
 
-def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, criticalValue, count):
+def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, criticalValue):
 
     # Time scope is the time difference between two recorded points
     # Assumption: for all events this value is the same.
@@ -87,22 +91,14 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, criticalValue, 
                         peak_time = -peak_fit[1]/(2*peak_fit[0])
                      
                         rise_time = (np.amin(data)-pedestal)*0.8/impulse_fit[0]
-                        
-                    else:
-                        count +=1
-                else:
-                    count+=1
-            else:
-                count += 1
-                
-                
+
     except:
     
         print "Error caught"
         print sys.exc_info()[0]
         print event, chan, "\n"
     
-    return peak_value, rise_time, peak_time, count
+    return peak_value, rise_time, peak_time
 
 
 # Search for critical amplitude values
