@@ -32,7 +32,6 @@ def trackingAnalysis():
         for index in range(0, len(runLog)):
            
             md.defineGlobalVariableRun(runLog[index])
-            runNumber = md.getRunNumber()
             
             if (md.isTrackingFileAvailable()):
                 
@@ -54,8 +53,6 @@ def trackingAnalysis():
                 results_batch.append([peak_values_run, tracking_run])
         
         
-        # Done with the for loop and appending results, produce plots
-       
         if len(results_batch) != 0:
             print "Done with batch", md.getBatchNumber(),"producing plots and exporting file.\n"
             
@@ -67,11 +64,10 @@ def trackingAnalysis():
                 tracking    = np.concatenate((tracking,  results_run[1]), axis = 0)
          
             tplot.produceTrackingGraphs(peak_values, tracking)
-            print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
+            
+            print "Done with batch",runLog[0][5],"Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
 
-    print "Done with batch",runLog[0][5],".\n"
-
-
+    print "Done with TRACKING analysis. Time analysing: "+str(md.getTime()-startTime)+"\n"
 
 # Get actual time
 def getTime():

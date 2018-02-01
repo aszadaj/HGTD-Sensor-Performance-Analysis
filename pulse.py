@@ -21,38 +21,39 @@ def pulseAnalysis():
     dm.checkIfRepositoryOnStau()
     
     startTime = md.getTime()
+    
     runLog_batch = md.getRunLogBatches(md.batchNumbers)
+    
     print "\nStart PULSE analysis, batches:", md.batchNumbers
-
+    
+    
     for runLog in runLog_batch:
     
         if md.limitRunNumbers != 0:
             runLog = runLog[0:md.limitRunNumbers] # Restrict to some run numbers
     
         startTimeBatch = md.getTime()
-        
-        print "Analysing batch:", runLog[0][5], "with", len(runLog),"run files.\n"
+        md.printTime()
+    
+        print "Batch: " + runLog[0][5] + ", " + len(runLog) + " run files.\n"
       
         for index in range(0, len(runLog)):
-            
-            row = runLog[index]
-            md.defineGlobalVariableRun(row)
-            runNumber = md.getRunNumber()
+      
+            md.defineGlobalVariableRun(runLog[index])
             
             if (md.isRootFileAvailable()):
             
-                md.printTime()
                 print "Run", md.getRunNumber()
-                [peak_values, peak_times, rise_times] = pulseAnalysisPerRun()
                 
-                # Export per run number
+                [peak_values, peak_times, rise_times] = pulseAnalysisPerRun()
                 dm.exportPulseData(peak_values, peak_times, rise_times)
+                
                 print "Done with run", md.getRunNumber(), "\n"
-    
 
-            print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
 
-    print "Done with batch",runLog[0][5],".\n"
+        print "Done with batch", runLog[0][5], "Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
+
+    print "Done with PULSE analysis. Time analysing: "+str(md.getTime()-startTime)+"\n"
 
 
 # Perform noise, pulse and telescope analysis

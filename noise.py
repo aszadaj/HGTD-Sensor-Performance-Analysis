@@ -30,26 +30,24 @@ def noiseAnalysis():
         startTimeBatch = md.getTime()
         md.printTime()
         
-        print "Analysing batch:", runLog[0][5], "with", len(runLog),"run files.\n"
+        print "Batch: " + runLog[0][5] + ", " + len(runLog) + " run files.\n"
       
         for index in range(0, len(runLog)):
-            
-            row = runLog[index]
-            md.defineGlobalVariableRun(row)
-            runNumber = md.getRunNumber()
+     
+            md.defineGlobalVariableRun(runLog[index])
             
             if (md.isRootFileAvailable()):
             
                 print "Run", md.getRunNumber()
+                
                 [noise_average, noise_std] = noiseAnalysisPerRun()
-             
                 dm.exportNoiseData(noise_average, noise_std)
+                
                 print "Done with run", md.getRunNumber(),"\n"
 
-            print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
+        print "Done with batch",runLog[0][5],"Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
 
-    print "Done with batch",runLog[0][5],"\n"
-
+    print "Done with NOISE analysis. Time analysing: "+str(md.getTime()-startTime)+"\n"
 
 def noiseAnalysisPerRun():
     
