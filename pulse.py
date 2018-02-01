@@ -15,9 +15,6 @@ ROOT.gROOT.SetBatch(True)
 # Start analysis of selected run numbers
 def pulseAnalysis():
 
-    # Define sigma variable
-    md.setSigma(5)
-
     dm.checkIfRepositoryOnStau()
     
     startTime = md.getTime()
@@ -25,7 +22,6 @@ def pulseAnalysis():
     runLog_batch = md.getRunLogBatches(md.batchNumbers)
     
     print "\nStart PULSE analysis, batches:", md.batchNumbers
-    
     
     for runLog in runLog_batch:
     
@@ -35,7 +31,7 @@ def pulseAnalysis():
         startTimeBatch = md.getTime()
         md.printTime()
     
-        print "Batch: " + runLog[0][5] + ", " + len(runLog) + " run files.\n"
+        print "Batch: ", runLog[0][5], len(runLog), "run files.\n"
       
         for index in range(0, len(runLog)):
       

@@ -17,18 +17,20 @@ def trackingAnalysis():
     dm.checkIfRepositoryOnStau()
     
     startTime = md.getTime()
+    
     runLog_batch = md.getRunLogBatches(md.batchNumbers)
+    
     print "\nStart TRACKING analysis, batches:", md.batchNumbers
 
     for runLog in runLog_batch:
     
-        results_batch = []
-        
         if md.limitRunNumbers != 0:
             runLog = runLog[0:md.limitRunNumbers] # Restrict to some run numbers
-    
+
         startTimeBatch = md.getTime()
-        
+    
+        results_batch = []
+
         for index in range(0, len(runLog)):
            
             md.defineGlobalVariableRun(runLog[index])
@@ -39,7 +41,6 @@ def trackingAnalysis():
                 peak_values_run = dm.importPulseFile("peak_value")
                 tracking_run = dm.importTrackingFile()
              
-               
                 # Slice the peak values to match the tracking files
                 if len(peak_values_run) > len(tracking_run):
                 
@@ -51,10 +52,12 @@ def trackingAnalysis():
                     tracking_run = np.take(tracking_run, np.arange(0,len(peak_values_run)))
                 
                 results_batch.append([peak_values_run, tracking_run])
+                
+                print "Done with run", md.getRunNumber(), "\n"
         
         
         if len(results_batch) != 0:
-            print "Done with batch", md.getBatchNumber(),"producing plots and exporting file.\n"
+            print "Producing plots for batch " + str(md.getBatchNumber()) + ".\n"
             
             peak_values = np.empty(0, dtype=results_batch[0][0].dtype)
             tracking    = np.empty(0, dtype=results_batch[0][1].dtype)

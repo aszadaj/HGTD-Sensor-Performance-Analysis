@@ -22,9 +22,10 @@ def main():
     
     ######  NOISE, PULSE, TELESCOPE AND TIMING   ######
     
-    metadata.setBatchNumbers([306, 507]) # For now available 306, 507 and 707
-    metadata.setLimitRunNumbers(0) # Run numbers to be considered (0 = all)
-    metadata.setEntriesForQuickAnalysis(0) # Entries to be considered (0 = all)
+    metadata.setBatchNumbers([306, 507, 707])        # For now available 306, 507 and 707
+    metadata.setLimitRunNumbers(0)              # Run numbers to be considered (0 = all)
+    metadata.setEntriesForQuickAnalysis(0)    # Entries to be considered (0 = all)
+    metadata.setSigma(5)                        # Define sigma variable
  
     
     # METHODS #
