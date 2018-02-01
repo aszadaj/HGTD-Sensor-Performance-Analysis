@@ -67,7 +67,7 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
                 pedestal_graph[chan].Fill(noise_average[entry][chan])
                 noise_graph[chan].Fill(noise_std[entry][chan])
     
-
+        
         pedestal_graph[chan].Fit("gaus","","", pedestal_graph[chan].GetMean()-3, pedestal_graph[chan].GetMean()+3)
         noise_graph[chan].Fit("gaus","","", noise_graph[chan].GetMean()-3, noise_graph[chan].GetMean()+3)
 
