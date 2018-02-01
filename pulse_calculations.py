@@ -10,29 +10,20 @@ import sys
 def pulseAnalysis(data, pedestal, noise):
 
     channels = data.dtype.names
-
-    peak_values     =   np.zeros(len(data), dtype = data.dtype)
+    
     peak_times      =   np.zeros(len(data), dtype = data.dtype)
+    peak_values     =   np.zeros(len(data), dtype = data.dtype)
     rise_times      =   np.zeros(len(data), dtype = data.dtype)
 
-   
     criticalValues = findCriticalValues(data)
 
     for event in range(0,len(data)):
     
         for chan in channels:
         
-            peak_values[event][chan],
-            rise_times[event][chan],
-            peak_times[event][chan] = getAmplitudeAndRiseTime(  data[chan][event],
-                                                                chan,
-                                                                np.average(pedestal[chan]),
-                                                                np.average(noise[chan]),
-                                                                event,
-                                                                criticalValues[chan])
+            peak_times[event][chan], peak_values[event][chan], rise_times[event][chan] = getAmplitudeAndRiseTime(data[chan][event], chan, pedestal[chan], noise[chan], event, criticalValues[chan])
 
-
-    return peak_values, peak_times, rise_times
+    return peak_times, peak_values, rise_times
 
 
 def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, criticalValue):
@@ -98,7 +89,7 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, criticalValue):
         print sys.exc_info()[0]
         print event, chan, "\n"
     
-    return peak_value, rise_time, peak_time
+    return peak_time, peak_value, rise_time
 
 
 # Search for critical amplitude values
@@ -119,18 +110,37 @@ def concatenateResults(results):
 
     channels = results[0][0].dtype.names
     
-    peak_values = np.empty(0, dtype=results[0][0].dtype)
-    peak_times  = np.empty(0, dtype=results[0][1].dtype)
+    peak_times = np.empty(0, dtype=results[0][0].dtype)
+    peak_values  = np.empty(0, dtype=results[0][1].dtype)
     rise_times = np.empty(0, dtype=results[0][2].dtype)
     
     for index in range(0, len(results)):
-        peak_values = np.concatenate((peak_values, results[index][0]), axis = 0)
-        peak_times  = np.concatenate((peak_times,  results[index][1]), axis = 0)
+    
+        peak_times  = np.concatenate((peak_times,  results[index][0]), axis = 0)
+        peak_values = np.concatenate((peak_values, results[index][1]), axis = 0)
         rise_times = np.concatenate((rise_times, results[index][2]), axis = 0)
     
 
-    return [peak_values, peak_times, rise_times]
+    return [peak_times, peak_values, rise_times]
 
+
+def getPedestalAndNoise(noise_average, noise_std):
+
+    pedestal = np.empty(0)
+    noise = np.empty(0)
+
+    for chan in noise_average.dtype.names:
+        
+        if pedestal.size == 0:
+
+            pedestal = np.empty(1, dtype=noise_average.dtype)
+            noise = np.empty(1, dtype=noise_std.dtype)
+        
+        pedestal[chan] = np.average(noise_average[chan])
+        noise[chan] = np.average(noise_std[chan])
+        
+
+    return pedestal, noise
 
 # Group each consequential numbers in each separate list
 def group_consecutives(data, stepsize=1):

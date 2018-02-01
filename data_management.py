@@ -14,11 +14,11 @@ def exportNoiseData(pedestal, noise):
 
 
 # Export pulse data
-def exportPulseData(peak_value, peak_time, rise_time):
+def exportPulseData(peak_times, peak_values, rise_times):
 
-    exportROOTFile(peak_value, "pulse", "peak_value")
-    exportROOTFile(peak_time, "pulse", "peak_time")
-    exportROOTFile(rise_time, "pulse", "rise_time")
+    exportROOTFile(peak_times, "pulse", "peak_time")
+    exportROOTFile(peak_values, "pulse", "peak_value")
+    exportROOTFile(rise_times, "pulse", "rise_time")
 
 # Export timing data
 def exportTimingData(time_difference):
@@ -34,7 +34,7 @@ def exportROOTFile(data, group, category=""):
         fileName = md.getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(md.getRunNumber())+".root"
     else:
         fileName = md.getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
-
+    
     data = changeDTYPEOfData(data)
 
     rnm.array2root(data, fileName, mode="recreate")

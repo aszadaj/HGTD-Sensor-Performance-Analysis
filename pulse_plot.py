@@ -36,9 +36,9 @@ def pulsePlots():
 
                 else:
 
-                    peak_times = np.concatenate((peak_times, dm.importNoiseFile("peak_time")), axis = 0)
-                    peak_values = np.concatenate((peak_values, dm.importNoiseFile("peak_value")), axis = 0)
-                    rise_times = np.concatenate((rise_times, dm.importNoiseFile("rise_time")), axis = 0)
+                    peak_times = np.concatenate((peak_times, dm.importPulseFile("peak_time")), axis = 0)
+                    peak_values = np.concatenate((peak_values, dm.importPulseFile("peak_value")), axis = 0)
+                    rise_times = np.concatenate((rise_times, dm.importPulseFile("rise_time")), axis = 0)
     
         producePulseDistributionPlots(peak_times, peak_values, rise_times)
 
@@ -49,7 +49,6 @@ def producePulseDistributionPlots(peak_times, peak_values, rise_times):
     
     peak_values = dm.convertPulseData(peak_values)
     
-
     canvas_peak_values = ROOT.TCanvas("Peak value Distribution", "peak_value")
     canvas_peak_times = ROOT.TCanvas("Peak time Distribution", "peak_time")
     canvas_rise_times = ROOT.TCanvas("Rise time Distribution", "rise_time")

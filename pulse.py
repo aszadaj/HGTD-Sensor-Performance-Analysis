@@ -41,8 +41,8 @@ def pulseAnalysis():
             
                 print "Run", md.getRunNumber()
                 
-                [peak_values, peak_times, rise_times] = pulseAnalysisPerRun()
-                dm.exportPulseData(peak_values, peak_times, rise_times)
+                [peak_times, peak_values, rise_times] = pulseAnalysisPerRun()
+                dm.exportPulseData(peak_times, peak_values, rise_times)
                 
                 print "Done with run", md.getRunNumber(), "\n"
 
@@ -69,10 +69,11 @@ def pulseAnalysisPerRun():
     ranges = range(0, max, step)
     
     dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
+
+    noise_average = dm.importNoiseFile("pedestal")
+    noise_std     = dm.importNoiseFile("noise")
     
-    # NOTE! Now pedestal and noise are event and channel dependent
-    pedestal    = dm.importNoiseFile("pedestal")
-    noise       = dm.importNoiseFile("noise")
+    pedestal, noise = p_calc.getPedestalAndNoise(noise_average, noise_std)
 
     results = p.map(lambda chunk: multiProcess(dataPath, pedestal, noise, chunk, chunk+step), ranges)
     
@@ -86,9 +87,9 @@ def pulseAnalysisPerRun():
 def multiProcess(dataPath, pedestal, noise, begin, end):
 
     data = rnm.root2array(dataPath, start=begin, stop=end)
-    peak_values, peak_times, rise_times = p_calc.pulseAnalysis(data, pedestal, noise)
+    peak_times, peak_values, rise_times = p_calc.pulseAnalysis(data, pedestal, noise)
     
-    return peak_values, peak_times, rise_times
+    return peak_times, peak_values, rise_times
 
 
 
