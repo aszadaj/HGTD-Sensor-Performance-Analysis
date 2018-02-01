@@ -22,7 +22,7 @@ def main():
     
     ######  NOISE, PULSE, TELESCOPE AND TIMING   ######
     
-    metadata.setBatchNumbers([306]) # For now available 306, 507 and 707
+    metadata.setBatchNumbers([306, 507]) # For now available 306, 507 and 707
     metadata.setLimitRunNumbers(0) # Run numbers to be considered (0 = all)
     metadata.setEntriesForQuickAnalysis(0) # Entries to be considered (0 = all)
  
@@ -30,10 +30,10 @@ def main():
     # METHODS #
     
     noise.noiseAnalysis()
-    #noise_plot.noisePlots()
+    noise_plot.noisePlots()
     
     pulse.pulseAnalysis()
-    #pulse_plot.pulsePlots()
+    pulse_plot.pulsePlots()
     
     tracking.trackingAnalysis()
     
@@ -49,7 +49,7 @@ main()
 
 # Log 19.01.2018
 
-# Noise and pulse analysis converted to receive and export originial data
+# Noise and pulse analysis converted to receive and export original data
 # Exported data are in V and "negative" values
 # Conversion is made inside plot functions
 # Continue with adapting timing functions
