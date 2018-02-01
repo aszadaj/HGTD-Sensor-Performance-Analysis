@@ -12,13 +12,13 @@ import timing_calculations as t_calc
 ROOT.gROOT.SetBatch(True)
 
 # Start analysis of selected run numbers
-def timingAnalysis(batchNumbers):
+def timingAnalysis():
 
     dm.checkIfRepositoryOnStau()
     
     startTime = md.getTime()
-    runLog_batch = md.getRunLogBatches(batchNumbers)
-    print "\nStart TIMING analysis, batches:", batchNumbers
+    runLog_batch = md.getRunLogBatches(md.batchNumbers)
+    print "\nStart TIMING analysis, batches:", md.batchNumbers
 
     for runLog in runLog_batch:
  

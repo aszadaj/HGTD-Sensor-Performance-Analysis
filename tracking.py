@@ -12,13 +12,13 @@ import data_management as dm
 
 ROOT.gROOT.SetBatch(True)
 
-def trackingAnalysis(batchNumbers):
+def trackingAnalysis():
 
     dm.checkIfRepositoryOnStau()
     
     startTime = md.getTime()
-    runLog_batch = md.getRunLogBatches(batchNumbers)
-    print "\nStart TRACKING analysis, batches:", batchNumbers
+    runLog_batch = md.getRunLogBatches(md.batchNumbers)
+    print "\nStart TRACKING analysis, batches:", md.batchNumbers
 
     for runLog in runLog_batch:
     

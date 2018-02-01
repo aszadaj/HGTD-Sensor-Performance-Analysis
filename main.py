@@ -22,24 +22,22 @@ def main():
     
     ######  NOISE, PULSE, TELESCOPE AND TIMING   ######
     
-    batchNumber = [306, 507, 707] # For now available 306, 507 and 707
-    
-    metadata.setLimitRunNumbers(0) # How many run numbers in each batch #max 50
-    metadata.setQuickParameter(False) # Quick check
-    metadata.setEntriesForQuickAnalysis(5000) # Amount of entries considered in quick
-    metadata.setSigma(5) # Used for pulse analysis
+    metadata.setBatchNumbers([306]) # For now available 306, 507 and 707
+    metadata.setLimitRunNumbers(0) # Run numbers to be considered (0 = all)
+    metadata.setEntriesForQuickAnalysis(0) # Entries to be considered (0 = all)
+ 
     
     # METHODS #
     
-    noise.noiseAnalysis           (batchNumber)
-    noise_plot.noisePlots           (batchNumber)
+    noise.noiseAnalysis()
+    #noise_plot.noisePlots()
     
-    pulse.pulseAnalysis           (batchNumber)
-    pulse_plot.pulsePlots           (batchNumber)
+    pulse.pulseAnalysis()
+    #pulse_plot.pulsePlots()
     
-    tracking.trackingAnalysis   (batchNumber)
+    tracking.trackingAnalysis()
     
-    timing.timingAnalysis         (batchNumber)
+    timing.timingAnalysis()
     
     ###########
     

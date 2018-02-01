@@ -7,9 +7,9 @@ import data_management as dm
 
 ROOT.gStyle.SetOptFit()
 
-def noisePlots(batchNumbers):
+def noisePlots():
     
-    for batchNumber in batchNumbers:
+    for batchNumber in md.batchNumbers:
         
         dm.checkIfRepositoryOnStau()
 

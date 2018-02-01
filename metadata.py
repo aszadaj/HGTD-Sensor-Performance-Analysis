@@ -312,9 +312,6 @@ def setLimitRunNumbers(number):
     global limitRunNumbers
     limitRunNumbers = number
 
-def setQuickParameter(debug):
-    global quick
-    quick = debug
 
 def setEntriesForQuickAnalysis(value):
     global maxEntries
@@ -325,6 +322,10 @@ def setSigma(value):
     global sigma
     sigma = value
 
+def setBatchNumbers(numbers):
+
+    global batchNumbers
+    batchNumbers = numbers
 
 
 

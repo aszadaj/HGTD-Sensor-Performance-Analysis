@@ -6,9 +6,9 @@ import data_management as dm
 
 ROOT.gStyle.SetOptFit()
 
-def pulsePlots(batchNumbers):
+def pulsePlots():
     
-    for batchNumber in batchNumbers:
+    for batchNumber in md.batchNumbers:
         
         dm.checkIfRepositoryOnStau()
         

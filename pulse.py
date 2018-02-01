@@ -13,18 +13,19 @@ ROOT.gROOT.SetBatch(True)
 
 
 # Start analysis of selected run numbers
-def pulseAnalysis(batchNumbers):
+def pulseAnalysis():
+
+    # Define sigma variable
+    md.setSigma(5)
 
     dm.checkIfRepositoryOnStau()
     
     startTime = md.getTime()
-    runLog_batch = md.getRunLogBatches(batchNumbers)
-    print "\nStart PULSE analysis, batches:", batchNumbers
+    runLog_batch = md.getRunLogBatches(md.batchNumbers)
+    print "\nStart PULSE analysis, batches:", md.batchNumbers
 
     for runLog in runLog_batch:
     
-        #results_batch = []
-        
         if md.limitRunNumbers != 0:
             runLog = runLog[0:md.limitRunNumbers] # Restrict to some run numbers
     
@@ -43,27 +44,11 @@ def pulseAnalysis(batchNumbers):
                 md.printTime()
                 print "Run", md.getRunNumber()
                 [peak_values, peak_times, rise_times] = pulseAnalysisPerRun()
-                #results_batch.append([peak_values, peak_times, rise_times])
                 
                 # Export per run number
                 dm.exportPulseData(peak_values, peak_times, rise_times)
                 print "Done with run", md.getRunNumber(), "\n"
     
-#        if len(results_batch) != 0:
-#
-#            # Done with the for loop and appending results, produce plots
-#            print "Done with batch", md.getBatchNumber(),"producing plots and exporting file.\n"
-#
-#            peak_values = np.empty(0, dtype=results_batch[0][0].dtype)
-#            peak_times  = np.empty(0, dtype=results_batch[0][1].dtype)
-#            rise_times  = np.empty(0, dtype=results_batch[0][2].dtype)
-#
-#            for results_run in results_batch:
-#                peak_values = np.concatenate((peak_values, results_run[0]), axis = 0)
-#                peak_times  = np.concatenate((peak_times,  results_run[1]), axis = 0)
-#                rise_times  = np.concatenate((rise_times,  results_run[2]), axis = 0)
-#
-#            p_plot.producePulseDistributionPlots(peak_times, peak_values, rise_times)
 
             print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
 
@@ -81,7 +66,7 @@ def pulseAnalysisPerRun():
     step = 8000
 
     # Quick Analysis
-    if md.quick:
+    if md.maxEntries != 0:
         max = step = md.maxEntries
 
     ranges = range(0, max, step)
