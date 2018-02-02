@@ -120,7 +120,7 @@ def checkIfRepositoryOnStau():
     
     if os.path.dirname(os.path.realpath(__file__)) == "/home/aszadaj/Gitlab/HGTD-Efficiency-analysis":
     
-        number = 16
+        number = 8
         sourceFolderPath = "/home/warehouse/aszadaj/HGTD_material/"
         onStau = True
 

@@ -143,6 +143,15 @@ def readFileNames(fileType):
         first_index = 16
         last_index = 20
 
+    elif fileType == "ntuple": #data_1504818689.dat.root
+        folderPath = "ntuples_sep_2017/"
+
+        folderPath = getSourceFolderPath() + folderPath
+
+        availableFiles = [f for f in os.listdir(folderPath) if os.path.isfile(os.path.join(folderPath, f)) and f != '.DS_Store']
+
+        return availableFiles
+
     
     folderPath = getSourceFolderPath() + folderPath
 

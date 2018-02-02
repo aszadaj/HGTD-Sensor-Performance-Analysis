@@ -10,9 +10,9 @@ ROOT.gROOT.SetBatch(True)
 # Start analysis of selected run numbers
 def printWaveform():
 
-    runNumber = 3870
-    startEntry = 14799
-    entries = 1
+    runNumber = 3791
+    startEntry = 200
+    entries = 5
 
     timeStamp = md.getTimeStamp(runNumber)
     row = md.getRowForRunNumber(runNumber)

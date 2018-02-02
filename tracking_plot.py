@@ -4,7 +4,7 @@ import numpy as np
 import metadata as md
 
 ROOT.gStyle.SetPalette(1)
-ROOT.gStyle.SetNumberContours(255)
+ROOT.gStyle.SetNumberContours(400)
 
 def produceTrackingGraphs(peak_values, tracking):
    
@@ -20,11 +20,11 @@ def produceTrackingGraphs(peak_values, tracking):
 
     xMin = -6
     xMax = 2.0
-    xBins = 800
+    xBins = 700
     
     yMin = 10
     yMax = 15
-    yBins = 800
+    yBins = xBins
     
     tracking, peak_values = convertTrackingData(tracking, peak_values)
     
@@ -32,7 +32,8 @@ def produceTrackingGraphs(peak_values, tracking):
 
     for chan in channels:
 
-        produce2DPlots(peak_values, tracking)
+        #produce2DPlots(peak_values, tracking)
+        produceEfficiencyPlot(peak_values, tracking)
 
 
 def produce2DPlots(peak_values, tracking):
@@ -57,6 +58,49 @@ def produce2DPlots(peak_values, tracking):
     canvas.Update()
     canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/tracking/tracking_"+str(md.getBatchNumber())+"_"+chan + ".pdf")
     canvas.Clear()
+
+
+def produceEfficiencyPlot(peak_values, tracking):
+
+    chan_index = str(int(chan[-1:]))
+    
+    canvas = ROOT.TCanvas("Tracking "+chan, "tracking"+chan)
+    
+    LGAD        = ROOT.TH2F("LGAD_particles_"+chan, "LGAD particles channel "+chan_index, xBins,xMin,xMax,yBins,yMin,yMax)
+    MIMOSA      = ROOT.TH2F("tracking_particles_"+chan, "Tracking particles channel "+chan_index, xBins,xMin,xMax,yBins,yMin,yMax)
+
+
+    # Fill two TH2F objects, where the other is filled if there is a peak value in the event
+    for index in range(0, len(tracking)):
+
+        if tracking["X"][index] > -9.0:
+            MIMOSA.Fill(tracking["X"][index], tracking["Y"][index], 1)
+            if peak_values[chan][index] != 0.0:
+                LGAD.Fill(tracking["X"][index], tracking["Y"][index], 1)
+
+    efficiency = ROOT.TEfficiency(LGAD, MIMOSA)
+
+    # Remove bins with less than 3 entries
+    for i in range(1, xBins+1):
+        for j in range(1, yBins+1):
+            bin = efficiency.GetGlobalBin(i,j)
+            num = efficiency.GetTotalHistogram().GetBinContent(bin)
+            if num < 3:
+                efficiency.SetPassedEvents(bin, 0)
+                efficiency.SetTotalEvents(bin, 0)
+
+
+    # Print TEfficiency plot
+    headTitle = "Efficiency in each bin, "
+    title = headTitle + ", Sep 2017 batch " + str(md.getBatchNumber())+", channel " + chan_index + ", sensor: " + md.getNameOfSensor(chan) + "; " + "X position (mm)" + "; " + "Y position (mm)"
+
+    efficiency.SetTitle(title)
+    canvas.cd()
+    efficiency.Draw("COLZ")
+    canvas.Update()
+    canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/tracking/tracking_efficiency_"+str(md.getBatchNumber())+"_"+chan + ".pdf")
+    canvas.Clear()
+
 
 def convertTrackingData(tracking, peak_values):
 

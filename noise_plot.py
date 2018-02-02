@@ -8,8 +8,12 @@ import data_management as dm
 ROOT.gStyle.SetOptFit()
 
 def noisePlots():
+
+    print "Start producing NOISE plots... \n"
     
     for batchNumber in md.batchNumbers:
+        
+        print "Batch", batchNumber+".\n"
         
         dm.checkIfRepositoryOnStau()
 
@@ -24,7 +28,10 @@ def noisePlots():
         for runNumber in runNumbers:
             
             if runNumber in availableRunNumbersPedestal:
+            
                 md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
+                
+                print "Importing run", md.getRunNumber(), "\n"
                 
                 if noise_average.size == 0:
                 
@@ -36,8 +43,11 @@ def noisePlots():
                     noise_average = np.concatenate((noise_average, dm.importNoiseFile("pedestal")), axis = 0)
                     noise_std = np.concatenate((noise_std, dm.importNoiseFile("noise")), axis = 0)
     
+        print "Done with importing files for", md.getBatchNumber(), "producing plots.\n"
+    
         produceNoiseDistributionPlots(noise_average, noise_std)
 
+    print "Done with producing NOISE plots.\n"
 
 def produceNoiseDistributionPlots(noise_average, noise_std):
     

@@ -52,13 +52,7 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, criticalValue):
             
             if len(threshold_indices) > 6:
                 
-                # Data selection for linear fit
-                skip_index = 0
-                
-                if chan == md.getChannelNameForSensor("SiPM-AFP"):
-                    skip_index = 1
-                
-                impulse_indices = np.arange(threshold_indices[0]+skip_index, np.argmin(data)+1)
+                impulse_indices = np.arange(threshold_indices[0], np.argmin(data)+1)
                 impulse_data = data[impulse_indices]
                 
                 # Data selection for polynomial fit
