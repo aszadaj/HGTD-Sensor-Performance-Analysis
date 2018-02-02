@@ -50,11 +50,17 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
     
     for chan in channels:
         
-        pedestal_center = np.average(noise_average[chan])
-        noise_center = np.average(noise_std[chan])
+        constant_sigma = 5
         
-        pedestal_graph[chan] = ROOT.TH1D("Pedestal, channel "+str(int(chan[-1:])), "pedestal"+chan, 1000, pedestal_center*0.5, pedestal_center*1.5)
-        noise_graph[chan]    = ROOT.TH1D("Noise, channel "+str(int(chan[-1:])), "noise"+chan, 1000, noise_center*0.5, noise_center*1.5)
+        pedestal_min = np.average(noise_average[chan]) - constant_sigma*np.std(noise_average[chan])
+        pedestal_max = np.average(noise_average[chan]) + constant_sigma*np.std(noise_average[chan])
+        
+        noise_min = np.average(noise_std[chan]) - constant_sigma*np.std(noise_std[chan])
+        noise_max = np.average(noise_std[chan]) + constant_sigma*np.std(noise_std[chan])
+        
+        
+        pedestal_graph[chan] = ROOT.TH1D("Pedestal, channel "+str(int(chan[-1:])), "pedestal"+chan, 1000, pedestal_min, pedestal_max)
+        noise_graph[chan]    = ROOT.TH1D("Noise, channel "+str(int(chan[-1:])), "noise"+chan, 1000, noise_min, noise_max)
 
 
         for entry in range(0, len(noise_average)):
@@ -63,9 +69,9 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
                 pedestal_graph[chan].Fill(noise_average[entry][chan])
                 noise_graph[chan].Fill(noise_std[entry][chan])
     
-    
-        pedestal_graph[chan].Fit("gaus","","", pedestal_graph[chan].GetMean()*0.7, pedestal_graph[chan].GetMean()*1.3)
-        noise_graph[chan].Fit("gaus","","", noise_graph[chan].GetMean()*0.7, noise_graph[chan].GetMean()*1.3)
+
+        pedestal_graph[chan].Fit("gaus","","", pedestal_min, pedestal_max)
+        noise_graph[chan].Fit("gaus","","", noise_min, noise_max)
 
 
     canvas_pedestal = ROOT.TCanvas("Pedestal per channel", "Pedestal per channel")
