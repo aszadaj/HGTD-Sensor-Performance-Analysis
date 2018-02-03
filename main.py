@@ -20,7 +20,7 @@ def main():
     
     metadata.printTime()
     
-    metadata.setIfOnHDD(True)
+    metadata.setIfOnHDD(False)
     
     ######  NOISE, PULSE, TELESCOPE AND TIMING   ######
     
