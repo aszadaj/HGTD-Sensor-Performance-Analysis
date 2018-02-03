@@ -36,10 +36,10 @@ def main():
     
     # 03.02.2018
     # Batch numbers which are left to analyse, noise
-    metadata.setBatchNumbers([607, 706, 801, 802, 804, 806, 901, 902, 903])
+    metadata.setBatchNumbers([706])
     
     # Batch numbers which are left to analyse, pulse
-    metadata.setBatchNumbers([602, 603, 605, 606, 607, 702, 703, 704, 705, 706, 801, 802, 804, 806, 901, 902, 903])
+    metadata.setBatchNumbers([701, 702, 703, 704, 705, 706])
     metadata.setLimitRunNumbers(0)            # Run numbers to be considered (0 = all)
     metadata.setEntriesForQuickAnalysis(0)    # Entries to be considered (0 = all)
  
