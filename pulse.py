@@ -45,6 +45,9 @@ def pulseAnalysis():
                 dm.exportPulseData(peak_times, peak_values, rise_times)
                 
                 print "Done with run", md.getRunNumber(), "\n"
+                
+            else:
+                print "No root file! \n"
 
 
         print "Done with batch", runLog[0][5], "Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
