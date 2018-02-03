@@ -118,7 +118,7 @@ def checkIfRepositoryOnStau():
     # sourceFolderPath is for plots, data, tracking data etc
     sourceFolderPath = "/Users/aszadaj/cernbox/SH203X/HGTD_material/"
     
-    if os.path.dirname(os.path.realpath(__file__)) == "/home/aszadaj/Gitlab/HGTD-Efficiency-analysis/":
+    if os.path.dirname(os.path.realpath(__file__)) == "/home/aszadaj/Gitlab/HGTD-Efficiency-analysis":
         print "stau"
     
         number = 8
