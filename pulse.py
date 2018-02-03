@@ -69,6 +69,10 @@ def pulseAnalysisPerRun():
     ranges = range(0, max, step)
     
     dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
+    
+    if md.isOnHDD():
+    
+        dataPath = "/Volumes/HDD500/" + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
 
     noise_average = dm.importNoiseFile("pedestal")
     noise_std     = dm.importNoiseFile("noise")

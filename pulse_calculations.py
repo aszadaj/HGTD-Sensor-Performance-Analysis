@@ -32,13 +32,16 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, criticalValue):
     # Assumption: for all events this value is the same.
     timeScope = 0.1
     
+    # Factor to regulate the threshold.
+    N = 6
+    
     # Relevant values from the pulse
     peak_value = 0
     peak_time = 0
     rise_time = 0
     
     # Set threshold, note data have negative pulse values
-    threshold = noise * md.sigma - pedestal
+    threshold = noise * N  - pedestal
     threshold_indices = np.where(data < -threshold)
     
     try:

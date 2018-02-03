@@ -33,7 +33,7 @@ def printWaveform():
     graph_line_noise = dict()
     graph_line_pedestal = dict()
 
-    sigma = 5
+    N = 6
     
     noise = dict()
     pedestal = dict()
@@ -45,11 +45,11 @@ def printWaveform():
     
     for chan in channels:
         
-        threshold = noise[chan]*sigma + pedestal[chan]
+        threshold = noise[chan] * N + pedestal[chan]
    
         canvas = ROOT.TCanvas("Waveforms","Waveforms")
         leg = ROOT.TLegend (0.73, 0.6, 0.93, 0.9)
-        leg.SetHeader("\sigma = "+str(sigma))
+        leg.SetHeader("N = "+str(sigma))
     
         graph_waveform[chan]        = ROOT.TGraph(1002*entries)
         graph_line_threshold[chan]  = ROOT.TGraph(1002*entries)

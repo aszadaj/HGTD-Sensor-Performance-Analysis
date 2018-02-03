@@ -152,10 +152,14 @@ def readFileNames(fileType):
 
         return availableFiles
 
-    
-    folderPath = getSourceFolderPath() + folderPath
 
-    availableFiles = [int(f[first_index:last_index]) for f in os.listdir(folderPath) if os.path.isfile(os.path.join(folderPath, f)) and f != '.DS_Store']
+    mainFolderPath = getSourceFolderPath() + folderPath
+    
+    if isOnHDD():
+    
+        mainFolderPath = "/Volumes/HDD500/" + folderPath
+
+    availableFiles = [int(f[first_index:last_index]) for f in os.listdir(mainFolderPath) if os.path.isfile(os.path.join(mainFolderPath, f)) and f != '.DS_Store']
     availableFiles.sort()
 
     return availableFiles
@@ -327,15 +331,18 @@ def setEntriesForQuickAnalysis(value):
     maxEntries = value
 
 
-def setSigma(value):
-    global sigma
-    sigma = value
-
 def setBatchNumbers(numbers):
 
     global batchNumbers
     batchNumbers = numbers
 
+def setIfOnHDD(value):
+    global hdd
+    hdd = value
+
+def isOnHDD():
+
+    return hdd
 
 
 

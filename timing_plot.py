@@ -74,7 +74,7 @@ def produceTH1Plot(graphList, canvas, chan):
     headTitle = "Distribution of timing difference, Sep 2017 batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])) + ", sensor: " + str(md.getNameOfSensor(chan))
     xAxisTitle = "Time (ns)"
     yAxisTitle = "Number (N)"
-    fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/timing/timing_distribution_"+str(md.getBatchNumber())+"_"+chan+".pdf"
+    fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/timing/timing_distribution/timing_distribution_"+str(md.getBatchNumber())+"_"+chan+".pdf"
 
 
     graphList.SetLineColor(1)
@@ -107,10 +107,10 @@ def produceTH2Plot(graph, headTitle, fileName, chan, canvas, num):
     canvas.Update()
     
     if num == 2:
-        canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/timing/timing_2d_diff_sipm_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
+        canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/timing/timing_2d_diff_sipm/timing_2d_diff_sipm_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
     elif num == 3:
-        canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/timing/timing_2d_diff_lgad_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
+        canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/timing/timing_2d_diff_lgad/timing_2d_diff_lgad_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
     else:
-        canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/timing/timing_2d_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
+        canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/timing/timing_2d/timing_2d_"+str(md.getBatchNumber())+"_"+str(chan) + fileName)
 
     canvas.Clear()

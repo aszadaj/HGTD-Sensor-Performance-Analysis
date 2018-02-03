@@ -29,11 +29,15 @@ def produceTrackingGraphs(peak_values, tracking):
     tracking, peak_values = convertTrackingData(tracking, peak_values)
     
     channels = peak_values.dtype.names
+    
+    
 
     for chan in channels:
-
-        #produce2DPlots(peak_values, tracking)
-        produceEfficiencyPlot(peak_values, tracking)
+        
+        if chan != md.getChannelNameForSensor("SiPM-AFP"):
+        
+            #produce2DPlots(peak_values, tracking)
+            produceEfficiencyPlot(peak_values, tracking)
 
 
 def produce2DPlots(peak_values, tracking):
