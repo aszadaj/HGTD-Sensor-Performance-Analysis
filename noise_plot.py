@@ -13,7 +13,7 @@ def noisePlots():
     
     for batchNumber in md.batchNumbers:
         
-        print "Batch", batchNumber+".\n"
+        print "Batch", batchNumber,"\n"
         
         dm.checkIfRepositoryOnStau()
 
@@ -43,9 +43,11 @@ def noisePlots():
                     noise_average = np.concatenate((noise_average, dm.importNoiseFile("pedestal")), axis = 0)
                     noise_std = np.concatenate((noise_std, dm.importNoiseFile("noise")), axis = 0)
     
-        print "Done with importing files for", md.getBatchNumber(), "producing plots.\n"
-    
-        produceNoiseDistributionPlots(noise_average, noise_std)
+        if len(noise_average) != 0:
+        
+            print "Done with importing files for", batchNumber, "producing plots.\n"
+        
+            produceNoiseDistributionPlots(noise_average, noise_std)
 
     print "Done with producing NOISE plots.\n"
 

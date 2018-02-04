@@ -88,6 +88,8 @@ def concatenateResults(results):
     noise_average   = np.empty(0, dtype=results[0][0].dtype)
     noise_std       = np.empty(0, dtype=results[0][1].dtype)
     
+    print len(results)
+    
     for index in range(0, len(results)):
         noise_average   = np.concatenate((noise_average, results[index][0]), axis = 0)
         noise_std       = np.concatenate((noise_std, results[index][1]), axis = 0)

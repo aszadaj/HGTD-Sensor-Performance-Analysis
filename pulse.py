@@ -37,7 +37,8 @@ def pulseAnalysis():
       
             md.defineGlobalVariableRun(runLog[index])
             
-            if (md.isRootFileAvailable()):
+#            if (not md.isPulseFileDone(md.getRunNumber()) and md.getRunNumber() != 3902):
+            if (md.getRunNumber() == 3902):
             
                 print "Run", md.getRunNumber()
                 
@@ -45,9 +46,6 @@ def pulseAnalysis():
                 dm.exportPulseData(peak_times, peak_values, rise_times)
                 
                 print "Done with run", md.getRunNumber(), "\n"
-            
-            else:
-                print "No root file! \n"
 
 
         print "Done with batch", runLog[0][5], "Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"

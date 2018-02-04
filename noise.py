@@ -36,8 +36,9 @@ def noiseAnalysis():
      
             md.defineGlobalVariableRun(runLog[index])
             
-            if (md.isRootFileAvailable()):
-            
+#            if (not md.isNoiseFileDone(md.getRunNumber()) and md.getRunNumber() != 3902):
+            if (md.getRunNumber() == 3902):
+
                 print "Run", md.getRunNumber()
                 
                 [noise_average, noise_std] = noiseAnalysisPerRun()
@@ -45,9 +46,7 @@ def noiseAnalysis():
                 dm.exportNoiseData(noise_average, noise_std)
                 
                 print "Done with run", md.getRunNumber(),"\n"
-            
-            else:
-                print "No root file! \n"
+
 
         print "Done with batch",runLog[0][5],"Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
 
@@ -78,6 +77,7 @@ def noiseAnalysisPerRun():
     results = p.map(lambda chunk: multiProcess(dataPath, chunk, chunk+step), ranges)
 
     # results change form, now each element is a variable
+    
     results_variables = n_calc.concatenateResults(results)
     
     return results_variables

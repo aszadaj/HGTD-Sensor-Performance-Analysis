@@ -99,6 +99,32 @@ def isTrackingFileAvailable():
     return False
 
 
+def isNoiseFileDone(runNumber):
+
+    available = False
+
+    availableFiles = readFileNames("noise_noise")
+    
+    if int(runNumber) in availableFiles:
+        available = True
+    
+    return available
+
+
+
+def isPulseFileDone(runNumber):
+
+    available = False
+
+    availableFiles = readFileNames("peak_value")
+
+    if int(runNumber) in availableFiles:
+        available = True
+        
+    return available
+
+
+
 def readFileNames(fileType):
 
     folderPath = ""
@@ -143,19 +169,10 @@ def readFileNames(fileType):
         first_index = 16
         last_index = 20
 
-    elif fileType == "ntuple": #data_1504818689.dat.root
-        folderPath = "ntuples_sep_2017/"
-
-        folderPath = getSourceFolderPath() + folderPath
-
-        availableFiles = [f for f in os.listdir(folderPath) if os.path.isfile(os.path.join(folderPath, f)) and f != '.DS_Store']
-
-        return availableFiles
-
 
     mainFolderPath = getSourceFolderPath() + folderPath
     
-    if isOnHDD():
+    if isOnHDD() and fileType == "oscilloscope":
     
         mainFolderPath = "/Volumes/HDD500/" + folderPath
 
@@ -183,7 +200,7 @@ def getSourceFolderPath():
 def getRunNumber(timeStamp=""):
     
     if timeStamp == "":
-        return runInfo[3]
+        return int(runInfo[3])
     
     else:
         runLog = getRunLog()
@@ -334,6 +351,10 @@ def setEntriesForQuickAnalysis(value):
 def setBatchNumbers(numbers):
 
     global batchNumbers
+    
+    if numbers == "all":
+        numbers = getAllBatchNumbers()
+
     batchNumbers = numbers
 
 def setIfOnHDD(value):

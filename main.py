@@ -20,35 +20,20 @@ def main():
     
     metadata.printTime()
     
-    metadata.setIfOnHDD(False)
+    metadata.setIfOnHDD(True)
     
     ######  NOISE, PULSE, TELESCOPE AND TIMING   ######
-    
-    # Last analysis:
-    # Problem with batch 607, run 3902
-    # Batch 607 not ready
-    
-    
-    
-    # All available batch numbers to be analysed, under investigation:
-    # 306, 507, and 707
-    #metadata.setBatchNumbers([301, 302, 303, 304, 305, 306, 401, 402, 404, 405, 402, 501, 502, 503, 504, 505, 506, 507, 601, 701, 702, 703, 705, 707, 706, 801, 802, 804, 806, 901, 902, 903])      # For now available 306, 507 and 707
-    
-    # 03.02.2018
-    # Batch numbers which are left to analyse, noise
-    metadata.setBatchNumbers([706])
-    
-    # Batch numbers which are left to analyse, pulse
-    metadata.setBatchNumbers([701, 702, 703, 704, 705, 706])
-    metadata.setLimitRunNumbers(0)            # Run numbers to be considered (0 = all)
+
+    metadata.setBatchNumbers("all")
+    metadata.setLimitRunNumbers(0)                # Run numbers to be considered (0 = all)
     metadata.setEntriesForQuickAnalysis(0)    # Entries to be considered (0 = all)
  
     # METHODS #
     
     noise.noiseAnalysis()
-    #noise_plot.noisePlots()
-    
     #pulse.pulseAnalysis()
+    
+    #noise_plot.noisePlots()
     #pulse_plot.pulsePlots()
     
     #tracking.trackingAnalysis()

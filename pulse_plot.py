@@ -12,7 +12,7 @@ def pulsePlots():
     
     for batchNumber in md.batchNumbers:
         
-        print "Batch", batchNumber+".\n"
+        print "Batch", batchNumber,"\n"
         
         dm.checkIfRepositoryOnStau()
         
@@ -44,10 +44,12 @@ def pulsePlots():
                     peak_times = np.concatenate((peak_times, dm.importPulseFile("peak_time")), axis = 0)
                     peak_values = np.concatenate((peak_values, dm.importPulseFile("peak_value")), axis = 0)
                     rise_times = np.concatenate((rise_times, dm.importPulseFile("rise_time")), axis = 0)
+                    
+        if len(peak_times) != 0:
+        
+            print "Done with importing files for", batchNumber, "producing plots.\n"
 
-        print "Done with importing files for", md.getBatchNumber(), "producing plots.\n"
-
-        producePulseDistributionPlots(peak_times, peak_values, rise_times, batchNumber)
+            producePulseDistributionPlots(peak_times, peak_values, rise_times, batchNumber)
 
     print "Done with producing PULSE plots.\n"
 
