@@ -57,6 +57,10 @@ def importTrackingFile():
 
     return importROOTFile("tracking")
 
+def importTimingFile():
+
+    return importROOTFile("timing")
+
 
 
 # Import selected ROOT file
@@ -65,6 +69,12 @@ def importROOTFile(group, category=""):
     if group == "tracking":
     
         fileName = md.getSourceFolderPath()+"tracking_data_sep_2017/tracking"+md.getTimeStamp()+".root"
+
+        return rnm.root2array(fileName)
+    
+    elif group == "timing":
+    
+        fileName = md.getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/timing/timing_"+str(md.getRunNumber())+".root"
 
         return rnm.root2array(fileName)
     

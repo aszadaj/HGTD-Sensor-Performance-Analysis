@@ -30,7 +30,7 @@ def pulsePlots():
             
             if runNumber in availableRunNumbersPeakTimes:
                 md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
-
+          
                 print "Importing run", md.getRunNumber(), "\n"
 
                 if peak_times.size == 0:
@@ -68,80 +68,6 @@ def producePulseDistributionPlots(peak_times, peak_values, rise_times, batchNumb
     
     for chan in peak_times.dtype.names:
     
-#        if batchNumber == 306:
-#            if chan == "chan0":
-#                np.place(peak_values[chan], peak_values[chan] < 12, 0)
-#
-#            if chan == "chan1":
-#                np.place(peak_values[chan], peak_values[chan] < 16, 0)
-#
-#            if chan == "chan2":
-#                np.place(peak_values[chan], peak_values[chan] < 15, 0)
-#
-#            if chan == "chan3":
-#                np.place(peak_values[chan], peak_values[chan] < 15, 0)
-#
-#            if chan == "chan4":
-#                np.place(peak_values[chan], peak_values[chan] < 20, 0)
-#
-#            if chan == "chan5":
-#                np.place(peak_values[chan], peak_values[chan] < 20, 0)
-#
-#            if chan == "chan6":
-#                np.place(peak_values[chan], peak_values[chan] < 40, 0)
-#
-#        if batchNumber == 507:
-#            if chan == "chan0":
-#                np.place(peak_values[chan], peak_values[chan] < 20, 0)
-#
-#            if chan == "chan1":
-#                np.place(peak_values[chan], peak_values[chan] < 30, 0)
-#
-#            if chan == "chan2":
-#                np.place(peak_values[chan], peak_values[chan] < 20, 0)
-#
-#            if chan == "chan3":
-#                np.place(peak_values[chan], peak_values[chan] < 20, 0)
-#
-#            if chan == "chan4":
-#                np.place(peak_values[chan], peak_values[chan] < 20, 0)
-#
-#            if chan == "chan5":
-#                np.place(peak_values[chan], peak_values[chan] < 25, 0)
-#
-#            if chan == "chan6":
-#                np.place(peak_values[chan], peak_values[chan] < 25, 0)
-#
-#            if chan == "chan7":
-#                np.place(peak_values[chan], peak_values[chan] < 25, 0)
-#
-#        if batchNumber == 707:
-#            if chan == "chan0":
-#                np.place(peak_values[chan], peak_values[chan] < 20, 0)
-#
-#            if chan == "chan1":
-#                np.place(peak_values[chan], peak_values[chan] < 20, 0)
-#
-#            if chan == "chan2":
-#                np.place(peak_values[chan], peak_values[chan] < 20, 0)
-#
-#            if chan == "chan3":
-#                np.place(peak_values[chan], peak_values[chan] < 20, 0)
-#
-#            if chan == "chan4":
-#                np.place(peak_values[chan], peak_values[chan] < 23, 0)
-#
-#            if chan == "chan5":
-#                np.place(peak_values[chan], peak_values[chan] < 23, 0)
-#
-#            if chan == "chan6":
-#                np.place(peak_values[chan], peak_values[chan] < 27, 0)
-#
-#            if chan == "chan7":
-#                np.place(peak_values[chan], peak_values[chan] < 27, 0)
-#
-
-
         index = int(chan[-1:])
         
         peak_times_graph[chan] = ROOT.TH1D("Peak time channel "+str(index), "peak_time" + chan, 1000, 0, 100)

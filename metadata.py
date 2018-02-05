@@ -124,6 +124,19 @@ def isPulseFileDone(runNumber):
     return available
 
 
+def isTimingFileDone(runNumber):
+
+    available = False
+
+    availableFiles = readFileNames("timing")
+
+    if int(runNumber) in availableFiles:
+        available = True
+    
+    return available
+
+
+
 
 def readFileNames(fileType):
 
@@ -168,6 +181,11 @@ def readFileNames(fileType):
         folderPath = "data_hgtd_efficiency_sep_2017/pulse/pulse_rise_time/"
         first_index = 16
         last_index = 20
+
+    elif fileType == "timing": #timing_3656.root
+        folderPath = "data_hgtd_efficiency_sep_2017/timing/"
+        first_index = 7
+        last_index = 11
 
 
     mainFolderPath = getSourceFolderPath() + folderPath
@@ -261,6 +279,13 @@ def getNumberOfEvents(timeStamp=""):
         for row in runLog:
             if int(row[4]) == timeStamp:
                 return int(row[6])
+
+def getPulseAmplitudeCut(chan):
+
+    index = int(chan[-1])
+    return float(runInfo[52+index].replace(",","."))
+
+
 
 # Get index for the name of the sensor in run log
 def getChannelNameForSensor(sensor):

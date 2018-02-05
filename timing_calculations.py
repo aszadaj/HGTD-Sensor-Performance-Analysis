@@ -11,7 +11,7 @@ import timing_plot as t_plot
 ROOT.gROOT.SetBatch(True)
 
 
-def timingAnalysisPerRun(peak_time):
+def timingAnalysisPerRun(peak_time, peak_value):
 
     SiPM_chan = md.getChannelNameForSensor("SiPM-AFP")
     
@@ -24,12 +24,12 @@ def timingAnalysisPerRun(peak_time):
         if chan != SiPM_chan:
             
             for event in range (0, len(peak_time)):
-
-                if peak_time[chan][event] != 0 and peak_time[SiPM_chan][event] != 0:
+                
+                
+                
+                if peak_time[chan][event] != 0 and peak_time[SiPM_chan][event] != 0 and peak_value[chan][event] < -md.getPulseAmplitudeCut(chan):
 
                     time_difference[chan][event] = peak_time[event][chan] - peak_time[event][SiPM_chan]
 
 
-
     return time_difference
-

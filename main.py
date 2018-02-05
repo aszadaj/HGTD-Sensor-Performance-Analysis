@@ -12,6 +12,7 @@ import pulse
 import pulse_plot
 import tracking
 import timing
+import timing_plot
 import metadata
 
 #md.setupATLAS()
@@ -24,7 +25,7 @@ def main():
     
     ######  NOISE, PULSE, TELESCOPE AND TIMING   ######
 
-    metadata.setBatchNumbers([507, 607])
+    metadata.setBatchNumbers([306])
     metadata.setLimitRunNumbers(0)                # Run numbers to be considered (0 = all)
     metadata.setEntriesForQuickAnalysis(0)    # Entries to be considered (0 = all)
  
@@ -36,9 +37,10 @@ def main():
     #noise_plot.noisePlots()
     #pulse_plot.pulsePlots()
     
-    tracking.trackingAnalysis()
+    #tracking.trackingAnalysis()
     
     #timing.timingAnalysis()
+    timing_plot.timingPlots()
     
     ###########
     

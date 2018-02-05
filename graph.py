@@ -10,18 +10,18 @@ ROOT.gROOT.SetBatch(True)
 # Start analysis of selected run numbers
 def printWaveform():
 
-    runNumber = 3899
+    runNumber = 3921
     startEntry = 200
-    entries = 5
+    entries = 1
 
     timeStamp = md.getTimeStamp(runNumber)
     row = md.getRowForRunNumber(runNumber)
+    
+    
     md.setIfOnHDD(True)
     md.defineGlobalVariableRun(row)
     dm.checkIfRepositoryOnStau()
-    
-    print timeStamp
-    
+
     dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(timeStamp)+".tree.root"
     
     if md.isOnHDD():
@@ -30,8 +30,6 @@ def printWaveform():
     
     data = rnm.root2array(dataPath, start=startEntry, stop=startEntry+entries)
     channels = data.dtype.names
-    
-    print data.dtype
     
     noise_average = dm.importNoiseFile("pedestal")
     noise_std = dm.importNoiseFile("noise")
@@ -47,6 +45,8 @@ def printWaveform():
     
     noise = dict()
     pedestal = dict()
+    
+    channels = ["chan0"]
     
     for chan in channels:
         pedestal[chan]     = np.average(np.take(noise_average[chan], np.nonzero(noise_average[chan]))[0])*-1000

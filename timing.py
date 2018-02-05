@@ -33,13 +33,14 @@ def timingAnalysis():
     
         startTimeBatch = md.getTime()
         md.printTime()
-        print "Analysing batch:", runLog[0][5], "with", len(runLog),"run files.\n"
+        
+        print "Batch:", runLog[0][5], len(runLog), "run files.\n"
       
         for index in range(0, len(runLog)):
             
             md.defineGlobalVariableRun(runLog[index])
             
-            if (md.isTimingDataFilesAvailable()):
+            if not md.isTimingFileDone(md.getRunNumber()):
                 
                 print "Run", md.getRunNumber()
                 
@@ -47,35 +48,17 @@ def timingAnalysis():
                 peak_time_run = dm.importPulseFile("peak_time")
                 peak_value_run = dm.importPulseFile("peak_value")
                 
-                time_difference_run = t_calc.timingAnalysisPerRun(peak_time_run)
+                time_difference_run = t_calc.timingAnalysisPerRun(peak_time_run, peak_value_run)
                 
-                if len(time_difference_batch) == 0:
-                
-                    time_difference_batch = time_difference_batch.astype(time_difference_run.dtype)
-                    peak_value_batch = peak_value_batch.astype(peak_value_run.dtype)
-                    peak_time_batch = peak_time_batch.astype(peak_time_run.dtype)
-         
                 # Export per run number
                 dm.exportTimingData(time_difference_run)
                 
-                # Concatenate to plot all results
-                time_difference_batch = np.concatenate((time_difference_batch, time_difference_run))
-                peak_value_batch = np.concatenate((peak_value_batch, peak_value_run))
-                peak_time_batch = np.concatenate((peak_time_batch, peak_time_run))
-               
                 print "Done with run", md.getRunNumber(), "\n"
 
 
-        if len(time_difference_batch) != 0:
-        
-            # Done with the for loop and appending results, produce plots
-            print "Done with batch", md.getBatchNumber(),"producing plots and exporting file.\n"
+        print "Done with batch", runLog[0][5], "Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
 
-            t_plot.produceTimingDistributionPlots(time_difference_batch, peak_value_batch, peak_time_batch)
-    
-        print "\nDone with final analysis and export. Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
-
-    print "Done with batch",runLog[0][5],"\n"
+    print "Done with TIMING analysis. Time analysing: "+str(md.getTime()-startTime)+"\n"
 
 
 # Get actual time

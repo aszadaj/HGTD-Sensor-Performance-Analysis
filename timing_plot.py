@@ -2,7 +2,55 @@ import ROOT
 import metadata as md
 import numpy as np
 
+import data_management as dm
+
 ROOT.gStyle.SetOptFit()
+
+def timingPlots():
+
+    print "Start producing TIMING plots... \n"
+    
+    for batchNumber in md.batchNumbers:
+        
+        print "Batch", batchNumber,"\n"
+        
+        dm.checkIfRepositoryOnStau()
+        
+        time_difference = np.empty(0)
+        peak_values = np.empty(0)
+        peak_times = np.empty(0)
+
+        runNumbers = md.getAllRunNumbers(batchNumber)
+        
+        availableRunNumbersTiming = md.readFileNames("timing")
+    
+        for runNumber in runNumbers:
+            
+            if runNumber in availableRunNumbersTiming:
+                md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
+          
+                print "Importing run", md.getRunNumber(), "\n"
+
+                if time_difference.size == 0:
+          
+                    time_difference  = dm.importTimingFile()
+                    peak_values = dm.importPulseFile("peak_value")
+                    peak_times  = dm.importPulseFile("peak_time")
+
+                else:
+
+                    time_difference = np.concatenate((time_difference, dm.importTimingFile()), axis = 0)
+                    peak_values = np.concatenate((peak_values, dm.importPulseFile("peak_value")), axis = 0)
+                    peak_times = np.concatenate((peak_times, dm.importPulseFile("peak_time")), axis = 0)
+        
+        if len(peak_times) != 0:
+        
+            print "Done with importing files for", batchNumber, "producing plots.\n"
+
+            produceTimingDistributionPlots(time_difference, peak_values, peak_times)
+
+    print "Done with producing TIMING plots.\n"
+
 
 def produceTimingDistributionPlots(time_difference, peak_value, peak_time):
     
@@ -24,13 +72,23 @@ def produceTimingDistributionPlots(time_difference, peak_value, peak_time):
             
             index = int(chan[-1:])
             
-            timing_mean = np.average(np.take(time_difference[chan], np.nonzero(time_difference[chan]))[0])
+            constant_sigma = 3
+            
+            timing_mean = np.average(time_difference[chan][np.nonzero(time_difference[chan])])
+            
+            timing_std = np.std(time_difference[chan][np.nonzero(time_difference[chan])])
+            
+            timing_min = timing_mean - constant_sigma * timing_std
+            
+            timing_max = timing_mean + constant_sigma * timing_std
+            
 
-            time_difference_graph[chan] = ROOT.TH1D("Time Difference channel "+str(index), "time_difference" + chan, 1000, timing_mean-2, timing_mean+2)
+            time_difference_graph[chan] = ROOT.TH1D("Time Difference channel "+str(index), "time_difference" + chan, 1000, timing_min, timing_max)
             
             times_2d[chan] = ROOT.TH2F("tracking_"+chan,"Times channel "+str(int(chan[-1:])+1),500,-14,0,500,5,80)
 
             time_diff_2d_lgad[chan] = ROOT.TH2F("tracking_1"+chan,"Time difference, lgad channel "+str(int(chan[-1:])+1), 500,-18,3,500,-50,500)
+            
             time_diff_2d_sipm[chan] = ROOT.TH2F("tracking_2"+chan,"Time diffence, sipm channel "+str(int(chan[-1:])+1),500,-18,3,500,-50,500)
             
             canvas[chan] = ROOT.TCanvas("Tracking "+chan, "tracking")
@@ -50,9 +108,16 @@ def produceTimingDistributionPlots(time_difference, peak_value, peak_time):
                
                     time_diff_2d_sipm[chan].Fill(time_difference[chan][entry], peak_value[SiPM_chan][entry]*-1000, 1)
 
-            # Create a gaus fit where one considers only points +-0.3 ns from the main point
-            time_difference_graph[chan].Fit("gaus","","", time_difference_graph[chan].GetMean()-0.3, time_difference_graph[chan].GetMean()+0.3)
-            
+            constant_sigma = 1.5
+
+            timing_min = timing_mean - constant_sigma * timing_std
+    
+            timing_max = timing_mean + constant_sigma * timing_std
+
+
+            time_difference_graph[chan].Fit("gaus","","", timing_min, timing_max)
+    
+    
             produceTH1Plot(time_difference_graph[chan], canvas[chan], chan)
 
             headTitle = "Time difference vs time position 2D plot "
@@ -71,8 +136,8 @@ def produceTimingDistributionPlots(time_difference, peak_value, peak_time):
 # Produce TH1 plots and export them as a PDF file
 def produceTH1Plot(graphList, canvas, chan):
 
-    headTitle = "Distribution of timing difference, Sep 2017 batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])) + ", sensor: " + str(md.getNameOfSensor(chan))
-    xAxisTitle = "Time (ns)"
+    headTitle = "Distribution of time difference in each event, Sep 2017 batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])) + ", sensor: " + str(md.getNameOfSensor(chan))
+    xAxisTitle = "\Delta t_{LGAD-SiPM}"
     yAxisTitle = "Number (N)"
     fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/timing/timing_distribution/timing_distribution_"+str(md.getBatchNumber())+"_"+chan+".pdf"
 

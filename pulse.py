@@ -37,8 +37,7 @@ def pulseAnalysis():
       
             md.defineGlobalVariableRun(runLog[index])
             
-            #if not md.isPulseFileDone(md.getRunNumber()):
-            if md.getRunNumber() == 3918 or md.getRunNumber() == 3919 or md.getRunNumber() == 3921 or md.getRunNumber() == 3922:
+            if not md.isPulseFileDone(md.getRunNumber()):
             
                 print "Run", md.getRunNumber()
                 

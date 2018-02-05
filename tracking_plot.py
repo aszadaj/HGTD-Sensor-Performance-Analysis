@@ -17,10 +17,14 @@ def produceTrackingGraphs(peak_values, tracking):
     global yBins
     
     global chan
+    
+    global minEntries # Minimum entries per bin
+
+    minEntries = 5
 
     xMin = -6
     xMax = 2.0
-    xBins = 700
+    xBins = 250
     
     yMin = 10
     yMax = 15
@@ -30,13 +34,11 @@ def produceTrackingGraphs(peak_values, tracking):
     
     channels = peak_values.dtype.names
     
-    
-
     for chan in channels:
         
         if chan != md.getChannelNameForSensor("SiPM-AFP"):
         
-            produce2DPlots(peak_values, tracking)
+            #produce2DPlots(peak_values, tracking)
             produceEfficiencyPlot(peak_values, tracking)
 
 
@@ -55,14 +57,22 @@ def produce2DPlots(peak_values, tracking):
     # Print original TProfile2D
     headTitle = "Pulse amplitude mean value (mV) in each bin"
     title = headTitle + ", Sep 2017 batch " + str(md.getBatchNumber())+", channel " + chan_index + ", sensor: " + md.getNameOfSensor(chan) + "; " + "X position (mm)" + "; " + "Y position (mm)"
+    
+    # RUN NUMBER
+    #title = headTitle + ", Sep 2017 batch " + str(md.getRunNumber())+", channel " + chan_index + ", sensor: " + md.getNameOfSensor(chan) + "; " + "X position (mm)" + "; " + "Y position (mm)"
 
     graph2D.SetTitle(title)
     canvas.cd()
     graph2D.Draw("COLZ")
     canvas.Update()
-    #canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/tracking/tracking_"+str(md.getBatchNumber())+"_"+chan + ".pdf")
-    canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/tracking/tracking_"+str(md.getRunNumber())+"_"+chan + ".pdf")
+    canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/tracking/tracking_"+str(md.getBatchNumber())+"_"+chan + ".pdf")
+
+    # RUN NUMBER
+  #  canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/tracking/tracking_"+str(md.getRunNumber())+"_"+chan + ".pdf")
+
     canvas.Clear()
+
+    del canvas
 
 
 def produceEfficiencyPlot(peak_values, tracking):
@@ -90,23 +100,21 @@ def produceEfficiencyPlot(peak_values, tracking):
         for j in range(1, yBins+1):
             bin = efficiency.GetGlobalBin(i,j)
             num = efficiency.GetTotalHistogram().GetBinContent(bin)
-            if num < 1:
+            if num < minEntries:
                 efficiency.SetPassedEvents(bin, 0)
                 efficiency.SetTotalEvents(bin, 0)
 
 
     # Print TEfficiency plot
     headTitle = "Efficiency in each bin, "
-    #title = headTitle + ", Sep 2017 batch " + str(md.getBatchNumber()) + ", channel " + chan_index + ", sensor: " + md.getNameOfSensor(chan) + "; " + "X position (mm)" + "; " + "Y position (mm)"
-    
-    title = headTitle + ", Sep 2017 batch " + str(md.getRunNumber()) + ", channel " + chan_index + ", sensor: " + md.getNameOfSensor(chan) + ", entries "+str(int(LGAD.GetEntries())) + "; " + "X position (mm)" + "; " + "Y position (mm)"
-
+    title = headTitle + ", Sep 2017 batch " + str(md.getBatchNumber()) + ", channel " + chan_index + ", sensor: " + md.getNameOfSensor(chan) + ", bins: " + str(xBins) +", min entries in bin: "+str(minEntries) + "; " + "X position (mm)" + "; " + "Y position (mm)"
+   
     efficiency.SetTitle(title)
     canvas.cd()
     efficiency.Draw("COLZ")
     canvas.Update()
-    #canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/tracking/tracking_efficiency_"+str(md.getBatchNumber())+"_"+chan + ".pdf")
-    canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/tracking/tracking_efficiency_"+str(md.getRunNumber())+"_"+chan + ".pdf")
+    canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/tracking/tracking_efficiency_"+str(md.getBatchNumber())+"_"+chan + "_"+str(xBins)+"_"+str(minEntries)+".pdf")
+  
     canvas.Clear()
 
 
