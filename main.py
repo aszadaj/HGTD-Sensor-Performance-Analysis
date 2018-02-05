@@ -24,19 +24,19 @@ def main():
     
     ######  NOISE, PULSE, TELESCOPE AND TIMING   ######
 
-    metadata.setBatchNumbers("all")
+    metadata.setBatchNumbers([507, 607])
     metadata.setLimitRunNumbers(0)                # Run numbers to be considered (0 = all)
     metadata.setEntriesForQuickAnalysis(0)    # Entries to be considered (0 = all)
  
     # METHODS #
     
-    noise.noiseAnalysis()
+    #noise.noiseAnalysis()
     #pulse.pulseAnalysis()
     
     #noise_plot.noisePlots()
     #pulse_plot.pulsePlots()
     
-    #tracking.trackingAnalysis()
+    tracking.trackingAnalysis()
     
     #timing.timingAnalysis()
     

@@ -50,7 +50,8 @@ def trackingAnalysis():
                 else:
                 
                     tracking_run = np.take(tracking_run, np.arange(0,len(peak_values_run)))
-                
+            
+
                 results_batch.append([peak_values_run, tracking_run])
                 
                 print "Done with run", md.getRunNumber(), "\n"
@@ -58,17 +59,18 @@ def trackingAnalysis():
         
         if len(results_batch) != 0:
             print "Producing plots for batch " + str(md.getBatchNumber()) + ".\n"
-            
+
             peak_values = np.empty(0, dtype=results_batch[0][0].dtype)
             tracking    = np.empty(0, dtype=results_batch[0][1].dtype)
-        
+
             for results_run in results_batch:
                 peak_values = np.concatenate((peak_values, results_run[0]), axis = 0)
                 tracking    = np.concatenate((tracking,  results_run[1]), axis = 0)
-         
+
             tplot.produceTrackingGraphs(peak_values, tracking)
-            
+
             print "Done with batch",runLog[0][5],"Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
+            
 
     print "Done with TRACKING analysis. Time analysing: "+str(md.getTime()-startTime)+"\n"
 

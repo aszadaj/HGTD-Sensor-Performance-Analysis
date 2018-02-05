@@ -24,7 +24,7 @@ def findNoiseAverageAndStd(data):
     noise_std = np.zeros(len(data), dtype = data.dtype)
     
     criticalValues = findCriticalValues(data)
- 
+
     for event in range(0, len(data)):
         for chan in channels:
         

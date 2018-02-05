@@ -10,18 +10,28 @@ ROOT.gROOT.SetBatch(True)
 # Start analysis of selected run numbers
 def printWaveform():
 
-    runNumber = 3791
+    runNumber = 3899
     startEntry = 200
     entries = 5
 
     timeStamp = md.getTimeStamp(runNumber)
     row = md.getRowForRunNumber(runNumber)
+    md.setIfOnHDD(True)
     md.defineGlobalVariableRun(row)
     dm.checkIfRepositoryOnStau()
     
+    print timeStamp
+    
     dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(timeStamp)+".tree.root"
+    
+    if md.isOnHDD():
+    
+        dataPath = "/Volumes/HDD500/" + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
+    
     data = rnm.root2array(dataPath, start=startEntry, stop=startEntry+entries)
     channels = data.dtype.names
+    
+    print data.dtype
     
     noise_average = dm.importNoiseFile("pedestal")
     noise_std = dm.importNoiseFile("noise")
@@ -49,7 +59,7 @@ def printWaveform():
    
         canvas = ROOT.TCanvas("Waveforms","Waveforms")
         leg = ROOT.TLegend (0.73, 0.6, 0.93, 0.9)
-        leg.SetHeader("N = "+str(sigma))
+        leg.SetHeader("N = "+str(N))
     
         graph_waveform[chan]        = ROOT.TGraph(1002*entries)
         graph_line_threshold[chan]  = ROOT.TGraph(1002*entries)

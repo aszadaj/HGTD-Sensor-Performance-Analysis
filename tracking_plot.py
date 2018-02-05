@@ -36,7 +36,7 @@ def produceTrackingGraphs(peak_values, tracking):
         
         if chan != md.getChannelNameForSensor("SiPM-AFP"):
         
-            #produce2DPlots(peak_values, tracking)
+            produce2DPlots(peak_values, tracking)
             produceEfficiencyPlot(peak_values, tracking)
 
 
@@ -60,7 +60,8 @@ def produce2DPlots(peak_values, tracking):
     canvas.cd()
     graph2D.Draw("COLZ")
     canvas.Update()
-    canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/tracking/tracking_"+str(md.getBatchNumber())+"_"+chan + ".pdf")
+    #canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/tracking/tracking_"+str(md.getBatchNumber())+"_"+chan + ".pdf")
+    canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/tracking/tracking_"+str(md.getRunNumber())+"_"+chan + ".pdf")
     canvas.Clear()
 
 
@@ -89,20 +90,23 @@ def produceEfficiencyPlot(peak_values, tracking):
         for j in range(1, yBins+1):
             bin = efficiency.GetGlobalBin(i,j)
             num = efficiency.GetTotalHistogram().GetBinContent(bin)
-            if num < 3:
+            if num < 1:
                 efficiency.SetPassedEvents(bin, 0)
                 efficiency.SetTotalEvents(bin, 0)
 
 
     # Print TEfficiency plot
     headTitle = "Efficiency in each bin, "
-    title = headTitle + ", Sep 2017 batch " + str(md.getBatchNumber())+", channel " + chan_index + ", sensor: " + md.getNameOfSensor(chan) + "; " + "X position (mm)" + "; " + "Y position (mm)"
+    #title = headTitle + ", Sep 2017 batch " + str(md.getBatchNumber()) + ", channel " + chan_index + ", sensor: " + md.getNameOfSensor(chan) + "; " + "X position (mm)" + "; " + "Y position (mm)"
+    
+    title = headTitle + ", Sep 2017 batch " + str(md.getRunNumber()) + ", channel " + chan_index + ", sensor: " + md.getNameOfSensor(chan) + ", entries "+str(int(LGAD.GetEntries())) + "; " + "X position (mm)" + "; " + "Y position (mm)"
 
     efficiency.SetTitle(title)
     canvas.cd()
     efficiency.Draw("COLZ")
     canvas.Update()
-    canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/tracking/tracking_efficiency_"+str(md.getBatchNumber())+"_"+chan + ".pdf")
+    #canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/tracking/tracking_efficiency_"+str(md.getBatchNumber())+"_"+chan + ".pdf")
+    canvas.Print(md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/tracking/tracking_efficiency_"+str(md.getRunNumber())+"_"+chan + ".pdf")
     canvas.Clear()
 
 

@@ -35,9 +35,8 @@ def noiseAnalysis():
         for index in range(0, len(runLog)):
      
             md.defineGlobalVariableRun(runLog[index])
-            
-#            if (not md.isNoiseFileDone(md.getRunNumber()) and md.getRunNumber() != 3902):
-            if (md.getRunNumber() == 3902):
+        
+            if md.isNoiseFileDone(md.getRunNumber()):
 
                 print "Run", md.getRunNumber()
                 
