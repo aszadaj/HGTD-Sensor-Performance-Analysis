@@ -75,7 +75,7 @@ def produceTimingDistributionPlots(time_difference, peak_value, peak_time):
             
             index = int(chan[-1:])
             
-            constant_sigma = 2
+            constant_sigma = 5
             
             timing_mean = np.average(time_difference[chan][np.nonzero(time_difference[chan])])
             

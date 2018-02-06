@@ -16,6 +16,8 @@ def pulseAnalysis(data, pedestal, noise):
     rise_times      =   np.zeros(len(data), dtype = data.dtype)
 
     criticalValues = findCriticalValues(data)
+    
+    print criticalValues
 
     for event in range(0,len(data)):
     

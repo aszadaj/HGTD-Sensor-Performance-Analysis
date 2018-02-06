@@ -26,7 +26,7 @@ def main():
     ######  NOISE, PULSE, TELESCOPE AND TIMING   ######
 
     metadata.setBatchNumbers([306])
-    metadata.setLimitRunNumbers(1)                # Run numbers to be considered (0 = all)
+    metadata.setLimitRunNumbers(2)                # Run numbers to be considered (0 = all)
     metadata.setEntriesForQuickAnalysis(0)    # Entries to be considered (0 = all)
  
     # METHODS #
