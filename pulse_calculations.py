@@ -7,9 +7,11 @@ import sys
 #wr.simplefilter('ignore', np.RankWarning)
 #np.seterr(divide='ignore', invalid='ignore')
 
-def pulseAnalysis(data, pedestal, noise, criticalValues):
+def pulseAnalysis(data, pedestal, noise):
 
     channels = data.dtype.names
+    
+    criticalValues = findCriticalValues(data)
     
     peak_times      =   np.zeros(len(data), dtype = data.dtype)
     peak_values     =   np.zeros(len(data), dtype = data.dtype)
