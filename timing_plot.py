@@ -22,6 +22,9 @@ def timingPlots():
 
         runNumbers = md.getAllRunNumbers(batchNumber)
         
+        if md.limitRunNumbers != 0:
+            runNumbers = runNumbers[0:md.limitRunNumbers] # Restrict to some run numbers
+        
         availableRunNumbersTiming = md.readFileNames("timing")
     
         for runNumber in runNumbers:
