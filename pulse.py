@@ -46,6 +46,8 @@ def pulseAnalysis():
                 [peak_times, peak_values, rise_times] = pulseAnalysisPerRun()
                 dm.exportPulseData(peak_times, peak_values, rise_times)
                 
+                del peak_times, peak_values, rise_times
+                
                 print "Done with run", md.getRunNumber(), "\n"
 
 
@@ -80,7 +82,8 @@ def pulseAnalysisPerRun():
     noise_std     = dm.importNoiseFile("noise")
     
     pedestal, noise = p_calc.getPedestalAndNoise(noise_average, noise_std)
-
+    
+    del noise_average, noise_std
 
     results = p.map(lambda chunk: multiProcess(dataPath, pedestal, noise, chunk, chunk+step), ranges)
     
@@ -94,7 +97,10 @@ def pulseAnalysisPerRun():
 def multiProcess(dataPath, pedestal, noise, begin, end):
 
     data = rnm.root2array(dataPath, start=begin, stop=end)
+    
     peak_times, peak_values, rise_times = p_calc.pulseAnalysis(data, pedestal, noise)
+    
+    del data
     
     return peak_times, peak_values, rise_times
 

@@ -41,8 +41,9 @@ def noiseAnalysis():
                 print "Run", md.getRunNumber()
                 
                 [noise_average, noise_std] = noiseAnalysisPerRun()
-                
                 dm.exportNoiseData(noise_average, noise_std)
+                
+                del noise_average, noise_std
                 
                 print "Done with run", md.getRunNumber(),"\n"
 
@@ -58,7 +59,7 @@ def noiseAnalysisPerRun():
     # Configure inputs for multiprocessing
     p = Pool(dm.threads)
     max = md.getNumberOfEvents()
-    step = 8000
+    step = 10000
     
     # Quick Analysis
     if md.maxEntries != 0:
@@ -72,7 +73,6 @@ def noiseAnalysisPerRun():
     
         dataPath = "/Volumes/HDD500/" + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
 
-    
     results = p.map(lambda chunk: multiProcess(dataPath, chunk, chunk+step), ranges)
 
     # results change form, now each element is a variable
@@ -88,6 +88,8 @@ def multiProcess(dataPath, begin, end):
     data = rnm.root2array(dataPath, start=begin, stop=end)
  
     noise_average, noise_std = n_calc.findNoiseAverageAndStd(data)
+    
+    del data
     
     return noise_average, noise_std
 
