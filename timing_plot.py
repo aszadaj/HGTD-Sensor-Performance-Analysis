@@ -72,7 +72,7 @@ def produceTimingDistributionPlots(time_difference, peak_value, peak_time):
             
             index = int(chan[-1:])
             
-            constant_sigma = 3
+            constant_sigma = 2
             
             timing_mean = np.average(time_difference[chan][np.nonzero(time_difference[chan])])
             
@@ -98,7 +98,9 @@ def produceTimingDistributionPlots(time_difference, peak_value, peak_time):
             for entry in range(0, len(time_difference[chan])):
 
                 if time_difference[chan][entry] != 0:
+                    
                     time_difference_graph[chan].Fill(time_difference[chan][entry])
+                
 
                 if peak_time[chan][entry] != 0 and peak_time[SiPM_chan][entry] != 0:
                     
@@ -108,7 +110,7 @@ def produceTimingDistributionPlots(time_difference, peak_value, peak_time):
                
                     time_diff_2d_sipm[chan].Fill(time_difference[chan][entry], peak_value[SiPM_chan][entry]*-1000, 1)
 
-            constant_sigma = 1.5
+            constant_sigma = 1
 
             timing_min = timing_mean - constant_sigma * timing_std
     

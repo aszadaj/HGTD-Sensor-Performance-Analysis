@@ -22,6 +22,9 @@ def pulsePlots():
 
         runNumbers = md.getAllRunNumbers(batchNumber)
         
+        if md.limitRunNumbers != 0:
+            runNumbers = runNumbers[0:md.limitRunNumbers] # Restrict to some run numbers
+        
         availableRunNumbersPeakTimes    = md.readFileNames("pulse_peak_time")
         availableRunNumbersPeakValues   = md.readFileNames("pulse_peak_value")
         availableRunNumbersRiseTimes    = md.readFileNames("pulse_rise_time")

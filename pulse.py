@@ -37,7 +37,9 @@ def pulseAnalysis():
       
             md.defineGlobalVariableRun(runLog[index])
             
-            if not md.isPulseFileDone(md.getRunNumber()):
+            # DEBUG, considering only one file
+            #if not md.isPulseFileDone(md.getRunNumber()):
+            if md.isPulseFileDone(md.getRunNumber()):
             
                 print "Run", md.getRunNumber()
                 
@@ -60,7 +62,7 @@ def pulseAnalysisPerRun():
     # Configure inputs for multiprocessing
     p = Pool(dm.threads)
     max = md.getNumberOfEvents()
-    step = 8000
+    step = 9000
 
     # Quick Analysis
     if md.maxEntries != 0:

@@ -1,6 +1,8 @@
 import ROOT
 import metadata as md
 import numpy as np
+import root_numpy as rnm
+
 import data_management as dm
 
 # Note, the function receives in SI units and with negative impulses.
@@ -21,6 +23,9 @@ def noisePlots():
         noise_std       = np.empty(0)
 
         runNumbers = md.getAllRunNumbers(batchNumber)
+        
+        if md.limitRunNumbers != 0:
+            runNumbers = runNumbers[0:md.limitRunNumbers] # Restrict to some run numbers
 
         availableRunNumbersNoise        = md.readFileNames("noise_noise")
         availableRunNumbersPedestal     = md.readFileNames("noise_pedestal")
@@ -59,29 +64,45 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
     noise_graph = dict()
     
     noise_average, noise_std = dm.convertNoiseData(noise_average, noise_std)
-    
+ 
+    # First fill pedestal and noise histograms and create fits
     for chan in channels:
         
-        constant_sigma = 5
+        width = 6
         
-        pedestal_min = np.average(noise_average[chan]) - constant_sigma*np.std(noise_average[chan])
-        pedestal_max = np.average(noise_average[chan]) + constant_sigma*np.std(noise_average[chan])
+        pedestal_mean = np.average(noise_average[chan][np.nonzero(noise_average[chan])])
+        pedestal_width  = np.std(noise_average[chan][np.nonzero(noise_average[chan])])
         
-        noise_min = np.average(noise_std[chan]) - constant_sigma*np.std(noise_std[chan])
-        noise_max = np.average(noise_std[chan]) + constant_sigma*np.std(noise_std[chan])
+        pedestal_min = pedestal_mean - width * pedestal_width
+        pedestal_max = pedestal_mean + width * pedestal_width
         
+  
+        noise_mean = np.average(noise_std[chan][np.nonzero(noise_std[chan])])
+        noise_width  = np.std(noise_std[chan][np.nonzero(noise_std[chan])])
+        
+        noise_min = noise_mean - width * noise_width
+        noise_max = noise_mean + width * noise_width
+  
         
         pedestal_graph[chan] = ROOT.TH1D("Pedestal, channel "+str(int(chan[-1:])), "pedestal"+chan, 1000, pedestal_min, pedestal_max)
+        
         noise_graph[chan]    = ROOT.TH1D("Noise, channel "+str(int(chan[-1:])), "noise"+chan, 1000, noise_min, noise_max)
 
-
         for entry in range(0, len(noise_average)):
-        
+
             if noise_std[entry][chan] != 0:
                 pedestal_graph[chan].Fill(noise_average[entry][chan])
                 noise_graph[chan].Fill(noise_std[entry][chan])
     
-
+        # Change width to match better with fit
+        width = 4.5
+    
+        pedestal_min = pedestal_mean - width * pedestal_width
+        pedestal_max = pedestal_mean + width * pedestal_width
+        
+        noise_min = noise_mean - width * noise_width
+        noise_max = noise_mean + width * noise_width
+        
         pedestal_graph[chan].Fit("gaus","","", pedestal_min, pedestal_max)
         noise_graph[chan].Fit("gaus","","", noise_min, noise_max)
 
