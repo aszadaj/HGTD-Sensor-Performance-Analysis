@@ -134,6 +134,8 @@ def checkIfRepositoryOnStau():
         number = 16
         sourceFolderPath = "/home/warehouse/aszadaj/HGTD_material/"
         onStau = True
+    
+        md.setIfOnHDD(False)
 
     defineNumberOfThreads(number)
     md.defineDataFolderPath(sourceFolderPath)
