@@ -12,6 +12,7 @@ def pulseAnalysis(data, pedestal, noise):
     channels = data.dtype.names
     
     criticalValues = findCriticalValues(data)
+    print criticalValues
     
     peak_times      =   np.zeros(len(data), dtype = data.dtype)
     peak_values     =   np.zeros(len(data), dtype = data.dtype)
