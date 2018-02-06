@@ -48,10 +48,10 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, criticalValue):
     
         if threshold_indices[0].size != 0:
             
-            # Consider consecutive points, with lowest peak value
-#            group_points = group_consecutives(threshold_indices[0])
-#            group_points_amplitude = [np.amin(data[group]) for group in group_points]
-#            threshold_indices = group_points[group_points_amplitude.index(min(group_points_amplitude))]
+             #Consider consecutive points, with lowest peak value
+            group_points = group_consecutives(threshold_indices[0])
+            group_points_amplitude = [np.amin(data[group]) for group in group_points]
+            threshold_indices = group_points[group_points_amplitude.index(min(group_points_amplitude))]
 
             if len(threshold_indices) > 6:
                 
