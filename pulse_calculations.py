@@ -7,17 +7,13 @@ import sys
 #wr.simplefilter('ignore', np.RankWarning)
 #np.seterr(divide='ignore', invalid='ignore')
 
-def pulseAnalysis(data, pedestal, noise):
+def pulseAnalysis(data, pedestal, noise, criticalValues):
 
     channels = data.dtype.names
     
     peak_times      =   np.zeros(len(data), dtype = data.dtype)
     peak_values     =   np.zeros(len(data), dtype = data.dtype)
     rise_times      =   np.zeros(len(data), dtype = data.dtype)
-
-    criticalValues = findCriticalValues(data)
-    
-    print criticalValues
 
     for event in range(0,len(data)):
     

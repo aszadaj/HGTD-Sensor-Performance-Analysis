@@ -14,7 +14,7 @@ ROOT.gROOT.SetBatch(True)
 def timingAnalysisPerRun(peak_time, peak_value):
 
     SiPM_chan = md.getChannelNameForSensor("SiPM-AFP")
-    print "SiPM", chan
+    print "SiPM", SiPM_chan
     
     time_difference = np.zeros(len(peak_time), dtype = peak_time.dtype)
     

@@ -80,6 +80,9 @@ def pulseAnalysisPerRun():
     noise_std     = dm.importNoiseFile("noise")
     
     pedestal, noise = p_calc.getPedestalAndNoise(noise_average, noise_std)
+    criticalValues = p_calc.findCriticalValues(data)
+    
+    print criticalValues
 
     results = p.map(lambda chunk: multiProcess(dataPath, pedestal, noise, chunk, chunk+step), ranges)
     
@@ -90,10 +93,10 @@ def pulseAnalysisPerRun():
 
 
 # Start multiprocessing analysis of noises and pulses in ROOT considerOnlyRunsfile
-def multiProcess(dataPath, pedestal, noise, begin, end):
+def multiProcess(dataPath, criticalValues, pedestal, noise, begin, end):
 
     data = rnm.root2array(dataPath, start=begin, stop=end)
-    peak_times, peak_values, rise_times = p_calc.pulseAnalysis(data, pedestal, noise)
+    peak_times, peak_values, rise_times = p_calc.pulseAnalysis(data, pedestal, noise, criticalValues)
     
     return peak_times, peak_values, rise_times
 
