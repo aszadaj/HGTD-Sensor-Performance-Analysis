@@ -39,8 +39,8 @@ def main():
     
     #tracking.trackingAnalysis()
     
-    #timing.timingAnalysis()
-    #timing_plot.timingPlots()
+    timing.timingAnalysis()
+    timing_plot.timingPlots()
     
     ###########
     
