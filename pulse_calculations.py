@@ -33,7 +33,7 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, criticalValue):
     timeScope = 0.1
     
     # Factor to regulate the threshold.
-    N = 6
+    N = 5
     
     # Relevant values from the pulse
     peak_value = 0
@@ -49,17 +49,17 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, criticalValue):
         if threshold_indices[0].size != 0:
             
             # Consider consecutive points, with lowest peak value
-            group_points = group_consecutives(threshold_indices[0])
-            group_points_amplitude = [np.amin(data[group]) for group in group_points]
-            threshold_indices = group_points[group_points_amplitude.index(min(group_points_amplitude))]
-            
+#            group_points = group_consecutives(threshold_indices[0])
+#            group_points_amplitude = [np.amin(data[group]) for group in group_points]
+#            threshold_indices = group_points[group_points_amplitude.index(min(group_points_amplitude))]
+
             if len(threshold_indices) > 6:
                 
                 impulse_indices = np.arange(threshold_indices[0], np.argmin(data)+1)
                 impulse_data = data[impulse_indices]
                 
                 # Data selection for polynomial fit
-                point_difference = 2
+                point_difference = 3
                 peak_first_index = np.argmin(data) - point_difference
                 peak_last_index = np.argmin(data) + point_difference
                 peak_indices = np.arange(peak_first_index, peak_last_index+1)
@@ -78,7 +78,7 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, criticalValue):
                         # Derivative polynomial fit
                         peak_time = -peak_fit[1]/(2*peak_fit[0])
                      
-                        rise_time = (np.amin(data)-pedestal)*0.8/impulse_fit[0]
+                        rise_time = (np.amin(data))*0.8/impulse_fit[0]
 
     except:
     
