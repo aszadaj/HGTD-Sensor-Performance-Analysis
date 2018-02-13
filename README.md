@@ -59,7 +59,7 @@ Before that, a list of functions can be choosed, these are:
 The first two functions needs oscilloscope files to run with. In general they do not to be run, since all files have been already created and exported. These are in ```HGTD_material/data_hgtd_efficiency_sep_2017``` folder.
 The methods are chosen by commenting out those which are of interest.
 
- CHOOSING BATCHES
+##CHOOSING BATCHES
 
 The function
  
