@@ -13,24 +13,29 @@ The code's input is an oscilloscope file for a given run, structured as a 3-dim 
 are 8 channels (chan0, chan1, chan2, ..., chan7), approximatelly 200000 events and 1002 data points. The data points lists voltages for
 which the pulses are negative and the time separation between the points is defined to be 0.1 ns.
 
+
 ```Resources - resources/run_list_tb_sep_2017```
  
 In the resources file, there is a run log  ```run_list_tb_sep_2017.csv``` which is copied form the oficial run list with modifications.
 These modifications are in form of removed run numbers which were either corrupted (the oscilloscope files) are not relevant to be
 used. 88 files out of 130 are considered from the original one.
  
+ 
 ```Produced data location - HGTD_material/oscilloscope_data_sep_2017```
 
 The location of oscilloscope files, not provided.
+
 
 ```Produced data location - HGTD_material/tracking_data_sep_2017```
 
 Here are the telescope files. For the telescope files there are only for batches 306, 507 and 607
  
+ 
 ```Produced plots location - HGTD_material/plots_hgtd_efficiency_sep_2017```
 
 Here are all produced plots from each of the sections listed below. In the folder there are different sensors listed and withing there are
 different folders marking which analysis has been performed.
+
 
 ```Produced data location - HGTD_material/data_hgtd_efficiency_sep_2017```
 
