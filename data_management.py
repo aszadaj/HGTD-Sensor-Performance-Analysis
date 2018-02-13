@@ -41,7 +41,6 @@ def exportROOTFile(data, group, category=""):
 
 
 
-
 # Import noise data file
 def importNoiseFile(category):
     
@@ -124,19 +123,20 @@ def changeDTYPEOfData(data):
 # Check if the repository is on the stau server
 def checkIfRepositoryOnStau():
 
-    number = 4
+    threadNumber = 4
+    
     # sourceFolderPath is for plots, data, tracking data etc
-    sourceFolderPath = "/Users/aszadaj/cernbox/SH203X/HGTD_material/"
+    sourceFolderPath = "HGTD_material/"
     
     if os.path.dirname(os.path.realpath(__file__)) == "/home/aszadaj/Gitlab/HGTD-Efficiency-analysis":
     
-        number = 16
+        threadNumber = 16
         sourceFolderPath = "/home/warehouse/aszadaj/HGTD_material/"
         onStau = True
     
-        md.setIfOnHDD(False)
+        setIfOnHDD(False)
 
-    defineNumberOfThreads(number)
+    defineNumberOfThreads(threadNumber)
     md.defineDataFolderPath(sourceFolderPath)
 
 
@@ -164,5 +164,25 @@ def convertPulseData(peak_values):
         peak_values[chan] =  np.multiply(peak_values[chan], -1000)
 
     return peak_values
+
+
+def convertTrackingData(tracking, peak_values):
+
+    for dimension in tracking.dtype.names:
+        tracking[dimension] = np.multiply(tracking[dimension], 0.001)
+
+    for chan in peak_values.dtype.names:
+        peak_values[chan] = np.multiply(peak_values[chan], -1000)
+
+    return tracking, peak_values
+
+
+def setIfOnHDD(value):
+    global hdd
+    hdd = value
+
+def isOnHDD():
+
+    return hdd
 
 

@@ -6,9 +6,12 @@ import data_management as dm
 
 ROOT.gStyle.SetOptFit()
 
+
+# Concatenate all runs for each batch. When the files are concatenated, produce plots for that batch until
+# all batches are considered.
 def pulsePlots():
 
-    print "Start producing PULSE plots... \n"
+    print "\nStart producing PULSE plots, batches:", md.batchNumbers
     
     for batchNumber in md.batchNumbers:
         
@@ -52,31 +55,31 @@ def pulsePlots():
         
             print "Done with importing files for", batchNumber, "producing plots.\n"
 
-            producePulseDistributionPlots(peak_times, peak_values, rise_times, batchNumber)
+            producePulsePlots(peak_times, peak_values, rise_times, batchNumber)
 
     print "Done with producing PULSE plots.\n"
 
-def producePulseDistributionPlots(peak_times, peak_values, rise_times, batchNumber):
 
+# Fill TH1 objects
+def producePulsePlots(peak_times, peak_values, rise_times, batchNumber):
+
+    global canvas
+    
     peak_values = dm.convertPulseData(peak_values)
     
-    canvas_peak_times = ROOT.TCanvas("Peak time Distribution", "peak_time")
-    canvas_peak_values = ROOT.TCanvas("Peak value Distribution", "peak_value")
-    canvas_rise_times = ROOT.TCanvas("Rise time Distribution", "rise_time")
+    canvas = ROOT.TCanvas("Pulse", "pulse")
 
     peak_times_graph = dict()
     peak_values_graph = dict()
     rise_times_graph = dict()
-
     
+
     for chan in peak_times.dtype.names:
     
         index = int(chan[-1:])
         
         peak_times_graph[chan] = ROOT.TH1D("Peak time channel "+str(index), "peak_time" + chan, 1000, 0, 100)
-        
         peak_values_graph[chan] = ROOT.TH1D("Peak value channel "+str(index), "peak_value" + chan, 1000, 0, 400)
-        
         rise_times_graph[chan] = ROOT.TH1D("Rise time channel "+str(index), "rise_time" + chan, 1000, 0, 2)
         
         
@@ -92,45 +95,36 @@ def producePulseDistributionPlots(peak_times, peak_values, rise_times, batchNumb
                 rise_times_graph[chan].Fill(rise_times[chan][entry])
     
 
-        typeOfGraph = "peak_time"
-        defineAndProduceHistogram(peak_times_graph[chan],canvas_peak_times,typeOfGraph,chan)
-        
-        typeOfGraph = "peak_value"
-        defineAndProduceHistogram(peak_values_graph[chan],canvas_peak_values,typeOfGraph,chan)
-        
-        typeOfGraph = "rise_time"
-        defineAndProduceHistogram(rise_times_graph[chan],canvas_rise_times,typeOfGraph,chan)
 
-
-def defineAndProduceHistogram(graphList,canvas,typeOfGraph,chan):
-
-    headTitle = "Distribution of pulse rise times, Sep 2017 batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])) + ", sensor: " + str(md.getNameOfSensor(chan))
-    xAxisTitle = "Time (ns)"
-    yAxisTitle = "Number (N)"
-    fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/pulse/rise_time_plots/rise_time_distribution_"+str(md.getBatchNumber())+"_"+chan+".pdf"
-    
-    if typeOfGraph == "peak_time":
-    
         headTitle = "Distribution of pulse peak times, Sep 2017 batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])) + ", sensor: " + str(md.getNameOfSensor(chan))
         xAxisTitle = "Time (ns)"
-        fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/pulse/peak_time_plots/peak_time_distribution_"+str(md.getBatchNumber())+"_"+chan+".pdf"
-    
-    
-    elif typeOfGraph == "peak_value":
-    
+        yAxisTitle = "Number (N)"
+        fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/peak_time_plots/peak_time_distribution_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
+        exportHistogram(peak_times_graph[chan], titles)
+        
         headTitle = "Distribution of pulse peak values, Sep 2017 batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])) + ", sensor: " + str(md.getNameOfSensor(chan))
         xAxisTitle = "Amplitude (mV)"
-        fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/pulse/peak_value_plots/peak_value_distribution_"+str(md.getBatchNumber())+"_"+chan+".pdf"
+        yAxisTitle = "Number of entries (N)"
+        fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/peak_value_plots/peak_value_distribution_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
+        exportHistogram(peak_values_graph[chan], titles)
+        
+        headTitle = "Distribution of pulse rise times, Sep 2017 batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])) + ", sensor: " + str(md.getNameOfSensor(chan))
+        xAxisTitle = "Time (ns)"
+        yAxisTitle = "Number of entries (N)"
+        fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/rise_time_plots/rise_time_distribution_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
+        exportHistogram(rise_times_graph[chan], titles)
 
 
-    graphList.SetLineColor(1)
-    graphList.SetMarkerColor(1)
-    graphList.GetYaxis().SetTitle(yAxisTitle)
-    graphList.GetXaxis().SetTitle(xAxisTitle)
+# Produce histograms
+def exportHistogram(graphList, titles):
+
+    graphList.SetTitle(titles[0])
+    graphList.GetXaxis().SetTitle(titles[1])
+    graphList.GetYaxis().SetTitle(titles[2])
     
-    graphList.SetTitle(headTitle)
-    
-    canvas.cd()
     graphList.Draw()
     canvas.Update()
-    canvas.Print(fileName)
+    canvas.Print(titles[3])

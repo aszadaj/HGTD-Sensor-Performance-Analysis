@@ -37,7 +37,7 @@ def pulseAnalysis():
       
             md.defineGlobalVariableRun(runLog[index])
             
-            # DEBUG, considering only one file
+            # DEBUG
             #if not md.isPulseFileDone(md.getRunNumber()):
             if md.isPulseFileDone(md.getRunNumber()):
             
@@ -59,8 +59,6 @@ def pulseAnalysis():
 # Perform noise, pulse and telescope analysis
 def pulseAnalysisPerRun():
     
-    startTimeRun = md.getTime()
-    
     # Configure inputs for multiprocessing
     p = Pool(dm.threads)
     max = md.getNumberOfEvents()
@@ -74,7 +72,7 @@ def pulseAnalysisPerRun():
     
     dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
     
-    if md.isOnHDD():
+    if dm.isOnHDD():
     
         dataPath = "/Volumes/HDD500/" + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
 

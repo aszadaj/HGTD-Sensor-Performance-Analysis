@@ -69,7 +69,7 @@ def noiseAnalysisPerRun():
     
     dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
     
-    if md.isOnHDD():
+    if dm.isOnHDD():
     
         dataPath = "/Volumes/HDD500/" + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
 

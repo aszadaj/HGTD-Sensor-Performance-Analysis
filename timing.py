@@ -47,9 +47,9 @@ def timingAnalysis():
                 # Import files per run
                 peak_time_run = dm.importPulseFile("peak_time")
                 peak_value_run = dm.importPulseFile("peak_value")
-              
+  
                 time_difference_run = t_calc.timingAnalysisPerRun(peak_time_run, peak_value_run)
-                
+
                 # Export per run number
                 dm.exportTimingData(time_difference_run)
                 
@@ -60,16 +60,4 @@ def timingAnalysis():
 
     print "Done with TIMING analysis. Time analysing: "+str(md.getTime()-startTime)+"\n"
 
-
-# Get actual time
-def getTime():
-
-    return datetime.now().replace(microsecond=0)
-
-
-# Print time stamp
-def printTime():
-
-    time = str(datetime.now().time())
-    print  "\nTime: " + str(time[:-7])
 

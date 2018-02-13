@@ -2,16 +2,17 @@ import ROOT
 import metadata as md
 import numpy as np
 import root_numpy as rnm
-
 import data_management as dm
 
-# Note, the function receives in SI units and with negative impulses.
 
 ROOT.gStyle.SetOptFit()
 
+
+# Concatenate all runs for each batch. When the files are concatenated, produce plots for that batch until
+# all batches are considered.
 def noisePlots():
 
-    print "Start producing NOISE plots... \n"
+    print "\nStart producing NOISE plots, batches:", md.batchNumbers
     
     for batchNumber in md.batchNumbers:
         
@@ -52,22 +53,28 @@ def noisePlots():
         
             print "Done with importing files for", batchNumber, "producing plots.\n"
         
-            produceNoiseDistributionPlots(noise_average, noise_std)
+            produceNoisePlots(noise_average, noise_std)
 
     print "Done with producing NOISE plots.\n"
 
-def produceNoiseDistributionPlots(noise_average, noise_std):
+
+def produceNoisePlots(noise_average, noise_std):
     
- 
-    channels = noise_average.dtype.names
+    global canvas, chan
+    
+    noise_average, noise_std = dm.convertNoiseData(noise_average, noise_std)
+    
+    canvas = ROOT.TCanvas("Noise", "noise")
+
     pedestal_graph = dict()
     noise_graph = dict()
     
-    noise_average, noise_std = dm.convertNoiseData(noise_average, noise_std)
+    
  
     # First fill pedestal and noise histograms and create fits
-    for chan in channels:
+    for chan in noise_average.dtype.names:
         
+        # Automized constants for setting the range of the TH1 graph
         width = 6
         
         pedestal_mean = np.average(noise_average[chan][np.nonzero(noise_average[chan])])
@@ -82,7 +89,7 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
         
         noise_min = noise_mean - width * noise_width
         noise_max = noise_mean + width * noise_width
-  
+        
         
         pedestal_graph[chan] = ROOT.TH1D("Pedestal, channel "+str(int(chan[-1:])), "pedestal"+chan, 1000, pedestal_min, pedestal_max)
         
@@ -94,7 +101,7 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
                 pedestal_graph[chan].Fill(noise_average[entry][chan])
                 noise_graph[chan].Fill(noise_std[entry][chan])
     
-        # Change width to match better with fit
+        # Automized constants for setting the range of the Gauss Fit
         width = 4.5
     
         pedestal_min = pedestal_mean - width * pedestal_width
@@ -107,54 +114,30 @@ def produceNoiseDistributionPlots(noise_average, noise_std):
         noise_graph[chan].Fit("gaus","","", noise_min, noise_max)
 
 
-    canvas_pedestal = ROOT.TCanvas("Pedestal per channel", "Pedestal per channel")
-    canvas_noise = ROOT.TCanvas("Noise per channel", "Noise per channel")
-   
-    for chan in channels:
-    
-        titleAbove = "Distribution of standard deviation values (noise) from each entry, Sep 2017 batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])) + ", sensor: " + str(md.getNameOfSensor(chan))
+        headTitle = "Distribution of standard deviation values (noise) from each entry, Sep 2017 batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])) + ", sensor: " + str(md.getNameOfSensor(chan))
         xAxisTitle = "Standard deviation (mV)"
         yAxisTitle = "Number of entries (N)"
-        setGraphAttributes(noise_graph[chan], titleAbove, xAxisTitle, yAxisTitle)
+        fileName = str(md.getSourceFolderPath()) + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/noise/noise_plots/noise_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
+        exportHistograms(noise_graph[chan], titles)
         
         
-        titleAbove = "Distribution of noise mean values (pedestal) from each entry, batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])) +", sensor: " + str(md.getNameOfSensor(chan))
+        headTitle = "Distribution of noise mean values (pedestal) from each entry, batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])) +", sensor: " + str(md.getNameOfSensor(chan))
         xAxisTitle = "Mean value (mV)"
         yAxisTitle = "Number of entries (N)"
-        setGraphAttributes(pedestal_graph[chan], titleAbove, xAxisTitle, yAxisTitle)
-        
-        fileName = str(md.getSourceFolderPath()) + "plots_hgtd_efficiency_sep_2017/noise/pedestal_plots/pedestal_"+str(md.getBatchNumber())+"_"+chan+".pdf"
-        
-        exportGraph(pedestal_graph[chan], canvas_pedestal, fileName)
-        
-        fileName = str(md.getSourceFolderPath()) + "plots_hgtd_efficiency_sep_2017/noise/noise_plots/noise_"+str(md.getBatchNumber())+"_"+chan+".pdf"
-        
-        exportGraph(noise_graph[chan], canvas_noise, fileName)
+        fileName = str(md.getSourceFolderPath()) + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/noise/pedestal_plots/pedestal_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
+        exportHistograms(pedestal_graph[chan], titles)
+
+
+# Produce histograms
+def exportHistograms(graphList, titles):
+
+    graphList.SetTitle(titles[0])
+    graphList.GetXaxis().SetTitle(titles[1])
+    graphList.GetYaxis().SetTitle(titles[2])
     
-    del canvas_pedestal, canvas_noise
-
-
-
-# Define the setup for graphs
-# Input: dictionary with TH1 objects, and title information for the graph
-def setGraphAttributes(graphList,titleAbove,xAxisTitle,yAxisTitle):
-    
-    graphList.SetLineColor(1)
-    graphList.SetMarkerColor(1)
-    graphList.GetYaxis().SetTitle(yAxisTitle)
-    graphList.GetXaxis().SetTitle(xAxisTitle)
-    
-    setTitleAboveGraph = titleAbove
-    graphList.SetTitle(setTitleAboveGraph)
-
-
-# Produce PDF file for selected chan
-# Input: dictionary with TH1 objects, TCanvas object and filename for the produced file
-# Output: mean value for selected dictionary and chan
-def exportGraph(graphList,canvas,fileName):
-    
-    canvas.cd()
     graphList.Draw()
     canvas.Update()
-    canvas.Print(fileName)
+    canvas.Print(titles[3])
 

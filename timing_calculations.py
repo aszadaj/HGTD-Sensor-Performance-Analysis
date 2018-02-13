@@ -14,10 +14,9 @@ ROOT.gROOT.SetBatch(True)
 def timingAnalysisPerRun(peak_time, peak_value):
 
     SiPM_chan = md.getChannelNameForSensor("SiPM-AFP")
-    print "SiPM", SiPM_chan
     
     time_difference = np.zeros(len(peak_time), dtype = peak_time.dtype)
-    
+  
     channels = peak_time.dtype.names
 
     for chan in channels:
@@ -25,10 +24,8 @@ def timingAnalysisPerRun(peak_time, peak_value):
         if chan != SiPM_chan:
             
             for event in range (0, len(peak_time)):
-                print chan
+                if peak_time[SiPM_chan][event] != 0 and peak_value[SiPM_chan][event] < md.getPulseAmplitudeCut(SiPM_chan) and peak_value[chan][event] < md.getPulseAmplitudeCut(chan):
                 
-                if peak_time[chan][event] != 0 and peak_time[SiPM_chan][event] != 0 and peak_value[chan][event] < -md.getPulseAmplitudeCut(chan):
-
                     time_difference[chan][event] = peak_time[event][chan] - peak_time[event][SiPM_chan]
 
 

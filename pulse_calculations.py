@@ -12,7 +12,6 @@ def pulseAnalysis(data, pedestal, noise):
     channels = data.dtype.names
     
     criticalValues = findCriticalValues(data)
-    print criticalValues
     
     peak_times      =   np.zeros(len(data), dtype = data.dtype)
     peak_values     =   np.zeros(len(data), dtype = data.dtype)
@@ -34,7 +33,7 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, criticalValue):
     timeScope = 0.1
     
     # Factor to regulate the threshold.
-    N = 5
+    N = 6
     
     # Relevant values from the pulse
     peak_value = 0
@@ -50,36 +49,37 @@ def getAmplitudeAndRiseTime (data, chan, pedestal, noise, event, criticalValue):
         if threshold_indices[0].size != 0:
             
             # Consider consecutive points, with lowest peak value
-            group_points = group_consecutives(threshold_indices[0])
-            group_points_amplitude = [np.amin(data[group]) for group in group_points]
-            threshold_indices = group_points[group_points_amplitude.index(min(group_points_amplitude))]
-
-            if len(threshold_indices) > 6:
+            
+#            group_points = group_consecutives(threshold_indices[0])
+#            group_points_amplitude = [np.amin(data[group]) for group in group_points]
+#            threshold_indices = group_points[group_points_amplitude.index(min(group_points_amplitude))]
+            if len(threshold_indices[0]) > 6:
                 
-                impulse_indices = np.arange(threshold_indices[0], np.argmin(data)+1)
+                impulse_indices = np.arange(threshold_indices[0][0], np.argmin(data)+1)
                 impulse_data = data[impulse_indices]
                 
                 # Data selection for polynomial fit
-                point_difference = 3
+                point_difference = 4
                 peak_first_index = np.argmin(data) - point_difference
                 peak_last_index = np.argmin(data) + point_difference
                 peak_indices = np.arange(peak_first_index, peak_last_index+1)
                 peak_data = data[peak_indices]
                 
-                # Corrupted event
-                if np.amin(data) != criticalValue and len(impulse_indices) > 4:
+                # Avoid data which have a limit on the oscilloscope and  require min 4 points on linear fit
+                if np.amin(data) != criticalValue and len(impulse_indices) >= 4:
                 
                     impulse_fit = np.polyfit(impulse_indices*timeScope, impulse_data, 1)
                     peak_fit = np.polyfit(peak_indices*timeScope, peak_data, 2)
                     
-                    if impulse_fit[0] < 0 and peak_fit[0] > 0.05:
-                
-                        peak_value = peak_fit[0]*np.power(np.argmin(data)*timeScope,2) + peak_fit[1]*np.argmin(data)*timeScope + peak_fit[2] - pedestal
+                    if impulse_fit[0] < 0 and peak_fit[0] > 0:
                         
-                        # Derivative polynomial fit
+                        # V_min = a*t_min^2 + b*t_min + c -> V' = 2*a*t_min + b = 0 -> t_min = -b/(2a)
+                        
                         peak_time = -peak_fit[1]/(2*peak_fit[0])
-                     
-                        rise_time = (np.amin(data))*0.8/impulse_fit[0]
+                        peak_value = peak_fit[0] * np.power(peak_time, 2) + peak_fit[1] * peak_time + peak_fit[2] - pedestal
+                        
+                        # t_rise_time = t_0.9 - t_0.1, 0.9 * V_min = at_0.9 + b -> (0.9-0.1)*V_min / a = t_0.9 - t_0.1 -> t_rise_time = 0.8 * V_min / a
+                        rise_time = 0.8 * peak_value/impulse_fit[0]
 
     except:
     

@@ -4,6 +4,7 @@ import csv
 import os
 import datetime as dt
 
+import data_management as dm
 
 ########## METADATA ##########
 
@@ -34,7 +35,7 @@ def restrictToBatch(metaData, batchNumber):
     return runLog
 
 
-# Structure of results: [runLogbatch1, runlogbacth2, ...,] and runLogBacth1 = [run1, run2, run3, ]... run1 = info about the run, as usual.
+# Structure of results: [runLogBatch1, runLogBatch1, ...,] and runLogBatch1 = [run1, run2, run3, ]... run1 = row from the run log for selected run
 def getRunLogBatches(batchNumbers):
 
     if batchNumbers == "all":
@@ -57,7 +58,7 @@ def getRunLogBatches(batchNumbers):
     return runLog
 
 
-
+# Check if the oscilloscope file is available
 def isRootFileAvailable():
 
     availableFiles = readFileNames("oscilloscope")
@@ -68,7 +69,7 @@ def isRootFileAvailable():
 
     return False
 
-
+# Check if the pulse file for timing is available
 def isTimingDataFilesAvailable():
 
 
@@ -81,7 +82,7 @@ def isTimingDataFilesAvailable():
 
     return False
 
-
+# Check if the tracking file is available
 def isTrackingFileAvailable():
 
 
@@ -98,7 +99,7 @@ def isTrackingFileAvailable():
 
     return False
 
-
+# Check if the noise file (noise = standard deviation) file is made
 def isNoiseFileDone(runNumber):
 
     available = False
@@ -111,7 +112,7 @@ def isNoiseFileDone(runNumber):
     return available
 
 
-
+# Check if the pulse file (peak value) file is made
 def isPulseFileDone(runNumber):
 
     available = False
@@ -124,6 +125,7 @@ def isPulseFileDone(runNumber):
     return available
 
 
+# Check if the timing resolution file is made
 def isTimingFileDone(runNumber):
 
     available = False
@@ -137,7 +139,7 @@ def isTimingFileDone(runNumber):
 
 
 
-
+# Read file names which are enlisted in the folder
 def readFileNames(fileType):
 
     folderPath = ""
@@ -190,7 +192,7 @@ def readFileNames(fileType):
 
     mainFolderPath = getSourceFolderPath() + folderPath
     
-    if isOnHDD() and fileType == "oscilloscope":
+    if dm.isOnHDD() and fileType == "oscilloscope":
     
         mainFolderPath = "/Volumes/HDD500/" + folderPath
 
@@ -255,7 +257,7 @@ def getTimeStamp(runNumber=""):
             if int(row[3]) == runNumber:
                 return int(row[4])
 
-
+# Get all time stamps for selected batch
 def getTimeStampsForBatch(batchNumber):
 
     runLog = getRunLogBatches([batchNumber])
@@ -280,10 +282,12 @@ def getNumberOfEvents(timeStamp=""):
             if int(row[4]) == timeStamp:
                 return int(row[6])
 
+# Get the voltage value which cuts the amplitude (to restrict from noise furthermore).
+# Value in negative voltage [-V].
 def getPulseAmplitudeCut(chan):
 
     index = int(chan[-1])
-    return float(runInfo[52+index].replace(",","."))
+    return -float(runInfo[52+index].replace(",","."))
 
 
 
@@ -343,19 +347,6 @@ def defineGlobalVariableRun(row):
     runInfo = row
 
 
-# Get actual time
-def getTime():
-
-    return dt.datetime.now().replace(microsecond=0)
-
-
-# Print time stamp
-def printTime():
-
-    time = str(dt.datetime.now().time())
-    print  "\nTime: " + str(time[:-7])
-
-
 # Function for setting up ATLAS style plots
 def setupATLAS():
 
@@ -382,13 +373,22 @@ def setBatchNumbers(numbers):
 
     batchNumbers = numbers
 
-def setIfOnHDD(value):
-    global hdd
-    hdd = value
 
-def isOnHDD():
+# Other functions, unrelated to metadata
 
-    return hdd
+# Get actual time
+def getTime():
+
+    return dt.datetime.now().replace(microsecond=0)
+
+
+# Print time stamp
+def printTime():
+
+    time = str(dt.datetime.now().time())
+    print  "\nTime: " + str(time[:-7])
+
+
 
 
 
