@@ -8,26 +8,32 @@ This code analyses properties of the oscilloscope files given in data_XXXXX.tree
 from the TB SEP 17 measurement. The main focus of this code is structured in groups of 'noise', 'pulse', 'timing' and tracking.
 
  ```Data information```
+ 
 The code's input is an oscilloscope file for a given run, structured as a 3-dim array with "channels", "events", and "data points". There
 are 8 channels (chan0, chan1, chan2, ..., chan7), approximatelly 200000 events and 1002 data points. The data points lists voltages for
 which the pulses are negative and the time separation between the points is defined to be 0.1 ns.
 
  ```Resources - resources/run_list_tb_sep_2017```
+ 
  In the resources file, there is a run log  ```run_list_tb_sep_2017.csv``` which is copied form the oficial run list with modifications.
  These modifications are in form of removed run numbers which were either corrupted (the oscilloscope files) are not relevant to be
  used. 88 files out of 130 are considered from the original one.
  
-   ```Produced data location - HGTD_material/oscilloscope_data_sep_2017```
+```Produced data location - HGTD_material/oscilloscope_data_sep_2017```
+
 The location of oscilloscope files, not provided.
 
-   ```Produced data location - HGTD_material/tracking_data_sep_2017```
+```Produced data location - HGTD_material/tracking_data_sep_2017```
+
 Here are the telescope files. For the telescope files there are only for batches 306, 507 and 607
  
-  ```Produced plots location - HGTD_material/plots_hgtd_efficiency_sep_2017```
+```Produced plots location - HGTD_material/plots_hgtd_efficiency_sep_2017```
+
 Here are all produced plots from each of the sections listed below. In the folder there are different sensors listed and withing there are
 different folders marking which analysis has been performed.
 
-  ```Produced data location - HGTD_material/data_hgtd_efficiency_sep_2017```
+```Produced data location - HGTD_material/data_hgtd_efficiency_sep_2017```
+
 Here are all produced ROOT files from each section.
 
 
@@ -62,17 +68,16 @@ The methods are chosen by commenting out those which are of interest.
 ##CHOOSING BATCHES
 
 The function
- 
-```metadata.setBatchNumbers([306])```
+metadata.setBatchNumbers([306])
 
 Can be used to choose batches and the simplest way is to choose 306. There can be more chosen, for example
 
- metadata.setBatchNumbers([306, 504])
+metadata.setBatchNumbers([306, 504])
  
- or considering all batches
+or considering all batches
  
- metadata.setBatchNumbers("all"). I suggest to use this only for producing plots, that is using
-
+metadata.setBatchNumbers("all"). I suggest to use this only for producing plots, that is using the functions
+which are related for producing plots.
 
 
 # Noise analysis
