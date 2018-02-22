@@ -12,7 +12,7 @@ def timingPlots():
     
     for batchNumber in md.batchNumbers:
         
-        print "Batch", batchNumber,"\n"
+        print "\nBatch", batchNumber,"\n"
         
         dm.checkIfRepositoryOnStau()
         
@@ -62,8 +62,10 @@ def timingPlots():
 
 
 def produceTimingDistributionPlots(time_difference, peak_value, peak_time, numberOfEventPerRun):
-    
+
     time_diff = dict()
+    
+    # FOR 2D PLOTS #
     time_diff_t_lgad = dict()
     time_diff_V_lgad = dict()
     time_diff_V_sipm = dict()
@@ -72,119 +74,140 @@ def produceTimingDistributionPlots(time_difference, peak_value, peak_time, numbe
     SiPM_chan = md.getChannelNameForSensor("SiPM-AFP")
     
     channels = time_difference.dtype.names
-    
-    #channels = ["chan5", "chan6", "chan7"]
-    channels = ["chan1"]
+
     global canvas
 
     canvas = ROOT.TCanvas("Timing", "timing")
     
+    channels = ["chan0"]
+    
+    xbins = 6000
+ 
     for chan in channels:
         if chan != SiPM_chan:
-            
+
             index = int(chan[-1:])
-
-            time_diff_mean_numpy = np.average(time_difference[chan][np.nonzero(time_difference[chan])])
             
-            # Used for shifting the center of the distribution plots
-            plot_shift = 1.5
-            
-            # Shift for gauss fit
-            distribution_shift = 2
-   
             # 1D PLOTS
-            time_diff[chan] = ROOT.TH1D("Time Difference channel "+str(index), "time_difference" + chan, 1000, time_diff_mean_numpy-plot_shift, time_diff_mean_numpy+plot_shift)
+            time_diff[chan] = ROOT.TH1D("Time difference "+md.getNameOfSensor(chan), "time_difference" + chan, xbins, -15, 15)
             
-            # Automatized constants for plotting right event number (the results were earlier concatenated)
-            maxNumber = 0
-            
-            for index in reversed(range(0, len(numberOfEventPerRun)-1)):
-                if maxNumber < numberOfEventPerRun[index]-numberOfEventPerRun[index-1]:
-                    maxNumber = numberOfEventPerRun[index]-numberOfEventPerRun[index-1]
-        
-            
-            # 2D PLOTS
-            time_diff_t_lgad[chan] = ROOT.TH2F("time_diff_t_lgad_"+chan,"Time difference vs peak time lgad, channel "+str(int(chan[-1:])+1),500,time_diff_mean_numpy-plot_shift,time_diff_mean_numpy+plot_shift,500,5,80)
-
-            time_diff_V_lgad[chan] = ROOT.TH2F("time_diff_V_lgad_"+chan,"Time difference vs max amplitude lgad, channel "+str(int(chan[-1:])+1), 500,time_diff_mean_numpy-plot_shift,time_diff_mean_numpy+plot_shift,500,-50,500)
-            
-            time_diff_V_sipm[chan] = ROOT.TH2F("time_diff_V_sipm_"+chan,"Time difference vs max amplitude SiPM, channel "+str(int(chan[-1:])+1),500,time_diff_mean_numpy-plot_shift,time_diff_mean_numpy+plot_shift,500,-50,500)
-            
-            time_diff_event_no[chan] = ROOT.TH2F("time_diff_event_no_"+chan,"Time difference vs event no, channel "+str(int(chan[-1:])+1),100,time_diff_mean_numpy-plot_shift,time_diff_mean_numpy+plot_shift,100,0, maxNumber)
-            
-           
-            entry_count = 0
-    
+            # Fill TH1 object
             for entry in range(0, len(time_difference[chan])):
-                
-                # If statement to keep track of correct event number
-                if entry+1 == numberOfEventPerRun[entry_count+1]:
-                    entry_count += 1
-                
                 if time_difference[chan][entry] != 0:
                     time_diff[chan].Fill(time_difference[chan][entry])
-                
+        
+#            # Remove bins with less than some entries
+#            count = 0
+#            minEntries = 5 * md.getNumberOfRunsPerBatch()
+#            for bin in range(1, xbins):
+#                num = time_diff[chan].GetBinContent(bin)
+#                if num < minEntries:
+#                    time_diff[chan].SetBinContent(bin, 0)
+#                    count += 1
+#
+#            # SetBinContent(bin, 0) increases an entry by 1.
+#            time_diff[chan].SetEntries((int(time_diff[chan].GetEntries()) - count))
 
-                if peak_time[chan][entry] != 0 and peak_time[SiPM_chan][entry] != 0 and time_difference[chan][entry] != 0 and peak_value[chan][entry] < md.getPulseAmplitudeCut(chan) and peak_value[SiPM_chan][entry] < md.getPulseAmplitudeCut(SiPM_chan):
-                    
-                    # 2D plot time difference vs time peak in event
-                    time_diff_t_lgad[chan].Fill(time_difference[chan][entry], peak_time[chan][entry], 1)
 
-                    # 2D plot time difference, vs amplitude for LGAD
-                    time_diff_V_lgad[chan].Fill(time_difference[chan][entry], peak_value[chan][entry]*-1000, 1)
-                    
-                    # 2D plot time difference vs amplitude for SiPM
-                    time_diff_V_sipm[chan].Fill(time_difference[chan][entry], peak_value[SiPM_chan][entry]*-1000, 1)
-             
-                    # 2D plot time difference vs event number
-                    time_diff_event_no[chan].Fill(time_difference[chan][entry], entry - numberOfEventPerRun[entry_count], 1)
-            
+            # Get Mean to adapt the graph
+            N = 5
+            xMin = time_diff[chan].GetMean() - N * time_diff[chan].GetStdDev()
+            xMax = time_diff[chan].GetMean() + N * time_diff[chan].GetStdDev()
 
             # GAUSS FIT for TH1D
-            time_diff[chan].Fit("gaus","","", time_diff_mean_numpy-distribution_shift, time_diff_mean_numpy+distribution_shift)
+            time_diff[chan].Fit("gaus","","", xMin, xMax)
             
-    
+            N = 7
+            xMin = time_diff[chan].GetMean() - N * time_diff[chan].GetStdDev()
+            xMax = time_diff[chan].GetMean() + N * time_diff[chan].GetStdDev()
+            
+            time_diff[chan].SetAxisRange(xMin, xMax)
+            
             # Print 1D plot time difference distribution
-            headTitle = "Distribution of time difference in each event, Sep 2017 batch "+str(md.getBatchNumber())+", channel " + str(int(chan[-1:])) + ", sensor: " + str(md.getNameOfSensor(chan))
-            xAxisTitle = "\Delta t_{LGAD-SiPM} (ns)"
+            headTitle = "Time difference SiPM and "+md.getNameOfSensor(chan)+", Sep 2017, B"+str(md.getBatchNumber())
+            xAxisTitle = "\Delta t_{SiPM-LGAD} (ns)"
             yAxisTitle = "Number (N)"
             fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/timing_distribution/timing_distribution_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
             titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
             exportTHPlot(time_diff[chan], titles, "")
 
 
+            ### 2D PLOTS ###
+
+              # Automatized constants for plotting right event number (the results were earlier concatenated)
+            maxNumber = 0
+
+            for index in reversed(range(0, len(numberOfEventPerRun)-1)):
+                if maxNumber < numberOfEventPerRun[index]-numberOfEventPerRun[index-1]:
+                    maxNumber = numberOfEventPerRun[index]-numberOfEventPerRun[index-1]
+
+
+            time_diff_t_lgad[chan] = ROOT.TH2F(md.getNameOfSensor(chan),"time_diff_t_lgad_"+chan,500,xMin,xMax,500,5,80)
+
+            time_diff_V_lgad[chan] = ROOT.TH2F(md.getNameOfSensor(chan),"time_diff_V_lgad_"+chan, 500,xMin,xMax,500,-50,500)
+
+            time_diff_V_sipm[chan] = ROOT.TH2F(md.getNameOfSensor(chan),"time_diff_V_sipm_"+chan,500,xMin,xMax,500,-50,500)
+
+            time_diff_event_no[chan] = ROOT.TH2F(md.getNameOfSensor(chan),"time_diff_event_no_"+chan,100,xMin,xMax,100,0, maxNumber)
+
+
+            entry_count = 0
+
+            # Fill TH2D objects
+            for entry in range(0, len(time_difference[chan])):
+
+                # If statement to keep track of correct event number
+                if entry+1 == numberOfEventPerRun[entry_count+1]:
+                    entry_count += 1
+
+
+                if peak_time[chan][entry] != 0 and peak_time[SiPM_chan][entry] != 0 and time_difference[chan][entry] != 0:
+
+                    # 2D plot time difference vs time peak in event
+                    time_diff_t_lgad[chan].Fill(time_difference[chan][entry], peak_time[chan][entry], 1)
+
+                    # 2D plot time difference, vs amplitude for LGAD
+                    time_diff_V_lgad[chan].Fill(time_difference[chan][entry], peak_value[chan][entry]*-1000, 1)
+
+                    # 2D plot time difference vs amplitude for SiPM
+                    time_diff_V_sipm[chan].Fill(time_difference[chan][entry], peak_value[SiPM_chan][entry]*-1000, 1)
+
+                    # 2D plot time difference vs event number
+                    time_diff_event_no[chan].Fill(time_difference[chan][entry], entry - numberOfEventPerRun[entry_count], 1)
+
+
             # Print 2D plot time difference vs time peak in event
-            headTitle = "Time difference vs peak time, Sep 2017 batch " + str(md.getBatchNumber())+", channel " + str(int(chan[-1:])) + ", sensor: " + str(md.getNameOfSensor(chan))
-            xAxisTitle = "\Delta t_{LGAD-SIPM} (ns)"
-            yAxisTitle = "t_{Peak, LGAD} (ns"
-            fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/timing_2d/timing_2d_"+str(md.getBatchNumber())+"_"+str(chan)  + "_"+str(md.getNameOfSensor(chan))+".pdf"
+            headTitle = "Time difference vs reference time "+md.getNameOfSensor(chan)+", Sep 2017 B" + str(md.getBatchNumber())
+            xAxisTitle = "\Delta t_{SIPM-LGAD} (ns)"
+            yAxisTitle = "t_{LGAD} (ns)"
+            fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/timing_2d/timing_t_diff_vs_t_LGAD_"+str(md.getBatchNumber())+"_"+str(chan)  + "_"+str(md.getNameOfSensor(chan))+".pdf"
             titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
             exportTHPlot(time_diff_t_lgad[chan], titles, "COLZ")
-            
-            
+
+
             # Print 2D plot time difference vs amplitude for LGAD
-            headTitle = "Time difference vs peak value LGAD, Sep 2017 batch " + str(md.getBatchNumber())+", channel " + str(int(chan[-1:])) + ", sensor: " + str(md.getNameOfSensor(chan))
-            xAxisTitle = "\Delta t_{LGAD-SiPM} (ns)"
+            headTitle = "Time difference vs LGAD pulse amplitude  "+md.getNameOfSensor(chan)+", Sep 2017 B" + str(md.getBatchNumber())
+            xAxisTitle = "\Delta t_{SiPM-LGAD} (ns)"
             yAxisTitle = "LGAD Amplitude (mV)"
-            fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/timing_2d_diff_lgad/timing_2d_diff_lgad_"+str(md.getBatchNumber())+"_"+str(chan)  + "_"+str(md.getNameOfSensor(chan))+".pdf"
+            fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/timing_2d_diff_lgad/timing_t_diff_vs_V_LGAD_"+str(md.getBatchNumber())+"_"+str(chan)  + "_"+str(md.getNameOfSensor(chan))+".pdf"
             titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
             exportTHPlot(time_diff_V_lgad[chan], titles, "COLZ")
-            
-            
+
+
             # Print 2D plot time difference vs amplitude for SiPM
-            headTitle = "Time difference vs peak value, SiPM Sep 2017 batch " + str(md.getBatchNumber())+", channel " + str(int(chan[-1:])) + ", sensor: " + str(md.getNameOfSensor(chan))
-            xAxisTitle = "\Delta t_{LGAD-SiPM} (ns)"
+            headTitle = "Time difference vs SiPM pulse amplitude "+md.getNameOfSensor(chan)+", Sep 2017 B" + str(md.getBatchNumber())
+            xAxisTitle = "\Delta t_{SiPM-LGAD} (ns)"
             yAxisTitle = "SiPM Amplitude (mV)"
-            fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/timing_2d_diff_sipm/timing_2d_diff_sipm_"+str(md.getBatchNumber())+"_"+str(chan) + "_"+str(md.getNameOfSensor(chan))+".pdf"
+            fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/timing_2d_diff_sipm/timing_t_diff_vs_V_SiPM_"+str(md.getBatchNumber())+"_"+str(chan) + "_"+str(md.getNameOfSensor(chan))+".pdf"
             titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
             exportTHPlot(time_diff_V_sipm[chan], titles, "COLZ")
-            
-            
+
+
             # Print 2D plot time difference vs event number
-            headTitle = "Time difference vs entry number, Sep 2017 batch " + str(md.getBatchNumber())+", channel " + str(int(chan[-1:])) + ", sensor: " + str(md.getNameOfSensor(chan))
-            xAxisTitle = "\Delta t_{LGAD-SiPM} (ns)"
+            headTitle = "Time difference vs entry number "+md.getNameOfSensor(chan)+", Sep 2017 B" + str(md.getBatchNumber())
+            xAxisTitle = "\Delta t_{SiPM-LGAD} (ns)"
             yAxisTitle = "Event number"
-            fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/timing_2d_diff_event/timing_2d_diff_event_"+str(md.getBatchNumber())+"_"+str(chan) + "_"+str(md.getNameOfSensor(chan))+".pdf"
+            fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/timing_2d_diff_event/timing_t_diff_vs_event_"+str(md.getBatchNumber())+"_"+str(chan) + "_"+str(md.getNameOfSensor(chan))+".pdf"
             titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
             exportTHPlot(time_diff_event_no[chan], titles, "COLZ")
 
@@ -195,8 +218,9 @@ def exportTHPlot(graphList, titles, drawOption):
     graphList.SetTitle(titles[0])
     graphList.GetXaxis().SetTitle(titles[1])
     graphList.GetYaxis().SetTitle(titles[2])
-    
+
     graphList.Draw(drawOption)
+  
     canvas.Update()
     canvas.Print(titles[3])
     canvas.Clear()

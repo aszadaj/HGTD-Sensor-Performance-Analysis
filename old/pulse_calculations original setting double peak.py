@@ -1,13 +1,16 @@
 import numpy as np
-import data_management as dm
-import sys
 import metadata as md
+import data_management as dm
+import warnings as wr
+import sys
+
+#wr.simplefilter('ignore', np.RankWarning)
+#np.seterr(divide='ignore', invalid='ignore')
 
 def pulseAnalysis(data, pedestal, noise):
 
     channels = data.dtype.names
     
-    # Calculate the maximum amplitude for which the oscilloscope reads out
     criticalValues = findCriticalValues(data)
     
     peak_times      =   np.zeros(len(data), dtype = data.dtype)
@@ -15,9 +18,9 @@ def pulseAnalysis(data, pedestal, noise):
     rise_times      =   np.zeros(len(data), dtype = data.dtype)
     peak_fit        =   np.zeros(len(data), dtype = data.dtype)
     
-    # Adapt the numpy array to have a correct dtype
     peak_fit = dm.changeDTYPEPeakFit(peak_fit)
     
+
     for event in range(0, len(data)):
     
         for chan in channels:
@@ -25,7 +28,7 @@ def pulseAnalysis(data, pedestal, noise):
             variables = [data[chan][event], pedestal[chan], noise[chan], chan, event, criticalValues[chan]]
             results = getAmplitudeAndRiseTime(variables)
             [peak_times[event][chan], peak_values[event][chan], rise_times[event][chan], peak_fit[event][chan]] = [i for i in results]
-
+        
     return peak_times, peak_values, rise_times, peak_fit
 
 
@@ -38,76 +41,60 @@ def getAmplitudeAndRiseTime (variables):
     timeScope = 0.1
     
     # Factor to regulate the threshold.
-    N = 5
+    N = 6
     
     # Relevant values from the pulse
     peak_value = 0
     peak_time = 0
     rise_time = 0
-    poly_fit = 0
- 
+    peak_fit = 0
+    
     # Set threshold, note data have negative pulse values
-    threshold = -noise * N + pedestal
-    threshold_indices = np.where(data < threshold)[0]
+    threshold = noise * N  - pedestal
+    threshold_indices = np.where(data < -threshold)
     
     try:
+    
+        if threshold_indices[0].size != 0:
+            
+            if len(threshold_indices[0]) > 6:
+                
+                impulse_indices = np.arange(threshold_indices[0][0], np.argmin(data)+1)
+                impulse_data = data[impulse_indices]
+                
+                # Data selection for polynomial fit
+                # change of reducing points for fitting
+                point_difference = 2
+                peak_first_index = np.argmin(data) - point_difference
+                peak_last_index = np.argmin(data) + point_difference
+                # change of adding extra point
+                peak_indices = np.arange(peak_first_index, peak_last_index+2)
+                peak_data = data[peak_indices]
+                
+                # Avoid data which have a limit on the oscilloscope and  require min 4 points on linear fit
+                if np.amin(data) != criticalValue and len(impulse_indices) >= 4:
+                
+                    impulse_fit = np.polyfit(impulse_indices*timeScope, impulse_data, 1)
+                    peak_fit = np.polyfit(peak_indices*timeScope, peak_data, 2)
+                    
+                    if impulse_fit[0] < 0 and peak_fit[0] > 0:
+                        
+                        # V_min = a*t_min^2 + b*t_min + c -> V' = 2*a*t_min + b = 0 -> t_min = -b/(2a)
+                        
+                        peak_time = -peak_fit[1]/(2*peak_fit[0])
+                        peak_value = peak_fit[0] * np.power(peak_time, 2) + peak_fit[1] * peak_time + peak_fit[2] - pedestal
+                        
+                        # t_rise_time = t_0.9 - t_0.1, 0.9 * V_min = at_0.9 + b -> (0.9-0.1)*V_min / a = t_0.9 - t_0.1 -> t_rise_time = 0.8 * V_min / a
+                        rise_time = 0.8 * peak_value/impulse_fit[0]
 
-        # Restrict to finding the threshold and avoid values which have corrupted data
-        if len(threshold_indices) > 0 and np.amin(data) != criticalValue:
-            
-            first_index = threshold_indices[0]
-            # Change from 0.8 to 0.9
-            last_index = np.argwhere(data < np.amin(data)*0.9)[0]
-            
-            if chan == md.getChannelNameForSensor("SiPM-AFP"):
-                first_index += 1
-                last_index -= 3
-            
-            linear_fit_indices = np.arange(first_index, last_index)
-            linear_fit_data = data[linear_fit_indices]
-  
-            # Data selection for polynomial fit
-            point_difference = 3
-            poly_fit_indices = np.arange(np.argmin(data) - point_difference, np.argmin(data) + point_difference)
-            poly_fit_data = data[poly_fit_indices]
-            
-            # Conditions on linear and 2nd degree fits
-            if len(linear_fit_data) > 2:
-                
-                linear_fit = np.polyfit((linear_fit_indices * timeScope), linear_fit_data, 1)
-                poly_fit = np.polyfit((poly_fit_indices * timeScope), poly_fit_data, 2)
-                
-                if linear_fit[0] < 0 and poly_fit[0] > 0:
-                
-                    # Reference point 50% of rise time, pedestal corrected
-                    #peak_time = (0.5 * (np.amin(data) + pedestal) - linear_fit[1]) / linear_fit[0]
-                    
-                    # Reference point peak time location second method
-                    peak_time = - poly_fit[1] / (2 * poly_fit[0])
-                    
-                    # Calculate the rise time, 10% - 90% of the pulse amplitude, with respect to data
-                    # No pedestal value, since the change is relative
-                    
-                    # Amplitude value with derivative of the fit taken as reference
-                    peak_index = - poly_fit[1] / (2 * poly_fit[0])
-                    
-                    peak_value = poly_fit[0] * np.power((peak_index), 2) + poly_fit[1] * peak_index + poly_fit[2] - pedestal
-                    
-                    # This method gives better results
-                    #rise_time = 0.8 * peak_value / linear_fit[0]
 
     except:
-
+    
         print "Error caught"
         print sys.exc_info()[0]
         print event, chan, "\n"
-        
-        peak_value = 0
-        peak_time = 0
-        rise_time = 0
-        poly_fit = 0
-
-    return peak_time, peak_value, rise_time, poly_fit
+    
+    return peak_time, peak_value, rise_time, peak_fit
 
 
 # Search for critical amplitude values

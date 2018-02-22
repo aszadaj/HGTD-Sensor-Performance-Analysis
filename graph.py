@@ -1,8 +1,10 @@
 import ROOT
 import numpy as np
 import root_numpy as rnm
+
 import metadata as md
 import data_management as dm
+import pulse_calculations as p_calc
 
 ROOT.gROOT.SetBatch(True)
 
@@ -10,38 +12,51 @@ ROOT.gROOT.SetBatch(True)
 # Start analysis of selected run numbers
 def printWaveform():
 
-    runNumber = 3793
-    startEntry = 52093
-    entries = 1
 
-    md.setIfOnHDD(False)
+    runNumber = 3791
+    firstEvent = 7213
+    entries = 1
+    N = 6
+
+    dm.setIfOnHDD(True)
+    dm.setIfOnHITACHI(False)
     md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
     dm.checkIfRepositoryOnStau()
 
+
     dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
     
-    if md.isOnHDD():
+    if dm.isOnHDD():
     
         dataPath = "/Volumes/HDD500/" + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
+        
+    elif dm.isOnHITACHI():
     
-    data = rnm.root2array(dataPath, start=startEntry, stop=startEntry+entries)
+        dataPath = "/Volumes/HITACHI/" + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
     
-    peak_value = dm.importPulseFile("peak_value")
-    timing_difference = dm.importTimingFile()
+    data = rnm.root2array(dataPath, start=firstEvent, stop=firstEvent+entries)
+ 
+
+  
+    pedestal, noise = p_calc.getPedestalAndNoise(dm.importNoiseFile("pedestal"), dm.importNoiseFile("noise"))
+    pedestal, noise  = dm.convertNoiseData(pedestal, noise)
     
-    
-    channels = data.dtype.names
 
     multi_graph = ROOT.TMultiGraph()
     canvas = ROOT.TCanvas("Waveforms","Waveforms")
+    legend = ROOT.TLegend(0.65, 0.9, 0.9, 0.7)
     
     graph_waveform = dict()
+    graph_threshold = dict()
     
-    channels = ["chan4", "chan6"]
+    
+    channels = data.dtype.names
+    channels = ["chan0"]
 
     for chan in channels:
-        
-        graph_waveform[chan]        = ROOT.TGraph(1002*entries)
+    
+        graph_waveform[chan] = ROOT.TGraph(1002*entries)
+        graph_threshold[chan] = ROOT.TGraph(2)
         
         i = 0
         
@@ -52,25 +67,36 @@ def printWaveform():
                 i+=1
 
         graph_waveform[chan].SetLineColor(int(chan[-1])+1)
+        graph_threshold[chan].SetLineColor(int(chan[-1])+1)
+        
+        threshold = noise[chan] * N + pedestal[chan]
+        graph_threshold[chan].SetPoint(0,0, threshold[0])
+        graph_threshold[chan].SetPoint(1,1002*entries, threshold[0])
+        
+        multi_graph.Add(graph_threshold[chan])
         multi_graph.Add(graph_waveform[chan])
-
+        legend.AddEntry(graph_waveform[chan], md.getNameOfSensor(chan), "l")
+        legend.AddEntry(graph_threshold[chan], "Threshold: "+str(threshold[0])[:5]+" mV", "l")
 
 
     xAxisTitle = "Time (ns)"
     yAxisTitle = "Voltage (mV)"
-    titleAbove = "Waveform, "+chan+", sensor: "+md.getNameOfSensor(chan)+" batch "+str(md.getBatchNumber(runNumber))
+    headTitle = "Waveform, batch: "+str(md.getBatchNumber(runNumber)) + ", run: "+ str(md.getRunNumber())
 
-    multi_graph.SetTitle(titleAbove)
+
     multi_graph.Draw("ALP")
+    legend.Draw()
+    multi_graph.SetTitle(headTitle)
     multi_graph.GetXaxis().SetTitle(xAxisTitle)
     multi_graph.GetYaxis().SetTitle(yAxisTitle)
 
-    multi_graph.GetYaxis().SetRangeUser(-30,300)
+    multi_graph.GetYaxis().SetRangeUser(-30,400)
     multi_graph.GetXaxis().SetRangeUser(0,100*entries)
-    #multi_graph.GetXaxis().SetRangeUser(47,52)
+    #multi_graph.GetXaxis().SetRangeUser(40,70)
 
 
-    fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/waveforms/waveform_"+str(runNumber)+"_entry_"+str(startEntry)+"_"+str(channels)+".pdf"
+    fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/waveforms/waveform"+"_"+str(md.getBatchNumber())+"_"+str(runNumber)+"_event_"+str(firstEvent)+".pdf"
+
 
     canvas.Print(fileName)
 

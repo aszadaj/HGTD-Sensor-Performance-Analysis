@@ -1,4 +1,3 @@
-
 import ROOT
 import numpy as np
 import root_numpy as rnm
@@ -11,8 +10,6 @@ import data_management as dm
 #md.setupATLAS()
 
 ROOT.gROOT.SetBatch(True)
-
-
 
 # Function appends tracking files and oscilloscope files and
 # matches the sizes of them
@@ -44,7 +41,7 @@ def trackingAnalysis():
                 print "Run", md.getRunNumber()
                 peak_values_run = dm.importPulseFile("peak_value")
                 tracking_run = dm.importTrackingFile()
-         
+            
                 # Slice the peak values to match the tracking files
                 if len(peak_values_run) > len(tracking_run):
                 
@@ -56,6 +53,9 @@ def trackingAnalysis():
                     tracking_run = np.take(tracking_run, np.arange(0,len(peak_values_run)))
             
                 results_batch.append([peak_values_run, tracking_run])
+                
+                # Plot per run number instead of concatenating
+                #tplot.produceTrackingGraphs(peak_values_run, tracking_run)
                 
                 print "Done with run", md.getRunNumber(), "\n"
         

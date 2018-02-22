@@ -54,17 +54,17 @@ def noiseAnalysis():
 
 def noiseAnalysisPerRun():
     
-    startTime = md.getTime()
+     # Configure inputs for multiprocessing
     
-    # Configure inputs for multiprocessing
-    p = Pool(dm.threads)
     max = md.getNumberOfEvents()
     step = 10000
-    
+
     # Quick Analysis
     if md.maxEntries != 0:
         max = step = md.maxEntries
-
+        dm.setNumberOfThreads(1)
+    
+    p = Pool(dm.threads)
     ranges = range(0, max, step)
     
     dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
@@ -72,6 +72,10 @@ def noiseAnalysisPerRun():
     if dm.isOnHDD():
     
         dataPath = "/Volumes/HDD500/" + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
+
+    elif dm.isOnHITACHI():
+    
+        dataPath = "/Volumes/HITACHI/" + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
 
     results = p.map(lambda chunk: multiProcess(dataPath, chunk, chunk+step), ranges)
 

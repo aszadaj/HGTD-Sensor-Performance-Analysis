@@ -99,6 +99,7 @@ def isTrackingFileAvailable():
 
     return False
 
+
 # Check if the noise file (noise = standard deviation) file is made
 def isNoiseFileDone(runNumber):
 
@@ -259,14 +260,18 @@ def getTimeStamp(runNumber=""):
 
 # Get all time stamps for selected batch
 def getTimeStampsForBatch(batchNumber):
-
+    
     runLog = getRunLogBatches([batchNumber])
-
+    
     timeStamps = []
     for row in runLog[0]:
         timeStamps.append(int(row[4]))
     
     return timeStamps
+
+def getNumberOfRunsPerBatch():
+
+    return len(getTimeStampsForBatch(int(runInfo[5])))
 
 
 # Get number of events inside the current ROOT file
@@ -364,13 +369,24 @@ def setEntriesForQuickAnalysis(value):
     maxEntries = value
 
 
-def setBatchNumbers(numbers):
+def setBatchNumbers(numbers, exclude=[]):
 
     global batchNumbers
     
-    if numbers == "all":
+    if numbers == "all" and len(exclude) == 0:
         numbers = getAllBatchNumbers()
 
+    elif numbers == "all":
+        numbers = getAllBatchNumbers()
+        number_excluded = []
+
+        for index in range(0, len(numbers)):
+            if numbers[index] not in exclude:
+                number_excluded.append(numbers[index])
+
+        numbers = number_excluded
+
+                
     batchNumbers = numbers
 
 

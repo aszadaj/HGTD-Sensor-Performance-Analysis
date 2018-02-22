@@ -1,20 +1,5 @@
 
-import ROOT
-import pickle
 import numpy as np
-import root_numpy as rnm
-
-import metadata as md
-
-# Data input description
-#
-# x-value = time: ranges between 0 and 100.2 ns
-# difference between two points is 0.1 ns -> 1002 data points in each entry)
-
-# y-value = voltage: expressed in V, with negative values as pulses
-# difference betwen two points is 1.31651759148e-05 V ~ 0.013 mV
-# Data have the structure per channels (up to 8 different) and each with 200 000 entries, can be
-# customizable
 
 def findNoiseAverageAndStd(data):
    
@@ -27,22 +12,11 @@ def findNoiseAverageAndStd(data):
 
     for event in range(0, len(data)):
         for chan in channels:
-        
-            ####################################################################
-            #
-            #   Two conditions of selecting the pedestal and noise:
-            #       1. pulse_limit = limit of exceeding the noise
-            #       2. data_point_correction = 'going back' couple of points
-            #
-            #   The limit is chosen from observing the waveform, the data point
-            #   correction is a convention to make the code more reliable
-            #
-            ####################################################################
             
             if np.amin(data[event][chan]) != criticalValues[chan]:
                 
                 # Consider points until a pulse
-                pulse_limit = -20 * 0.001 # mV
+                pulse_limit = -25 * 0.001 # mV
                 
                 data_point_correction = 3
                 
@@ -50,7 +24,7 @@ def findNoiseAverageAndStd(data):
                 pulse_compatible_samples = data[event][chan] < pulse_limit
                 
                 # Select the "last index" which defines the range of the noise selection
-                max_index = np.where(pulse_compatible_samples)[0][0] - data_point_correction if len( np.where(pulse_compatible_samples)[0] ) else 1002
+                max_index = np.where(pulse_compatible_samples)[0][0] - data_point_correction if len(np.where(pulse_compatible_samples)[0] ) else 1002
                 
                 noise_average[event][chan]  = np.average(data[event][chan][0:max_index])
                 noise_std[event][chan]      = np.std(data[event][chan][0:max_index])

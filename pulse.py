@@ -43,9 +43,11 @@ def pulseAnalysis():
             
                 print "Run", md.getRunNumber()
                 
-                [peak_times, peak_values, rise_times] = pulseAnalysisPerRun()
-                dm.exportPulseData(peak_times, peak_values, rise_times)
+                [peak_times, peak_values, rise_times, peak_fit] = pulseAnalysisPerRun()
                 
+                #print "\nNOT EXPORTING DATA\n"
+                dm.exportPulseData(peak_times, peak_values, rise_times, peak_fit)
+            
                 del peak_times, peak_values, rise_times
                 
                 print "Done with run", md.getRunNumber(), "\n"
@@ -60,14 +62,16 @@ def pulseAnalysis():
 def pulseAnalysisPerRun():
     
     # Configure inputs for multiprocessing
-    p = Pool(dm.threads)
+    
     max = md.getNumberOfEvents()
     step = 10000
 
     # Quick Analysis
     if md.maxEntries != 0:
         max = step = md.maxEntries
-
+        dm.setNumberOfThreads(1)
+    
+    p = Pool(dm.threads)
     ranges = range(0, max, step)
     
     dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
@@ -76,9 +80,13 @@ def pulseAnalysisPerRun():
     
         dataPath = "/Volumes/HDD500/" + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
 
+    elif dm.isOnHITACHI():
+    
+        dataPath = "/Volumes/HITACHI/" + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
+
     noise_average = dm.importNoiseFile("pedestal")
     noise_std     = dm.importNoiseFile("noise")
-    
+
     pedestal, noise = p_calc.getPedestalAndNoise(noise_average, noise_std)
     
     del noise_average, noise_std
@@ -96,11 +104,11 @@ def multiProcess(dataPath, pedestal, noise, begin, end):
 
     data = rnm.root2array(dataPath, start=begin, stop=end)
     
-    peak_times, peak_values, rise_times = p_calc.pulseAnalysis(data, pedestal, noise)
+    peak_times, peak_values, rise_times, peak_fit = p_calc.pulseAnalysis(data, pedestal, noise)
     
     del data
     
-    return peak_times, peak_values, rise_times
+    return peak_times, peak_values, rise_times, peak_fit
 
 
 
