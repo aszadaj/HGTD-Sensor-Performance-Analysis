@@ -9,6 +9,8 @@ ROOT.gStyle.SetOptFit()
 
 # Concatenate all runs for each batch. When the files are concatenated, produce plots for that batch until
 # all batches are considered.
+
+# Test
 def pulsePlots():
 
     print "\nStart producing PULSE plots, batches:", md.batchNumbers
