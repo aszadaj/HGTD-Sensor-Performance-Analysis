@@ -44,14 +44,14 @@ def main():
     
     # NOISE AND PULSE ANALYSIS #
     #noise.noiseAnalysis()
-    pulse.pulseAnalysis()
+    #pulse.pulseAnalysis()
     
     # TIMING RESOLUTION ANALYSIS #
-    timing.timingAnalysis()
+    #timing.timingAnalysis()
     
     # PRODUCE PLOTS #
     #noise_plot.noisePlots()
-    pulse_plot.pulsePlots()
+    #pulse_plot.pulsePlots()
     timing_plot.timingPlots()
     
     # TRACKING ANALYSIS #
