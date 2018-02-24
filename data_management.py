@@ -14,12 +14,11 @@ def exportNoiseData(pedestal, noise):
 
 
 # Export pulse data
-def exportPulseData(peak_times, peak_values, rise_times, peak_fit):
+def exportPulseData(peak_times, peak_values, rise_times):
 
     exportROOTFile(peak_times, "pulse", "peak_time")
     exportROOTFile(peak_values, "pulse", "peak_value")
     exportROOTFile(rise_times, "pulse", "rise_time")
-    exportROOTFile(peak_fit, "pulse", "peak_fit")
 
 
 # Export timing data
@@ -49,8 +48,7 @@ def exportROOTFile(data, group, category=""):
         fileName = md.getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
 
 
-    if category != "peak_fit":
-        data = changeDTYPEOfData(data)
+    data = changeDTYPEOfData(data)
 
     rnm.array2root(data, fileName, mode="recreate")
 
@@ -97,7 +95,6 @@ def importROOTFile(group, category=""):
 
         return rnm.root2array(fileName)
 
-
     
     else:
     
@@ -119,17 +116,6 @@ def changeDTYPEOfData(data):
 
     return data
 
-# Change dtype when exporting peak_fit
-def changeDTYPEPeakFit(data):
-
-    if len(data.dtype.names) == 7:
-    
-        data = data.astype(  [('chan0', '<f8', (1,3)), ('chan1', '<f8', (1,3)) ,('chan2', '<f8', (1,3)) ,('chan3', '<f8', (1,3)) ,('chan4', '<f8', (1,3)) ,('chan5', '<f8', (1,3)) ,('chan6', '<f8', (1,3)) ] )
-
-    else:
-        data = data.astype(  [('chan0', '<f8', (1,3)), ('chan1', '<f8', (1,3)) ,('chan2', '<f8', (1,3)) ,('chan3', '<f8', (1,3)) ,('chan4', '<f8', (1,3)) ,('chan5', '<f8', (1,3)) ,('chan6', '<f8', (1,3)) ,('chan7', '<f8', (1,3))] )
-
-    return data
 
 # Create array for exporting center positions, inside tracking
 def createCenterPositionArray():
@@ -137,8 +123,6 @@ def createCenterPositionArray():
     dt = (  [('chan0', '<f8', 2), ('chan1', '<f8', 2) ,('chan2', '<f8', 2) ,('chan3', '<f8', 2) ,('chan4', '<f8', 2) ,('chan5', '<f8', 2) ,('chan6', '<f8', 2) ,('chan7', '<f8', 2)] )
     
     return np.zeros(1, dtype = dt)
-
-
 
 
 # Check if the repository is on the stau server

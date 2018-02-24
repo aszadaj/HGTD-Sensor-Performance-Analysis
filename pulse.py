@@ -36,21 +36,14 @@ def pulseAnalysis():
         for index in range(0, len(runLog)):
       
             md.defineGlobalVariableRun(runLog[index])
+        
+            print "Run", md.getRunNumber()
             
-            # DEBUG
-            #if not md.isPulseFileDone(md.getRunNumber()):
-            if md.isPulseFileDone(md.getRunNumber()):
+            [peak_time, peak_value, rise_time] = pulseAnalysisPerRun()
             
-                print "Run", md.getRunNumber()
-                
-                [peak_times, peak_values, rise_times, peak_fit] = pulseAnalysisPerRun()
-                
-                #print "\nNOT EXPORTING DATA\n"
-                dm.exportPulseData(peak_times, peak_values, rise_times, peak_fit)
+            dm.exportPulseData(peak_time, peak_value, rise_time)
             
-                del peak_times, peak_values, rise_times
-                
-                print "Done with run", md.getRunNumber(), "\n"
+            print "Done with run", md.getRunNumber(), "\n"
 
 
         print "Done with batch", runLog[0][5], "Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
@@ -99,16 +92,12 @@ def pulseAnalysisPerRun():
     return results_variables
 
 
-# Start multiprocessing analysis of noises and pulses in ROOT considerOnlyRunsfile
+# Multiprocessing
 def multiProcess(dataPath, pedestal, noise, begin, end):
 
     data = rnm.root2array(dataPath, start=begin, stop=end)
     
-    peak_times, peak_values, rise_times, peak_fit = p_calc.pulseAnalysis(data, pedestal, noise)
-    
-    del data
-    
-    return peak_times, peak_values, rise_times, peak_fit
+    return p_calc.pulseAnalysis(data, pedestal, noise)
 
 
 

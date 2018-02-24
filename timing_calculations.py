@@ -13,7 +13,8 @@ def timingAnalysisPerRun(peak_time, peak_value):
             
             for event in range (0, len(peak_time)):
                 if peak_time[SiPM_chan][event] != 0 and peak_time[chan][event] != 0:
-                
+                    
+                    # This is for the case if the SiPM is in the same oscilloscope as the DUT
                     time_difference[chan][event] = peak_time[event][chan] - peak_time[event][SiPM_chan]
 
 

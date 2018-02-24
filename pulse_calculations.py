@@ -13,20 +13,17 @@ def pulseAnalysis(data, pedestal, noise):
     peak_times      =   np.zeros(len(data), dtype = data.dtype)
     peak_values     =   np.zeros(len(data), dtype = data.dtype)
     rise_times      =   np.zeros(len(data), dtype = data.dtype)
-    peak_fit        =   np.zeros(len(data), dtype = data.dtype)
-    
-    # Adapt the numpy array to have a correct dtype
-    peak_fit = dm.changeDTYPEPeakFit(peak_fit)
-    
+
+
     for event in range(0, len(data)):
     
         for chan in channels:
             
             variables = [data[chan][event], pedestal[chan], noise[chan], chan, event, criticalValues[chan]]
             results = getAmplitudeAndRiseTime(variables)
-            [peak_times[event][chan], peak_values[event][chan], rise_times[event][chan], peak_fit[event][chan]] = [i for i in results]
+            [peak_times[event][chan], peak_values[event][chan], rise_times[event][chan]] = [i for i in results]
 
-    return peak_times, peak_values, rise_times, peak_fit
+    return peak_times, peak_values, rise_times
 
 
 def getAmplitudeAndRiseTime (variables):
@@ -41,10 +38,9 @@ def getAmplitudeAndRiseTime (variables):
     N = 5
     
     # Relevant values from the pulse
-    peak_value = 0
     peak_time = 0
+    peak_value = 0
     rise_time = 0
-    poly_fit = 0
  
     # Set threshold, note data have negative pulse values
     threshold = -noise * N + pedestal
@@ -56,21 +52,22 @@ def getAmplitudeAndRiseTime (variables):
         if len(threshold_indices) > 0 and np.amin(data) != criticalValue:
             
             first_index = threshold_indices[0]
-            # Change from 0.8 to 0.9
             last_index = np.argwhere(data < np.amin(data)*0.9)[0]
-            
+
+            # This is to adapt for the SiPM rise time distribution to look better
+            # Does not affect other plots
             if chan == md.getChannelNameForSensor("SiPM-AFP"):
-                first_index += 1
-                last_index -= 3
-            
+                last_index -= 2
+
             linear_fit_indices = np.arange(first_index, last_index)
             linear_fit_data = data[linear_fit_indices]
   
             # Data selection for polynomial fit
             point_difference = 3
-            poly_fit_indices = np.arange(np.argmin(data) - point_difference, np.argmin(data) + point_difference)
+            poly_fit_indices = np.arange(np.argmin(data) - point_difference, np.argmin(data) + point_difference+1)
             poly_fit_data = data[poly_fit_indices]
             
+            # Previous setting, 2 points
             # Conditions on linear and 2nd degree fits
             if len(linear_fit_data) > 2:
                 
@@ -85,16 +82,12 @@ def getAmplitudeAndRiseTime (variables):
                     # Reference point peak time location second method
                     peak_time = - poly_fit[1] / (2 * poly_fit[0])
                     
-                    # Calculate the rise time, 10% - 90% of the pulse amplitude, with respect to data
-                    # No pedestal value, since the change is relative
-                    
                     # Amplitude value with derivative of the fit taken as reference
                     peak_index = - poly_fit[1] / (2 * poly_fit[0])
-                    
                     peak_value = poly_fit[0] * np.power((peak_index), 2) + poly_fit[1] * peak_index + poly_fit[2] - pedestal
                     
                     # This method gives better results
-                    #rise_time = 0.8 * peak_value / linear_fit[0]
+                    rise_time = 0.8 * peak_value / linear_fit[0]
 
     except:
 
@@ -105,9 +98,8 @@ def getAmplitudeAndRiseTime (variables):
         peak_value = 0
         peak_time = 0
         rise_time = 0
-        poly_fit = 0
 
-    return peak_time, peak_value, rise_time, poly_fit
+    return peak_time, peak_value, rise_time
 
 
 # Search for critical amplitude values
@@ -127,20 +119,18 @@ def concatenateResults(results):
 
     channels = results[0][0].dtype.names
     
-    peak_times = np.empty(0, dtype=results[0][0].dtype)
-    peak_values  = np.empty(0, dtype=results[0][1].dtype)
-    rise_times = np.empty(0, dtype=results[0][2].dtype)
-    peak_fit = np.empty(0, dtype=results[0][3].dtype)
+    peak_time = np.empty(0, dtype=results[0][0].dtype)
+    peak_value  = np.empty(0, dtype=results[0][1].dtype)
+    rise_time = np.empty(0, dtype=results[0][2].dtype)
     
     for index in range(0, len(results)):
     
-        peak_times  = np.concatenate((peak_times,  results[index][0]), axis = 0)
-        peak_values = np.concatenate((peak_values, results[index][1]), axis = 0)
-        rise_times = np.concatenate((rise_times, results[index][2]), axis = 0)
-        peak_fit = np.concatenate((peak_fit, results[index][3]), axis = 0)
+        peak_time  = np.concatenate((peak_time,  results[index][0]), axis = 0)
+        peak_value = np.concatenate((peak_value, results[index][1]), axis = 0)
+        rise_time = np.concatenate((rise_time, results[index][2]), axis = 0)
     
 
-    return [peak_times, peak_values, rise_times, peak_fit]
+    return [peak_time, peak_value, rise_time]
 
 
 def getPedestalAndNoise(noise_average, noise_std):
@@ -157,7 +147,7 @@ def getPedestalAndNoise(noise_average, noise_std):
         
         pedestal[chan] = np.average(noise_average[chan])
         noise[chan] = np.average(noise_std[chan])
-        
+    
 
     return pedestal, noise
 
