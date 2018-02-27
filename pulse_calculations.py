@@ -53,11 +53,12 @@ def getAmplitudeAndRiseTime (variables):
             
             first_index = threshold_indices[0]
             last_index = np.argwhere(data < np.amin(data)*0.9)[0]
-
+        
             # This is to adapt for the SiPM rise time distribution to look better
             # Does not affect other plots
             if chan == md.getChannelNameForSensor("SiPM-AFP"):
                 last_index -= 2
+           
 
             linear_fit_indices = np.arange(first_index, last_index)
             linear_fit_data = data[linear_fit_indices]

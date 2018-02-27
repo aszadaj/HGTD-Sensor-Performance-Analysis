@@ -39,21 +39,19 @@ def timingAnalysis():
         for index in range(0, len(runLog)):
             
             md.defineGlobalVariableRun(runLog[index])
+                
+            print "Run", md.getRunNumber()
             
-            if md.isTimingFileDone(md.getRunNumber()):
-                
-                print "Run", md.getRunNumber()
-                
-                # Import files per run
-                peak_time_run = dm.importPulseFile("peak_time")
-                peak_value_run = dm.importPulseFile("peak_value")
-  
-                time_difference_run = t_calc.timingAnalysisPerRun(peak_time_run, peak_value_run)
+            # Import files per run
+            peak_time_run = dm.importPulseFile("peak_time")
+            peak_value_run = dm.importPulseFile("peak_value")
 
-                # Export per run number
-                dm.exportTimingData(time_difference_run)
-                
-                print "Done with run", md.getRunNumber(), "\n"
+            time_difference_run = t_calc.timingAnalysisPerRun(peak_time_run, peak_value_run)
+
+            # Export per run number
+            dm.exportTimingData(time_difference_run)
+            
+            print "Done with run", md.getRunNumber(), "\n"
 
 
         print "Done with batch", runLog[0][5], "Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"

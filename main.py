@@ -27,7 +27,7 @@ def main():
     data_management.setIfOnHITACHI(True)
     
     #### Settings used for debugging noise and pulse analysis ####
-    metadata.setLimitRunNumbers(1)
+    metadata.setLimitRunNumbers(0)
     metadata.setEntriesForQuickAnalysis(0)
     #############################################################
     
@@ -36,7 +36,7 @@ def main():
     # This is automated to used with all methods listed below.
     # If all, then second argument excludes selected batch numbers
     #metadata.setBatchNumbers("all", [101,102,103,104,105,106,107,108,203,204,205,206,207])
-    metadata.setBatchNumbers("all")
+    metadata.setBatchNumbers([704])
     
     ####### METHODS ########
     
@@ -44,7 +44,7 @@ def main():
     #noise.noiseAnalysis()
     
     # PULSE ANALYSIS #
-    pulse.pulseAnalysis()
+    #pulse.pulseAnalysis()
     
     # TRACKING ANALYSIS #
     #tracking.trackingAnalysis()
@@ -53,9 +53,9 @@ def main():
     #timing.timingAnalysis()
     
     # PRODUCE PLOTS #
-    noise_plot.noisePlots()
-    pulse_plot.pulsePlots()
-    #timing_plot.timingPlots()
+    #noise_plot.noisePlots()
+    #pulse_plot.pulsePlots()
+    timing_plot.timingPlots()
     
     
     

@@ -23,13 +23,14 @@ def timingPlots():
         if md.limitRunNumbers != 0:
             runNumbers = runNumbers[0:md.limitRunNumbers] # Restrict to some run numbers
         
-        availableRunNumbersTiming = md.readFileNames("timing")
+        availableRunNumbersPeakTimes = md.readFileNames("pulse_peak_time")
         
         numberOfEventPerRun = [0]
         
         for runNumber in runNumbers:
         
-            if runNumber in availableRunNumbersTiming:
+            print runNumber
+            if runNumber in availableRunNumbersPeakTimes:
                 md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
                 
                 print "Importing run", md.getRunNumber(), "\n"
@@ -83,22 +84,25 @@ def produceTimingDistributionPlots(time_difference, peak_value, peak_time, numbe
     
     xbins = 6000
  
+    print peak_time.dtype
+ 
     for chan in channels:
-        if chan != SiPM_chan:
-
+        if chan != SiPM_chan and chan != "chan0":
+            
             index = int(chan[-1:])
-            
+
             # 1D PLOTS
-            time_diff[chan] = ROOT.TH1D("Time difference "+md.getNameOfSensor(chan), "time_difference" + chan, xbins, -15, 15)
+            time_diff[chan] = ROOT.TH1D("Time difference "+md.getNameOfSensor(chan), "time_difference" + chan, xbins, -15000, 15000)
             
+
             # Fill TH1 object and cut the noise for the DUT and SiPM < 200 mV, specified in run log
             for entry in range(0, len(time_difference[chan])):
                 if time_difference[chan][entry] != 0 and peak_value[chan][entry] < md.getPulseAmplitudeCut(chan) and peak_value[SiPM_chan][entry] < md.getPulseAmplitudeCut(SiPM_chan):
-                    time_diff[chan].Fill(time_difference[chan][entry])
+                    time_diff[chan].Fill(time_difference[chan][entry]*1000)
         
 
             # Choose the range for the fit
-            N = 0.5
+            N = 1
             xMin = time_diff[chan].GetMean() - N * time_diff[chan].GetStdDev()
             xMax = time_diff[chan].GetMean() + N * time_diff[chan].GetStdDev()
  
@@ -112,6 +116,7 @@ def produceTimingDistributionPlots(time_difference, peak_value, peak_time, numbe
             xMin = time_diff[chan].GetMean() - N * time_diff[chan].GetStdDev()
             xMax = time_diff[chan].GetMean() + N * time_diff[chan].GetStdDev()
             
+
             # Print the fit function with the extracted parameters
             fit_function_adapted = ROOT.TF1("fit_peak_1", "gaus", xMin, xMax)
             fit_function_adapted.SetParameters(fitted_parameters[0], fitted_parameters[1], fitted_parameters[2])
@@ -120,20 +125,20 @@ def produceTimingDistributionPlots(time_difference, peak_value, peak_time, numbe
             
             # Calculate the time resolution given that the SiPM is in the same oscilloscope as the DUT.
             
-            SiPM_time_resolution = 30 * 0.001 # Value given in ns
+            # Need source for this!
+            sigma_SiPM = 30
             sigma_fit = fitted_parameters[2]
             
-            DUT_time_resolution = np.sqrt( np.power(sigma_fit,2) - np.power(SiPM_time_resolution, 2)  ) * 1000
-            
+            sigma_DUT = np.sqrt( np.power(sigma_fit,2) - np.power(sigma_SiPM, 2)  )
             
             
             # Print 1D plot time difference distribution
             headTitle = "Time difference SiPM and "+md.getNameOfSensor(chan)+", Sep 2017, B"+str(md.getBatchNumber())
-            xAxisTitle = "\Delta t_{SiPM-LGAD} (ns)"
+            xAxisTitle = "\Delta t_{SiPM-LGAD} (ps)"
             yAxisTitle = "Number (N)"
             fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/timing_distribution/timing_distribution_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
             titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
-            exportTHPlot(time_diff[chan], titles, "", fit_function_adapted, DUT_time_resolution)
+            exportTHPlot(time_diff[chan], titles, "", fit_function_adapted, sigma_DUT)
 
 
 
@@ -166,8 +171,10 @@ def exportTHPlot(graphList, titles, drawOption, fit, sigma=0):
     linesStatsBox.Remove(textMean)
     textConstant = statsBox.GetLineWith("Constant")
     linesStatsBox.Remove(textConstant)
+    textSigma = statsBox.GetLineWith("Sigma")
+    linesStatsBox.Remove(textSigma)
     
-    statsBox.AddText("\sigma_{"+md.getNameOfSensor(chan)+"} = "+str(sigma)[0:6] + " ps")
+    statsBox.AddText("\sigma_{"+md.getNameOfSensor(chan)+"} = "+str(sigma)[0:6])
     canvas.Modified()
     canvas.Update()
     

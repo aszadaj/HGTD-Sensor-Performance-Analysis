@@ -81,7 +81,7 @@ def producePulsePlots(peak_times, peak_values, rise_times, batchNumber):
 
         peak_times_graph[chan] = ROOT.TH1D("Time location " + md.getNameOfSensor(chan), "peak_time" + chan, 800, 30, 70)
         peak_values_graph[chan] = ROOT.TH1D("Max amplitude " + md.getNameOfSensor(chan), "peak_value" + chan, 500, 0, 400)
-        rise_times_graph[chan] = ROOT.TH1D("Rise time " + md.getNameOfSensor(chan), "rise_time" + chan, xbins, 0, 1.5)
+        rise_times_graph[chan] = ROOT.TH1D("Rise time " + md.getNameOfSensor(chan), "rise_time" + chan, xbins, 0, 2)
         
 
         for entry in range(0, len(peak_times[chan])):
@@ -99,22 +99,22 @@ def producePulsePlots(peak_times, peak_values, rise_times, batchNumber):
         N = 2
         xMin = rise_times_graph[chan].GetMean() - N * rise_times_graph[chan].GetStdDev()
         xMax = rise_times_graph[chan].GetMean() + N * rise_times_graph[chan].GetStdDev()
-        
-        
+
+
         # Create a gaus distribution for rise time
         rise_times_graph[chan].Fit("gaus","0","", xMin, xMax)
         fit_function = rise_times_graph[chan].GetFunction("gaus")
         fitted_parameters = [fit_function.GetParameter(0), fit_function.GetParameter(1), fit_function.GetParameter(2)]
-        
+
         # Rescale the ranges to plot along them
         N = 5
         xMin = rise_times_graph[chan].GetMean() - N * rise_times_graph[chan].GetStdDev()
         xMax = rise_times_graph[chan].GetMean() + N * rise_times_graph[chan].GetStdDev()
-        
+
         # Print the fit function with the extracted parameters
         fit_function_adapted = ROOT.TF1("fit_peak_1", "gaus", xMin, xMax)
         fit_function_adapted.SetParameters(fitted_parameters[0], fitted_parameters[1], fitted_parameters[2])
-        
+
 
         rise_times_graph[chan].SetAxisRange(xMin, xMax)
 
@@ -138,21 +138,18 @@ def producePulsePlots(peak_times, peak_values, rise_times, batchNumber):
         yAxisTitle = "Number of entries (N)"
         fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/rise_time_plots/rise_time_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
-        ranges = [xMin, xMax]
-        exportHistogram(rise_times_graph[chan], titles, ranges, fit_function_adapted)
+        exportHistogram(rise_times_graph[chan], titles, fit_function_adapted)
+        #exportHistogram(rise_times_graph[chan], titles)
 
 
 # Produce histograms
-def exportHistogram(graphList, titles, ranges=[], fit_function = False):
+def exportHistogram(graphList, titles, fit_function = False):
     
     graphList.SetLineColor(1)
     graphList.SetTitle(titles[0])
     graphList.GetXaxis().SetTitle(titles[1])
     graphList.GetYaxis().SetTitle(titles[2])
     
-    
-    if ranges:
-        graphList.SetAxisRange(ranges[0], ranges[1])
     
     graphList.Draw()
     

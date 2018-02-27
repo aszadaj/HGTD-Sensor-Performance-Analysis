@@ -13,10 +13,10 @@ ROOT.gROOT.SetBatch(True)
 def printWaveform():
 
 
-    runNumber = 3791
-    firstEvent = 7213
+    runNumber = 3921
+    firstEvent = 16492
     entries = 1
-    N = 6
+    N = 5
 
     dm.setIfOnHDD(True)
     dm.setIfOnHITACHI(False)
@@ -51,7 +51,7 @@ def printWaveform():
     
     
     channels = data.dtype.names
-    channels = ["chan0"]
+    channels = ["chan4"]
 
     for chan in channels:
     
