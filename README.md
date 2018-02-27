@@ -62,8 +62,8 @@ The methods are chosen by commenting out those which are of interest.
 CHOOSING BATCHES
 
 The function
- 
-```metadata.setBatchNumbers([306])```
+
+ ```metadata.setBatchNumbers([306])```
 
 Can be used to choose batches and the simplest way is to choose 306. There can be more chosen, for example
 
