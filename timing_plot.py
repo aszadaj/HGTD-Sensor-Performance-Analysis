@@ -163,7 +163,7 @@ def produceTimingDistributionPlots(time_difference, peak_value, peak_time, numbe
                 headTitle = "Time difference "+md.getNameOfSensor(chan)+" and "+md.getNameOfSensor(chan2)+", Sep 2017, B"+str(md.getBatchNumber())
                 xAxisTitle = "\Delta t_{DUT1 - DUT2} (ps)"
                 yAxisTitle = "Number (N)"
-                fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/timing_distribution/timing_distribution_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_and_"+str(md.getNameOfSensor(chan2))+".pdf"
+                fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/time_diff_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_and_"+str(md.getNameOfSensor(chan2))+".pdf"
                 titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
                 print sigmas_chan.item((0, index))
                 exportTHPlot(time_diff[chan][chan2], titles, "", fit_function_adapted, sigmas_chan.item((0, index)))
