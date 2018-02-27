@@ -47,7 +47,7 @@ def timingAnalysis():
             peak_value_run = dm.importPulseFile("peak_value")
 
             time_difference_run = t_calc.timingAnalysisPerRun(peak_time_run, peak_value_run)
-
+            
             # Export per run number
             dm.exportTimingData(time_difference_run)
             

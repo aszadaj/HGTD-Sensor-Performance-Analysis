@@ -47,8 +47,9 @@ def exportROOTFile(data, group, category=""):
     else:
         fileName = md.getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
 
+    if group != "timing":
+        data = changeDTYPEOfData(data)
 
-    data = changeDTYPEOfData(data)
 
     rnm.array2root(data, fileName, mode="recreate")
 

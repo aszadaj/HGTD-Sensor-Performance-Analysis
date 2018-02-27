@@ -36,7 +36,7 @@ def main():
     # This is automated to used with all methods listed below.
     # If all, then second argument excludes selected batch numbers
     #metadata.setBatchNumbers("all", [101,102,103,104,105,106,107,108,203,204,205,206,207])
-    metadata.setBatchNumbers([704])
+    metadata.setBatchNumbers([306])
     
     ####### METHODS ########
     
@@ -58,9 +58,7 @@ def main():
     timing_plot.timingPlots()
     
     
-    
-   
-   ####### END OF METHODS ########
+    ###### END OF METHODS ########
    
     metadata.printTime()
     exit()
