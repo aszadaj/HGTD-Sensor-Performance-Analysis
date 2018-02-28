@@ -17,7 +17,7 @@ def trackingAnalysis():
 
     dm.checkIfRepositoryOnStau()
     
-    startTime = md.getTime()
+    startTime = md.dm.getTime()
     
     runLog_batch = md.getRunLogBatches(md.batchNumbers)
     
@@ -28,7 +28,7 @@ def trackingAnalysis():
         if md.limitRunNumbers != 0:
             runLog = runLog[0:md.limitRunNumbers] # Restrict to some run numbers
 
-        startTimeBatch = md.getTime()
+        startTimeBatch = md.dm.getTime()
     
         results_batch = []
 
@@ -72,19 +72,8 @@ def trackingAnalysis():
 
             tplot.produceTrackingGraphs(peak_values, tracking)
 
-            print "Done with batch",runLog[0][5],"Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
+            print "Done with batch",runLog[0][5],"Time analysing: "+str(md.dm.getTime()-startTimeBatch)+"\n"
 
 
-    print "Done with TRACKING analysis. Time analysing: "+str(md.getTime()-startTime)+"\n"
-
-# Get actual time
-def getTime():
-
-    return datetime.now().replace(microsecond=0)
-
-# Print time stamp
-def printTime():
-
-    time = str(datetime.now().time())
-    print  "\nTime: " + str(time[:-7])
+    print "Done with TRACKING analysis. Time analysing: "+str(md.dm.getTime()-startTime)+"\n"
 

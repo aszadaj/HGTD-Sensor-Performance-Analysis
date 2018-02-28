@@ -76,71 +76,74 @@ def produceTimingDistributionPlots(time_difference, peak_value, peak_time, numbe
 
     canvas = ROOT.TCanvas("Timing", "timing")
     
-    #channels = ["chan0"]
-    
     xbins = 6000
     
     osc1 = ["chan0", "chan1", "chan2", "chan3"]
-    osc2 = ["chan4", "chan5", "chan6", "chan7"]
+    s = (4,4)
+    sigmas_mix = np.zeros(s)
     
-    if int(md.getBatchNumber()/100) == 3:
-        osc2 = ["chan4", "chan5", "chan6"]
+    for chan in osc1:
+        
+        # Do not consider the same channel when comparing two
+        chan2_list = list(osc1)
+        chan2_list.remove(chan)
+        
+        # Create TH1 object
+        time_diff[chan] = dict()
+        for chan2 in chan2_list:
+        
+            time_diff[chan][chan2] = ROOT.TH1D("TD \sigma_{"+chan[-1]+chan2[-1]+"}", "time_difference" + chan, xbins, -15000, 15000)
+        
+        # Fill TH1 object between channels in oscilloscope
+        for entry in range(0, len(time_difference[chan])):
+            for index in range(0, len(chan2_list)):
+                chan2 = chan2_list[index]
+                if time_difference[chan][entry][index] != 0 and peak_value[chan][entry] < md.getPulseAmplitudeCut(chan) and peak_value[chan2][entry] < md.getPulseAmplitudeCut(chan2):
+                    time_diff[chan][chan2].Fill(time_difference[chan][entry][index])
+        
+        for chan2 in chan2_list:
+            for bin in range(1, xbins+1):
+        
+                num = time_diff[chan][chan2].GetBinContent(bin)
+
+                if num < 2:
+                    time_diff[chan][chan2].SetBinContent(bin, 0)
+            
+            time_diff[chan][chan2].ResetStats()
+
+        # Get sigma and adapt distribution curve
+        for chan2 in chan2_list:
+            
+            i = int(chan[-1]) % 4
+            j = int(chan2[-1]) % 4
+            
+            # Choose the range for the fit
+            N = 2
+            xMin = time_diff[chan][chan2].GetMean() - N * time_diff[chan][chan2].GetStdDev()
+            xMax = time_diff[chan][chan2].GetMean() + N * time_diff[chan][chan2].GetStdDev()
+          
+            # Obtain the parameters
+            time_diff[chan][chan2].Fit("gaus", "Q0", "", xMin, xMax)
+            fit_function = time_diff[chan][chan2].GetFunction("gaus")
+            fitted_parameters = [fit_function.GetParameter(0), fit_function.GetParameter(1), fit_function.GetParameter(2)]
+            
+            
+            # Get sigma between two channels
+            sigmas_mix[i][j] = fit_function.GetParameter(2)
+            sigmas_mix[j][i] = fit_function.GetParameter(2)
+
+
+    # Obtain the sigmas for each channel
+
+    sigmas_chan = t_calc.solveLinearEq(sigmas_mix)
+
+    for chan in osc1:
+        chan2_list = list(osc1)
+        chan2_list.remove(chan)
     
-    oscilloscope_chan = [osc1, osc2]
-
-    for channels_part in oscilloscope_chan:
-        s = (4,4)
-        sigmas_mix = np.zeros(s)
+        for chan2 in chan2_list:
         
-        for chan in channels_part:
-            
-            # Do not consider the same channel when comparing two
-            chan2_list = list(channels_part)
-            chan2_list.remove(chan)
-            
-            # Create TH1 object
-            time_diff[chan] = dict()
-            for chan2 in chan2_list:
-                time_diff[chan][chan2] = ROOT.TH1D("TD \sigma_{"+chan[-1]+chan2[-1]+"}", "time_difference" + chan, xbins, -15000, 15000)
-            
-            # Fill TH1 object between channels in oscilloscope
-            for entry in range(0, len(time_difference[chan])):
-                for index in range(0, len(chan2_list)):
-                    chan2 = chan2_list[index]
-                    if time_difference[chan][entry][index] != 0 and peak_value[chan][entry] < md.getPulseAmplitudeCut(chan) and peak_value[chan2][entry] < md.getPulseAmplitudeCut(chan2):
-                        time_diff[chan][chan2].Fill(time_difference[chan][entry][index])
-        
-            # Get sigma and adapt distribution curve
-            for chan2 in chan2_list:
-                
-                i = int(chan[-1]) % 4
-                j = int(chan2[-1]) % 4
-                
-                # Choose the range for the fit
-                N = 1
-                xMin = time_diff[chan][chan2].GetMean() - N * time_diff[chan][chan2].GetStdDev()
-                xMax = time_diff[chan][chan2].GetMean() + N * time_diff[chan][chan2].GetStdDev()
-                
-                # Obtain the parameters
-                time_diff[chan][chan2].Fit("gaus", "0", "", xMin, xMax)
-                fit_function = time_diff[chan][chan2].GetFunction("gaus")
-                fitted_parameters = [fit_function.GetParameter(0), fit_function.GetParameter(1), fit_function.GetParameter(2)]
-                
-                # Get sigma between two channels
-                sigmas_mix[i][j] = fit_function.GetParameter(2)
-                sigmas_mix[j][i] = fit_function.GetParameter(2)
-                
-
-        # Obtain the sigmas for each channel
-
-        sigmas_chan = t_calc.solveLinearEq(sigmas_mix)
-        print sigmas_chan
-        
-        for chan in channels_part:
-            chan2_list = list(channels_part)
-            chan2_list.remove(chan)
-        
-            for chan2 in chan2_list:
+            if md.getNameOfSensor(chan) != md.getNameOfSensor(chan2):
 
                 index = int(chan[-1]) % 4
                 
@@ -150,7 +153,7 @@ def produceTimingDistributionPlots(time_difference, peak_value, peak_time, numbe
                 xMax = time_diff[chan][chan2].GetMean() + N * time_diff[chan][chan2].GetStdDev()
                 
                 # Obtain the parameters
-                time_diff[chan][chan2].Fit("gaus", "N", "", xMin, xMax)
+                time_diff[chan][chan2].Fit("gaus", "Q0", "", xMin, xMax)
                 fit_function = time_diff[chan][chan2].GetFunction("gaus")
                 fitted_parameters = [fit_function.GetParameter(0), fit_function.GetParameter(1), fit_function.GetParameter(2)]
                 
@@ -163,9 +166,8 @@ def produceTimingDistributionPlots(time_difference, peak_value, peak_time, numbe
                 headTitle = "Time difference "+md.getNameOfSensor(chan)+" and "+md.getNameOfSensor(chan2)+", Sep 2017, B"+str(md.getBatchNumber())
                 xAxisTitle = "\Delta t_{DUT1 - DUT2} (ps)"
                 yAxisTitle = "Number (N)"
-                fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/time_diff_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_and_"+str(md.getNameOfSensor(chan2))+".pdf"
+                fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/time_diff_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_and_"+str(md.getNameOfSensor(chan2))+".pdf"
                 titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
-                print sigmas_chan.item((0, index))
                 exportTHPlot(time_diff[chan][chan2], titles, "", fit_function_adapted, sigmas_chan.item((0, index)))
 
 
@@ -199,7 +201,7 @@ def exportTHPlot(graphList, titles, drawOption, fit, sigma):
     linesStatsBox.Remove(textMean)
     textConstant = statsBox.GetLineWith("Constant")
     linesStatsBox.Remove(textConstant)
-    
+
     statsBox.AddText("\sigma_{"+md.getNameOfSensor(chan)+"} = "+str(sigma)[0:6])
     canvas.Modified()
     canvas.Update()

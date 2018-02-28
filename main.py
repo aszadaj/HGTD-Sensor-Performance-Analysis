@@ -20,14 +20,14 @@ import data_management
 
 def main():
     
-    metadata.printTime()
+    data_management.printTime()
     
     # This is only used for me, for storing the oscilloscope on an external drive
     data_management.setIfOnHDD(False)
-    data_management.setIfOnHITACHI(True)
+    data_management.setIfOnHITACHI(False)
     
     #### Settings used for debugging noise and pulse analysis ####
-    metadata.setLimitRunNumbers(0)
+    metadata.setLimitRunNumbers(2)
     metadata.setEntriesForQuickAnalysis(0)
     #############################################################
     
@@ -55,12 +55,12 @@ def main():
     # PRODUCE PLOTS #
     #noise_plot.noisePlots()
     #pulse_plot.pulsePlots()
-    timing_plot.timingPlots()
+    #timing_plot.timingPlots()
     
     
     ###### END OF METHODS ########
    
-    metadata.printTime()
+    data_management.printTime()
     exit()
 
 

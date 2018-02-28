@@ -91,7 +91,7 @@ def produceMeanValue2DPlots(peak_values, tracking):
     # Print mean value 2D plot
     headTitle = "Pulse amplitude mean value (mV) in each bin, Sep 2017 batch " + batchOrRunNumber +", channel " + chan_index + ", sensor: " + md.getNameOfSensor(chan) + ", bins: " + str(ybin) +", min entries in bin: "+str(minEntries) + "; " + "X position (mm)" + "; " + "Y position (mm)"
     
-    fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/tracking_mean_value_"+ batchOrRunNumber +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+    fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/tracking_mean_value_"+ batchOrRunNumber +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
 
     titles = [headTitle, fileName]
     printTHPlot(mean_values[chan], canvas, titles)
@@ -167,20 +167,20 @@ def produceEfficiency2DPlot(peak_values, tracking):
 
     # Print efficiency plot
     headTitle = "Efficiency in each bin, Sep 2017 batch " + batchOrRunNumber + ", channel " + chan_index + ", sensor: " + md.getNameOfSensor(chan) + ", bins: " + str(ybin) +", min entries in bin: "+str(minEntries) + "; " + "X position (mm)" + "; " + "Y position (mm)"
-    fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/tracking_efficiency_" + batchOrRunNumber +"_"+chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+    fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/tracking_efficiency_" + batchOrRunNumber +"_"+chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
     titles = [headTitle, fileName]
     printTHPlot(efficiency[chan], canvas, titles, True, [xmin, xmax, ymin, ymax])
     
     
 #    # Print efficiency profile x plot
 #    headTitle = "Projected histogram along X-axis from the efficiency graph, Sep 2017 batch " + batchOrRunNumber + ", channel " + chan_index + ", sensor: " + md.getNameOfSensor(chan) + ", bins: " + str(ybin) +", min entries in bin: "+str(minEntries) + "; " + "X position (mm)" + "; " + "Y position (mm)"
-#    fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/tracking_efficiency_profile_x_" + batchOrRunNumber +"_"+chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+#    fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/tracking_efficiency_profile_x_" + batchOrRunNumber +"_"+chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
 #    titles = [headTitle, fileName]
 #    printTHPlot(efficiency[chan].GetTotalHistogram().ProfileX(), canvas, titles, False, [xmin, xmax, ymin, ymax], True)
 #
 #    # Print efficiency profile y plot
 #    headTitle = "Projected histogram along Y-axis from the efficiency graph, Sep 2017 batch " + batchOrRunNumber + ", channel " + chan_index + ", sensor: " + md.getNameOfSensor(chan) + ", bins: " + str(ybin) +", min entries in bin: "+str(minEntries) + "; " + "X position (mm)" + "; " + "Y position (mm)"
-#    fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/tracking_efficiency_profile_y_" + batchOrRunNumber +"_"+chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+#    fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/tracking_efficiency_profile_y_" + batchOrRunNumber +"_"+chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
 #    titles = [headTitle, fileName]
 #    printTHPlot(efficiency[chan].GetTotalHistogram().ProfileX(), canvas, titles, False, [xmin, xmax, ymin, ymax], True)
 
@@ -188,19 +188,19 @@ def produceEfficiency2DPlot(peak_values, tracking):
 
     # Print inefficiency plot
     headTitle = "Inefficiency in each bin, Sep 2017 batch " + batchOrRunNumber + ", channel " + chan_index + ", sensor: " + md.getNameOfSensor(chan) + ", bins: " + str(ybin) +", min entries in bin: "+str(minEntries) + "; " + "X position (mm)" + "; " + "Y position (mm)"
-    fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/tracking_inefficiency_"+ batchOrRunNumber +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+    fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/tracking_inefficiency_"+ batchOrRunNumber +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
     titles = [headTitle, fileName]
     printTHPlot(inefficiency[chan], canvas, titles)
     
 #    # Print inefficiency profile x plot
 #    headTitle = "Projected histogram along X-axis from the inefficiency graph, Sep 2017 batch " + batchOrRunNumber + ", channel " + chan_index + ", sensor: " + md.getNameOfSensor(chan) + ", bins: " + str(ybin) +", min entries in bin: "+str(minEntries) + "; " + "X position (mm)" + "; " + "Y position (mm)"
-#    fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/tracking_inefficiency_profile_x_"+ batchOrRunNumber +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+#    fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/tracking_inefficiency_profile_x_"+ batchOrRunNumber +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
 #    titles = [headTitle, fileName]
 #    printTHPlot(inefficiency[chan].ProfileX(), canvas, titles, False, "", True)
 #
 #    # Print inefficiency profile y plot
 #    headTitle = "Projected histogram along Y-axis from the inefficiency graph, Sep 2017 batch " + batchOrRunNumber + ", channel " + chan_index + ", sensor: " + md.getNameOfSensor(chan) + ", bins: " + str(ybin) +", min entries in bin: "+str(minEntries) + "; " + "X position (mm)" + "; " + "Y position (mm)"
-#    fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/tracking_inefficiency_profile_y_"+ batchOrRunNumber +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+#    fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/tracking_inefficiency_profile_y_"+ batchOrRunNumber +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
 #    titles = [headTitle, fileName]
 #    printTHPlot(inefficiency[chan].ProfileY(), canvas, titles, False, "", True)
 
@@ -210,14 +210,14 @@ def produceEfficiency2DPlot(peak_values, tracking):
     canvas.SetLogz()
 
     headTitle = "Efficiency in each bin, Sep 2017 batch " + batchOrRunNumber + ", channel " + chan_index + ", sensor: " + md.getNameOfSensor(chan) + ", bins: " + str(ybin) +", min entries in bin: "+str(minEntries) + "; " + "X position (mm)" + "; " + "Y position (mm)"
-    fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/tracking_efficiency_" + batchOrRunNumber +"_"+chan + "_"+str(md.getNameOfSensor(chan))+"_log.pdf"
+    fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/tracking_efficiency_" + batchOrRunNumber +"_"+chan + "_"+str(md.getNameOfSensor(chan))+"_log.pdf"
     titles = [headTitle, fileName]
     printTHPlot(efficiency[chan], canvas, titles, True, [xmin, xmax, ymin, ymax])
 
 
     # Print inefficiency plot with log scale
     headTitle = "Inefficiency in each bin, Sep 2017 batch " + batchOrRunNumber + ", channel " + chan_index + ", sensor: " + md.getNameOfSensor(chan) + ", bins: " + str(ybin) +", min entries in bin: "+str(minEntries) + "; " + "X position (mm)" + "; " + "Y position (mm)"
-    fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/tracking_inefficiency_"+ batchOrRunNumber +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+"_log.pdf"
+    fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/tracking_inefficiency_"+ batchOrRunNumber +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+"_log.pdf"
     titles = [headTitle, fileName]
     printTHPlot(inefficiency[chan], canvas, titles)
 

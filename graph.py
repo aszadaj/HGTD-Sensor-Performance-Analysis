@@ -13,10 +13,10 @@ ROOT.gROOT.SetBatch(True)
 def printWaveform():
 
 
-    runNumber = 3921
+    runNumber = 3785
     firstEvent = 16492
     entries = 1
-    N = 5
+    N = 1
 
     dm.setIfOnHDD(True)
     dm.setIfOnHITACHI(False)
@@ -24,7 +24,7 @@ def printWaveform():
     dm.checkIfRepositoryOnStau()
 
 
-    dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
+    dataPath = dm.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
     
     if dm.isOnHDD():
     
@@ -51,7 +51,7 @@ def printWaveform():
     
     
     channels = data.dtype.names
-    channels = ["chan4"]
+    channels = ["chan0"]
 
     for chan in channels:
     
@@ -90,12 +90,12 @@ def printWaveform():
     multi_graph.GetXaxis().SetTitle(xAxisTitle)
     multi_graph.GetYaxis().SetTitle(yAxisTitle)
 
-    multi_graph.GetYaxis().SetRangeUser(-30,400)
+    multi_graph.GetYaxis().SetRangeUser(-30,30)
     multi_graph.GetXaxis().SetRangeUser(0,100*entries)
     #multi_graph.GetXaxis().SetRangeUser(40,70)
 
 
-    fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/waveforms/waveform"+"_"+str(md.getBatchNumber())+"_"+str(runNumber)+"_event_"+str(firstEvent)+".pdf"
+    fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/waveforms/waveform"+"_"+str(md.getBatchNumber())+"_"+str(runNumber)+"_event_"+str(firstEvent)+".pdf"
 
 
     canvas.Print(fileName)

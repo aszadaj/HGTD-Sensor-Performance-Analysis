@@ -59,19 +59,19 @@ Before that, a list of functions can be choosed, these are:
 The first two functions needs oscilloscope files to run with. In general they do not to be run, since all files have been already created and exported. These are in ```HGTD_material/data_hgtd_efficiency_sep_2017``` folder.
 The methods are chosen by commenting out those which are of interest.
 
-CHOOSING BATCHES
 
-The function
+
+# Choosing what to run
+
+To adapt the code to run just certain batches, the function can be adapted for this
 
  ```metadata.setBatchNumbers([306])```
 
-Can be used to choose batches and the simplest way is to choose 306. There can be more chosen, for example
+here the example shows only batch 306. For multiple, write as a new element, [306, 507]. Also all can be performed
 
-metadata.setBatchNumbers([306, 504])
- 
-or considering all batches
- 
-metadata.setBatchNumbers("all"). I suggest to use this only for producing plots, that is using
+metadata.setBatchNumbers("all").
+
+If all methods below are in use, this usually takes (on 4 threads) 5 hours.
 
 
 

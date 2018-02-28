@@ -118,7 +118,7 @@ def produceNoisePlots(noise_average, noise_std):
         headTitle = "Noise standard deviation values "+md.getNameOfSensor(chan)+" B"+str(md.getBatchNumber())
         xAxisTitle = "Standard deviation (mV)"
         yAxisTitle = "Number of entries (N)"
-        fileName = str(md.getSourceFolderPath()) + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/noise/noise_plots/noise_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        fileName = str(dm.getSourceFolderPath()) + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/noise/noise_plots/noise_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistograms(noise_graph[chan], titles)
         
@@ -126,7 +126,7 @@ def produceNoisePlots(noise_average, noise_std):
         headTitle = "Noise average values (pedestal) "+md.getNameOfSensor(chan)+" B"+str(md.getBatchNumber())
         xAxisTitle = "Average value (mV)"
         yAxisTitle = "Number of entries (N)"
-        fileName = str(md.getSourceFolderPath()) + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/noise/pedestal_plots/pedestal_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        fileName = str(dm.getSourceFolderPath()) + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/noise/pedestal_plots/pedestal_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistograms(pedestal_graph[chan], titles)
 

@@ -1,7 +1,7 @@
 import numpy as np
 import root_numpy as rnm
 import os
-
+import datetime as dt
 
 import metadata as md
 
@@ -37,15 +37,15 @@ def exportROOTFile(data, group, category=""):
     
     if category == "":
     
-        fileName = md.getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(md.getRunNumber())+".root"
+        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(md.getRunNumber())+".root"
     
     
     elif category == "position":
     
-        fileName = md.getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(category)+"_"+str(md.getBatchNumber())+".root"
+        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(category)+"_"+str(md.getBatchNumber())+".root"
     
     else:
-        fileName = md.getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
+        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
 
     if group != "timing":
         data = changeDTYPEOfData(data)
@@ -83,26 +83,54 @@ def importROOTFile(group, category=""):
         
         if category == "":
         
-            fileName = md.getSourceFolderPath()+"tracking_data_sep_2017/tracking"+md.getTimeStamp()+".root"
+            fileName = getSourceFolderPath()+"tracking_data_sep_2017/tracking"+md.getTimeStamp()+".root"
         
         else:
-            fileName = md.getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+group+"/"+category+"_"+str(md.getBatchNumber())+".root"
+            fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+group+"/"+category+"_"+str(md.getBatchNumber())+".root"
 
         return rnm.root2array(fileName)
     
     elif group == "timing":
     
-        fileName = md.getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/timing/timing_"+str(md.getRunNumber())+".root"
+        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/timing/timing_"+str(md.getRunNumber())+".root"
 
         return rnm.root2array(fileName)
 
     
     else:
     
-        fileName = md.getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
+        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
         
         
         return rnm.root2array(fileName)
+
+def convertNoiseData(noise_average, noise_std):
+    
+    for chan in noise_std.dtype.names:
+        noise_average[chan] =  np.multiply(noise_average[chan], -1000)
+        noise_std[chan] = np.multiply(noise_std[chan], 1000)
+
+    return noise_average, noise_std
+
+
+
+def convertPulseData(peak_values):
+    
+    for chan in peak_values.dtype.names:
+        peak_values[chan] =  np.multiply(peak_values[chan], -1000)
+
+    return peak_values
+
+
+def convertTrackingData(tracking, peak_values):
+
+    for dimension in tracking.dtype.names:
+        tracking[dimension] = np.multiply(tracking[dimension], 0.001)
+
+    for chan in peak_values.dtype.names:
+        peak_values[chan] = np.multiply(peak_values[chan], -1000)
+
+    return tracking, peak_values
 
 
 def changeDTYPEOfData(data):
@@ -143,47 +171,20 @@ def checkIfRepositoryOnStau():
         setIfOnHDD(False)
 
     defineNumberOfThreads(threadNumber)
-    md.defineDataFolderPath(sourceFolderPath)
+    defineDataFolderPath(sourceFolderPath)
 
 
-# Define thread number or multiprocessing
-def defineNumberOfThreads(number):
+# Get actual time
+def getTime():
 
-    global threads
-    threads = number
-
-def setNumberOfThreads(number):
-    threads = number
+    return dt.datetime.now().replace(microsecond=0)
 
 
-def convertNoiseData(noise_average, noise_std):
-    
-    for chan in noise_std.dtype.names:
-        noise_average[chan] =  np.multiply(noise_average[chan], -1000)
-        noise_std[chan] = np.multiply(noise_std[chan], 1000)
+# Print time stamp
+def printTime():
 
-    return noise_average, noise_std
-
-
-
-def convertPulseData(peak_values):
-    
-    for chan in peak_values.dtype.names:
-        peak_values[chan] =  np.multiply(peak_values[chan], -1000)
-
-    return peak_values
-
-
-def convertTrackingData(tracking, peak_values):
-
-    for dimension in tracking.dtype.names:
-        tracking[dimension] = np.multiply(tracking[dimension], 0.001)
-
-    for chan in peak_values.dtype.names:
-        peak_values[chan] = np.multiply(peak_values[chan], -1000)
-
-    return tracking, peak_values
-
+    time = str(dt.datetime.now().time())
+    print  "\nTime: " + str(time[:-7])
 
 def setIfOnHDD(value):
 
@@ -202,4 +203,26 @@ def setIfOnHITACHI(value):
 def isOnHITACHI():
 
     return hitachi
+
+# Define folder where the pickle files should be
+def defineDataFolderPath(source):
+
+    global sourceFolderPath
+    sourceFolderPath = source
+
+
+# Return path of data files
+def getSourceFolderPath():
+
+    return sourceFolderPath
+
+
+# Define thread number or multiprocessing
+def defineNumberOfThreads(number):
+
+    global threads
+    threads = number
+
+def setNumberOfThreads(number):
+    threads = number
 

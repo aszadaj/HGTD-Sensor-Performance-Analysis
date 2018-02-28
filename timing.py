@@ -16,7 +16,7 @@ def timingAnalysis():
 
     dm.checkIfRepositoryOnStau()
     
-    startTime = md.getTime()
+    startTime = dm.getTime()
     runLog_batch = md.getRunLogBatches(md.batchNumbers)
     print "\nStart TIMING analysis, batches:", md.batchNumbers
 
@@ -31,8 +31,8 @@ def timingAnalysis():
         if md.limitRunNumbers != 0:
             runLog = runLog[0:md.limitRunNumbers]
     
-        startTimeBatch = md.getTime()
-        md.printTime()
+        startTimeBatch = dm.getTime()
+        dm.printTime()
         
         print "Batch:", runLog[0][5], len(runLog), "run files.\n"
       
@@ -54,8 +54,8 @@ def timingAnalysis():
             print "Done with run", md.getRunNumber(), "\n"
 
 
-        print "Done with batch", runLog[0][5], "Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
+        print "Done with batch", runLog[0][5], "Time analysing: "+str(dm.getTime()-startTimeBatch)+"\n"
 
-    print "Done with TIMING analysis. Time analysing: "+str(md.getTime()-startTime)+"\n"
+    print "Done with TIMING analysis. Time analysing: "+str(dm.getTime()-startTime)+"\n"
 
 

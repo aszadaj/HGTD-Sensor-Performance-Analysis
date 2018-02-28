@@ -16,7 +16,7 @@ def noiseAnalysis():
     
     dm.checkIfRepositoryOnStau()
     
-    startTime = md.getTime()
+    startTime = md.dm.getTime()
    
     runLog_batch = md.getRunLogBatches(md.batchNumbers)
     
@@ -27,8 +27,8 @@ def noiseAnalysis():
         if md.limitRunNumbers != 0:
             runLog = runLog[0:md.limitRunNumbers] # Restrict to some run numbers
     
-        startTimeBatch = md.getTime()
-        md.printTime()
+        startTimeBatch = md.dm.getTime()
+        dm.printTime()
         
         print "Batch:", runLog[0][5], len(runLog), "run files.\n"
       
@@ -46,9 +46,9 @@ def noiseAnalysis():
             print "Done with run", md.getRunNumber(),"\n"
 
 
-        print "Done with batch",runLog[0][5],"Time analysing: "+str(md.getTime()-startTimeBatch)+"\n"
+        print "Done with batch",runLog[0][5],"Time analysing: "+str(md.dm.getTime()-startTimeBatch)+"\n"
 
-    print "Done with NOISE analysis. Time analysing: "+str(md.getTime()-startTime)+"\n"
+    print "Done with NOISE analysis. Time analysing: "+str(md.dm.getTime()-startTime)+"\n"
 
 def noiseAnalysisPerRun():
     
@@ -65,7 +65,7 @@ def noiseAnalysisPerRun():
     p = Pool(dm.threads)
     ranges = range(0, max, step)
     
-    dataPath = md.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
+    dataPath = dm.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
     
     if dm.isOnHDD():
     

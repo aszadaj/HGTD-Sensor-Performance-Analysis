@@ -2,11 +2,9 @@
 import ROOT
 import csv
 import os
-import datetime as dt
 
 import data_management as dm
 
-########## METADATA ##########
 
 # Return run log imported from a .csv file
 def getRunLog():
@@ -191,7 +189,7 @@ def readFileNames(fileType):
         last_index = 11
 
 
-    mainFolderPath = getSourceFolderPath() + folderPath
+    mainFolderPath = dm.getSourceFolderPath() + folderPath
     
     if dm.isOnHDD() and fileType == "oscilloscope":
     
@@ -201,20 +199,6 @@ def readFileNames(fileType):
     availableFiles.sort()
 
     return availableFiles
-
-
-
-# Define folder where the pickle files should be
-def defineDataFolderPath(source):
-
-    global sourceFolderPath
-    sourceFolderPath = source
-
-
-# Return path of data files
-def getSourceFolderPath():
-
-    return sourceFolderPath
 
 
 # Get current run number
@@ -345,11 +329,6 @@ def getRowForRunNumber(runNumber):
         if int(row[3]) == runNumber:
             return row
 
-# Set run info for selected run
-def defineGlobalVariableRun(row):
-    
-    global runInfo
-    runInfo = row
 
 
 # Function for setting up ATLAS style plots
@@ -359,14 +338,12 @@ def setupATLAS():
     ROOT.gROOT.LoadMacro("./resources/style/AtlasStyle.C")
     ROOT.SetAtlasStyle()
 
-def setLimitRunNumbers(number):
-    global limitRunNumbers
-    limitRunNumbers = number
 
-
-def setEntriesForQuickAnalysis(value):
-    global maxEntries
-    maxEntries = value
+# Set run info for selected run
+def defineGlobalVariableRun(row):
+    
+    global runInfo
+    runInfo = row
 
 
 def setBatchNumbers(numbers, exclude=[]):
@@ -390,21 +367,11 @@ def setBatchNumbers(numbers, exclude=[]):
     batchNumbers = numbers
 
 
-# Other functions, unrelated to metadata
-
-# Get actual time
-def getTime():
-
-    return dt.datetime.now().replace(microsecond=0)
+def setLimitRunNumbers(number):
+    global limitRunNumbers
+    limitRunNumbers = number
 
 
-# Print time stamp
-def printTime():
-
-    time = str(dt.datetime.now().time())
-    print  "\nTime: " + str(time[:-7])
-
-
-
-
-
+def setEntriesForQuickAnalysis(value):
+    global maxEntries
+    maxEntries = value

@@ -122,21 +122,21 @@ def producePulsePlots(peak_times, peak_values, rise_times, batchNumber):
         headTitle = "Time at peak location "+md.getNameOfSensor(chan)+" B"+str(md.getBatchNumber())
         xAxisTitle = "Time (ns)"
         yAxisTitle = "Number (N)"
-        fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/peak_time_plots/time_reference_peak_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/peak_time_plots/time_reference_peak_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistogram(peak_times_graph[chan], titles)
         
         headTitle = "Maximum amplitudes "+md.getNameOfSensor(chan)+" B"+str(md.getBatchNumber())
         xAxisTitle = "Max amplitude (mV)"
         yAxisTitle = "Number of entries (N)"
-        fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/peak_value_plots/pulse_amplitude_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/peak_value_plots/pulse_amplitude_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistogram(peak_values_graph[chan], titles)
         
         headTitle = "Rise times "+md.getNameOfSensor(chan)+" B"+str(md.getBatchNumber())
         xAxisTitle = "Time (ns)"
         yAxisTitle = "Number of entries (N)"
-        fileName = md.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/rise_time_plots/rise_time_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/rise_time_plots/rise_time_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistogram(rise_times_graph[chan], titles, fit_function_adapted)
         #exportHistogram(rise_times_graph[chan], titles)
