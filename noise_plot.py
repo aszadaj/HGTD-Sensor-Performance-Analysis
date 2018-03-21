@@ -5,9 +5,6 @@ import root_numpy as rnm
 import data_management as dm
 
 
-ROOT.gStyle.SetOptFit()
-
-
 # Concatenate all runs for each batch. When the files are concatenated, produce plots for that batch until
 # all batches are considered.
 def noisePlots():
@@ -92,9 +89,9 @@ def produceNoisePlots(noise_average, noise_std):
         noise_max = noise_mean + width * noise_width
         
         
-        pedestal_graph[chan] = ROOT.TH1D("Pedestal " + md.getNameOfSensor(chan), "pedestal"+chan, 1000, pedestal_min, pedestal_max)
+        pedestal_graph[chan] = ROOT.TH1D("Pedestal", "pedestal"+chan, 1000, pedestal_min, pedestal_max)
         
-        noise_graph[chan]    = ROOT.TH1D("Noise " + md.getNameOfSensor(chan), "noise"+chan, 1000, noise_min, noise_max)
+        noise_graph[chan]    = ROOT.TH1D("Noise", "noise"+chan, 1000, noise_min, noise_max)
 
         for entry in range(0, len(noise_average)):
 
@@ -110,12 +107,14 @@ def produceNoisePlots(noise_average, noise_std):
         
         noise_min = noise_mean - width * noise_width
         noise_max = noise_mean + width * noise_width
-        
-        pedestal_graph[chan].Fit("gaus","","", pedestal_min, pedestal_max)
-        noise_graph[chan].Fit("gaus","","", noise_min, noise_max)
+
+        ROOT.gStyle.SetOptFit()
+
+        pedestal_graph[chan].Fit("gaus","Q","", pedestal_min, pedestal_max)
+        noise_graph[chan].Fit("gaus","Q","", noise_min, noise_max)
 
 
-        headTitle = "Noise standard deviation values "+md.getNameOfSensor(chan)+" B"+str(md.getBatchNumber())
+        headTitle = "Noise - standard deviation values "+md.getNameOfSensor(chan)+", B"+str(md.getBatchNumber())
         xAxisTitle = "Standard deviation (mV)"
         yAxisTitle = "Number of entries (N)"
         fileName = str(dm.getSourceFolderPath()) + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/noise/noise_plots/noise_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
@@ -123,7 +122,7 @@ def produceNoisePlots(noise_average, noise_std):
         exportHistograms(noise_graph[chan], titles)
         
         
-        headTitle = "Noise average values (pedestal) "+md.getNameOfSensor(chan)+" B"+str(md.getBatchNumber())
+        headTitle = "Pedestal - average values "+md.getNameOfSensor(chan)+", B"+str(md.getBatchNumber())
         xAxisTitle = "Average value (mV)"
         yAxisTitle = "Number of entries (N)"
         fileName = str(dm.getSourceFolderPath()) + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/noise/pedestal_plots/pedestal_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"

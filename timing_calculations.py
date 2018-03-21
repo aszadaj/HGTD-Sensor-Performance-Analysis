@@ -3,6 +3,26 @@ import metadata as md
 
 def timingAnalysisPerRun(peak_time, peak_value):
     
+    time_difference = np.zeros(len(peak_time), dtype = peak_time.dtype)
+    
+    SiPM_chan = md.getChannelNameForSensor("SiPM-AFP")
+
+    for chan in peak_time.dtype.names:
+
+        if chan != SiPM_chan:
+            
+            for event in range (0, len(peak_time)):
+                if peak_time[SiPM_chan][event] != 0 and peak_time[chan][event] != 0:
+                    
+                    # This is for the case if the SiPM is in the same oscilloscope as the DUT
+                    time_difference[chan][event] = peak_time[event][chan] - peak_time[event][SiPM_chan]
+
+
+    return time_difference
+
+# This is used to produce ROOT files which have multiple solutions
+def timingAnalysisPerRunSysEq(peak_time, peak_value):
+    
     dt = (  [('chan0',  '<f8', 3), ('chan1',  '<f8', 3) ,('chan2',  '<f8', 3) ,('chan3',  '<f8', 3) ,('chan4',  '<f8', 3) ,('chan5',  '<f8', 3) ,('chan6',  '<f8', 3) ,('chan7',  '<f8', 3)] )
     
     time_difference = np.zeros(len(peak_time), dtype = dt)
@@ -47,6 +67,5 @@ def solveLinearEq(sigmas_mix):
     solution = inverse.dot(vector)
     sigma_chan = np.sqrt(solution)
 
-    
-    return sigma_chan
 
+    return sigma_chan

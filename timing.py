@@ -22,11 +22,6 @@ def timingAnalysis():
 
     for runLog in runLog_batch:
  
-        # Create batches to use them to plot results
-        time_difference_batch = np.empty(0)
-        peak_value_batch = np.empty(0)
-        peak_time_batch = np.empty(0)
-        
         # Restrict run numbers
         if md.limitRunNumbers != 0:
             runLog = runLog[0:md.limitRunNumbers]
@@ -46,10 +41,13 @@ def timingAnalysis():
             peak_time_run = dm.importPulseFile("peak_time")
             peak_value_run = dm.importPulseFile("peak_value")
 
-            time_difference_run = t_calc.timingAnalysisPerRun(peak_time_run, peak_value_run)
+            time_difference_linear_run = t_calc.timingAnalysisPerRun(peak_time_run, peak_value_run)
+            
+            time_difference_sys_eq_run = t_calc.timingAnalysisPerRunSysEq(peak_time_run, peak_value_run)
             
             # Export per run number
-            dm.exportTimingData(time_difference_run)
+            dm.exportTimingLinearData(time_difference_linear_run)
+            dm.exportTimingSysEqData(time_difference_sys_eq_run)
             
             print "Done with run", md.getRunNumber(), "\n"
 

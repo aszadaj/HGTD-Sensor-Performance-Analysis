@@ -14,7 +14,6 @@ def pulseAnalysis(data, pedestal, noise):
     peak_values     =   np.zeros(len(data), dtype = data.dtype)
     rise_times      =   np.zeros(len(data), dtype = data.dtype)
 
-
     for event in range(0, len(data)):
     
         for chan in channels:
@@ -22,6 +21,7 @@ def pulseAnalysis(data, pedestal, noise):
             variables = [data[chan][event], pedestal[chan], noise[chan], chan, event, criticalValues[chan]]
             results = getAmplitudeAndRiseTime(variables)
             [peak_times[event][chan], peak_values[event][chan], rise_times[event][chan]] = [i for i in results]
+
 
     return peak_times, peak_values, rise_times
 
@@ -36,7 +36,7 @@ def getAmplitudeAndRiseTime (variables):
     
     # Factor to regulate the threshold.
     N = 5
-    
+   
     # Relevant values from the pulse
     peak_time = 0
     peak_value = 0
@@ -46,6 +46,12 @@ def getAmplitudeAndRiseTime (variables):
     threshold = -noise * N + pedestal
     threshold_indices = np.where(data < threshold)[0]
     
+#    if len(threshold_indices) > 0:
+#
+#        group_points = group_consecutives(threshold_indices)
+#        group_points_amplitude = [np.amin(data[group]) for group in group_points]
+#        threshold_indices = group_points[group_points_amplitude.index(min(group_points_amplitude))]
+
     try:
 
         # Restrict to finding the threshold and avoid values which have corrupted data
@@ -54,12 +60,6 @@ def getAmplitudeAndRiseTime (variables):
             first_index = threshold_indices[0]
             last_index = np.argwhere(data < np.amin(data)*0.9)[0]
         
-            # This is to adapt for the SiPM rise time distribution to look better
-            # Does not affect other plots
-            if chan == md.getChannelNameForSensor("SiPM-AFP"):
-                last_index -= 2
-           
-
             linear_fit_indices = np.arange(first_index, last_index)
             linear_fit_data = data[linear_fit_indices]
   
@@ -91,14 +91,15 @@ def getAmplitudeAndRiseTime (variables):
                     rise_time = 0.8 * peak_value / linear_fit[0]
 
     except:
+#
+#        print "Error caught"
+#        print sys.exc_info()[0]
+#        print event, chan, "\n"
 
-        print "Error caught"
-        print sys.exc_info()[0]
-        print event, chan, "\n"
-        
         peak_value = 0
         peak_time = 0
         rise_time = 0
+
 
     return peak_time, peak_value, rise_time
 

@@ -14,9 +14,9 @@ def printWaveform():
 
 
     runNumber = 3785
-    firstEvent = 16492
+    firstEvent = 56143
     entries = 1
-    N = 1
+    N = 5
 
     dm.setIfOnHDD(True)
     dm.setIfOnHITACHI(False)
@@ -36,10 +36,21 @@ def printWaveform():
     
     data = rnm.root2array(dataPath, start=firstEvent, stop=firstEvent+entries)
  
-
-  
+    channels = data.dtype.names
+    channels = ["chan3"]
+    chan = channels[0]
+    
     pedestal, noise = p_calc.getPedestalAndNoise(dm.importNoiseFile("pedestal"), dm.importNoiseFile("noise"))
+
+    
+    
+
     pedestal, noise  = dm.convertNoiseData(pedestal, noise)
+    
+    rise_time = dm.importPulseFile("rise_time")
+    
+    print channels
+    print np.argwhere(rise_time[channels[0]] > 1.5)
     
 
     multi_graph = ROOT.TMultiGraph()
@@ -48,10 +59,8 @@ def printWaveform():
     
     graph_waveform = dict()
     graph_threshold = dict()
-    
-    
-    channels = data.dtype.names
-    channels = ["chan0"]
+
+
 
     for chan in channels:
     
@@ -77,11 +86,13 @@ def printWaveform():
         multi_graph.Add(graph_waveform[chan])
         legend.AddEntry(graph_waveform[chan], md.getNameOfSensor(chan), "l")
         legend.AddEntry(graph_threshold[chan], "Threshold: "+str(threshold[0])[:5]+" mV", "l")
+        legend.AddEntry(graph_threshold[chan], "Rise time: "+str(rise_time[chan][firstEvent])+" ns", "l")
 
 
     xAxisTitle = "Time (ns)"
     yAxisTitle = "Voltage (mV)"
-    headTitle = "Waveform, batch: "+str(md.getBatchNumber(runNumber)) + ", run: "+ str(md.getRunNumber())
+    #headTitle = "Waveform, batch: "+str(md.getBatchNumber(runNumber)) + ", run: "+ str(md.getRunNumber())
+    headTitle = "Waveform " + md.getNameOfSensor(chan)
 
 
     multi_graph.Draw("ALP")
@@ -90,7 +101,7 @@ def printWaveform():
     multi_graph.GetXaxis().SetTitle(xAxisTitle)
     multi_graph.GetYaxis().SetTitle(yAxisTitle)
 
-    multi_graph.GetYaxis().SetRangeUser(-30,30)
+    multi_graph.GetYaxis().SetRangeUser(-30,200)
     multi_graph.GetXaxis().SetRangeUser(0,100*entries)
     #multi_graph.GetXaxis().SetRangeUser(40,70)
 

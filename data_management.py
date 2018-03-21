@@ -22,9 +22,15 @@ def exportPulseData(peak_times, peak_values, rise_times):
 
 
 # Export timing data
-def exportTimingData(time_difference):
+def exportTimingLinearData(time_difference):
 
-    exportROOTFile(time_difference, "timing","")
+    exportROOTFile(time_difference, "timing","linear")
+
+
+def exportTimingSysEqData(time_difference):
+
+    exportROOTFile(time_difference, "timing","sys_eq")
+
 
 
 def exportTrackingData(sensor_position):
@@ -35,10 +41,9 @@ def exportTrackingData(sensor_position):
 # Export ROOT file with selected information
 def exportROOTFile(data, group, category=""):
     
-    if category == "":
+    if group == "timing":
     
-        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(md.getRunNumber())+".root"
-    
+        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
     
     elif category == "position":
     
@@ -70,9 +75,9 @@ def importTrackingFile(category=""):
 
     return importROOTFile("tracking", category)
 
-def importTimingFile():
+def importTimingFile(category):
 
-    return importROOTFile("timing")
+    return importROOTFile("timing", category)
 
 
 
@@ -92,7 +97,7 @@ def importROOTFile(group, category=""):
     
     elif group == "timing":
     
-        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/timing/timing_"+str(md.getRunNumber())+".root"
+        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
 
         return rnm.root2array(fileName)
 

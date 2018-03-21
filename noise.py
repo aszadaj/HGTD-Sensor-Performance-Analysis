@@ -39,6 +39,7 @@ def noiseAnalysis():
             print "Run", md.getRunNumber()
             
             [noise_average, noise_std] = noiseAnalysisPerRun()
+            
             dm.exportNoiseData(noise_average, noise_std)
             
             del noise_average, noise_std

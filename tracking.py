@@ -31,6 +31,8 @@ def trackingAnalysis():
         startTimeBatch = md.dm.getTime()
     
         results_batch = []
+        
+        print "\n Importing and concatenating...\n"
 
         for index in range(0, len(runLog)):
            
@@ -41,7 +43,8 @@ def trackingAnalysis():
                 print "Run", md.getRunNumber()
                 peak_values_run = dm.importPulseFile("peak_value")
                 tracking_run = dm.importTrackingFile()
-            
+    
+    
                 # Slice the peak values to match the tracking files
                 if len(peak_values_run) > len(tracking_run):
                 
@@ -53,12 +56,7 @@ def trackingAnalysis():
                     tracking_run = np.take(tracking_run, np.arange(0,len(peak_values_run)))
             
                 results_batch.append([peak_values_run, tracking_run])
-                
-                # Plot per run number instead of concatenating
-                #tplot.produceTrackingGraphs(peak_values_run, tracking_run)
-                
-                print "Done with run", md.getRunNumber(), "\n"
-        
+    
         
         if len(results_batch) != 0:
             print "Producing plots for batch " + str(md.getBatchNumber()) + ".\n"
@@ -69,7 +67,7 @@ def trackingAnalysis():
             for results_run in results_batch:
                 peak_values = np.concatenate((peak_values, results_run[0]), axis = 0)
                 tracking    = np.concatenate((tracking,  results_run[1]), axis = 0)
-
+        
             tplot.produceTrackingGraphs(peak_values, tracking)
 
             print "Done with batch",runLog[0][5],"Time analysing: "+str(md.dm.getTime()-startTimeBatch)+"\n"
