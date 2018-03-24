@@ -3,6 +3,8 @@ import metadata as md
 import numpy as np
 import data_management as dm
 
+ROOT.gStyle.SetOptFit(1)
+
 # Concatenate all runs for each batch. When the files are concatenated, produce plots for that batch until
 # all batches are considered.
 
@@ -16,86 +18,111 @@ def pulsePlots():
         
         dm.checkIfRepositoryOnStau()
         
-        peak_times = np.empty(0)
         peak_values = np.empty(0)
         rise_times = np.empty(0)
+        peak_time = np.empty(0)
+        rise_time_ref = np.empty(0)
 
         runNumbers = md.getAllRunNumbers(batchNumber)
         
         if md.limitRunNumbers != 0:
             runNumbers = runNumbers[0:md.limitRunNumbers] # Restrict to some run numbers
         
-        availableRunNumbersPeakTimes    = md.readFileNames("pulse_peak_time")
         availableRunNumbersPeakValues   = md.readFileNames("pulse_peak_value")
         availableRunNumbersRiseTimes    = md.readFileNames("pulse_rise_time")
     
         for runNumber in runNumbers:
             
-            if runNumber in availableRunNumbersPeakTimes:
+            if runNumber in availableRunNumbersPeakValues:
                 md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
           
                 print "Importing run", md.getRunNumber(), "\n"
 
-                if peak_times.size == 0:
+                if peak_values.size == 0:
           
-                    peak_times  = dm.importPulseFile("peak_time")
                     peak_values = dm.importPulseFile("peak_value")
                     rise_times  = dm.importPulseFile("rise_time")
+                    peak_time  = dm.importPulseFile("peak_time")
+                    rise_time_ref  = dm.importPulseFile("rise_time_ref")
+                
 
                 else:
 
-                    peak_times = np.concatenate((peak_times, dm.importPulseFile("peak_time")), axis = 0)
                     peak_values = np.concatenate((peak_values, dm.importPulseFile("peak_value")), axis = 0)
                     rise_times = np.concatenate((rise_times, dm.importPulseFile("rise_time")), axis = 0)
+                    peak_time = np.concatenate((peak_time, dm.importPulseFile("peak_time")), axis = 0)
+                    rise_time_ref = np.concatenate((rise_time_ref, dm.importPulseFile("rise_time_ref")), axis = 0)
+                
                     
-        if len(peak_times) != 0:
+        if len(peak_values) != 0:
         
             print "Done with importing files for", batchNumber, "producing plots.\n"
 
-            producePulsePlots(peak_times, peak_values, rise_times, batchNumber)
+            producePulsePlots(peak_values, rise_times, peak_time, rise_time_ref, batchNumber)
 
     print "Done with producing PULSE plots.\n"
 
 
 # Fill TH1 objects
-def producePulsePlots(peak_times, peak_values, rise_times, batchNumber):
+def producePulsePlots(peak_values, rise_times, peak_time, rise_time_ref, batchNumber):
 
     global canvas
     
     peak_values = dm.convertPulseData(peak_values)
+    rise_times = dm.convertRiseTimeData(rise_times)
+    
+    
     
     canvas = ROOT.TCanvas("Pulse", "pulse")
 
-    peak_times_th1d = dict()
     peak_values_th1d = dict()
     rise_times_th1d = dict()
+    peak_time_th1d = dict()
+    rise_time_ref_th1d = dict()
     
     xbins_amplitude = 120
     
     xbins_rise_time = 400
     
-    xbins_times = 200
+    xbins_rise_time_ref = 400
     
-    channels = peak_times.dtype.names
+    xbins_peak_time = 400
     
-    channels = ["chan5"]
+    channels = peak_values.dtype.names
+    
+    #channels = ["chan3","chan5"]
 
     for chan in channels:
+        
+        
+        xbin_max_rise_time = 300
+        
+        if md.getNameOfSensor(chan) == "SiPM-AFP":
+            xbin_max_rise_time = 1000
+        
+        peak_values_th1d[chan] = ROOT.TH1D("Max amplitude", "peak_value" + chan, xbins_amplitude, 0, 500)
+        rise_times_th1d[chan] = ROOT.TH1D("Rise time", "rise_time" + chan, xbins_rise_time, 0, xbin_max_rise_time)
+        
+        peak_time_th1d[chan] = ROOT.TH1D("Peak time", "peak_time" + chan, xbins_peak_time, 0, 100)
 
-        peak_times_th1d[chan] = ROOT.TH1D("Time location", "peak_time" + chan, xbins_times, 30, 70)
-        peak_values_th1d[chan] = ROOT.TH1D("Max amplitude", "peak_value" + chan, xbins_amplitude, 0, 350)
-        rise_times_th1d[chan] = ROOT.TH1D("Rise time", "rise_time" + chan, xbins_rise_time, 0, 3)
+        rise_time_ref_th1d[chan] = ROOT.TH1D("Rise time Ref", "rise_time_ref" + chan, xbins_rise_time_ref, 0, 100)
 
-        for entry in range(0, len(peak_times[chan])):
+        for entry in range(0, len(peak_values[chan])):
    
-            if peak_times[chan][entry] != 0:
-                peak_times_th1d[chan].Fill(peak_times[chan][entry])
-            
             if peak_values[chan][entry] != 0:
                 peak_values_th1d[chan].Fill(peak_values[chan][entry])
             
             if rise_times[chan][entry] != 0:
                 rise_times_th1d[chan].Fill(rise_times[chan][entry])
+    
+            if peak_time[chan][entry] != 0:
+                peak_time_th1d[chan].Fill(peak_time[chan][entry])
+
+            if rise_time_ref[chan][entry] != 0:
+                rise_time_ref_th1d[chan].Fill(rise_time_ref[chan][entry])
+    
+    
+    
     
         # Choose the range for the fits, rise time fit
         N = 2
@@ -129,8 +156,6 @@ def producePulsePlots(peak_times, peak_values, rise_times, batchNumber):
         fit_function_convolution.SetParNames("LConstant", "L\mu", "LScale","GConstant", "GMean", "G\sigma")
         peak_values_th1d[chan].Fit("gaus_landau", "Q")
         
-        ROOT.gStyle.SetOptFit()
-    
         
         # Print maximum amplitude plots
         headTitle = "Maximum amplitudes, "+md.getNameOfSensor(chan)+", B"+str(md.getBatchNumber())
@@ -147,18 +172,23 @@ def producePulsePlots(peak_times, peak_values, rise_times, batchNumber):
         yAxisTitle = "Number of entries (N)"
         fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/rise_time_plots/rise_time_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
-        #exportHistogram(rise_times_th1d[chan], titles)
+        exportHistogram(rise_times_th1d[chan], titles)
 
-
-        ROOT.gStyle.SetOptFit(0)
-
-        # Print time location plot
-        headTitle = "Time at peak location, "+md.getNameOfSensor(chan)+", B"+str(md.getBatchNumber())
+        # Print peak time plots
+        headTitle = "Peak time, "+md.getNameOfSensor(chan)+", B"+str(md.getBatchNumber())
         xAxisTitle = "Time (ns)"
-        yAxisTitle = "Number (N)"
-        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/peak_time_plots/time_reference_peak_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        yAxisTitle = "Number of entries (N)"
+        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/peak_time_plots/peak_time_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
-        #exportHistogram(peak_times_th1d[chan], titles)
+        exportHistogram(peak_time_th1d[chan], titles)
+
+        # Print rise time ref plots
+        headTitle = "Time 50% crossing edge time, "+md.getNameOfSensor(chan)+", B"+str(md.getBatchNumber())
+        xAxisTitle = "Time (ns)"
+        yAxisTitle = "Number of entries (N)"
+        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/rise_time_ref_plots/rise_time_ref_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
+        exportHistogram(rise_time_ref_th1d[chan], titles)
 
 
 # Produce histograms

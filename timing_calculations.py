@@ -1,7 +1,7 @@
 import numpy as np
 import metadata as md
 
-def timingAnalysisPerRun(peak_time, peak_value):
+def timingAnalysisPerRun(peak_time):
     
     time_difference = np.zeros(len(peak_time), dtype = peak_time.dtype)
     
@@ -20,8 +20,9 @@ def timingAnalysisPerRun(peak_time, peak_value):
 
     return time_difference
 
+
 # This is used to produce ROOT files which have multiple solutions
-def timingAnalysisPerRunSysEq(peak_time, peak_value):
+def timingAnalysisPerRunSysEq(peak_time):
     
     dt = (  [('chan0',  '<f8', 3), ('chan1',  '<f8', 3) ,('chan2',  '<f8', 3) ,('chan3',  '<f8', 3) ,('chan4',  '<f8', 3) ,('chan5',  '<f8', 3) ,('chan6',  '<f8', 3) ,('chan7',  '<f8', 3)] )
     
@@ -58,6 +59,23 @@ def timingAnalysisPerRunSysEq(peak_time, peak_value):
 # Solve system of linear equation
 # Note, there are multiple to choose from, 4 unknowns, 6 different equations, not all are independent
 def solveLinearEq(sigmas_mix):
+
+    vector_1 = [1, 1, 0, 0]
+    vector_2 = [1, 0, 1, 0]
+    vector_3 = [1, 0, 0, 1]
+    vector_4 = [0, 1, 1, 0]
+    vector_5 = [0, 1, 0, 1]
+    vector_6 = [0, 0, 1, 1]
+
+
+    pos_vec = [vector_1, vector_2, vector_3, vector_4, vector_5, vector_6]
+
+    for subset in itertools.combinations(pos_vec, 4):
+        matrix = np.matrix(subset)
+        try:
+            inverse = np.linalg.inv(matrix)
+        except:
+            continue
     
     # Non-singular matrix selected
     matrix = np.matrix([[1, 0, 0, 1], [0, 1, 1, 0], [0, 0, 1, 1], [0, 1, 0, 1]])

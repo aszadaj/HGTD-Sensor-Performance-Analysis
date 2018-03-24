@@ -39,9 +39,9 @@ def pulseAnalysis():
         
             print "Run", md.getRunNumber()
             
-            [peak_time, peak_value, rise_time] = pulseAnalysisPerRun()
+            [peak_time, peak_value, rise_time, rise_time_ref] = pulseAnalysisPerRun()
             
-            dm.exportPulseData(peak_time, peak_value, rise_time)
+            dm.exportPulseData(peak_time, peak_value, rise_time, rise_time_ref)
             
             print "Done with run", md.getRunNumber(), "\n"
 
@@ -77,13 +77,9 @@ def pulseAnalysisPerRun():
     
         dataPath = "/Volumes/HITACHI/" + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
 
-    noise_average = dm.importNoiseFile("pedestal")
-    noise_std     = dm.importNoiseFile("noise")
-
-    pedestal, noise = p_calc.getPedestalAndNoise(noise_average, noise_std)
+    pedestal = dm.importNoiseFile("pedestal")
+    noise     = dm.importNoiseFile("noise")
     
-    del noise_average, noise_std
-
     results = p.map(lambda chunk: multiProcess(dataPath, pedestal, noise, chunk, chunk+step), ranges)
     
     # results change form, now each element is a variable

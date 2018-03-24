@@ -17,8 +17,11 @@ def timingPlots():
         
         time_difference_linear = np.empty(0)
         time_difference_sys_eq = np.empty(0)
+        
+        time_difference_linear_rise_time_ref = np.empty(0)
+        time_difference_sys_eq_rise_time_ref = np.empty(0)
+        
         peak_values = np.empty(0)
-        peak_times = np.empty(0)
 
         runNumbers = md.getAllRunNumbers(batchNumber)
         
@@ -41,34 +44,43 @@ def timingPlots():
           
                     time_difference_linear  = dm.importTimingFile("linear")
                     time_difference_sys_eq  = dm.importTimingFile("sys_eq")
+                    
+                    time_difference_linear_rise_time_ref  = dm.importTimingFile("linear_rise_time_ref")
+                    time_difference_sys_eq_rise_time_ref  = dm.importTimingFile("sys_eq_rise_time")
+                    
+                    
                     peak_values = dm.importPulseFile("peak_value")
-                    peak_times  = dm.importPulseFile("peak_time")
                 
                 else:
 
                     time_difference_linear = np.concatenate((time_difference_linear, dm.importTimingFile("linear")), axis = 0)
                     time_difference_sys_eq = np.concatenate((time_difference_sys_eq, dm.importTimingFile("sys_eq")), axis = 0)
+                    
+                    time_difference_linear_rise_time_ref = np.concatenate((time_difference_linear_rise_time_ref, dm.importTimingFile("linear_rise_time_ref")), axis = 0)
+                    time_difference_sys_eq_rise_time_ref = np.concatenate((time_difference_sys_eq_rise_time_ref, dm.importTimingFile("sys_eq_rise_time")), axis = 0)
+                    
                     peak_values = np.concatenate((peak_values, dm.importPulseFile("peak_value")), axis = 0)
-                    peak_times = np.concatenate((peak_times, dm.importPulseFile("peak_time")), axis = 0)
                     
                 # Since the values are concatenated, number of events are tracked
                 
                 numberOfEventPerRun.append(len(time_difference_linear))
         
-        if len(peak_times) != 0:
+        if len(peak_values) != 0:
         
             print "Done with importing files for", batchNumber
             print "Producing plots.\n"
 
-            produceTimingDistributionPlots(time_difference_linear, peak_values, peak_times, numberOfEventPerRun)
-
-            produceTimingDistributionPlotsLinearSys(time_difference_sys_eq, peak_values, peak_times, numberOfEventPerRun)
+            produceTimingDistributionPlots(time_difference_linear, peak_values, numberOfEventPerRun)
+            produceTimingDistributionPlotsSysEq(time_difference_sys_eq, peak_values, numberOfEventPerRun)
+            
+            produceTimingDistributionPlots(time_difference_linear_rise_time_ref, peak_values, numberOfEventPerRun, True)
+            produceTimingDistributionPlotsSysEq(time_difference_sys_eq_rise_time_ref, peak_values, numberOfEventPerRun, True)
 
 
     print "Done with producing TIMING plots.\n"
 
 
-def produceTimingDistributionPlots(time_difference, peak_value, peak_time, numberOfEventPerRun):
+def produceTimingDistributionPlots(time_difference, peak_value, numberOfEventPerRun, rise_time_ref = False):
 
     time_diff = dict()
     fit_function = dict()
@@ -86,7 +98,7 @@ def produceTimingDistributionPlots(time_difference, peak_value, peak_time, numbe
     xbin_low = -15000
     xbin_high = 15000
     
-    #channels = ["chan0"]
+    #channels = ["chan1"]
 
     for chan in channels:
         if chan != SiPM_chan:
@@ -154,23 +166,40 @@ def produceTimingDistributionPlots(time_difference, peak_value, peak_time, numbe
 #            defined_fit.SetParameters(amplitude_low_peak, mean_value_low_peak, amplitude_high_peak, mean_value_high_peak, sigma_double_peak)
 #            defined_fit.SetParNames("Norm 1", "Mean value 1", "Norm 2", "Mean value 2", "Width both")
 
-            # Fit using normal gaussian
-            fit_option = 3
-            defined_fit = ROOT.TF1("gaussian_mod_fit", "gaus", xMin, xMax)
+            fit_option = 0
+            defined_fit = ""
 
-#            # Fit using a modified of number 2
-#            fit_option = 4
-#            defined_fit = ROOT.TF1("gaussian_mod_fit", "[0]*exp(-0.5*((x-[1])/[2])^2) + [3]*exp(-0.5*((x-[1]+100)/[2])^2)", xMin, xMax)
-#
-#            if largePeakOnRight:
-#
-#                defined_fit.SetParameters(amplitude_low_peak, mean_value_high_peak, sigma_double_peak, amplitude_high_peak)
-#                defined_fit.SetParNames("Norm low peak", "Mean value high peak", "Width", "Norm high peak")
-#
-#            else:
-#
-#                defined_fit.SetParameters(amplitude_high_peak, mean_value_high_peak, sigma_double_peak/2, amplitude_low_peak)
-#                defined_fit.SetParNames("Norm high peak", "Mean value high peak", "Width", "Norm low peak")
+
+            # In oscilloscope 1
+            if int(SiPM_chan[-1]) < 4 and int(chan[-1]) < 4:
+
+                # Fit using normal gaussian
+                fit_option = 3
+                defined_fit = ROOT.TF1("gaussian_mod_fit", "gaus", xMin, xMax)
+            
+            # In oscilloscope 2
+            elif int(SiPM_chan[-1]) > 3 and int(chan[-1]) > 3:
+            
+                # Fit using normal gaussian
+                fit_option = 3
+                defined_fit = ROOT.TF1("gaussian_mod_fit", "gaus", xMin, xMax)
+            
+            # Else in different oscilloscopes
+            else:
+
+                # Fit using a modified of number 2
+                fit_option = 4
+                defined_fit = ROOT.TF1("gaussian_mod_fit", "[0]*exp(-0.5*((x-[1])/[2])^2) + [3]*exp(-0.5*((x-[1]+100)/[2])^2)", xMin, xMax)
+
+                if largePeakOnRight:
+
+                    defined_fit.SetParameters(amplitude_low_peak, mean_value_high_peak, sigma_double_peak, amplitude_high_peak)
+                    defined_fit.SetParNames("Norm low peak", "Mean value high peak", "Width", "Norm high peak")
+
+                else:
+
+                    defined_fit.SetParameters(amplitude_high_peak, mean_value_high_peak, sigma_double_peak/2, amplitude_low_peak)
+                    defined_fit.SetParNames("Norm high peak", "Mean value high peak", "Width", "Norm low peak")
 
 
             time_diff[chan].Fit("gaussian_mod_fit", "Q", "", xMin, xMax)
@@ -204,12 +233,19 @@ def produceTimingDistributionPlots(time_difference, peak_value, peak_time, numbe
             xAxisTitle = "\Delta t_{SiPM-LGAD} (ps)"
             yAxisTitle = "Number (N)"
             fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+            
+            if rise_time_ref:
+                headTitle = "Time difference SiPM and "+md.getNameOfSensor(chan)+" B"+str(md.getBatchNumber())
+                xAxisTitle = "\Delta t_{SiPM-LGAD} (ps)"
+                yAxisTitle = "Number (N)"
+                fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_rise_time_ref.pdf"
+            
             titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
             exportTHPlot(time_diff[chan], titles, "", fit_function[chan], sigma_DUT)
 
 
 # Use this method to calculate the linear system of equations solution
-def produceTimingDistributionPlotsLinearSys(time_difference, peak_value, peak_time, numberOfEventPerRun):
+def produceTimingDistributionPlotsSysEq(time_difference, peak_value, numberOfEventPerRun, rise_time_ref = False):
     
     # TH1 objects
     time_diff = dict()
@@ -266,7 +302,7 @@ def produceTimingDistributionPlotsLinearSys(time_difference, peak_value, peak_ti
             j = int(chan2[-1]) % 4
             
             # Choose the range for the fit
-            N = 2
+            N = 4
             xMin = time_diff[chan][chan2].GetMean() - N * time_diff[chan][chan2].GetStdDev()
             xMax = time_diff[chan][chan2].GetMean() + N * time_diff[chan][chan2].GetStdDev()
           
@@ -277,13 +313,15 @@ def produceTimingDistributionPlotsLinearSys(time_difference, peak_value, peak_ti
             
             
             # Get sigma between two channels
+            
             sigmas_mix[i][j] = fit_function.GetParameter(2)
             sigmas_mix[j][i] = fit_function.GetParameter(2)
 
-
     # Obtain the sigmas for each channel
 
-    sigmas_chan = t_calc.solveLinearEq(sigmas_mix)
+
+    #sigmas_chan = t_calc.solveLinearEq(sigmas_mix)
+
 
     for chan in osc1:
         chan2_list = list(osc1)
@@ -310,11 +348,20 @@ def produceTimingDistributionPlotsLinearSys(time_difference, peak_value, peak_ti
                 fit_function_adapted.SetParameters(fitted_parameters[0], fitted_parameters[1], fitted_parameters[2])
                 time_diff[chan][chan2].SetAxisRange(xMin, xMax)
 
+
                 # Print 1D plot time difference distribution
                 headTitle = "Time difference "+md.getNameOfSensor(chan)+" and "+md.getNameOfSensor(chan2)+" B"+str(md.getBatchNumber())
                 xAxisTitle = "\Delta t_{DUT1 - DUT2} (ps)"
                 yAxisTitle = "Number (N)"
                 fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_and_"+str(md.getNameOfSensor(chan2))+".pdf"
+                
+                if rise_time_ref:
+                
+                    headTitle = "Time difference "+md.getNameOfSensor(chan)+" and "+md.getNameOfSensor(chan2)+" B"+str(md.getBatchNumber())
+                    xAxisTitle = "\Delta t_{DUT1 - DUT2} (ps)"
+                    yAxisTitle = "Number (N)"
+                    fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_and_"+str(md.getNameOfSensor(chan2))+"_rise_time_ref.pdf"
+            
                 titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
                 exportTHPlot(time_diff[chan][chan2], titles, "", fit_function_adapted, sigmas_chan.item((0, index)))
 
@@ -343,7 +390,7 @@ def exportTHPlot(graphList, titles, drawOption, fit, sigma=0):
     graphList.SetStats(0)
 
     linesStatsBox = statsBox.GetListOfLines()
-#
+
 #    textMean = statsBox.GetLineWith("Mean")
 #    linesStatsBox.Remove(textMean)
 #    textConstant = statsBox.GetLineWith("Constant")

@@ -16,6 +16,9 @@ import timing_plot
 import metadata
 import data_management
 
+import numpy as np
+import itertools
+
 #metadata.setupATLAS()
 
 def main():
@@ -24,7 +27,7 @@ def main():
     
     # This is only used for me, for storing the oscilloscope on an external drive
     data_management.setIfOnHDD(False)
-    data_management.setIfOnHITACHI(True)
+    data_management.setIfOnHITACHI(False)
     
     #### Settings used for debugging noise and pulse analysis ####
     metadata.setLimitRunNumbers(0)
@@ -37,10 +40,10 @@ def main():
     # If all, then second argument excludes selected batch numbers
     #metadata.setBatchNumbers("all", [101,102,103,104,105,106,107,108,203,204,205,206,207, 301, 302, 303, 304, 305, 306, 401, 402, 403, 404, 405, 406, 407, 501, 502, 503, 504, 505, 506, 507, 701, 702, 703, 704, 705])
     #metadata.setBatchNumbers("all", [405, 406, 704, 705, 706])
-    #metadata.setBatchNumbers("all")
-    metadata.setBatchNumbers([101, 108, 207, 306, 401, 507, 707])
+    metadata.setBatchNumbers([108])
+    #metadata.setBatchNumbers("all", [101,102,103,104,105,106,107,108,203,204,205,206,207, 301, 302, 303, 304, 305, 306, 401, 402, 403, 404, 405, 406])
 
-    
+
     ####### METHODS ########
     
     # NOISE ANALYSIS #
@@ -49,7 +52,7 @@ def main():
     # PULSE ANALYSIS #
     #pulse.pulseAnalysis()
     
-    # TRACKING ANALYSIS #
+    # TRACKING ANALYSIS AND PLOT PRODUCTION#
     tracking.trackingAnalysis()
     
     # TIMING RESOLUTION ANALYSIS #
@@ -67,4 +70,28 @@ def main():
     exit()
 
 
+
+
 main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

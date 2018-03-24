@@ -13,6 +13,7 @@ def pulseAnalysis(data, pedestal, noise):
     peak_times      =   np.zeros(len(data), dtype = data.dtype)
     peak_values     =   np.zeros(len(data), dtype = data.dtype)
     rise_times      =   np.zeros(len(data), dtype = data.dtype)
+    rise_time_ref   =   np.zeros(len(data), dtype = data.dtype)
 
     for event in range(0, len(data)):
     
@@ -20,10 +21,10 @@ def pulseAnalysis(data, pedestal, noise):
             
             variables = [data[chan][event], pedestal[chan], noise[chan], chan, event, criticalValues[chan]]
             results = getAmplitudeAndRiseTime(variables)
-            [peak_times[event][chan], peak_values[event][chan], rise_times[event][chan]] = [i for i in results]
+            [peak_times[event][chan], peak_values[event][chan], rise_times[event][chan], rise_time_ref[event][chan] ] = [i for i in results]
 
 
-    return peak_times, peak_values, rise_times
+    return peak_times, peak_values, rise_times, rise_time_ref
 
 
 def getAmplitudeAndRiseTime (variables):
@@ -35,22 +36,24 @@ def getAmplitudeAndRiseTime (variables):
     timeScope = 0.1
     
     # Factor to regulate the threshold.
-    N = 5
-   
+    
+    N = 3
+
     # Relevant values from the pulse
     peak_time = 0
     peak_value = 0
     rise_time = 0
+    rise_time_ref = 0
  
     # Set threshold, note data have negative pulse values
     threshold = -noise * N + pedestal
     threshold_indices = np.where(data < threshold)[0]
     
-#    if len(threshold_indices) > 0:
-#
-#        group_points = group_consecutives(threshold_indices)
-#        group_points_amplitude = [np.amin(data[group]) for group in group_points]
-#        threshold_indices = group_points[group_points_amplitude.index(min(group_points_amplitude))]
+    if len(threshold_indices) > 0:
+
+        group_points = group_consecutives(threshold_indices)
+        group_points_amplitude = [np.amin(data[group]) for group in group_points]
+        threshold_indices = group_points[group_points_amplitude.index(min(group_points_amplitude))]
 
     try:
 
@@ -59,6 +62,7 @@ def getAmplitudeAndRiseTime (variables):
             
             first_index = threshold_indices[0]
             last_index = np.argwhere(data < np.amin(data)*0.9)[0]
+            #last_index = threshold_indices[0] + 3
         
             linear_fit_indices = np.arange(first_index, last_index)
             linear_fit_data = data[linear_fit_indices]
@@ -78,30 +82,31 @@ def getAmplitudeAndRiseTime (variables):
                 if linear_fit[0] < 0 and poly_fit[0] > 0:
                 
                     # Reference point 50% of rise time, pedestal corrected
-                    #peak_time = (0.5 * (np.amin(data) + pedestal) - linear_fit[1]) / linear_fit[0]
-                    
+                    rise_time_ref = (0.5 * (np.amin(data) + pedestal) - linear_fit[1]) / linear_fit[0]
+                   
                     # Reference point peak time location second method
                     peak_time = - poly_fit[1] / (2 * poly_fit[0])
                     
                     # Amplitude value with derivative of the fit taken as reference
-                    peak_index = - poly_fit[1] / (2 * poly_fit[0])
-                    peak_value = poly_fit[0] * np.power((peak_index), 2) + poly_fit[1] * peak_index + poly_fit[2] - pedestal
+                    peak_value = poly_fit[0] * np.power((peak_time), 2) + poly_fit[1] * peak_time + poly_fit[2] - pedestal
                     
                     # This method gives better results
                     rise_time = 0.8 * peak_value / linear_fit[0]
 
+
     except:
-#
-#        print "Error caught"
-#        print sys.exc_info()[0]
-#        print event, chan, "\n"
+    
+        print "Error caught"
+        print sys.exc_info()[0]
+        print event, chan, "\n"
 
         peak_value = 0
         peak_time = 0
         rise_time = 0
+        rise_time_ref = 0
 
 
-    return peak_time, peak_value, rise_time
+    return peak_time, peak_value, rise_time, rise_time_ref
 
 
 # Search for critical amplitude values
@@ -124,15 +129,17 @@ def concatenateResults(results):
     peak_time = np.empty(0, dtype=results[0][0].dtype)
     peak_value  = np.empty(0, dtype=results[0][1].dtype)
     rise_time = np.empty(0, dtype=results[0][2].dtype)
+    rise_time_ref = np.empty(0, dtype=results[0][3].dtype)
     
     for index in range(0, len(results)):
     
         peak_time  = np.concatenate((peak_time,  results[index][0]), axis = 0)
         peak_value = np.concatenate((peak_value, results[index][1]), axis = 0)
         rise_time = np.concatenate((rise_time, results[index][2]), axis = 0)
+        rise_time_ref = np.concatenate((rise_time_ref, results[index][3]), axis = 0)
     
 
-    return [peak_time, peak_value, rise_time]
+    return [peak_time, peak_value, rise_time, rise_time_ref]
 
 
 def getPedestalAndNoise(noise_average, noise_std):

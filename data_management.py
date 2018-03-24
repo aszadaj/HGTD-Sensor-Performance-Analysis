@@ -7,18 +7,19 @@ import metadata as md
 
 
 # Export noise data
-def exportNoiseData(pedestal, noise):
+def exportNoiseData(noise, pedestal):
 
+    exportROOTFile(noise,  "noise", "noise")
     exportROOTFile(pedestal, "noise", "pedestal")
-    exportROOTFile(noise,"noise", "noise")
 
 
 # Export pulse data
-def exportPulseData(peak_times, peak_values, rise_times):
+def exportPulseData(peak_times, peak_values, rise_times, rise_time_ref):
 
     exportROOTFile(peak_times, "pulse", "peak_time")
     exportROOTFile(peak_values, "pulse", "peak_value")
     exportROOTFile(rise_times, "pulse", "rise_time")
+    exportROOTFile(rise_time_ref, "pulse", "rise_time_ref")
 
 
 # Export timing data
@@ -27,9 +28,19 @@ def exportTimingLinearData(time_difference):
     exportROOTFile(time_difference, "timing","linear")
 
 
+def exportTimingLinearRiseTimeRefData(time_difference):
+
+    exportROOTFile(time_difference, "timing","linear_rise_time_ref")
+
+
 def exportTimingSysEqData(time_difference):
 
     exportROOTFile(time_difference, "timing","sys_eq")
+
+
+def exportTimingSysEqRiseTimeRefData(time_difference):
+
+    exportROOTFile(time_difference, "timing","sys_eq_rise_time")
 
 
 
@@ -48,6 +59,7 @@ def exportROOTFile(data, group, category=""):
     elif category == "position":
     
         fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(category)+"_"+str(md.getBatchNumber())+".root"
+
     
     else:
         fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
@@ -125,6 +137,13 @@ def convertPulseData(peak_values):
         peak_values[chan] =  np.multiply(peak_values[chan], -1000)
 
     return peak_values
+
+def convertRiseTimeData(rise_times):
+    
+    for chan in rise_times.dtype.names:
+        rise_times[chan] =  np.multiply(rise_times[chan], 1000)
+
+    return rise_times
 
 
 def convertTrackingData(tracking, peak_values):

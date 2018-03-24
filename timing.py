@@ -39,15 +39,22 @@ def timingAnalysis():
             
             # Import files per run
             peak_time_run = dm.importPulseFile("peak_time")
-            peak_value_run = dm.importPulseFile("peak_value")
-
-            time_difference_linear_run = t_calc.timingAnalysisPerRun(peak_time_run, peak_value_run)
+            rise_time_ref = dm.importPulseFile("rise_time_ref")
             
-            time_difference_sys_eq_run = t_calc.timingAnalysisPerRunSysEq(peak_time_run, peak_value_run)
+            # Perform calculations
+            time_difference_linear_run = t_calc.timingAnalysisPerRun(peak_time_run)
+            time_difference_linear_rise_time_ref_run = t_calc.timingAnalysisPerRun(rise_time_ref)
+            
+            time_difference_sys_eq_run = t_calc.timingAnalysisPerRunSysEq(peak_time_run)
+            time_difference_sys_eq_rise_time_ref_run = t_calc.timingAnalysisPerRunSysEq(rise_time_ref)
+
             
             # Export per run number
             dm.exportTimingLinearData(time_difference_linear_run)
+            dm.exportTimingLinearRiseTimeRefData(time_difference_linear_rise_time_ref_run)
+            
             dm.exportTimingSysEqData(time_difference_sys_eq_run)
+            dm.exportTimingSysEqRiseTimeRefData(time_difference_sys_eq_rise_time_ref_run)
             
             print "Done with run", md.getRunNumber(), "\n"
 

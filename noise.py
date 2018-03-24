@@ -38,11 +38,11 @@ def noiseAnalysis():
 
             print "Run", md.getRunNumber()
             
-            [noise_average, noise_std] = noiseAnalysisPerRun()
+            noise_average, noise_std = noiseAnalysisPerRun()
             
-            dm.exportNoiseData(noise_average, noise_std)
+            noise, pedestal = n_calc.getPedestalAndNoisePerChannel(noise_std, noise_average)
             
-            del noise_average, noise_std
+            dm.exportNoiseData(noise, pedestal)
             
             print "Done with run", md.getRunNumber(),"\n"
 

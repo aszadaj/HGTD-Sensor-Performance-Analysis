@@ -1,4 +1,3 @@
-
 import numpy as np
 
 def findNoiseAverageAndStd(data):
@@ -80,6 +79,4 @@ def findCriticalValues(data):
         criticalValues[chan] = np.amin(np.concatenate(data[chan]))
 
     return criticalValues
-
-
 

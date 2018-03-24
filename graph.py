@@ -13,12 +13,12 @@ ROOT.gROOT.SetBatch(True)
 def printWaveform():
 
 
-    runNumber = 3785
-    firstEvent = 56143
+    runNumber = 3870
+    firstEvent = 3008
     entries = 1
-    N = 5
+    N = 3
 
-    dm.setIfOnHDD(True)
+    dm.setIfOnHDD(False)
     dm.setIfOnHITACHI(False)
     md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
     dm.checkIfRepositoryOnStau()
@@ -37,10 +37,11 @@ def printWaveform():
     data = rnm.root2array(dataPath, start=firstEvent, stop=firstEvent+entries)
  
     channels = data.dtype.names
-    channels = ["chan3"]
+    channels = ["chan5"]
     chan = channels[0]
     
-    pedestal, noise = p_calc.getPedestalAndNoise(dm.importNoiseFile("pedestal"), dm.importNoiseFile("noise"))
+    pedestal = dm.importNoiseFile("pedestal")
+    noise = dm.importNoiseFile("noise")
 
     
     
@@ -49,8 +50,7 @@ def printWaveform():
     
     rise_time = dm.importPulseFile("rise_time")
     
-    print channels
-    print np.argwhere(rise_time[channels[0]] > 1.5)
+
     
 
     multi_graph = ROOT.TMultiGraph()
