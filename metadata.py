@@ -330,6 +330,23 @@ def getRowForRunNumber(runNumber):
             return row
 
 
+def checkIfArrayPad(chan):
+
+    if getNameOfSensor(chan) == "W4-S204_6e14":
+
+        return True
+
+    elif getNameOfSensor(chan) == "W4-S215":
+        
+        batchIndex = getBatchNumber()/100
+        
+        if batchIndex == 1 or batchIndex == 2 or batchIndex == 4:
+        
+            return True
+    else:
+    
+        return False
+
 
 # Function for setting up ATLAS style plots
 def setupATLAS():

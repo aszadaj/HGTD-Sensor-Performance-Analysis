@@ -98,150 +98,51 @@ def produceTimingDistributionPlots(time_difference, peak_value, numberOfEventPer
     xbin_low = -15000
     xbin_high = 15000
     
-    #channels = ["chan1"]
+    channels = ["chan0"]
+    
+    try:
+        channels.remove(SiPM_chan)
+    
+    except:
+        None
 
     for chan in channels:
-        if chan != SiPM_chan:
-            index = int(chan[-1:])
+        index = int(chan[-1:])
 
-            # TH1 object
-            time_diff[chan] = ROOT.TH1D("Time difference "+md.getNameOfSensor(chan), "time_difference" + chan, xbins, xbin_low, xbin_high)
-         
-            # Fill TH1 object and cut the noise for the DUT and SiPM < 200 mV, specified in run log
-            for entry in range(0, len(time_difference[chan])):
-                if time_difference[chan][entry] != 0 and peak_value[chan][entry] < md.getPulseAmplitudeCut(chan) and peak_value[SiPM_chan][entry] < md.getPulseAmplitudeCut(SiPM_chan):
-                    time_diff[chan].Fill(time_difference[chan][entry]*1000)
+        # TH1 object
+        time_diff[chan] = ROOT.TH1D("Time difference "+md.getNameOfSensor(chan), "time_difference" + chan, xbins, xbin_low, xbin_high)
+     
+        # Fill TH1 object and cut the noise for the DUT and SiPM < 200 mV, specified in run log
+        for entry in range(0, len(time_difference[chan])):
+            if time_difference[chan][entry] != 0 and peak_value[chan][entry] < md.getPulseAmplitudeCut(chan) and peak_value[SiPM_chan][entry] < md.getPulseAmplitudeCut(SiPM_chan):
+                time_diff[chan].Fill(time_difference[chan][entry]*1000)
+    
+        # Remove bins with less than 4 entries
+        for bin in range(1, xbins+1):
+
+            num = time_diff[chan].GetBinContent(bin)
+
+            if num < 5:
+                time_diff[chan].SetBinContent(bin, 0)
+
+        time_diff[chan].ResetStats()
         
-            # Remove bins with less than 4 entries
-            for bin in range(1, xbins+1):
+        fit_function, sigma_DUT = t_calc.getFitFunction(time_diff[chan], chan)
 
-                num = time_diff[chan].GetBinContent(bin)
-
-                if num < 5:
-                    time_diff[chan].SetBinContent(bin, 0)
-
-            time_diff[chan].ResetStats()
-
-
-            # Choose the range for the fit and the plot
-            N = 4
-            xMin = time_diff[chan].GetMean() - N * time_diff[chan].GetStdDev()
-            xMax = time_diff[chan].GetMean() + N * time_diff[chan].GetStdDev()
-            
-            # For the case when the large peak is on the right
-            bin_high_peak = time_diff[chan].GetMaximumBin()
-            mean_value_high_peak = int(time_diff[chan].GetXaxis().GetBinCenter(bin_high_peak))
-            amplitude_high_peak = time_diff[chan].GetMaximum()
-            
-            # Change manually depending if the peak is on the left or right side
-            largePeakOnRight = True
-            timeScopeShift = -100
-            
-            if int(md.getBatchNumber()/100) == 1 or int(md.getBatchNumber()/100) == 2 or int(md.getBatchNumber()/100) == 4:
-                largePeakOnRight = False
-                timeScopeShift = 100
-            
-            elif int(md.getBatchNumber()/100) == 5:
-                largePeakOnRight = False
-                timeScopeShift = 100
-                
-
-            # The shift needs to be changed depending on time difference between the DUT and SiPM
-
-            mean_value_low_peak = mean_value_high_peak + timeScopeShift
-            bin_low_peak = time_diff[chan].FindBin(mean_value_low_peak)
-            amplitude_low_peak = time_diff[chan].GetBinContent(bin_low_peak)
-            sigma_double_peak = time_diff[chan].GetStdDev()
-            
-            
-            
-            # Fit using two default gaussians
-#            fit_option = 1
-#            defined_fit = ROOT.TF1("gaussian_mod_fit", "gaus(0) + gaus(3)", xMin, xMax)
-#            defined_fit.SetParNames(amplitude_low_peak, mean_value_low_peak, sigma_double_peak*0.5, amplitude_high_peak, mean_value_high_peak, sigma_double_peak*0.5)
-
-            # Fit using predefined function
-#            fit_option = 2
-#            defined_fit = ROOT.TF1("gaussian_mod_fit", "[0]*exp(-0.5*((x-[1])/[4])^2) + [2]*exp(-0.5*((x-[3])/[4])^2)", xMin, xMax)
-#            defined_fit.SetParameters(amplitude_low_peak, mean_value_low_peak, amplitude_high_peak, mean_value_high_peak, sigma_double_peak)
-#            defined_fit.SetParNames("Norm 1", "Mean value 1", "Norm 2", "Mean value 2", "Width both")
-
-            fit_option = 0
-            defined_fit = ""
-
-
-            # In oscilloscope 1
-            if int(SiPM_chan[-1]) < 4 and int(chan[-1]) < 4:
-
-                # Fit using normal gaussian
-                fit_option = 3
-                defined_fit = ROOT.TF1("gaussian_mod_fit", "gaus", xMin, xMax)
-            
-            # In oscilloscope 2
-            elif int(SiPM_chan[-1]) > 3 and int(chan[-1]) > 3:
-            
-                # Fit using normal gaussian
-                fit_option = 3
-                defined_fit = ROOT.TF1("gaussian_mod_fit", "gaus", xMin, xMax)
-            
-            # Else in different oscilloscopes
-            else:
-
-                # Fit using a modified of number 2
-                fit_option = 4
-                defined_fit = ROOT.TF1("gaussian_mod_fit", "[0]*exp(-0.5*((x-[1])/[2])^2) + [3]*exp(-0.5*((x-[1]+100)/[2])^2)", xMin, xMax)
-
-                if largePeakOnRight:
-
-                    defined_fit.SetParameters(amplitude_low_peak, mean_value_high_peak, sigma_double_peak, amplitude_high_peak)
-                    defined_fit.SetParNames("Norm low peak", "Mean value high peak", "Width", "Norm high peak")
-
-                else:
-
-                    defined_fit.SetParameters(amplitude_high_peak, mean_value_high_peak, sigma_double_peak/2, amplitude_low_peak)
-                    defined_fit.SetParNames("Norm high peak", "Mean value high peak", "Width", "Norm low peak")
-
-
-            time_diff[chan].Fit("gaussian_mod_fit", "Q", "", xMin, xMax)
-            fit_function[chan] = time_diff[chan].GetFunction("gaussian_mod_fit")
-
-            # Change the range of the plot
-            N = 4
-            xMin = time_diff[chan].GetMean() - N * time_diff[chan].GetStdDev()
-            xMax = time_diff[chan].GetMean() + N * time_diff[chan].GetStdDev()
-            time_diff[chan].SetAxisRange(xMin, xMax)
-            fit_function[chan].SetRange(xMin, xMax)
-            
-            # Calculate the time resolution given that the SiPM is in the same oscilloscope as the DUT.
-            
-            sigma_fit = 0
-            
-            if fit_option == 1:
-                sigma_fit = (fit_function[chan].GetParameter(2) + fit_function[chan].GetParameter(5))/2
-            elif fit_option == 2:
-                sigma_fit = fit_function[chan].GetParameter(4)
-            else:
-                sigma_fit = fit_function[chan].GetParameter(2)
-            
-            # This is the averaged value of calculated time resolution using linear sys equations
-            sigma_SiPM = 16.14
-            sigma_DUT = np.sqrt( np.power(sigma_fit,2) - np.power(sigma_SiPM, 2)  )
-
-
-            # Print 1D plot time difference distribution
+        # Print 1D plot time difference distribution
+        headTitle = "Time difference SiPM and "+md.getNameOfSensor(chan)+" B"+str(md.getBatchNumber())
+        xAxisTitle = "\Delta t_{SiPM-LGAD} (ps)"
+        yAxisTitle = "Number (N)"
+        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        
+        if rise_time_ref:
             headTitle = "Time difference SiPM and "+md.getNameOfSensor(chan)+" B"+str(md.getBatchNumber())
             xAxisTitle = "\Delta t_{SiPM-LGAD} (ps)"
             yAxisTitle = "Number (N)"
-            fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
-            
-            if rise_time_ref:
-                headTitle = "Time difference SiPM and "+md.getNameOfSensor(chan)+" B"+str(md.getBatchNumber())
-                xAxisTitle = "\Delta t_{SiPM-LGAD} (ps)"
-                yAxisTitle = "Number (N)"
-                fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_rise_time_ref.pdf"
-            
-            titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
-            exportTHPlot(time_diff[chan], titles, "", fit_function[chan], sigma_DUT)
+            fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_rise_time_ref.pdf"
+        
+        titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
+        exportTHPlot(time_diff[chan], titles, "", fit_function, sigma_DUT)
 
 
 # Use this method to calculate the linear system of equations solution
@@ -320,7 +221,7 @@ def produceTimingDistributionPlotsSysEq(time_difference, peak_value, numberOfEve
     # Obtain the sigmas for each channel
 
 
-    #sigmas_chan = t_calc.solveLinearEq(sigmas_mix)
+    sigmas_chan = t_calc.solveLinearEq(sigmas_mix)
 
 
     for chan in osc1:
@@ -364,8 +265,6 @@ def produceTimingDistributionPlotsSysEq(time_difference, peak_value, numberOfEve
             
                 titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
                 exportTHPlot(time_diff[chan][chan2], titles, "", fit_function_adapted, sigmas_chan.item((0, index)))
-
-
 
 
 def exportTHPlot(graphList, titles, drawOption, fit, sigma=0):

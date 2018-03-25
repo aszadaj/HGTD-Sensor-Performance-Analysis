@@ -59,7 +59,7 @@ def trackingAnalysis():
     
         
         if len(results_batch) != 0:
-            print "Producing plots for batch " + str(md.getBatchNumber()) + ".\n"
+            print "\nProducing plots for batch " + str(md.getBatchNumber()) + ".\n"
 
             peak_values                     = np.empty(0, dtype=results_batch[0][0].dtype)
             tracking                        = np.empty(0, dtype=results_batch[0][1].dtype)
@@ -74,8 +74,8 @@ def trackingAnalysis():
         
             tplot.produceTrackingGraphs(peak_values, tracking, time_difference_peak, time_difference_rise_time_ref)
 
-            print "Done with batch",runLog[0][5],"Time analysing: "+str(md.dm.getTime()-startTimeBatch)+"\n"
+            print "\nDone with batch",runLog[0][5],"Time analysing: "+str(md.dm.getTime()-startTimeBatch)+"\n"
 
 
-    print "Done with TRACKING analysis. Time analysing: "+str(md.dm.getTime()-startTime)+"\n"
+    print "\nDone with TRACKING analysis. Time analysing: "+str(md.dm.getTime()-startTime)+"\n"
 

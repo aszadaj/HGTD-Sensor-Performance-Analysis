@@ -146,16 +146,6 @@ def convertRiseTimeData(rise_times):
     return rise_times
 
 
-def convertTrackingData(tracking, peak_values):
-
-    for dimension in tracking.dtype.names:
-        tracking[dimension] = np.multiply(tracking[dimension], 0.001)
-
-    for chan in peak_values.dtype.names:
-        peak_values[chan] = np.multiply(peak_values[chan], -1000)
-
-    return tracking, peak_values
-
 
 def changeDTYPEOfData(data):
 
