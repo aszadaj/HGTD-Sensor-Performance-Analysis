@@ -70,8 +70,8 @@ def timingPlots():
             produceTimingDistributionPlots(time_difference_linear_cfd05, peak_values, True)
 
             # System of linear equations between sensors, wrt peak time and cfd05 reference
-            #produceTimingDistributionPlotsSysEq(time_difference_sys_eq, peak_values)
-            #produceTimingDistributionPlotsSysEq(time_difference_sys_eq_cfd05, peak_values, True)
+            produceTimingDistributionPlotsSysEq(time_difference_sys_eq, peak_values)
+            produceTimingDistributionPlotsSysEq(time_difference_sys_eq_cfd05, peak_values, True)
 
 
     print "Done with producing TIMING plots.\n"
@@ -98,7 +98,7 @@ def produceTimingDistributionPlots(time_difference, peak_value, cfd05=False):
     SiPM_chan = md.getChannelNameForSensor("SiPM-AFP")
     channels = [x for x in chans if x != SiPM_chan]
     
-    channels = ["chan1"]
+    #channels = ["chan1"]
     
     for chan in channels:
     
@@ -128,8 +128,8 @@ def produceTimingDistributionPlots(time_difference, peak_value, cfd05=False):
 
         # Print 1D plot time difference distribution
         headTitle = "Time difference SiPM and "+md.getNameOfSensor(chan)+" B"+str(md.getBatchNumber())
-        xAxisTitle = "\Delta t_{SiPM-LGAD} (ps)"
-        yAxisTitle = "Number (N)"
+        xAxisTitle = "\Delta t [ps]"
+        yAxisTitle = "Entries"
         fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/normal/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         
 
@@ -269,8 +269,8 @@ def produceTimingDistributionPlotsSysEq(time_difference, peak_value, cfd05 = Fal
 
                 # Print 1D plot time difference distribution
                 headTitle = "Time difference "+md.getNameOfSensor(chan)+" and "+md.getNameOfSensor(chan2)+" B"+str(md.getBatchNumber())
-                xAxisTitle = "\Delta t_{DUT1 - DUT2} (ps)"
-                yAxisTitle = "Number (N)"
+                xAxisTitle = "\Delta t [ps]"
+                yAxisTitle = "Entries"
                 fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/system/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_and_"+str(md.getNameOfSensor(chan2))+".pdf"
                 
                 if cfd05:
@@ -320,5 +320,6 @@ def exportTHPlot(graphList, titles, drawOption, fit, sigma=0):
     
 
     canvas.Print(titles[3])
+    dm.exportROOTHistogram(graphList, titles[3])
     canvas.Clear()
 

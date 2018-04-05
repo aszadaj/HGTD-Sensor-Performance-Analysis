@@ -1,9 +1,8 @@
 import ROOT
-import numpy as np
 import root_numpy as rnm
+import numpy as np
 
 import pulse_calculations as p_calc
-import pulse_plot as p_plot
 import metadata as md
 import data_management as dm
 
@@ -16,9 +15,7 @@ ROOT.gROOT.SetBatch(True)
 def pulseAnalysis():
 
     dm.checkIfRepositoryOnStau()
-    
     startTime = md.dm.getTime()
-    
     runLog_batch = md.getRunLogBatches(md.batchNumbers)
     
     print "\nStart PULSE analysis, batches:", md.batchNumbers
@@ -40,11 +37,9 @@ def pulseAnalysis():
             print "Run", md.getRunNumber()
             
             [peak_time, peak_value, rise_time, cfd05] = pulseAnalysisPerRun()
-            
             dm.exportPulseData(peak_time, peak_value, rise_time, cfd05)
             
             print "Done with run", md.getRunNumber(), "\n"
-
 
         print "Done with batch", runLog[0][5], "Time analysing: "+str(md.dm.getTime()-startTimeBatch)+"\n"
 
@@ -55,7 +50,6 @@ def pulseAnalysis():
 def pulseAnalysisPerRun():
     
     # Configure inputs for multiprocessing
-    
     max = md.getNumberOfEvents()
     step = 10000
 
@@ -67,19 +61,9 @@ def pulseAnalysisPerRun():
     p = Pool(dm.threads)
     ranges = range(0, max, step)
     
-    dataPath = dm.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
-    
-    if dm.isOnHDD():
-    
-        dataPath = "/Volumes/HDD500/" + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
-
-    elif dm.isOnHITACHI():
-    
-        dataPath = "/Volumes/HITACHI/" + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
-
+    dataPath = dm.getDataPath()
     pedestal = dm.importNoiseFile("pedestal")
     noise     = dm.importNoiseFile("noise")
-    
     results = p.map(lambda chunk: multiProcess(dataPath, pedestal, noise, chunk, chunk+step), ranges)
     
     # results change form, now each element is a variable

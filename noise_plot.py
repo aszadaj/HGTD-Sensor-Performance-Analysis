@@ -27,8 +27,6 @@ def noisePlots():
 
         availableRunNumbersNoise        = md.readFileNames("noise_noise")
         availableRunNumbersPedestal     = md.readFileNames("noise_pedestal")
-        
-        print availableRunNumbersNoise
       
         for runNumber in runNumbers:
             
@@ -44,8 +42,6 @@ def noisePlots():
                     noise_std      = dm.importNoiseFilePlot("noise")
                 
             
-                    
-
                 else:
 
                     noise_average = np.concatenate((noise_average, dm.importNoiseFilePlot("pedestal")), axis = 0)
@@ -118,18 +114,17 @@ def produceNoisePlots(noise_average, noise_std):
         pedestal_graph[chan].Fit("gaus","Q","", pedestal_min, pedestal_max)
         noise_graph[chan].Fit("gaus","Q","", noise_min, noise_max)
         
+        yAxisTitle = "Entries"
         
         headTitle = "Noise - standard deviation values "+md.getNameOfSensor(chan)+", B"+str(md.getBatchNumber())
-        xAxisTitle = "Standard deviation (mV)"
-        yAxisTitle = "Number of entries (N)"
+        xAxisTitle = "Standard deviation [mV]"
         fileName = str(dm.getSourceFolderPath()) + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/noise/noise_plots/noise_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistograms(noise_graph[chan], titles)
         
         
         headTitle = "Pedestal - average values "+md.getNameOfSensor(chan)+", B"+str(md.getBatchNumber())
-        xAxisTitle = "Average value (mV)"
-        yAxisTitle = "Number of entries (N)"
+        xAxisTitle = "Average value [mV]"
         fileName = str(dm.getSourceFolderPath()) + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/noise/pedestal_plots/pedestal_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistograms(pedestal_graph[chan], titles)
@@ -158,5 +153,6 @@ def exportHistograms(graphList, titles):
     
     graphList.Draw()
     canvas.Update()
+    dm.exportROOTHistogram(graphList, titles[3])
     canvas.Print(titles[3])
 

@@ -11,12 +11,11 @@ ROOT.gStyle.SetNumberContours(300)
 
 def produceTrackingGraphs(peak_values, tracking, time_difference_peak, time_difference_cfd05):
    
-    global minEntries
     global canvas
     global bin_size
     global sep_x
     global sep_y
-    global arrayBinFactor
+    global minEntries
     
     # Convert pulse data to positive mV values, and x and y positions into mm.
     peak_values = dm.convertPulseData(peak_values)
@@ -25,7 +24,7 @@ def produceTrackingGraphs(peak_values, tracking, time_difference_peak, time_diff
 
     bin_size = 18.5 * 0.001
     sep_x = 0.8
-    sep_y = 0.6
+    sep_y = 0.61
     
     minEntries = 5
     arrayBinFactor = 1.5
@@ -42,19 +41,19 @@ def produceTrackingGraphs(peak_values, tracking, time_difference_peak, time_diff
     #channels = ["chan0"]
 
     # Produce single pad plots
-    for chan in channels:
-    
-            if not md.checkIfArrayPad(chan):
-
-                print "\nSingle pad", md.getNameOfSensor(chan), "\n"
-
-                pos_x = position[chan][0][0]
-                pos_y = position[chan][0][1]
-
-                tracking_chan = changeCenterPositionSensor(np.copy(tracking), pos_x, pos_y)
-
-                produceTProfilePlots(peak_values[chan], tracking_chan, time_difference_peak[chan], time_difference_cfd05[chan], chan)
-                produceEfficiencyPlot(peak_values[chan], tracking_chan, chan)
+#    for chan in channels:
+#
+#            if not md.checkIfArrayPad(chan):
+#
+#                print "\nSingle pad", md.getNameOfSensor(chan), "\n"
+#
+#                pos_x = position[chan][0][0]
+#                pos_y = position[chan][0][1]
+#
+#                tracking_chan = changeCenterPositionSensor(np.copy(tracking), pos_x, pos_y)
+#
+#                produceTProfilePlots(peak_values[chan], tracking_chan, time_difference_peak[chan], time_difference_cfd05[chan], chan)
+#                produceEfficiencyPlot(peak_values[chan], tracking_chan, chan)
 
 
 ###########################################
@@ -67,14 +66,11 @@ def produceTrackingGraphs(peak_values, tracking, time_difference_peak, time_diff
 # Produce mean value and time resolution plots
 def produceTProfilePlots(peak_values, tracking, time_difference_peak, time_difference_cfd05, chan, array_pad=False):
 
-
-    sep_x, sep_y, bin_size, minEntries, arrayBinFactor = getSepGlobVar()
-
+    sep_x, sep_y, bin_size, minEntries = getSepGlobVar()
+    
     if array_pad:
         sep_x *= 2
         sep_y *= 2
-        bin_size *= arrayBinFactor
-        minEntries *= arrayBinFactor
 
     xbin = int(2*sep_x/bin_size)
     ybin = int(2*sep_y/bin_size)
@@ -90,10 +86,10 @@ def produceTProfilePlots(peak_values, tracking, time_difference_peak, time_diffe
     mean_values[chan] = ROOT.TProfile2D("Mean value","Mean value", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y)
 
     timing_resolution_peak[chan] = ROOT.TProfile2D("Timing resolution peak copy", "timing resolution peak temp", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y, "s")
-    timing_resolution_cfd05[chan] = ROOT.TProfile2D("Timing resolution rise time ref temp", "timing resolution rtref", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y, "s")
+    timing_resolution_cfd05[chan] = ROOT.TProfile2D("Timing resolution cdf05 temp", "timing resolution cdf05", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y, "s")
 
     timing_resolution_peak_copy[chan] = ROOT.TH2D("Timing resolution peak", "timing resolution peak", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y)
-    timing_resolution_cfd05_copy[chan] = ROOT.TH2D("Timing resolution rise time ref", "timing resolution rtref", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y)
+    timing_resolution_cfd05_copy[chan] = ROOT.TH2D("Timing resolution cdf05", "timing resolution cdf05", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y)
 
     # Fill mean values and time differences in each bin, for peak reference and rise time reference
     
@@ -101,21 +97,21 @@ def produceTProfilePlots(peak_values, tracking, time_difference_peak, time_diffe
     
         for event in range(0, len(tracking)):
         
-            for selection in range(0, len(peak_values[event])):
+            for pad in range(0, len(peak_values[event])):
         
                 if (-sep_x < tracking['X'][event] < sep_x) and (-sep_y < tracking['Y'][event] < sep_y):
 
-                    if peak_values[event][selection] > -md.getPulseAmplitudeCut(chan)*1000:
+                    if peak_values[event][pad] > -md.getPulseAmplitudeCut(chan)*1000:
                     
-                        mean_values[chan].Fill(tracking['X'][event], tracking['Y'][event], peak_values[event][selection])
+                        mean_values[chan].Fill(tracking['X'][event], tracking['Y'][event], peak_values[event][pad])
                     
-                        if time_difference_peak[event][selection] != 0:
+                        if time_difference_peak[event][pad] != 0:
 
-                            timing_resolution_peak[chan].Fill(tracking['X'][event], tracking['Y'][event], time_difference_peak[event][selection])
+                            timing_resolution_peak[chan].Fill(tracking['X'][event], tracking['Y'][event], time_difference_peak[event][pad])
 
-                        if time_difference_cfd05[event][selection] != 0:
+                        if time_difference_cfd05[event][pad] != 0:
 
-                            timing_resolution_cfd05[chan].Fill(tracking['X'][event], tracking['Y'][event], time_difference_cfd05[event][selection])
+                            timing_resolution_cfd05[chan].Fill(tracking['X'][event], tracking['Y'][event], time_difference_cfd05[event][pad])
 
     else:
     
@@ -214,13 +210,11 @@ def produceTProfilePlots(peak_values, tracking, time_difference_peak, time_diffe
 def produceEfficiencyPlot(peak_values, tracking, chan, array_pad=False):
 
 
-    sep_x, sep_y, bin_size, minEntries, arrayBinFactor = getSepGlobVar()
+    sep_x, sep_y, bin_size, minEntries = getSepGlobVar()
 
     if array_pad:
         sep_x *= 2
         sep_y *= 2
-        bin_size *= arrayBinFactor
-        minEntries *= arrayBinFactor
 
 
     xbin = int(2*sep_x/bin_size)
@@ -258,13 +252,13 @@ def produceEfficiencyPlot(peak_values, tracking, chan, array_pad=False):
         for event in range(0, len(tracking)):
             if (-sep_x < tracking['X'][event] < sep_x) and (-sep_y < tracking['Y'][event] < sep_y):
             
-                for selection in range(0, len(peak_values[event])):
+                for pad in range(0, len(peak_values[event])):
                     
                     # Total events
                     MIMOSA[chan].Fill(tracking['X'][event], tracking['Y'][event], 1)
                     
                     # Passed events
-                    if peak_values[event][selection] > -md.getPulseAmplitudeCut(chan)*1000:
+                    if peak_values[event][pad] > -md.getPulseAmplitudeCut(chan)*1000:
                         LGAD[chan].Fill(tracking['X'][event], tracking['Y'][event], 1)
 
     else:
@@ -308,38 +302,38 @@ def produceEfficiencyPlot(peak_values, tracking, chan, array_pad=False):
             bin = efficiency[chan].GetGlobalBin(i,j)
             eff = efficiency[chan].GetEfficiency(bin)
             
-            if eff == 1:
+            # Compensate for array pads, one trigger per pad
+            if array_pad:
+                eff *= 4
+                    
+            if eff >= 1:
                 inefficiency[chan].SetBinContent(bin, 0.001)
+ 
         
             elif eff != 0:
+                inefficiency[chan].SetBinContent(bin, 1 - eff)
             
-                if array_pad:
-                    inefficiency[chan].SetBinContent(bin, 1 - 4*eff)
+            if not array_pad:
+                # Get projection x data given limits
+                if bin_low_x <= i <= bin_high_x:
+                    y_pos = LGAD[chan].GetYaxis().GetBinCenter(j)
+                    efficiency_projectionY[chan].Fill(y_pos, eff*100)
                 
-                else:
-                    inefficiency[chan].SetBinContent(bin, 1 - eff)
-
-
-            # Get projection x data given limits
-            if bin_low_x <= i <= bin_high_x:
-                y_pos = LGAD[chan].GetYaxis().GetBinCenter(j)
-                efficiency_projectionY[chan].Fill(y_pos, eff*100)
-            
-            # Get projection x data given limits
-            if bin_low_y <= j <= bin_high_y:
-                x_pos = LGAD[chan].GetXaxis().GetBinCenter(i)
-                efficiency_projectionX[chan].Fill(x_pos, eff*100)
+                # Get projection x data given limits
+                if bin_low_y <= j <= bin_high_y:
+                    x_pos = LGAD[chan].GetXaxis().GetBinCenter(i)
+                    efficiency_projectionX[chan].Fill(x_pos, eff*100)
 
 
     # Create projection plots for single pad arrays only
     if not array_pad:
      
         fit_sigmoid_x = ROOT.TF1("sigmoid_x", "([0]/(1+ TMath::Exp(-[1]*(x-[2]))) - [0]/(1+ TMath::Exp(-[1]*(x-[3]))))", -sep_x, sep_x)
-        fit_sigmoid_x.SetParameters(100, 10, -0.5, 0.5)
+        fit_sigmoid_x.SetParameters(100, 70, -0.5, 0.5)
         efficiency_projectionX[chan].Fit("sigmoid_x", "Q","", -sep_x, sep_x)
         
         fit_sigmoid_y = ROOT.TF1("sigmoid_y", "([0]/(1+ TMath::Exp(-[1]*(x-[2]))) - [0]/(1+ TMath::Exp(-[1]*(x-[3]))))", -sep_y, sep_y)
-        fit_sigmoid_y.SetParameters(100, 10, -0.5, 0.5)
+        fit_sigmoid_y.SetParameters(100, 70, -0.5, 0.5)
         efficiency_projectionY[chan].Fit("sigmoid_y", "Q","", -sep_y, sep_y)
      
      
@@ -499,31 +493,34 @@ def printTHPlot(graphList, info, efficiency=False, inefficiency=False, array_pad
     # Export PDF
     canvas.Print(info[1])
     
-    # Export ROOT TH2 Histogram
-    rootDestination = info[1].replace("plots_hgtd_efficiency_sep_2017", "plots_data_hgtd_efficiency_sep_2017")
-    rootDestination = rootDestination.replace(".pdf", ".root")
-    fileObject = ROOT.TFile(rootDestination, "RECREATE")
-    fileObject.WriteTObject(graphList)
-    fileObject.Close()
+    if efficiency:
+        dm.exportROOTHistogram(graphList.GetPaintedHistogram(), info[1])
+    
+    else:
+        dm.exportROOTHistogram(graphList, info[1])
 
     canvas.Clear()
 
 
 
 # Print projection plot
-def printProjectionPlot(graphList, titles):
+def printProjectionPlot(graphList, info):
 
     ROOT.gStyle.SetOptStat(1)
     ROOT.gStyle.SetOptFit(1)
 
-    graphList.SetTitle(titles[0])
+    graphList.SetTitle(info[0])
     graphList.SetStats(1)
     graphList.Draw()
     canvas.Update()
 
     # Export PDF
-    canvas.Print(titles[1])
+    canvas.Print(info[1])
+    
+    # Export histogram as ROOT file
+    dm.exportROOTHistogram(graphList, info[1])
     canvas.Clear()
+    
 
 
 # Change tracking information
@@ -555,5 +552,5 @@ def changeCenterPositionSensor(tracking, pos_x, pos_y, array_pad=False):
 # Return global varables, separation and bin size
 def getSepGlobVar():
 
-    return sep_x, sep_y, bin_size, minEntries, arrayBinFactor
+    return sep_x, sep_y, bin_size, minEntries
 

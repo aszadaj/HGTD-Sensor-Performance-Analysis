@@ -128,7 +128,6 @@ def getFitFunction(th1d_list, chan, same_osc):
     SiPM_chan = md.getChannelNameForSensor("SiPM-AFP")
 
     # Within the same oscilloscope
-    #if (int(SiPM_chan[-1]) < 4 and int(chan[-1])) < 4 or (int(SiPM_chan[-1]) > 3 and int(chan[-1]) > 3):
     if same_osc:
 
         # Fit using normal gaussian
@@ -154,7 +153,7 @@ def getFitFunction(th1d_list, chan, same_osc):
     th1d_list.Fit("gaussian_mod_fit", "Q", "", xMin, xMax)
     fit_function = th1d_list.GetFunction("gaussian_mod_fit")
 
-    N = 5
+    N = 4
     xMin = th1d_list.GetMean() - N * th1d_list.GetStdDev()
     xMax = th1d_list.GetMean() + N * th1d_list.GetStdDev()
     th1d_list.SetAxisRange(xMin, xMax)

@@ -4,6 +4,7 @@ import numpy as np
 import data_management as dm
 
 ROOT.gStyle.SetOptFit(1)
+ROOT.gStyle.SetOptStat(1)
 
 # Concatenate all runs for each batch. When the files are concatenated, produce plots for that batch until
 # all batches are considered.
@@ -154,15 +155,16 @@ def producePulsePlots(peak_values, rise_times, peak_time, cfd05, batchNumber):
 
 
         fit_function_convolution = ROOT.TF1("gaus_landau", "landau(0) + gaus(3)", 0, 300)
-        fit_function_convolution.SetParameters(integral, most_prob_value, 6, amplitude, mean_value, std_dev)
+        fit_function_convolution.SetParameters(integral, most_prob_value, mean_value/10.0, amplitude, mean_value, std_dev)
         fit_function_convolution.SetParNames("LConstant", "L\mu", "LScale","GConstant", "GMean", "G\sigma")
         peak_values_th1d[chan].Fit("gaus_landau", "Q")
-        
-        
+
+
+        yAxisTitle = "Entries"
+
         # Print maximum amplitude plots
         headTitle = "Maximum amplitudes, "+md.getNameOfSensor(chan)+", B"+str(md.getBatchNumber())
-        xAxisTitle = "Max amplitude (mV)"
-        yAxisTitle = "Number of entries (N)"
+        xAxisTitle = "Max amplitude [mV]"
         fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/peak_value_plots/pulse_amplitude_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistogram(peak_values_th1d[chan], titles)
@@ -170,24 +172,22 @@ def producePulsePlots(peak_values, rise_times, peak_time, cfd05, batchNumber):
         
         # Print rise time plots
         headTitle = "Rise time, "+md.getNameOfSensor(chan)+", B"+str(md.getBatchNumber())
-        xAxisTitle = "Time (ns)"
-        yAxisTitle = "Number of entries (N)"
+        xAxisTitle = "Rise time [ps]"
         fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/rise_time_plots/rise_time_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistogram(rise_times_th1d[chan], titles)
 
+        
         # Print peak time plots
         headTitle = "Peak time, "+md.getNameOfSensor(chan)+", B"+str(md.getBatchNumber())
-        xAxisTitle = "Time (ns)"
-        yAxisTitle = "Number of entries (N)"
+        xAxisTitle = "Time [ns]"
         fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/peak_time_plots/peak_time_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistogram(peak_time_th1d[chan], titles)
 
-        # Print rise time ref plots
+        # Print cdf05 ref plots
         headTitle = "Time 50% crossing edge time, "+md.getNameOfSensor(chan)+", B"+str(md.getBatchNumber())
-        xAxisTitle = "Time (ns)"
-        yAxisTitle = "Number of entries (N)"
+        xAxisTitle = "Time [ns]"
         fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/cfd05_plots/cfd05_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistogram(cfd05_th1d[chan], titles)
@@ -227,3 +227,6 @@ def exportHistogram(graphList, titles):
   
     canvas.Update()
     canvas.Print(titles[3])
+    dm.exportROOTHistogram(graphList, titles[3])
+
+    

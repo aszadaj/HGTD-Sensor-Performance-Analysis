@@ -120,6 +120,15 @@ def exportROOTFile(data, group, category="", sensor_info=[], same_osc=False, cfd
     rnm.array2root(data, fileName, mode="recreate")
 
 
+def exportROOTHistogram(graphList, fileName):
+
+    rootDestination = fileName.replace("plots_hgtd_efficiency_sep_2017", "plots_data_hgtd_efficiency_sep_2017")
+    rootDestination = rootDestination.replace(".pdf", ".root")
+    fileObject = ROOT.TFile(rootDestination, "RECREATE")
+    fileObject.Close()
+
+
+
 # Import noise data file
 def importNoiseFile(category):
     
@@ -333,6 +342,22 @@ def defineDataFolderPath(source):
 def getSourceFolderPath():
 
     return sourceFolderPath
+
+
+def getDataPath():
+
+    dataPath = getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
+    
+    if isOnHDD():
+    
+        dataPath = "/Volumes/HDD500/" + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
+
+    elif isOnHITACHI():
+    
+        dataPath = "/Volumes/HITACHI/" + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
+
+
+    return dataPath
 
 
 # Define thread number or multiprocessing
