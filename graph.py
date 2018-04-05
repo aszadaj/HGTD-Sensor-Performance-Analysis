@@ -13,13 +13,13 @@ ROOT.gROOT.SetBatch(True)
 def printWaveform():
 
 
-    runNumber = 3870
-    firstEvent = 3008
+    runNumber = 3661
+    firstEvent = 15973
     entries = 1
     N = 3
 
     dm.setIfOnHDD(False)
-    dm.setIfOnHITACHI(False)
+    dm.setIfOnHITACHI(True)
     md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
     dm.checkIfRepositoryOnStau()
 
@@ -37,7 +37,7 @@ def printWaveform():
     data = rnm.root2array(dataPath, start=firstEvent, stop=firstEvent+entries)
  
     channels = data.dtype.names
-    channels = ["chan5"]
+    channels = ["chan1"]
     chan = channels[0]
     
     pedestal = dm.importNoiseFile("pedestal")
@@ -49,8 +49,13 @@ def printWaveform():
     pedestal, noise  = dm.convertNoiseData(pedestal, noise)
     
     rise_time = dm.importPulseFile("rise_time")
+    peak_value = dm.importPulseFile("peak_value")
     
 
+    
+    print np.argwhere((rise_time[chan] > 0.) & (rise_time[chan] > -0.025))[30:50]
+
+    #print rise_time[chan][199575]
     
 
     multi_graph = ROOT.TMultiGraph()
@@ -87,6 +92,7 @@ def printWaveform():
         legend.AddEntry(graph_waveform[chan], md.getNameOfSensor(chan), "l")
         legend.AddEntry(graph_threshold[chan], "Threshold: "+str(threshold[0])[:5]+" mV", "l")
         legend.AddEntry(graph_threshold[chan], "Rise time: "+str(rise_time[chan][firstEvent])+" ns", "l")
+        legend.AddEntry(graph_threshold[chan], "Peak value: "+str(peak_value[chan][firstEvent]*-1000)+" mV", "l")
 
 
     xAxisTitle = "Time (ns)"
@@ -101,7 +107,7 @@ def printWaveform():
     multi_graph.GetXaxis().SetTitle(xAxisTitle)
     multi_graph.GetYaxis().SetTitle(yAxisTitle)
 
-    multi_graph.GetYaxis().SetRangeUser(-30,200)
+    multi_graph.GetYaxis().SetRangeUser(-30,400)
     multi_graph.GetXaxis().SetRangeUser(0,100*entries)
     #multi_graph.GetXaxis().SetRangeUser(40,70)
 

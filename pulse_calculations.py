@@ -7,48 +7,53 @@ def pulseAnalysis(data, pedestal, noise):
 
     channels = data.dtype.names
     
-    # Calculate the maximum amplitude for which the oscilloscope reads out
-    criticalValues = findCriticalValues(data)
-    
+    # Time in event when the pulse reaches maximum
     peak_times      =   np.zeros(len(data), dtype = data.dtype)
-    peak_values     =   np.zeros(len(data), dtype = data.dtype)
-    rise_times      =   np.zeros(len(data), dtype = data.dtype)
-    rise_time_ref   =   np.zeros(len(data), dtype = data.dtype)
-
-    for event in range(0, len(data)):
     
-        for chan in channels:
-            
-            variables = [data[chan][event], pedestal[chan], noise[chan], chan, event, criticalValues[chan]]
+    # Pulse amplitude
+    peak_values     =   np.zeros(len(data), dtype = data.dtype)
+    
+    # Rise time
+    rise_times      =   np.zeros(len(data), dtype = data.dtype)
+    
+    # Time at 50% of the rising edge
+    cfd05           =   np.zeros(len(data), dtype = data.dtype)
+
+
+    for chan in channels:
+
+        for event in range(0, len(data)):
+
+            variables = [data[chan][event], pedestal[chan], noise[chan], chan, event]
             results = getAmplitudeAndRiseTime(variables)
-            [peak_times[event][chan], peak_values[event][chan], rise_times[event][chan], rise_time_ref[event][chan] ] = [i for i in results]
+            [peak_times[event][chan], peak_values[event][chan], rise_times[event][chan], cfd05[event][chan]] = [i for i in results]
+
+    return peak_times, peak_values, rise_times, cfd05
 
 
-    return peak_times, peak_values, rise_times, rise_time_ref
+def getAmplitudeAndRiseTime(variables):
 
-
-def getAmplitudeAndRiseTime (variables):
-
-    [data, pedestal, noise, chan, event, criticalValue] = [i for i in variables]
+    [data, pedestal, noise, chan, event] = [i for i in variables]
     
     # Time scope is the time difference between two recorded points
     # Assumption: for all events this value is the same.
     timeScope = 0.1
     
     # Factor to regulate the threshold.
-    
     N = 3
 
     # Relevant values from the pulse
     peak_time = 0
     peak_value = 0
     rise_time = 0
-    rise_time_ref = 0
+    cfd05 = 0
  
     # Set threshold, note data have negative pulse values
     threshold = -noise * N + pedestal
     threshold_indices = np.where(data < threshold)[0]
     
+    
+    # Select the consecutive range of points with maximal pulse
     if len(threshold_indices) > 0:
 
         group_points = group_consecutives(threshold_indices)
@@ -58,14 +63,18 @@ def getAmplitudeAndRiseTime (variables):
     try:
 
         # Restrict to finding the threshold and avoid values which have corrupted data
-        if len(threshold_indices) > 0 and np.amin(data) != criticalValue:
+        if len(threshold_indices) > 0:
             
             first_index = threshold_indices[0]
             last_index = np.argwhere(data < np.amin(data)*0.9)[0]
-            #last_index = threshold_indices[0] + 3
-        
+
             linear_fit_indices = np.arange(first_index, last_index)
             linear_fit_data = data[linear_fit_indices]
+
+
+            if not np.all(np.diff(linear_fit_data) < 0):
+                return peak_time, peak_value, rise_time, cfd05
+            
   
             # Data selection for polynomial fit
             point_difference = 3
@@ -75,14 +84,14 @@ def getAmplitudeAndRiseTime (variables):
             # Previous setting, 2 points
             # Conditions on linear and 2nd degree fits
             if len(linear_fit_data) > 2:
-                
+           
                 linear_fit = np.polyfit((linear_fit_indices * timeScope), linear_fit_data, 1)
                 poly_fit = np.polyfit((poly_fit_indices * timeScope), poly_fit_data, 2)
                 
                 if linear_fit[0] < 0 and poly_fit[0] > 0:
                 
                     # Reference point 50% of rise time, pedestal corrected
-                    rise_time_ref = (0.5 * (np.amin(data) + pedestal) - linear_fit[1]) / linear_fit[0]
+                    cfd05 = (0.5 * (np.amin(data) + pedestal) - linear_fit[1]) / linear_fit[0]
                    
                     # Reference point peak time location second method
                     peak_time = - poly_fit[1] / (2 * poly_fit[0])
@@ -96,17 +105,16 @@ def getAmplitudeAndRiseTime (variables):
 
     except:
     
-        print "Error caught"
-        print sys.exc_info()[0]
-        print event, chan, "\n"
+#        print "Error caught"
+#        print sys.exc_info()[0]
+#        print event, chan, "\n"
 
         peak_value = 0
         peak_time = 0
         rise_time = 0
-        rise_time_ref = 0
+        cfd05 = 0
 
-
-    return peak_time, peak_value, rise_time, rise_time_ref
+    return peak_time, peak_value, rise_time, cfd05
 
 
 # Search for critical amplitude values
@@ -129,17 +137,17 @@ def concatenateResults(results):
     peak_time = np.empty(0, dtype=results[0][0].dtype)
     peak_value  = np.empty(0, dtype=results[0][1].dtype)
     rise_time = np.empty(0, dtype=results[0][2].dtype)
-    rise_time_ref = np.empty(0, dtype=results[0][3].dtype)
+    cfd05 = np.empty(0, dtype=results[0][3].dtype)
     
     for index in range(0, len(results)):
     
         peak_time  = np.concatenate((peak_time,  results[index][0]), axis = 0)
         peak_value = np.concatenate((peak_value, results[index][1]), axis = 0)
         rise_time = np.concatenate((rise_time, results[index][2]), axis = 0)
-        rise_time_ref = np.concatenate((rise_time_ref, results[index][3]), axis = 0)
+        cfd05 = np.concatenate((cfd05, results[index][3]), axis = 0)
     
 
-    return [peak_time, peak_value, rise_time, rise_time_ref]
+    return [peak_time, peak_value, rise_time, cfd05]
 
 
 def getPedestalAndNoise(noise_average, noise_std):

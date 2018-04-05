@@ -33,6 +33,12 @@ def restrictToBatch(metaData, batchNumber):
     return runLog
 
 
+def getAllSensorNames():
+
+    return ["50D-GBGR2", "SiPM-AFP", "W4-LG12", "W4-RD01", "W4-S203", "W4-S204_6e14", "W4-S215", "W4-S1022", "W4-S1061", "W9-LGA35"]
+
+
+
 # Structure of results: [runLogBatch1, runLogBatch1, ...,] and runLogBatch1 = [run1, run2, run3, ]... run1 = row from the run log for selected run
 def getRunLogBatches(batchNumbers):
 
@@ -137,6 +143,23 @@ def isTimingFileDone(runNumber):
     return available
 
 
+def checkIfSameOscAsSiPM(chan):
+
+    SiPM_chan = getChannelNameForSensor("SiPM-AFP")
+    
+    chan_DUT = int(chan[-1])
+    chan_SiPM = int(SiPM_chan[-1])
+    
+    if chan_DUT < 4 and chan_SiPM < 4:
+        return True
+
+    elif chan_DUT >= 4 and chan_SiPM >= 4:
+        return True
+
+    else:
+        return False
+
+
 
 # Read file names which are enlisted in the folder
 def readFileNames(fileType):
@@ -213,6 +236,7 @@ def getRunNumber(timeStamp=""):
         for row in runLog:
             if int(row[4]) == timeStamp:
                 return int(row[3])
+
 
 # Return all run numbers for given batch
 
@@ -329,8 +353,28 @@ def getRowForRunNumber(runNumber):
         if int(row[3]) == runNumber:
             return row
 
+# Return row in run log for given run number
+def getRowForBatchNumber(batchNumber):
 
-def checkIfArrayPad(chan):
+    runLog = getRunLog()
+
+    for row in runLog:
+        if int(row[5]) == batchNumber:
+            return row
+
+def getTemperature(batchNumber=""):
+
+    if batchNumber == "":
+        return int(runInfo[10])
+
+def getBiasVoltage(sensor):
+
+    index = runInfo.index(sensor)
+
+    return int(runInfo[index+1])
+
+
+def checkIfArrayPad(chan="chan5"):
 
     if getNameOfSensor(chan) == "W4-S204_6e14":
 
@@ -343,6 +387,7 @@ def checkIfArrayPad(chan):
         if batchIndex == 1 or batchIndex == 2 or batchIndex == 4:
         
             return True
+
     else:
     
         return False

@@ -39,9 +39,9 @@ def pulseAnalysis():
         
             print "Run", md.getRunNumber()
             
-            [peak_time, peak_value, rise_time, rise_time_ref] = pulseAnalysisPerRun()
+            [peak_time, peak_value, rise_time, cfd05] = pulseAnalysisPerRun()
             
-            dm.exportPulseData(peak_time, peak_value, rise_time, rise_time_ref)
+            dm.exportPulseData(peak_time, peak_value, rise_time, cfd05)
             
             print "Done with run", md.getRunNumber(), "\n"
 

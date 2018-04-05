@@ -15,6 +15,7 @@ import timing
 import timing_plot
 import metadata
 import data_management
+import results
 
 
 #metadata.setupATLAS()
@@ -24,21 +25,19 @@ def main():
     data_management.printTime()
     
     # This is only used for me, for storing the oscilloscope on an external drive
-    data_management.setIfOnHDD(False)
+    data_management.setIfOnHDD(True)
     data_management.setIfOnHITACHI(False)
     
     #### Settings used for debugging noise and pulse analysis ####
-    metadata.setLimitRunNumbers(1)
     metadata.setEntriesForQuickAnalysis(0)
     #############################################################
     
     
     # Choose batch numbers to run
-    metadata.setBatchNumbers([507])
-    #metadata.setBatchNumbers([101, 108, 207, 306, 401, 507, 707]) # all for tracking
-
-
-
+    metadata.setLimitRunNumbers(0)
+    #metadata.setBatchNumbers([207])
+    #metadata.setBatchNumbers([707])
+    metadata.setBatchNumbers([101]) # all for tracking
 
     ############## METHODS ###############
     
@@ -52,7 +51,7 @@ def main():
     
     ######## PULSE ##########
     
-    #pulse.pulseAnalysis()
+    pulse.pulseAnalysis()
     
     #########################
 
@@ -74,9 +73,14 @@ def main():
     ### PLOTS ###
     
     #noise_plot.noisePlots()
-    #pulse_plot.pulsePlots()
+    pulse_plot.pulsePlots()
     #timing_plot.timingPlots()
     
+   
+    ### RESULTS ###
+    
+    #results.produceResults()
+   
    
     #######################################
    
@@ -87,25 +91,5 @@ def main():
 
 
 main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

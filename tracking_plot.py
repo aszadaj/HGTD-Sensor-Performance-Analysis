@@ -9,55 +9,52 @@ import timing_calculations as t_calc
 ROOT.gStyle.SetPalette(1)
 ROOT.gStyle.SetNumberContours(300)
 
-def produceTrackingGraphs(peak_values, tracking, time_difference_peak, time_difference_rise_time_ref):
+def produceTrackingGraphs(peak_values, tracking, time_difference_peak, time_difference_cfd05):
    
     global minEntries
     global canvas
     global bin_size
     global sep_x
     global sep_y
-    
-    # Data selection
-    minEntries = 3
+    global arrayBinFactor
     
     # Convert pulse data to positive mV values, and x and y positions into mm.
     peak_values = dm.convertPulseData(peak_values)
-    
-    # Import center positions info for given batch
     position = dm.importTrackingFile("position")
-    sep_x = 0.9
-    sep_y = 0.7
-    
-    # Telescope bin size in mm
-    bin_size = 18.5 * 0.001
-    
     canvas = ROOT.TCanvas("Tracking", "tracking")
+
+    bin_size = 18.5 * 0.001
+    sep_x = 0.8
+    sep_y = 0.6
     
-    chans = peak_values.dtype.names
-
+    minEntries = 5
+    arrayBinFactor = 1.5
+    
+    
     # In case there are arrays in batch, produce seperately array plots
-    produceArrayPlots(peak_values, np.copy(tracking), position, time_difference_peak, time_difference_rise_time_ref)
+    if md.checkIfArrayPad():
+        produceArrayPlots(peak_values, np.copy(tracking), position, time_difference_peak, time_difference_cfd05)
 
-
+    chans = peak_values.dtype.names
     SiPM_chan = md.getChannelNameForSensor("SiPM-AFP")
     channels = [x for x in chans if x != SiPM_chan]
 
     #channels = ["chan0"]
 
-#    # Produce single pad plots
-#    for chan in channels:
-#
-#            if not md.checkIfArrayPad(chan):
-#
-#                print "\nSingle pad", md.getNameOfSensor(chan), "\n"
-#
-#                pos_x = position[chan][0][0]
-#                pos_y = position[chan][0][1]
-#
-#                tracking_chan = changeCenterPositionSensor(np.copy(tracking), pos_x, pos_y)
-#
-#                produceTProfilePlots(peak_values[chan], tracking_chan, time_difference_peak[chan], time_difference_rise_time_ref[chan], chan)
-#                produceEfficiencyPlot(peak_values[chan], tracking_chan, chan)
+    # Produce single pad plots
+    for chan in channels:
+    
+            if not md.checkIfArrayPad(chan):
+
+                print "\nSingle pad", md.getNameOfSensor(chan), "\n"
+
+                pos_x = position[chan][0][0]
+                pos_y = position[chan][0][1]
+
+                tracking_chan = changeCenterPositionSensor(np.copy(tracking), pos_x, pos_y)
+
+                produceTProfilePlots(peak_values[chan], tracking_chan, time_difference_peak[chan], time_difference_cfd05[chan], chan)
+                produceEfficiencyPlot(peak_values[chan], tracking_chan, chan)
 
 
 ###########################################
@@ -68,51 +65,76 @@ def produceTrackingGraphs(peak_values, tracking, time_difference_peak, time_diff
 
 
 # Produce mean value and time resolution plots
-def produceTProfilePlots(peak_values, tracking, time_difference_peak, time_difference_rise_time_ref, chan, array_pad=False):
+def produceTProfilePlots(peak_values, tracking, time_difference_peak, time_difference_cfd05, chan, array_pad=False):
 
 
-    sep_x, sep_y, bin_size = getSepGlobVar()
+    sep_x, sep_y, bin_size, minEntries, arrayBinFactor = getSepGlobVar()
 
     if array_pad:
-        sep_x *= 1.9
-        sep_y *= 1.9
-
-    #bin_size *= 2.5
+        sep_x *= 2
+        sep_y *= 2
+        bin_size *= arrayBinFactor
+        minEntries *= arrayBinFactor
 
     xbin = int(2*sep_x/bin_size)
     ybin = int(2*sep_y/bin_size)
 
     mean_values = dict()
     timing_resolution_peak = dict()
-    timing_resolution_rise_time_ref = dict()
+    timing_resolution_cfd05 = dict()
 
     timing_resolution_peak_copy = dict()
-    timing_resolution_rise_time_ref_copy = dict()
+    timing_resolution_cfd05_copy = dict()
     
 
     mean_values[chan] = ROOT.TProfile2D("Mean value","Mean value", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y)
 
-    timing_resolution_peak[chan] = ROOT.TProfile2D("Timing resolution peak", "timing resolution peak temp", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y, "s")
-    timing_resolution_rise_time_ref[chan] = ROOT.TProfile2D("Timing resolution rise time ref temp", "timing resolution rtref", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y, "s")
+    timing_resolution_peak[chan] = ROOT.TProfile2D("Timing resolution peak copy", "timing resolution peak temp", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y, "s")
+    timing_resolution_cfd05[chan] = ROOT.TProfile2D("Timing resolution rise time ref temp", "timing resolution rtref", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y, "s")
 
-    timing_resolution_peak_copy[chan] = ROOT.TH2F("Timing resolution peak copy", "timing resolution peak", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y)
-    timing_resolution_rise_time_ref_copy[chan] = ROOT.TH2F("Timing resolution rise time ref", "timing resolution rtref", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y)
+    timing_resolution_peak_copy[chan] = ROOT.TH2D("Timing resolution peak", "timing resolution peak", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y)
+    timing_resolution_cfd05_copy[chan] = ROOT.TH2D("Timing resolution rise time ref", "timing resolution rtref", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y)
 
     # Fill mean values and time differences in each bin, for peak reference and rise time reference
-
-    for event in range(0, len(tracking)):
+    
+    if array_pad:
+    
+        for event in range(0, len(tracking)):
         
-        if (-sep_x < tracking['X'][event] < sep_x) and (-sep_y < tracking['Y'][event] < sep_y) and peak_values[event] > -md.getPulseAmplitudeCut(chan)*1000:
+            for selection in range(0, len(peak_values[event])):
         
-            mean_values[chan].Fill(tracking['X'][event], tracking['Y'][event], peak_values[event])
-            
-            if time_difference_peak[event] != 0:
+                if (-sep_x < tracking['X'][event] < sep_x) and (-sep_y < tracking['Y'][event] < sep_y):
 
-                timing_resolution_peak[chan].Fill(tracking['X'][event], tracking['Y'][event], time_difference_peak[event])
+                    if peak_values[event][selection] > -md.getPulseAmplitudeCut(chan)*1000:
+                    
+                        mean_values[chan].Fill(tracking['X'][event], tracking['Y'][event], peak_values[event][selection])
+                    
+                        if time_difference_peak[event][selection] != 0:
 
-            if time_difference_rise_time_ref[event] != 0:
+                            timing_resolution_peak[chan].Fill(tracking['X'][event], tracking['Y'][event], time_difference_peak[event][selection])
 
-                timing_resolution_rise_time_ref[chan].Fill(tracking['X'][event], tracking['Y'][event], time_difference_rise_time_ref[event])
+                        if time_difference_cfd05[event][selection] != 0:
+
+                            timing_resolution_cfd05[chan].Fill(tracking['X'][event], tracking['Y'][event], time_difference_cfd05[event][selection])
+
+    else:
+    
+        for event in range(0, len(tracking)):
+
+            if (-sep_x < tracking['X'][event] < sep_x) and (-sep_y < tracking['Y'][event] < sep_y):
+
+                if peak_values[event] > -md.getPulseAmplitudeCut(chan)*1000:
+                
+                    mean_values[chan].Fill(tracking['X'][event], tracking['Y'][event], peak_values[event])
+                
+                    if time_difference_peak[event] != 0:
+
+                        timing_resolution_peak[chan].Fill(tracking['X'][event], tracking['Y'][event], time_difference_peak[event])
+
+                    if time_difference_cfd05[event] != 0:
+
+                        timing_resolution_cfd05[chan].Fill(tracking['X'][event], tracking['Y'][event], time_difference_cfd05[event])
+    
 
 
     sigma_sipm = 16.14
@@ -124,7 +146,7 @@ def produceTProfilePlots(peak_values, tracking, time_difference_peak, time_diffe
             bin = mean_values[chan].GetBin(i,j)
             num_mean = mean_values[chan].GetBinEntries(bin)
             num_time_peak = timing_resolution_peak[chan].GetBinEntries(bin)
-            num_time_rtref = timing_resolution_rise_time_ref[chan].GetBinEntries(bin)
+            num_time_rtref = timing_resolution_cfd05[chan].GetBinEntries(bin)
             
             if 0 < num_mean < minEntries:
                 mean_values[chan].SetBinContent(bin, 0)
@@ -138,11 +160,11 @@ def produceTProfilePlots(peak_values, tracking, time_difference_peak, time_diffe
                     timing_resolution_peak_copy[chan].SetBinContent(bin, sigma_dut)
 
             if num_time_rtref > minEntries:
-                sigma_dut_conv_rt = timing_resolution_rise_time_ref[chan].GetBinError(bin)*1000
+                sigma_dut_conv_rt = timing_resolution_cfd05[chan].GetBinError(bin)*1000
                 
                 if sigma_dut_conv_rt > sigma_sipm:
                     sigma_dut = np.sqrt(sigma_dut_conv_rt**2 - sigma_sipm**2)
-                    timing_resolution_rise_time_ref_copy[chan].SetBinContent(bin, sigma_dut)
+                    timing_resolution_cfd05_copy[chan].SetBinContent(bin, sigma_dut)
 
 
     mean_values[chan].ResetStats()
@@ -173,12 +195,12 @@ def produceTProfilePlots(peak_values, tracking, time_difference_peak, time_diffe
 
     # Print time resolution rise time ref
     headTitle = "Time resolution (rise time ref) in each bin " + md.getNameOfSensor(chan) + " B" + str(md.getBatchNumber()) +"; X [mm] ; Y [mm] ; \sigma_{t} [ps]"
-    fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/time_resolution/tracking_time_resolution_rise_time_ref_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+    fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/time_resolution/tracking_time_resolution_cfd05_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
     if array_pad:
         fileName = fileName.replace(".pdf", "_array.pdf")
     titles = [headTitle, fileName, totalEntries]
-    timing_resolution_rise_time_ref_copy[chan].SetAxisRange(0, 100, "Z")
-    printTHPlot(timing_resolution_rise_time_ref_copy[chan], titles)
+    timing_resolution_cfd05_copy[chan].SetAxisRange(0, 100, "Z")
+    printTHPlot(timing_resolution_cfd05_copy[chan], titles)
 
 
 ###########################################
@@ -191,14 +213,19 @@ def produceTProfilePlots(peak_values, tracking, time_difference_peak, time_diffe
 # Produce efficiency graphs (for array and single pads) and projection histograms (single pad arrays only)
 def produceEfficiencyPlot(peak_values, tracking, chan, array_pad=False):
 
-    sep_x, sep_y, bin_size = getSepGlobVar()
+
+    sep_x, sep_y, bin_size, minEntries, arrayBinFactor = getSepGlobVar()
 
     if array_pad:
-        sep_x *= 1.9
-        sep_y *= 1.9        #bin_size *= 1.5
+        sep_x *= 2
+        sep_y *= 2
+        bin_size *= arrayBinFactor
+        minEntries *= arrayBinFactor
+
 
     xbin = int(2*sep_x/bin_size)
     ybin = int(2*sep_y/bin_size)
+    
     
     LGAD = dict()
     MIMOSA = dict()
@@ -209,31 +236,48 @@ def produceEfficiencyPlot(peak_values, tracking, chan, array_pad=False):
     
     
     # Fill events for which the sensors records a hit
-    LGAD[chan]         = ROOT.TH2F("LGAD_particles", "LGAD particles",xbin,-sep_x,sep_x,ybin,-sep_y,sep_y)
+    LGAD[chan]         = ROOT.TH2D("LGAD_particles", "LGAD particles",xbin,-sep_x,sep_x,ybin,-sep_y,sep_y)
     
     # Fill events for which the tracking notes a hit
-    MIMOSA[chan]       = ROOT.TH2F("tracking_particles", "Tracking particles",xbin,-sep_x,sep_x,ybin,-sep_y,sep_y)
+    MIMOSA[chan]       = ROOT.TH2D("tracking_particles", "Tracking particles",xbin,-sep_x,sep_x,ybin,-sep_y,sep_y)
     
     # For a given TEfficiency object, recreate to make it an inefficiency
-    inefficiency[chan] = ROOT.TH2F("Inefficiency", "Inefficiency",xbin,-sep_x,sep_x,ybin,-sep_y,sep_y)
+    inefficiency[chan] = ROOT.TH2D("Inefficiency", "Inefficiency",xbin,-sep_x,sep_x,ybin,-sep_y,sep_y)
     
     # Projection X of efficiency
-    efficiency_projectionX[chan] = ROOT.TProfile("Projection X plot", "projection X", xbin,-sep_x,sep_x)
+    efficiency_projectionX[chan] = ROOT.TProfile("Projection X", "projection x", xbin,-sep_x,sep_x)
     
     # Projection Y of efficiency
-    efficiency_projectionY[chan] = ROOT.TProfile("Projection Y plot", "projection X", ybin,-sep_y,sep_y)
+    efficiency_projectionY[chan] = ROOT.TProfile("Projection Y", "projection y", ybin,-sep_y,sep_y)
     
     
     # Fill MIMOSA[chan] and LGAD[chan] (TH2 objects)
-    for event in range(0, len(tracking)):
-        if (-sep_x < tracking['X'][event] < sep_x) and (-sep_y < tracking['Y'][event] < sep_y):
+    
+    if array_pad:
         
-            # Total events
-            MIMOSA[chan].Fill(tracking['X'][event], tracking['Y'][event], 1)
+        for event in range(0, len(tracking)):
+            if (-sep_x < tracking['X'][event] < sep_x) and (-sep_y < tracking['Y'][event] < sep_y):
             
-            # Passed events
-            if peak_values[event] > -md.getPulseAmplitudeCut(chan)*1000:
-                LGAD[chan].Fill(tracking['X'][event], tracking['Y'][event], 1)
+                for selection in range(0, len(peak_values[event])):
+                    
+                    # Total events
+                    MIMOSA[chan].Fill(tracking['X'][event], tracking['Y'][event], 1)
+                    
+                    # Passed events
+                    if peak_values[event][selection] > -md.getPulseAmplitudeCut(chan)*1000:
+                        LGAD[chan].Fill(tracking['X'][event], tracking['Y'][event], 1)
+
+    else:
+    
+         for event in range(0, len(tracking)):
+            if (-sep_x < tracking['X'][event] < sep_x) and (-sep_y < tracking['Y'][event] < sep_y):
+        
+                # Total events
+                MIMOSA[chan].Fill(tracking['X'][event], tracking['Y'][event], 1)
+                
+                # Passed events
+                if peak_values[event] > -md.getPulseAmplitudeCut(chan)*1000:
+                    LGAD[chan].Fill(tracking['X'][event], tracking['Y'][event], 1)
 
 
     # Remove bins with less than some entries
@@ -245,6 +289,7 @@ def produceEfficiencyPlot(peak_values, tracking, chan, array_pad=False):
             if 0 < num_LGAD < minEntries:
                 LGAD[chan].SetBinContent(bin, 0)
                 MIMOSA[chan].SetBinContent(bin, 0)
+
 
     LGAD[chan].ResetStats()
     MIMOSA[chan].ResetStats()
@@ -263,20 +308,17 @@ def produceEfficiencyPlot(peak_values, tracking, chan, array_pad=False):
             bin = efficiency[chan].GetGlobalBin(i,j)
             eff = efficiency[chan].GetEfficiency(bin)
             
-            if eff != 0 and eff != 1:
-                
-                # The factor 4 is to compensate for 4 times the registered tracking info
-                # The TEfficiency is scaled when the histogram is drawn
-                if array_pad:
-                    inefficiency[chan].SetBinContent(bin, 1-eff*4)
-        
-                else:
-                    inefficiency[chan].SetBinContent(bin, 1-eff)
-
-
-            elif eff == 1:
+            if eff == 1:
                 inefficiency[chan].SetBinContent(bin, 0.001)
+        
+            elif eff != 0:
             
+                if array_pad:
+                    inefficiency[chan].SetBinContent(bin, 1 - 4*eff)
+                
+                else:
+                    inefficiency[chan].SetBinContent(bin, 1 - eff)
+
 
             # Get projection x data given limits
             if bin_low_x <= i <= bin_high_x:
@@ -348,66 +390,49 @@ def produceEfficiencyPlot(peak_values, tracking, chan, array_pad=False):
 ###########################################
 
 
-def produceArrayPlots(peak_values, tracking, position, time_difference_peak, time_difference_rise_time_ref):
+def produceArrayPlots(peak_values, tracking, position, time_difference_peak, time_difference_cfd05):
+
+
+    channels = ["chan5"]
+    batchCategory = md.getBatchNumber()/100
+    # W4-S204_6e14 -40 C
+    if batchCategory == 5 or batchCategory == 7:
+        channels = ["chan5", "chan6", "chan7"]
+        
+        # Calculate mean position from position of each array sensor
+        array_pos_x = (position["chan6"][0][0] + position["chan7"][0][0])/2
+        array_pos_y = (position["chan7"][0][1] + position["chan5"][0][1])/2
     
-    if md.getNameOfSensor("chan5") == "W4-S215" or md.getNameOfSensor("chan5") == "W4-S204_6e14":
+    else:
+        # W4-S215 22 C
+        if int(md.getBatchNumber()/100) == 1:
+            channels = ["chan4", "chan5", "chan6", "chan7"]
+
+        # W4-S215 22 C
+        elif int(md.getBatchNumber()/100) == 2:
+            channels = ["chan3", "chan5", "chan6", "chan7"]
         
-        channels = ["chan5"]
-        batchCategory = md.getBatchNumber()/100
-        # W4-S204_6e14 -40 C
-        if batchCategory == 5 or batchCategory == 7:
-       
-            # Calculate mean position from position of each array sensor
-            array_pos_x = (position["chan6"][0][0] + position["chan7"][0][0])/2
-            array_pos_y = (position["chan7"][0][1] + position["chan5"][0][1])/2
-            
-            changeCenterPositionSensor(tracking, array_pos_x, array_pos_y, True)
+        # W4-S215 -30 C
+        elif int(md.getBatchNumber()/100) == 4:
+            channels = ["chan1", "chan5", "chan6", "chan7"]
 
-            # Concatenate max amplitude value info for each array sensor
-            peak_values_array = np.concatenate((peak_values["chan5"], peak_values["chan6"], peak_values["chan7"]), axis=0)
-            tracking_array = np.concatenate((tracking, tracking, tracking), axis=0)
-            time_difference_peak_array = np.concatenate((time_difference_peak["chan5"], time_difference_peak["chan6"], time_difference_peak["chan7"]), axis=0)
-            time_difference_rise_time_ref_array = np.concatenate((time_difference_rise_time_ref["chan5"], time_difference_rise_time_ref["chan6"], time_difference_rise_time_ref["chan7"]), axis=0)
-        
-        else:
-
-            # W4-S215 22 C
-            if int(md.getBatchNumber()/100) == 1:
-            
-                channels = ["chan4", "chan5", "chan6", "chan7"]
+        # Calculate mean position from position of each array sensor
+        array_pos_x = (position[channels[0]][0][0] + position[channels[1]][0][0] + position[channels[2]][0][0] + position[channels[3]][0][0])/4
+        array_pos_y = (position[channels[0]][0][1] + position[channels[1]][0][1] + position[channels[2]][0][1] + position[channels[3]][0][1])/4
 
 
-            # W4-S215 22 C
-            elif int(md.getBatchNumber()/100) == 2:
-                
-                channels = ["chan3", "chan5", "chan6", "chan7"]
-            
+    changeCenterPositionSensor(tracking, array_pos_x, array_pos_y, True)
+    peak_values_array = peak_values[channels]
+    time_difference_peak_array = time_difference_peak[channels]
+    time_difference_cfd05_array = time_difference_cfd05[channels]
+
+    print "\nArray Pad", md.getNameOfSensor(channels[0]), "\n"
+
+    produceTProfilePlots(peak_values_array, tracking, time_difference_peak_array, time_difference_cfd05_array, channels[0], True)
+    produceEfficiencyPlot(peak_values_array, tracking, channels[0], True)
 
 
-            # W4-S215 -30 C
-            elif int(md.getBatchNumber()/100) == 4:
-            
-                channels = ["chan1", "chan5", "chan6", "chan7"]
-
-
-            # Calculate mean position from position of each array sensor
-            array_pos_x = (position[channels[0]][0][0] + position[channels[1]][0][0] + position[channels[2]][0][0] + position[channels[3]][0][0])/4
-            array_pos_y = (position[channels[0]][0][1] + position[channels[1]][0][1] + position[channels[2]][0][1] + position[channels[3]][0][1])/4
-            
-            changeCenterPositionSensor(tracking, array_pos_x, array_pos_y, True)
-
-            # Concatenate max amplitude value info for each array sensor
-            peak_values_array = np.concatenate((peak_values[channels[0]], peak_values[channels[1]], peak_values[channels[2]], peak_values[channels[3]]), axis=0)
-            tracking_array = np.concatenate((tracking, tracking, tracking, tracking), axis=0)
-            time_difference_peak_array = np.concatenate((time_difference_peak[channels[0]], time_difference_peak[channels[1]], time_difference_peak[channels[2]], time_difference_peak[channels[3]]), axis=0)
-            time_difference_rise_time_ref_array = np.concatenate((time_difference_rise_time_ref[channels[0]], time_difference_rise_time_ref[channels[1]], time_difference_rise_time_ref[channels[2]], time_difference_rise_time_ref[channels[3]]), axis=0)
-
-        print "\nArray Pad", md.getNameOfSensor(channels[0]), "\n"
-
-        produceTProfilePlots(peak_values_array, tracking_array, time_difference_peak_array, time_difference_rise_time_ref_array, channels[0], True)
-        produceEfficiencyPlot(peak_values_array, tracking_array, channels[0], True)
-
-        del channels
+    del channels
 
 # Print TH2 Object plot
 def printTHPlot(graphList, info, efficiency=False, inefficiency=False, array_pad=False):
@@ -420,10 +445,11 @@ def printTHPlot(graphList, info, efficiency=False, inefficiency=False, array_pad
     
     if efficiency:
     
+        # Get painted histogram by calling TEfficiency-object
+        
         if array_pad:
             graphList.GetPaintedHistogram().Scale(4)
-
-        # Get painted histogram by calling TEfficiency-object
+        
         graphList.GetPaintedHistogram().Scale(100)
         graphList.GetPaintedHistogram().SetAxisRange(0, 100, "Z")
         graphList.GetPaintedHistogram().SetNdivisions(10, "Z")
@@ -518,6 +544,7 @@ def changeCenterPositionSensor(tracking, pos_x, pos_y, array_pad=False):
         cos_theta = np.sqrt(1./(1+np.power(tan_theta, 2)))
         sin_theta = np.sqrt(1-np.power(cos_theta, 2))
 
+        # Use the rotation matrix around z
         tracking["X"] = np.multiply(tracking["X"], cos_theta) - np.multiply(tracking["Y"], sin_theta)
         tracking["Y"] = np.multiply(tracking["X"], sin_theta) + np.multiply(tracking["Y"], cos_theta)
 
@@ -525,37 +552,8 @@ def changeCenterPositionSensor(tracking, pos_x, pos_y, array_pad=False):
     return tracking
 
 
-# Time diff in ns
-def getSigmaPerBin(time_difference, tracking, x_pos, y_pos, bin_size, chan):
-
-    selection_x  = (tracking["X"] < x_pos + bin_size/2) & (tracking["X"] > x_pos - bin_size/2)
-    selection_y  = (tracking["Y"] < y_pos + bin_size/2) & (tracking["Y"] > y_pos - bin_size/2)
-    
-    time_diff_bin = time_difference[(selection_x & selection_y)]
-    
-    time_diff_bin = np.multiply(time_diff_bin, 1000)
-    
-    mean_value_time_diff = np.average(time_diff_bin)
-    N = 3
-    xMin = np.average(time_diff_bin) - N * np.std(time_diff_bin)
-    xMax = np.average(time_diff_bin) + N * np.std(time_diff_bin)
-
-    hist = ROOT.TH1D("Time difference bin", "time_diff_bin", 10, xMin, xMax)
-
-    
-    for entry in range(0, len(time_diff_bin)):
-        hist.Fill(time_diff_bin[entry])
-
-
-    fit_function, sigma_DUT = t_calc.getFitFunction(hist, chan)
-
-    del hist
-
-    return sigma_DUT
-
-
-
 # Return global varables, separation and bin size
 def getSepGlobVar():
 
-    return sep_x, sep_y, bin_size
+    return sep_x, sep_y, bin_size, minEntries, arrayBinFactor
+

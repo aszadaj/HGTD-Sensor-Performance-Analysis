@@ -27,6 +27,8 @@ def noisePlots():
 
         availableRunNumbersNoise        = md.readFileNames("noise_noise")
         availableRunNumbersPedestal     = md.readFileNames("noise_pedestal")
+        
+        print availableRunNumbersNoise
       
         for runNumber in runNumbers:
             
@@ -38,13 +40,16 @@ def noisePlots():
                 
                 if noise_average.size == 0:
                 
-                    noise_average  = dm.importNoiseFile("pedestal")
-                    noise_std      = dm.importNoiseFile("noise")
+                    noise_average  = dm.importNoiseFilePlot("pedestal")
+                    noise_std      = dm.importNoiseFilePlot("noise")
+                
+            
+                    
 
                 else:
 
-                    noise_average = np.concatenate((noise_average, dm.importNoiseFile("pedestal")), axis = 0)
-                    noise_std = np.concatenate((noise_std, dm.importNoiseFile("noise")), axis = 0)
+                    noise_average = np.concatenate((noise_average, dm.importNoiseFilePlot("pedestal")), axis = 0)
+                    noise_std = np.concatenate((noise_std, dm.importNoiseFilePlot("noise")), axis = 0)
     
         if len(noise_average) != 0:
         
@@ -112,8 +117,8 @@ def produceNoisePlots(noise_average, noise_std):
 
         pedestal_graph[chan].Fit("gaus","Q","", pedestal_min, pedestal_max)
         noise_graph[chan].Fit("gaus","Q","", noise_min, noise_max)
-
-
+        
+        
         headTitle = "Noise - standard deviation values "+md.getNameOfSensor(chan)+", B"+str(md.getBatchNumber())
         xAxisTitle = "Standard deviation (mV)"
         yAxisTitle = "Number of entries (N)"
@@ -128,6 +133,19 @@ def produceNoisePlots(noise_average, noise_std):
         fileName = str(dm.getSourceFolderPath()) + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/noise/pedestal_plots/pedestal_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistograms(pedestal_graph[chan], titles)
+        
+        pedestal_mean = pedestal_graph[chan].GetFunction("gaus").GetParameter(1)
+        noise_mean = noise_graph[chan].GetFunction("gaus").GetParameter(1)
+
+        dt = (  [('noise', '<f8'), ('pedestal', '<f8') ])
+        noise_characteristics_results = np.empty(1, dtype=dt)
+
+
+        noise_characteristics_results["noise"][0] = noise_mean
+        noise_characteristics_results["pedestal"][0] = pedestal_mean
+
+        sensor_info = [md.getNameOfSensor(chan), chan]
+        dm.exportNoiseResults(noise_characteristics_results, sensor_info)
 
 
 # Produce histograms

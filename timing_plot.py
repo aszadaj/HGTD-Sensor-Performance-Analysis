@@ -18,8 +18,8 @@ def timingPlots():
         time_difference_linear = np.empty(0)
         time_difference_sys_eq = np.empty(0)
         
-        time_difference_linear_rise_time_ref = np.empty(0)
-        time_difference_sys_eq_rise_time_ref = np.empty(0)
+        time_difference_linear_cfd05 = np.empty(0)
+        time_difference_sys_eq_cfd05 = np.empty(0)
         
         peak_values = np.empty(0)
 
@@ -30,11 +30,9 @@ def timingPlots():
         
         availableRunNumbersPeakTimes = md.readFileNames("pulse_peak_time")
         
-        numberOfEventPerRun = [0]
         
         for runNumber in runNumbers:
         
-            print runNumber
             if runNumber in availableRunNumbersPeakTimes:
                 md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
                 
@@ -45,8 +43,8 @@ def timingPlots():
                     time_difference_linear  = dm.importTimingFile("linear")
                     time_difference_sys_eq  = dm.importTimingFile("sys_eq")
                     
-                    time_difference_linear_rise_time_ref  = dm.importTimingFile("linear_rise_time_ref")
-                    time_difference_sys_eq_rise_time_ref  = dm.importTimingFile("sys_eq_rise_time")
+                    time_difference_linear_cfd05  = dm.importTimingFile("linear_cfd05")
+                    time_difference_sys_eq_cfd05  = dm.importTimingFile("sys_eq_cfd05")
                     
                     
                     peak_values = dm.importPulseFile("peak_value")
@@ -56,38 +54,37 @@ def timingPlots():
                     time_difference_linear = np.concatenate((time_difference_linear, dm.importTimingFile("linear")), axis = 0)
                     time_difference_sys_eq = np.concatenate((time_difference_sys_eq, dm.importTimingFile("sys_eq")), axis = 0)
                     
-                    time_difference_linear_rise_time_ref = np.concatenate((time_difference_linear_rise_time_ref, dm.importTimingFile("linear_rise_time_ref")), axis = 0)
-                    time_difference_sys_eq_rise_time_ref = np.concatenate((time_difference_sys_eq_rise_time_ref, dm.importTimingFile("sys_eq_rise_time")), axis = 0)
+                    time_difference_linear_cfd05 = np.concatenate((time_difference_linear_cfd05, dm.importTimingFile("linear_cfd05")), axis = 0)
+                    time_difference_sys_eq_cfd05 = np.concatenate((time_difference_sys_eq_cfd05, dm.importTimingFile("sys_eq_cfd05")), axis = 0)
                     
                     peak_values = np.concatenate((peak_values, dm.importPulseFile("peak_value")), axis = 0)
-                    
-                # Since the values are concatenated, number of events are tracked
-                
-                numberOfEventPerRun.append(len(time_difference_linear))
+
         
         if len(peak_values) != 0:
         
             print "Done with importing files for", batchNumber
             print "Producing plots.\n"
-
-            produceTimingDistributionPlots(time_difference_linear, peak_values, numberOfEventPerRun)
-            produceTimingDistributionPlotsSysEq(time_difference_sys_eq, peak_values, numberOfEventPerRun)
             
-            produceTimingDistributionPlots(time_difference_linear_rise_time_ref, peak_values, numberOfEventPerRun, True)
-            produceTimingDistributionPlotsSysEq(time_difference_sys_eq_rise_time_ref, peak_values, numberOfEventPerRun, True)
+            # Differences between two sensors, wrt peak time and cfd05 reference
+            produceTimingDistributionPlots(time_difference_linear, peak_values)
+            produceTimingDistributionPlots(time_difference_linear_cfd05, peak_values, True)
+
+            # System of linear equations between sensors, wrt peak time and cfd05 reference
+            #produceTimingDistributionPlotsSysEq(time_difference_sys_eq, peak_values)
+            #produceTimingDistributionPlotsSysEq(time_difference_sys_eq_cfd05, peak_values, True)
 
 
     print "Done with producing TIMING plots.\n"
 
 
-def produceTimingDistributionPlots(time_difference, peak_value, numberOfEventPerRun, rise_time_ref = False):
+def produceTimingDistributionPlots(time_difference, peak_value, cfd05=False):
 
     time_diff = dict()
     fit_function = dict()
 
     SiPM_chan = md.getChannelNameForSensor("SiPM-AFP")
     
-    channels = time_difference.dtype.names
+    chans = time_difference.dtype.names
 
     global canvas
     global chan
@@ -98,15 +95,15 @@ def produceTimingDistributionPlots(time_difference, peak_value, numberOfEventPer
     xbin_low = -15000
     xbin_high = 15000
     
-    channels = ["chan0"]
+    SiPM_chan = md.getChannelNameForSensor("SiPM-AFP")
+    channels = [x for x in chans if x != SiPM_chan]
     
-    try:
-        channels.remove(SiPM_chan)
+    channels = ["chan1"]
     
-    except:
-        None
-
     for chan in channels:
+    
+        same_osc = md.checkIfSameOscAsSiPM(chan)
+    
         index = int(chan[-1:])
 
         # TH1 object
@@ -127,26 +124,45 @@ def produceTimingDistributionPlots(time_difference, peak_value, numberOfEventPer
 
         time_diff[chan].ResetStats()
         
-        fit_function, sigma_DUT = t_calc.getFitFunction(time_diff[chan], chan)
+        fit_function, sigma_DUT = t_calc.getFitFunction(time_diff[chan], chan, same_osc)
 
         # Print 1D plot time difference distribution
         headTitle = "Time difference SiPM and "+md.getNameOfSensor(chan)+" B"+str(md.getBatchNumber())
         xAxisTitle = "\Delta t_{SiPM-LGAD} (ps)"
         yAxisTitle = "Number (N)"
-        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/normal/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         
-        if rise_time_ref:
-            headTitle = "Time difference SiPM and "+md.getNameOfSensor(chan)+" B"+str(md.getBatchNumber())
-            xAxisTitle = "\Delta t_{SiPM-LGAD} (ps)"
-            yAxisTitle = "Number (N)"
-            fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_rise_time_ref.pdf"
-        
+
+        if same_osc:
+            fileName = fileName.replace(".pdf", "_same_osc.pdf")
+
+        else:
+            fileName = fileName.replace(".pdf", "_diff_osc.pdf")
+
+
+        if cfd05:
+            fileName = fileName.replace(".pdf", "_cfd05.pdf")
+
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportTHPlot(time_diff[chan], titles, "", fit_function, sigma_DUT)
 
 
+        dt = (  [('time_resolution_DUT', '<f8') ])
+        timing_results = np.empty(1, dtype = dt)
+
+        timing_results["time_resolution_DUT"] = sigma_DUT
+        sensor_info = [md.getNameOfSensor(chan), chan]
+        
+        
+        # Export results
+        # Array structure:
+        # time_resolution_DUT with one sigma value from adapted fit
+        
+        dm.exportTimingResults(timing_results, sensor_info, same_osc, cfd05)
+
+
 # Use this method to calculate the linear system of equations solution
-def produceTimingDistributionPlotsSysEq(time_difference, peak_value, numberOfEventPerRun, rise_time_ref = False):
+def produceTimingDistributionPlotsSysEq(time_difference, peak_value, cfd05 = False):
     
     # TH1 objects
     time_diff = dict()
@@ -212,9 +228,7 @@ def produceTimingDistributionPlotsSysEq(time_difference, peak_value, numberOfEve
             fit_function = time_diff[chan][chan2].GetFunction("gaus")
             fitted_parameters = [fit_function.GetParameter(0), fit_function.GetParameter(1), fit_function.GetParameter(2)]
             
-            
             # Get sigma between two channels
-            
             sigmas_mix[i][j] = fit_function.GetParameter(2)
             sigmas_mix[j][i] = fit_function.GetParameter(2)
 
@@ -227,7 +241,10 @@ def produceTimingDistributionPlotsSysEq(time_difference, peak_value, numberOfEve
     for chan in osc1:
         chan2_list = list(osc1)
         chan2_list.remove(chan)
-    
+        
+        dt = (  [('time_resolution_DUT_sys_eq', '<f8') ])
+        timing_results_sys_eq = np.empty(1, dtype = dt)
+        
         for chan2 in chan2_list:
         
             if md.getNameOfSensor(chan) != md.getNameOfSensor(chan2):
@@ -254,17 +271,23 @@ def produceTimingDistributionPlotsSysEq(time_difference, peak_value, numberOfEve
                 headTitle = "Time difference "+md.getNameOfSensor(chan)+" and "+md.getNameOfSensor(chan2)+" B"+str(md.getBatchNumber())
                 xAxisTitle = "\Delta t_{DUT1 - DUT2} (ps)"
                 yAxisTitle = "Number (N)"
-                fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_and_"+str(md.getNameOfSensor(chan2))+".pdf"
+                fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/system/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_and_"+str(md.getNameOfSensor(chan2))+".pdf"
                 
-                if rise_time_ref:
-                
-                    headTitle = "Time difference "+md.getNameOfSensor(chan)+" and "+md.getNameOfSensor(chan2)+" B"+str(md.getBatchNumber())
-                    xAxisTitle = "\Delta t_{DUT1 - DUT2} (ps)"
-                    yAxisTitle = "Number (N)"
-                    fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_and_"+str(md.getNameOfSensor(chan2))+"_rise_time_ref.pdf"
+                if cfd05:
+                    fileName = fileName.replace(".pdf", "_cfd05.pdf")
             
                 titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
                 exportTHPlot(time_diff[chan][chan2], titles, "", fit_function_adapted, sigmas_chan.item((0, index)))
+
+            timing_results_sys_eq["time_resolution_DUT_sys_eq"] =  sigmas_chan.item((0, index))
+
+        # Export results
+        # Array structure:
+        # time_resolution_DUT_sys_eq with one sigma value
+
+        sensor_info = [md.getNameOfSensor(chan), chan]
+
+        dm.exportTimingResultsSysEq(timing_results_sys_eq, sensor_info, cfd05)
 
 
 def exportTHPlot(graphList, titles, drawOption, fit, sigma=0):
@@ -290,12 +313,6 @@ def exportTHPlot(graphList, titles, drawOption, fit, sigma=0):
 
     linesStatsBox = statsBox.GetListOfLines()
 
-#    textMean = statsBox.GetLineWith("Mean")
-#    linesStatsBox.Remove(textMean)
-#    textConstant = statsBox.GetLineWith("Constant")
-#    linesStatsBox.Remove(textConstant)
-#    textSigma = statsBox.GetLineWith("Sigma")
-#    linesStatsBox.Remove(textSigma)
 
     statsBox.AddText("\sigma_{"+md.getNameOfSensor(chan)+"} = "+str(sigma)[0:6])
     canvas.Modified()

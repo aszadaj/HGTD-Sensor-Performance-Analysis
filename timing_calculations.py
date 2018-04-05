@@ -61,23 +61,6 @@ def timingAnalysisPerRunSysEq(peak_time):
 # Note, there are multiple to choose from, 4 unknowns, 6 different equations, not all are independent
 def solveLinearEq(sigmas_mix):
 
-    vector_1 = [1, 1, 0, 0]
-    vector_2 = [1, 0, 1, 0]
-    vector_3 = [1, 0, 0, 1]
-    vector_4 = [0, 1, 1, 0]
-    vector_5 = [0, 1, 0, 1]
-    vector_6 = [0, 0, 1, 1]
-
-
-    pos_vec = [vector_1, vector_2, vector_3, vector_4, vector_5, vector_6]
-
-    for subset in itertools.combinations(pos_vec, 4):
-        matrix = np.matrix(subset)
-        try:
-            inverse = np.linalg.inv(matrix)
-        except:
-            continue
-    
     # Non-singular matrix selected
     matrix = np.matrix([[1, 0, 0, 1], [0, 1, 1, 0], [0, 0, 1, 1], [0, 1, 0, 1]])
     inverse = np.linalg.inv(matrix)
@@ -85,15 +68,35 @@ def solveLinearEq(sigmas_mix):
     vector = np.power(vector, 2)
     solution = inverse.dot(vector)
     sigma_chan = np.sqrt(solution)
+    
+    
+    
+    #    vector_1 = [1, 1, 0, 0]
+#    vector_2 = [1, 0, 1, 0]
+#    vector_3 = [1, 0, 0, 1]
+#    vector_4 = [0, 1, 1, 0]
+#    vector_5 = [0, 1, 0, 1]
+#    vector_6 = [0, 0, 1, 1]
+
+
+#    pos_vec = [vector_1, vector_2, vector_3, vector_4, vector_5, vector_6]
+#
+#    for subset in itertools.combinations(pos_vec, 4):
+#        matrix = np.matrix(subset)
+#        try:
+#            inverse = np.linalg.inv(matrix)
+#        except:
+#            continue
 
 
     return sigma_chan
 
 
-def getFitFunction(th1d_list, chan):
+def getFitFunction(th1d_list, chan, same_osc):
+
 
     # Choose the range for the fit and the plot
-    N = 2
+    N = 3
     xMin = th1d_list.GetMean() - N * th1d_list.GetStdDev()
     xMax = th1d_list.GetMean() + N * th1d_list.GetStdDev()
     
@@ -107,6 +110,7 @@ def getFitFunction(th1d_list, chan):
     timeScopeShift = -100
     batchConfig = md.getBatchNumber()/100
     
+    # How the shift behaves, based on observation from plots
     if batchConfig == 1 or batchConfig == 2 or batchConfig == 4:
         largePeakOnRight = False
         timeScopeShift = 100
@@ -119,11 +123,13 @@ def getFitFunction(th1d_list, chan):
     bin_low_peak = th1d_list.FindBin(mean_value_low_peak)
     amplitude_low_peak = th1d_list.GetBinContent(bin_low_peak)
     sigma_double_peak = th1d_list.GetStdDev()
+
     
     SiPM_chan = md.getChannelNameForSensor("SiPM-AFP")
 
     # Within the same oscilloscope
-    if (int(SiPM_chan[-1]) < 4 and int(chan[-1])) < 4 or (int(SiPM_chan[-1]) > 3 and int(chan[-1]) > 3):
+    #if (int(SiPM_chan[-1]) < 4 and int(chan[-1])) < 4 or (int(SiPM_chan[-1]) > 3 and int(chan[-1]) > 3):
+    if same_osc:
 
         # Fit using normal gaussian
         defined_fit = ROOT.TF1("gaussian_mod_fit", "gaus", xMin, xMax)
@@ -139,20 +145,20 @@ def getFitFunction(th1d_list, chan):
             defined_fit.SetParameters(amplitude_low_peak, mean_value_high_peak, sigma_double_peak, amplitude_high_peak)
             defined_fit.SetParNames("Norm low peak", "Mean value high peak", "Width", "Norm high peak")
 
-        else:
-
-            defined_fit.SetParameters(amplitude_high_peak, mean_value_high_peak, sigma_double_peak/2, amplitude_low_peak)
+        else:            
+            
+            defined_fit.SetParameters(amplitude_high_peak, mean_value_high_peak, sigma_double_peak, amplitude_low_peak)
             defined_fit.SetParNames("Norm high peak", "Mean value high peak", "Width", "Norm low peak")
 
 
     th1d_list.Fit("gaussian_mod_fit", "Q", "", xMin, xMax)
     fit_function = th1d_list.GetFunction("gaussian_mod_fit")
-    fit_function.SetRange(xMin, xMax)
 
-    N = 2
+    N = 5
     xMin = th1d_list.GetMean() - N * th1d_list.GetStdDev()
     xMax = th1d_list.GetMean() + N * th1d_list.GetStdDev()
     th1d_list.SetAxisRange(xMin, xMax)
+    fit_function.SetRange(xMin, xMax)
     
     # This is the averaged value of calculated time resolution using linear sys equations
     sigma_SiPM = 16.14
@@ -160,16 +166,9 @@ def getFitFunction(th1d_list, chan):
 
 
     if sigma_fit > sigma_SiPM:
-        sigma_DUT = np.sqrt( np.power(sigma_fit,2) - np.power(sigma_SiPM, 2)  )
-        
-        print th1d_list.GetEntries()
-        print th1d_list.GetMean()
-        print th1d_list.GetStdDev()
-        print "\n"
+        sigma_DUT = np.sqrt(np.power(sigma_fit, 2) - np.power(sigma_SiPM, 2))
 
-        #print str("%.2f" % sigma_fit) + " Error:" + str("%.2f" % error_fit) + "\n"
     else:
-        #print "\nsigma dut 0\n"
         sigma_DUT = 0
 
 
