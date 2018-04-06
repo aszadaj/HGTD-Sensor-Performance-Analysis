@@ -10,6 +10,9 @@ def timingPlots():
     print "\nStart producing TIMING plots, batches:", md.batchNumbers
     
     for batchNumber in md.batchNumbers:
+    
+        if batchNumber in [405, 406, 705, 706]:
+            continue
         
         print "\nBatch", batchNumber,"\n"
         

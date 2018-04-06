@@ -41,19 +41,19 @@ def produceTrackingGraphs(peak_values, tracking, time_difference_peak, time_diff
     #channels = ["chan0"]
 
     # Produce single pad plots
-#    for chan in channels:
-#
-#            if not md.checkIfArrayPad(chan):
-#
-#                print "\nSingle pad", md.getNameOfSensor(chan), "\n"
-#
-#                pos_x = position[chan][0][0]
-#                pos_y = position[chan][0][1]
-#
-#                tracking_chan = changeCenterPositionSensor(np.copy(tracking), pos_x, pos_y)
-#
-#                produceTProfilePlots(peak_values[chan], tracking_chan, time_difference_peak[chan], time_difference_cfd05[chan], chan)
-#                produceEfficiencyPlot(peak_values[chan], tracking_chan, chan)
+    for chan in channels:
+
+            if not md.checkIfArrayPad(chan):
+
+                print "\nSingle pad", md.getNameOfSensor(chan), "\n"
+
+                pos_x = position[chan][0][0]
+                pos_y = position[chan][0][1]
+
+                tracking_chan = changeCenterPositionSensor(np.copy(tracking), pos_x, pos_y)
+
+                produceTProfilePlots(peak_values[chan], tracking_chan, time_difference_peak[chan], time_difference_cfd05[chan], chan)
+                produceEfficiencyPlot(peak_values[chan], tracking_chan, chan)
 
 
 ###########################################

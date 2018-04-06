@@ -19,9 +19,13 @@ def trackingAnalysis():
     
     startTime = md.dm.getTime()
     
-    runLog_batch = md.getRunLogBatches(md.batchNumbers)
+    batchListLarge = [101, 108, 207, 306, 401, 507, 707]
     
-    print "\nStart TRACKING analysis, batches:", md.batchNumbers
+    batchList = [i for i in md.batchNumbers if i in batchListLarge]
+    
+    runLog_batch = md.getRunLogBatches(batchList)
+    
+    print "\nStart TRACKING analysis, batches:", batchList
 
     for runLog in runLog_batch:
     

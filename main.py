@@ -37,7 +37,7 @@ def main():
     metadata.setLimitRunNumbers(0)
     #metadata.setBatchNumbers([207])
     #metadata.setBatchNumbers([707])
-    metadata.setBatchNumbers([207]) # all for tracking
+    metadata.setBatchNumbers([707]) # all for tracking
 
     ############## METHODS ###############
     
@@ -58,7 +58,7 @@ def main():
     
     ###### TRACKING #########
     
-    tracking.trackingAnalysis()
+    #tracking.trackingAnalysis()
     
     #########################
     
@@ -79,7 +79,7 @@ def main():
    
     ### RESULTS ###
     
-    #results.produceResults()
+    results.produceResults()
    
    
     #######################################

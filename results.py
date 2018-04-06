@@ -2,6 +2,7 @@ import ROOT
 import root_numpy as rnm
 import numpy as np
 import os
+import math
 
 import metadata as md
 import data_management as dm
@@ -28,8 +29,8 @@ def produceResults():
     sourceResultsFiles = dm.getSourceFolderPath() + "results_hgtd_efficiency_sep_2017/"
     sensorNames.remove("SiPM-AFP")
     
-    typesDirectories = ["noise/", "pulse/", "timing/normal/", "timing/system/"]
-    #typesDirectories = ["timing/normal/"]
+    #typesDirectories = ["noise/", "pulse/", "timing/normal/", "timing/system/"]
+    typesDirectories = ["noise/"]
 
     for sensor in sensorNames:
     
@@ -41,8 +42,9 @@ def produceResults():
             if type == "noise/":
                 
                 # Force select noise instead of pedestal
-                categories = ["noise"]
-                #categories = ["noise", "pedestal"]
+                #categories = ["pedestal"]
+                categories = ["noise", "pedestal"]
+                
             elif type == "pulse/":
                 
                 categories = ["max_amplitude", "rise_time"]
@@ -66,12 +68,17 @@ def produceResults():
                 resultsDict["-40"] = []
             
                 resultGraphs[category] = ROOT.TMultiGraph()
-                legend[category] = ROOT.TLegend(0.65, 0.85, 0.89, 0.6)
+                legend[category] = ROOT.TLegend(0.6, 0.9, 0.9, 0.7)
 
                 if category == "noise":
                     titleGraph = "Noise values per bias voltage "
                     xTitle = "Bias voltage [V]"
                     yTitle = "Noise [mV]"
+                
+                elif category == "pedestal":
+                    titleGraph = "Pedestal values per bias voltage "
+                    xTitle = "Bias voltage [V]"
+                    yTitle = "Pedestal [mV]"
 
                 elif category == "max_amplitude":
                 
@@ -126,39 +133,53 @@ def produceResults():
                 graph = dict()
                 
                 for temperature in resultsDict.keys():
-                
-                    graph[category] = ROOT.TGraph()
+                    if len(resultsDict[temperature]) != 0:
+                        graph[category] = ROOT.TGraph()
+
+                        graph[category].SetMarkerColor(colorNumber)
+                        graph[category].SetMarkerStyle(markerStyle)
+                        i = 0
+
+                        for voltage_x_value in resultsDict[temperature]:
+                            graph[category].SetPoint(i, voltage_x_value[0], voltage_x_value[1])
+                            i += 1
                     
-                    graph[category].SetMarkerColor(colorNumber)
-                    graph[category].SetMarkerStyle(markerStyle)
-                    i = 0
-                    
-                    for voltage_x_value in resultsDict[temperature]:
-                        graph[category].SetPoint(i, voltage_x_value[0], voltage_x_value[1])
-                        i += 1
-                    
-                    resultGraphs[category].Add(graph[category])
-                    legend[category].AddEntry(graph[category], str(temperature) + " \circC", "p")
-                
-                    colorNumber += 1
-                    markerStyle += 1
+
+                        resultGraphs[category].Add(graph[category])
+                        legend[category].AddEntry(graph[category], str(temperature) + " \circC, " + str(round(graph[category].GetMean(2),3)) + " \pm "+ str(round(graph[category].GetRMS(2),3)) + " mV" , "p")
+
+                        colorNumber += 1
+                        markerStyle += 1
           
                     
                 resultGraphs[category].Draw("AP")
-                legend[category].SetTextSize(0.05)
-                legend[category].SetBorderSize(0)
+                legend[category].SetTextSize(0.03)
+                legend[category].SetBorderSize(1)
                 legend[category].Draw()
                 
-                # Adapt this depending on graph
-#                resultGraphs[category].SetMinimum(0)
-#                resultGraphs[category].SetMaximum(10)
-
                 resultGraphs[category].SetTitle((titleGraph+" "+sensor))
                 resultGraphs[category].GetXaxis().SetTitle(xTitle)
                 resultGraphs[category].GetYaxis().SetTitle(yTitle)
+
+                yMin = resultGraphs[category].GetHistogram().GetMinimum()
+                yMax = resultGraphs[category].GetHistogram().GetMaximum()
+                d = yMax-yMin
+
+                dist = 10
+
+                y_low = yMin - dist*d
+                y_high = yMax + dist*d
+
+
+                # Adapt this depending on graph
+                resultGraphs[category].SetMinimum(y_low)
+                resultGraphs[category].SetMaximum(y_high)
+
+
+
                 canvas.Update()
 
-                fileName = fileDirectoryResults + category + "_results_"+sensor+".pdf"
+                fileName = fileDirectoryResults +category+"/" + category + "_results_"+sensor+".pdf"
                 
                 canvas.Print(fileName)
 

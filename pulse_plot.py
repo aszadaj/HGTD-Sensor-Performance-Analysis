@@ -93,7 +93,7 @@ def producePulsePlots(peak_values, rise_times, peak_time, cfd05, batchNumber):
     channels = peak_values.dtype.names
     
     
-    #channels = ["chan3","chan5"]
+    channels = ["chan5","chan6", "chan7"]
 
     for chan in channels:
     
@@ -154,10 +154,15 @@ def producePulsePlots(peak_values, rise_times, peak_time, cfd05, batchNumber):
         integral = peak_values_th1d[chan].Integral()
 
 
-        fit_function_convolution = ROOT.TF1("gaus_landau", "landau(0) + gaus(3)", 0, 300)
-        fit_function_convolution.SetParameters(integral, most_prob_value, mean_value/10.0, amplitude, mean_value, std_dev)
+        fit_function_convolution = ROOT.TF1("gaus_landau", "landau(0) + gaus(3)", 10, 350)
+        fit_function_convolution.SetParameters(integral, most_prob_value, mean_value/9.0, amplitude, mean_value, std_dev)
         fit_function_convolution.SetParNames("LConstant", "L\mu", "LScale","GConstant", "GMean", "G\sigma")
         peak_values_th1d[chan].Fit("gaus_landau", "Q")
+        
+        lmu = peak_values_th1d[chan].GetFunction("gaus_landau").GetParameter(1)
+        lscale = peak_values_th1d[chan].GetFunction("gaus_landau").GetParameter(2)
+        
+        print lmu, mean_value, lscale
 
 
         yAxisTitle = "Entries"

@@ -13,49 +13,34 @@ ROOT.gROOT.SetBatch(True)
 def printWaveform():
 
 
-    runNumber = 3661
-    firstEvent = 15973
+    runNumber = 3870
+    firstEvent = 24717
     entries = 1
     N = 3
 
     dm.setIfOnHDD(False)
-    dm.setIfOnHITACHI(True)
+    dm.setIfOnHITACHI(False)
     md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
     dm.checkIfRepositoryOnStau()
 
-
-    dataPath = dm.getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
-    
-    if dm.isOnHDD():
-    
-        dataPath = "/Volumes/HDD500/" + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
-        
-    elif dm.isOnHITACHI():
-    
-        dataPath = "/Volumes/HITACHI/" + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
+    dataPath = dm.getDataPath()
     
     data = rnm.root2array(dataPath, start=firstEvent, stop=firstEvent+entries)
  
     channels = data.dtype.names
-    channels = ["chan1"]
+    channels = ["chan5"]
     chan = channels[0]
     
     pedestal = dm.importNoiseFile("pedestal")
     noise = dm.importNoiseFile("noise")
 
-    
-    
 
     pedestal, noise  = dm.convertNoiseData(pedestal, noise)
     
     rise_time = dm.importPulseFile("rise_time")
     peak_value = dm.importPulseFile("peak_value")
     
-
-    
-    print np.argwhere((rise_time[chan] > 0.) & (rise_time[chan] > -0.025))[30:50]
-
-    #print rise_time[chan][199575]
+    print np.argwhere((rise_time[chan] > 0.6) & (rise_time[chan] < 0.7))[30:50]
     
 
     multi_graph = ROOT.TMultiGraph()
