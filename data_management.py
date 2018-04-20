@@ -14,13 +14,20 @@ def exportNoiseData(noise, pedestal):
     exportROOTFile(pedestal, "noise", "pedestal")
 
 
+def exportNoiseDataPlot(noise, pedestal):
+
+    exportROOTFile(noise,  "noise_plot", "noise")
+    exportROOTFile(pedestal, "noise_plot", "pedestal")
+
+
 # Export pulse data
-def exportPulseData(peak_times, peak_values, rise_times, cfd05):
+def exportPulseData(peak_times, peak_values, rise_times, cfd05, point_count):
 
     exportROOTFile(peak_times, "pulse", "peak_time")
     exportROOTFile(peak_values, "pulse", "peak_value")
     exportROOTFile(rise_times, "pulse", "rise_time")
     exportROOTFile(cfd05, "pulse", "cfd05")
+    exportROOTFile(point_count, "pulse", "point_count")
 
 
 # Export timing data
@@ -53,24 +60,26 @@ def exportTrackingData(sensor_position):
 
 # Export results
 
-def exportNoiseResults(noise_results, sensor_info):
+def exportNoiseResults(pedestal_result, noise_result, sensor_info):
 
-    exportROOTFile(noise_results, "results", "noise", sensor_info)
+    exportROOTFile(pedestal_result, "results", "pedestal", sensor_info)
+    exportROOTFile(noise_result, "results", "noise", sensor_info)
 
 
-def exportPulseResults(pulse_results, sensor_info):
+def exportPulseResults(peak_value_result, rise_time_result, sensor_info):
 
-    exportROOTFile(pulse_results, "results", "pulse", sensor_info)
+    exportROOTFile(peak_value_result, "results", "peak_value", sensor_info)
+    exportROOTFile(rise_time_result, "results", "rise_time", sensor_info)
 
 
 def exportTimingResults(timing_results, sensor_info, same_osc, cfd05):
     
-    exportROOTFile(timing_results, "results", "timing", sensor_info, same_osc, cfd05)
+    exportROOTFile(timing_results, "results", "timing_normal", sensor_info, same_osc, cfd05)
 
 
 def exportTimingResultsSysEq(timing_results, sensor_info, cfd05):
     
-    exportROOTFile(timing_results, "results", "timing_sys_eq", sensor_info, False, cfd05)
+    exportROOTFile(timing_results, "results", "timing_system", sensor_info, False, cfd05)
 
 
 
@@ -83,40 +92,40 @@ def exportROOTFile(data, group, category="", sensor_info=[], same_osc=False, cfd
     
     elif category == "position":
     
-        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(category)+"_"+str(md.getBatchNumber())+".root"
+        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(category)+"_"+str(md.getBatchNumber()/100)+".root"
 
     elif group == "results":
     
-        if category == "timing":
+        if category == "timing_normal" or category == "timing_system":
         
-            fileName = getSourceFolderPath()+"results_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category+"/normal/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_diff_osc_cfd05_results.root"
+            fileName = getSourceFolderPath()+"results_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category+"/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_diff_osc_cfd05_results.root"
         
             if same_osc:
                 fileName = fileName.replace("diff_osc", "same_osc")
         
             if not cfd05:
                 fileName = fileName.replace("cfd05_", "")
-    
-        elif category == "timing_sys_eq":
-            
-            category = category.replace("timing_sys_eq", "timing")
 
-            fileName = getSourceFolderPath()+"results_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category+"/system/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_sys_eq_cfd05_results.root"
-            
-            if not cfd05:
-                fileName = fileName.replace("cfd05_", "")
-        
         else:
         
             fileName = getSourceFolderPath()+"results_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category+"/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_results.root"
+            
+    elif group == "noise_plot":
 
+        group = group.replace("noise_plot", "noise")
+
+        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"_plot/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
+    
+    elif group == "noise":
+    
+        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())+".root"
+    
     
     else:
         fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
 
-    if group != "timing" and group != "results":
+    if group != "timing" and group != "results" and category != "position":
         data = changeDTYPEOfData(data)
-
 
     rnm.array2root(data, fileName, mode="recreate")
 
@@ -188,7 +197,7 @@ def importROOTFile(group, category="", sensor_info=[], same_osc=False, cfd05=Fal
             fileName = getSourceFolderPath()+"tracking_data_sep_2017/tracking"+md.getTimeStamp()+".root"
         
         else:
-            fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+group+"/"+category+"_"+str(md.getBatchNumber())+".root"
+            fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+group+"/"+category+"_"+str(md.getBatchNumber()/100)+".root"
 
     
     elif group == "timing":
@@ -226,7 +235,11 @@ def importROOTFile(group, category="", sensor_info=[], same_osc=False, cfd05=Fal
         group = group.replace("noise_plot", "noise")
     
         fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"_plot/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
+
+    elif group == "noise":
     
+        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())+".root"
+
     
     else:
     
@@ -243,7 +256,25 @@ def convertNoiseData(noise_average, noise_std):
 
     return noise_average, noise_std
 
+    
+def convertTrackingData(tracking, peak_values):
 
+    for dimension in tracking.dtype.names:
+        tracking[dimension] = np.multiply(tracking[dimension], 0.001)
+
+    for chan in peak_values.dtype.names:
+        peak_values[chan] = np.multiply(peak_values[chan], -1000)
+
+    return tracking, peak_values
+
+
+
+def convertPulseData(peak_values):
+    
+    for chan in peak_values.dtype.names:
+        peak_values[chan] =  np.multiply(peak_values[chan], -1000)
+
+    return peak_values
 
 def convertPulseData(peak_values):
     
@@ -267,6 +298,14 @@ def changeDTYPEOfData(data):
     if len(data.dtype.names) == 7:
     
         data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ,('chan4', '<f8') ,('chan5', '<f8') ,('chan6', '<f8') ] )
+
+    elif len(data.dtype.names) == 3:
+    
+        data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ] )
+    
+    elif len(data.dtype.names) == 4:
+    
+        data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ])
 
     else:
         data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ,('chan4', '<f8') ,('chan5', '<f8') ,('chan6', '<f8') ,('chan7', '<f8')] )
@@ -314,23 +353,20 @@ def printTime():
     time = str(dt.datetime.now().time())
     print  "\nTime: " + str(time[:-7])
 
-def setIfOnHDD(value):
-
-    global hdd
-    hdd = value
-
 def isOnHDD():
 
-    return hdd
+    if "HDD500" in os.listdir("/Volumes"):
+        return True
+    else:
+        return False
 
-def setIfOnHITACHI(value):
-
-    global hitachi
-    hitachi = value
 
 def isOnHITACHI():
 
-    return hitachi
+    if "HITACHI" in os.listdir("/Volumes"):
+        return True
+    else:
+        return False
 
 # Define folder where the pickle files should be
 def defineDataFolderPath(source):

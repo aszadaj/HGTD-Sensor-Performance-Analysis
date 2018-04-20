@@ -23,215 +23,209 @@ def pulsePlots():
         rise_times = np.empty(0)
         peak_time = np.empty(0)
         cfd05 = np.empty(0)
+        point_count = np.empty(0)
 
         runNumbers = md.getAllRunNumbers(batchNumber)
         
         if md.limitRunNumbers != 0:
             runNumbers = runNumbers[0:md.limitRunNumbers] # Restrict to some run numbers
         
-        availableRunNumbersPeakValues   = md.readFileNames("pulse_peak_value")
-        availableRunNumbersRiseTimes    = md.readFileNames("pulse_rise_time")
     
         for runNumber in runNumbers:
-            
-            if runNumber in availableRunNumbersPeakValues:
-                md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
-          
-                print "Importing run", md.getRunNumber(), "\n"
+            md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
+     
+            print "Importing run", md.getRunNumber(), "\n"
 
-                if peak_values.size == 0:
-          
-                    peak_values = dm.importPulseFile("peak_value")
-                    rise_times  = dm.importPulseFile("rise_time")
-                    peak_time  = dm.importPulseFile("peak_time")
-                    cfd05  = dm.importPulseFile("cfd05")
+            if peak_values.size == 0:
+      
+                peak_values = dm.importPulseFile("peak_value")
+                rise_times  = dm.importPulseFile("rise_time")
+                peak_time  = dm.importPulseFile("peak_time")
+                cfd05  = dm.importPulseFile("cfd05")
+                point_count  = dm.importPulseFile("point_count")
+
+            else:
+
+                peak_values = np.concatenate((peak_values, dm.importPulseFile("peak_value")), axis = 0)
+                rise_times = np.concatenate((rise_times, dm.importPulseFile("rise_time")), axis = 0)
+                peak_time = np.concatenate((peak_time, dm.importPulseFile("peak_time")), axis = 0)
+                cfd05 = np.concatenate((cfd05, dm.importPulseFile("cfd05")), axis = 0)
+                point_count = np.concatenate((point_count, dm.importPulseFile("point_count")), axis = 0)
                 
 
-                else:
-
-                    peak_values = np.concatenate((peak_values, dm.importPulseFile("peak_value")), axis = 0)
-                    rise_times = np.concatenate((rise_times, dm.importPulseFile("rise_time")), axis = 0)
-                    peak_time = np.concatenate((peak_time, dm.importPulseFile("peak_time")), axis = 0)
-                    cfd05 = np.concatenate((cfd05, dm.importPulseFile("cfd05")), axis = 0)
-                
-                    
         if len(peak_values) != 0:
         
             print "Done with importing files for", batchNumber, "producing plots.\n"
-
-            producePulsePlots(peak_values, rise_times, peak_time, cfd05, batchNumber)
+            
+            producePulsePlots(peak_values, rise_times, peak_time, cfd05, point_count)
+            #producePulsePlots(peak_values, rise_times, peak_time, cfd05)
 
     print "Done with producing PULSE plots.\n"
 
 
 # Fill TH1 objects
-def producePulsePlots(peak_values, rise_times, peak_time, cfd05, batchNumber):
+#def producePulsePlots(peak_values, rise_times, peak_time, cfd05):
+def producePulsePlots(peak_values, rise_times, peak_time, cfd05, point_count):
 
     global canvas
     
+    # Limit of the oscilloscope
+    osc_limit = 350
+    
     peak_values = dm.convertPulseData(peak_values)
     rise_times = dm.convertRiseTimeData(rise_times)
-    
-    # Continue investigating the rise time plot
-    
-    
+
     canvas = ROOT.TCanvas("Pulse", "pulse")
 
-    peak_values_th1d = dict()
-    rise_times_th1d = dict()
-    peak_time_th1d = dict()
-    cfd05_th1d = dict()
-    
-    xbins_amplitude = 120
-    
-    xbins_rise_time = 400
-    
-    xbins_cfd05 = 400
-    
-    xbins_peak_time = 400
-    
     channels = peak_values.dtype.names
     
-    
-    channels = ["chan5","chan6", "chan7"]
+    # Select only a certain sensor to be plotted
+    #channels = [x for x in channels if md.getNameOfSensor(x) == "50D-GBGR2"]
+    #channels = ["chan3"]
 
     for chan in channels:
-    
-        amplitude_average = np.average(peak_values[chan][np.nonzero(peak_values[chan])])+500
-        
-        xbin_max_rise_time = 1200
-        
-        peak_values_th1d[chan] = ROOT.TH1D("Max amplitude", "peak_value" + chan, xbins_amplitude, 0, amplitude_average)
-        rise_times_th1d[chan] = ROOT.TH1D("Rise time", "rise_time" + chan, xbins_rise_time, 0, xbin_max_rise_time)
-        
-        peak_time_th1d[chan] = ROOT.TH1D("Peak time", "peak_time" + chan, xbins_peak_time, 0, 100)
-
-        cfd05_th1d[chan] = ROOT.TH1D("CFD05 Ref", "cfd05" + chan, xbins_cfd05, 0, 100)
+ 
+        peak_values_th1d    = ROOT.TH1D("Pulse amplitude", "peak_value" + chan, 80, 0, 500)
+        rise_times_th1d     = ROOT.TH1D("Rise time", "rise_time" + chan, 600, 0, 4000)
+        peak_time_th1d      = ROOT.TH1D("Peak time", "peak_time" + chan, 400, 0, 100)
+        cfd05_th1d          = ROOT.TH1D("CFD05 time", "cfd05" + chan, 400, 0, 100)
+        point_count_th1d          = ROOT.TH1D("point count", "point_count" + chan, 100, 0, 100)
+        # continue implementing point counts
 
         for entry in range(0, len(peak_values[chan])):
    
-            if peak_values[chan][entry] != 0:
-                peak_values_th1d[chan].Fill(peak_values[chan][entry])
+            if peak_values[chan][entry] != 0 and peak_values[chan][entry] < osc_limit:
+                peak_values_th1d.Fill(peak_values[chan][entry])
             
             if rise_times[chan][entry] != 0:
-                rise_times_th1d[chan].Fill(rise_times[chan][entry])
+                rise_times_th1d.Fill(rise_times[chan][entry])
     
             if peak_time[chan][entry] != 0:
-                peak_time_th1d[chan].Fill(peak_time[chan][entry])
+                peak_time_th1d.Fill(peak_time[chan][entry])
 
             if cfd05[chan][entry] != 0:
-                cfd05_th1d[chan].Fill(cfd05[chan][entry])
+                cfd05_th1d.Fill(cfd05[chan][entry])
     
-    
-    
-    
-        # Choose the range for the fits, rise time fit
-        N = 2
-        xMin = rise_times_th1d[chan].GetMean() - N * rise_times_th1d[chan].GetStdDev()
-        xMax = rise_times_th1d[chan].GetMean() + N * rise_times_th1d[chan].GetStdDev()
+            if point_count[chan][entry] != 0:
+                point_count_th1d.Fill(point_count[chan][entry])
 
-        
-        # Perform the fit for rise time
-        rise_times_th1d[chan].Fit("gaus", "Q", "", xMin, xMax)
-        
         N = 4
-        xMin = rise_times_th1d[chan].GetMean() - N * rise_times_th1d[chan].GetStdDev()
-        xMax = rise_times_th1d[chan].GetMean() + N * rise_times_th1d[chan].GetStdDev()
+        bin_max_rise_time = rise_times_th1d.GetMaximumBin()
+        max_value_rise_time = rise_times_th1d.GetBinCenter(bin_max_rise_time)
+        xMin = max_value_rise_time - N * rise_times_th1d.GetStdDev()
+        xMax = max_value_rise_time + N * rise_times_th1d.GetStdDev()
+        rise_times_th1d.SetAxisRange(xMin, xMax)
         
-        rise_time_fit = rise_times_th1d[chan].GetFunction("gaus")
-        
-        rise_times_th1d[chan].SetAxisRange(xMin, xMax)
-        rise_time_fit.SetRange(xMin, xMax)
+        N = 1
+        bin_max_rise_time = rise_times_th1d.GetMaximumBin()
+        max_value_rise_time = rise_times_th1d.GetBinCenter(bin_max_rise_time)
+        xMin = max_value_rise_time - N * rise_times_th1d.GetStdDev()
+        xMax = max_value_rise_time + N * rise_times_th1d.GetStdDev()
+        rise_times_th1d.Fit("gaus", "Q", "", xMin, xMax)
+        fit_params_rise_time = rise_times_th1d.GetFunction("gaus").GetParameters()
+
         
         
         # Create convoluted fit for max amplitude
+        bin_max = peak_values_th1d.GetMaximumBin()
+        most_prob_value = int(peak_values_th1d.GetBinCenter(bin_max))
+        mean_value = peak_values_th1d.GetMean()
+        std_dev = peak_values_th1d.GetStdDev()
+        amplitude = peak_values_th1d.GetMaximum()
+        integral = peak_values_th1d.Integral()
         
-        bin_max = peak_values_th1d[chan].GetMaximumBin()
-        most_prob_value = int(peak_values_th1d[chan].GetBinCenter(bin_max))
-        mean_value = peak_values_th1d[chan].GetMean()
-        std_dev = peak_values_th1d[chan].GetStdDev()
-        amplitude = peak_values_th1d[chan].GetMaximum()
-        integral = peak_values_th1d[chan].Integral()
-
-
-        fit_function_convolution = ROOT.TF1("gaus_landau", "landau(0) + gaus(3)", 10, 350)
+        N = 0.8
+        xMin = most_prob_value - N * std_dev
+        xMax = most_prob_value + N * std_dev
+        
+        fit_function_convolution = ROOT.TF1("gaus_landau", "landau(0) + gaus(3)", xMin, 350)
         fit_function_convolution.SetParameters(integral, most_prob_value, mean_value/9.0, amplitude, mean_value, std_dev)
-        fit_function_convolution.SetParNames("LConstant", "L\mu", "LScale","GConstant", "GMean", "G\sigma")
-        peak_values_th1d[chan].Fit("gaus_landau", "Q")
+        fit_function_convolution.SetParNames("Constant (L)", "MPV", "Scale","Constant (G)", "Mean value", "Sigma")
+        peak_values_th1d.Fit("gaus_landau", "QR")
         
-        lmu = peak_values_th1d[chan].GetFunction("gaus_landau").GetParameter(1)
-        lscale = peak_values_th1d[chan].GetFunction("gaus_landau").GetParameter(2)
-        
-        print lmu, mean_value, lscale
 
+        # Define plot information
 
         yAxisTitle = "Entries"
 
         # Print maximum amplitude plots
-        headTitle = "Maximum amplitudes, "+md.getNameOfSensor(chan)+", B"+str(md.getBatchNumber())
-        xAxisTitle = "Max amplitude [mV]"
+        headTitle = "Pulse amplitude - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
+        xAxisTitle = "Pulse amplitude [mV]"
         fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/peak_value_plots/pulse_amplitude_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
-        exportHistogram(peak_values_th1d[chan], titles)
-        
-        
+        exportHistogram(peak_values_th1d, titles)
+
+
         # Print rise time plots
-        headTitle = "Rise time, "+md.getNameOfSensor(chan)+", B"+str(md.getBatchNumber())
+        headTitle = "Rise time - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
         xAxisTitle = "Rise time [ps]"
         fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/rise_time_plots/rise_time_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
-        exportHistogram(rise_times_th1d[chan], titles)
+        exportHistogram(rise_times_th1d, titles)
 
         
         # Print peak time plots
-        headTitle = "Peak time, "+md.getNameOfSensor(chan)+", B"+str(md.getBatchNumber())
+        headTitle = "Peak time - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
         xAxisTitle = "Time [ns]"
         fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/peak_time_plots/peak_time_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
-        exportHistogram(peak_time_th1d[chan], titles)
+        exportHistogram(peak_time_th1d, titles)
 
         # Print cdf05 ref plots
-        headTitle = "Time 50% crossing edge time, "+md.getNameOfSensor(chan)+", B"+str(md.getBatchNumber())
+        headTitle = "CFD05 time - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
         xAxisTitle = "Time [ns]"
         fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/cfd05_plots/cfd05_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
-        exportHistogram(cfd05_th1d[chan], titles)
+        exportHistogram(cfd05_th1d, titles)
         
-        
-        pulse_max_amplitude_MPV_fit = peak_values_th1d[chan].GetFunction("gaus_landau").GetParameter(1)
-        pulse_max_amplitude_mean_histogram = peak_values_th1d[chan].GetMean()
-        
-        
-        rise_time_mean_fit = rise_times_th1d[chan].GetFunction("gaus").GetParameter(1)
-        rise_time_mean_histogram = rise_times_th1d[chan].GetMean()
+        # Print point count plots
+        headTitle = "Point count - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
+        xAxisTitle = "Number of points above 10%"
+        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/point_count_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
+        exportHistogram(point_count_th1d, titles)
 
-        dt = (  [('max_amplitude', '<f8', 2), ('rise_time', '<f8', 2) ])
-        pulse_characteristics_results = np.empty(1, dtype=dt)
-        
-        pulse_characteristics_results["max_amplitude"][0] = np.array([pulse_max_amplitude_MPV_fit, pulse_max_amplitude_mean_histogram])
-        pulse_characteristics_results["rise_time"][0] = np.array([rise_time_mean_fit, rise_time_mean_histogram])
+#        # Export results to root file
+#        peak_value_result = np.empty(2, dtype=[('peak_value', '<f8')])
+#        rise_time_result    = np.empty(2, dtype=[('rise_time', '<f8')])
+#
+#        peak_value_MPV   = peak_values_th1d.GetFunction("gaus_landau").GetParameter(1)
+#        peak_value_error = peak_values_th1d.GetFunction("gaus_landau").GetParError(1)
+#
+#        rise_time_mean = rise_times_th1d.GetFunction("gaus").GetParameter(1)
+#        rise_time_error = rise_times_th1d.GetFunction("gaus").GetParError(1)
+#
+#        peak_value_result["peak_value"][0] = peak_value_MPV
+#        peak_value_result["peak_value"][1] = peak_value_error
+#
+#        rise_time_result["rise_time"][0] = rise_time_mean
+#        rise_time_result["rise_time"][1] = rise_time_error
+#
+#        sensor_info = [md.getNameOfSensor(chan), chan]
+#        dm.exportPulseResults(peak_value_result, rise_time_result, sensor_info)
 
-        # Export results
-        # Array structure
-        # max_amplitude with MPV from fit and mean value from histogram
-        # rise_time with mean from gaus fit and mean value from histogram
-        sensor_info = [md.getNameOfSensor(chan), chan]
-        dm.exportPulseResults(pulse_characteristics_results, sensor_info)
+        del peak_values_th1d, rise_times_th1d, peak_time_th1d, cfd05_th1d
 
+    del canvas
 
 # Produce histograms
 def exportHistogram(graphList, titles):
+
+    ROOT.gStyle.SetOptStat("ne")
+    ROOT.gStyle.SetOptFit(0012)
     
     graphList.SetLineColor(1)
     graphList.SetTitle(titles[0])
     graphList.GetXaxis().SetTitle(titles[1])
     graphList.GetYaxis().SetTitle(titles[2])
-
     
     graphList.Draw()
+
   
     canvas.Update()
     canvas.Print(titles[3])
     dm.exportROOTHistogram(graphList, titles[3])
+
+
 
     

@@ -2,57 +2,51 @@ import numpy as np
 import metadata as md
 import ROOT
 
-def timingAnalysisPerRun(peak_time):
+def timingAnalysisPerRun(time_location):
     
-    time_difference = np.zeros(len(peak_time), dtype = peak_time.dtype)
+    time_difference = np.zeros(len(time_location), dtype = time_location.dtype)
     
     SiPM_chan = md.getChannelNameForSensor("SiPM-AFP")
 
-    for chan in peak_time.dtype.names:
+    for chan in time_location.dtype.names:
 
         if chan != SiPM_chan:
             
-            for event in range (0, len(peak_time)):
-                if peak_time[SiPM_chan][event] != 0 and peak_time[chan][event] != 0:
-                    
+            for event in range (0, len(time_location)):
+                if time_location[SiPM_chan][event] != 0 and time_location[chan][event] != 0:
                     # This is for the case if the SiPM is in the same oscilloscope as the DUT
-                    time_difference[chan][event] = peak_time[event][chan] - peak_time[event][SiPM_chan]
+                    time_difference[chan][event] = time_location[event][chan] - time_location[event][SiPM_chan]
 
 
     return time_difference
 
 
 # This is used to produce ROOT files which have multiple solutions
-def timingAnalysisPerRunSysEq(peak_time):
+# Note that the system of equations only applies to the first oscilloscope
+# Reason: the first oscilloscope contains different sensors.
+def timingAnalysisPerRunSysEq(time_location):
     
-    dt = (  [('chan0',  '<f8', 3), ('chan1',  '<f8', 3) ,('chan2',  '<f8', 3) ,('chan3',  '<f8', 3) ,('chan4',  '<f8', 3) ,('chan5',  '<f8', 3) ,('chan6',  '<f8', 3) ,('chan7',  '<f8', 3)] )
+    dt = (  [('chan0',  '<f8', 3), ('chan1',  '<f8', 3) ,('chan2',  '<f8', 3) ,('chan3',  '<f8', 3)] )
     
-    time_difference = np.zeros(len(peak_time), dtype = dt)
+    time_difference = np.zeros(len(time_location), dtype = dt)
 
     osc1 = ["chan0", "chan1", "chan2", "chan3"]
-    osc2 = ["chan4", "chan5", "chan6", "chan7"]
+
+    for chan in osc1:
     
-    if int(md.getBatchNumber()/100) == 3:
-        osc2 = ["chan4", "chan5", "chan6"]
-    
-    oscilloscope_chan = [osc1, osc2]
-    
-    for channels_part in oscilloscope_chan:
-        for chan in channels_part:
+        chan2_list = list(osc1)
+        chan2_list.remove(chan)
         
-            chan2_list = list(channels_part)
-            chan2_list.remove(chan)
+        for event in range(0, len(time_location[chan])):
             
-            for event in range(0, len(peak_time[chan])):
-                
-                time_difference[chan][event] = np.zeros(3)
-                
-                for index in range(0, len(chan2_list)):
-                    chan2 = chan2_list[index]
-                    if peak_time[chan][event] != 0 and peak_time[chan2][event] != 0:
-                       
-                        value = (peak_time[chan][event] - peak_time[chan2][event])*1000
-                        time_difference[chan][event][index] = value
+            time_difference[chan][event] = np.zeros(3)
+            
+            for index in range(0, len(chan2_list)):
+                chan2 = chan2_list[index]
+                if time_location[chan][event] != 0 and time_location[chan2][event] != 0:
+                   
+                    value = (time_location[chan][event] - time_location[chan2][event])*1000
+                    time_difference[chan][event][index] = value
 
 
     return time_difference
@@ -69,26 +63,8 @@ def solveLinearEq(sigmas_mix):
     solution = inverse.dot(vector)
     sigma_chan = np.sqrt(solution)
     
+    # Warning, need to take into consideration the error as a function of two variables
     
-    
-    #    vector_1 = [1, 1, 0, 0]
-#    vector_2 = [1, 0, 1, 0]
-#    vector_3 = [1, 0, 0, 1]
-#    vector_4 = [0, 1, 1, 0]
-#    vector_5 = [0, 1, 0, 1]
-#    vector_6 = [0, 0, 1, 1]
-
-
-#    pos_vec = [vector_1, vector_2, vector_3, vector_4, vector_5, vector_6]
-#
-#    for subset in itertools.combinations(pos_vec, 4):
-#        matrix = np.matrix(subset)
-#        try:
-#            inverse = np.linalg.inv(matrix)
-#        except:
-#            continue
-
-
     return sigma_chan
 
 
@@ -96,7 +72,7 @@ def getFitFunction(th1d_list, chan, same_osc):
 
 
     # Choose the range for the fit and the plot
-    N = 3
+    N = 2
     xMin = th1d_list.GetMean() - N * th1d_list.GetStdDev()
     xMax = th1d_list.GetMean() + N * th1d_list.GetStdDev()
     
@@ -137,31 +113,38 @@ def getFitFunction(th1d_list, chan, same_osc):
     # Else in different oscilloscopes
     else:
 
-        defined_fit = ROOT.TF1("gaussian_mod_fit", "[0]*exp(-0.5*((x-[1])/[2])^2) + [3]*exp(-0.5*((x-[1]+100)/[2])^2)", xMin, xMax)
+        defined_fit = ROOT.TF1("gaussian_mod_fit", "[0]*exp(-0.5*((x-[1])/[2])^2) + [3]*exp(-0.5*((x-([1]+100))/[2])^2)", xMin, xMax)
 
         if largePeakOnRight:
 
             defined_fit.SetParameters(amplitude_low_peak, mean_value_high_peak, sigma_double_peak, amplitude_high_peak)
-            defined_fit.SetParNames("Norm low peak", "Mean value high peak", "Width", "Norm high peak")
+            defined_fit.SetParNames("Constant low peak", "Mean high peak ", "\sigma_{tot}", "Constant high peak")
 
         else:            
-            
             defined_fit.SetParameters(amplitude_high_peak, mean_value_high_peak, sigma_double_peak, amplitude_low_peak)
-            defined_fit.SetParNames("Norm high peak", "Mean value high peak", "Width", "Norm low peak")
+            defined_fit.SetParNames("Constant high peak", "Mean high peak", "\sigma_{tot}", "Constant low peak")
 
 
     th1d_list.Fit("gaussian_mod_fit", "Q", "", xMin, xMax)
     fit_function = th1d_list.GetFunction("gaussian_mod_fit")
-
+    
+    
+    fit_function.SetRange(xMin, xMax)
+    
     N = 4
     xMin = th1d_list.GetMean() - N * th1d_list.GetStdDev()
     xMax = th1d_list.GetMean() + N * th1d_list.GetStdDev()
     th1d_list.SetAxisRange(xMin, xMax)
-    fit_function.SetRange(xMin, xMax)
+        
+    sigma_SiPM = 15
     
-    # This is the averaged value of calculated time resolution using linear sys equations
-    sigma_SiPM = 16.14
+    if md.getTemperature() < 0:
+        sigma_SiPM = 9
+    
     sigma_fit = fit_function.GetParameter(2)
+    sigma_fit_error = fit_function.GetParError(2)
+    
+    # Here assume that the error is zero fro
 
 
     if sigma_fit > sigma_SiPM:
@@ -173,4 +156,4 @@ def getFitFunction(th1d_list, chan, same_osc):
 
     del defined_fit
 
-    return fit_function, sigma_DUT
+    return fit_function, sigma_DUT, sigma_fit_error

@@ -1,4 +1,3 @@
-
 import ROOT
 import csv
 import os
@@ -17,7 +16,8 @@ def getRunLog():
         for row in fileData:
             metaData.append(row)
 
-    del metaData[0]
+    del metaData[0:2]
+  
     return metaData
 
 
@@ -46,17 +46,17 @@ def getRunLogBatches(batchNumbers):
         batchNumbers = getAllBatchNumbers()
 
     metaData = getRunLog()
- 
+
     runLog = []
-    
+
     for batch in batchNumbers:
         runLog_batch = []
-        
+
         for row in metaData:
-            
+
             if batch == int(row[5]):
                 runLog_batch.append(row)
-                
+
         runLog.append(runLog_batch)
 
     return runLog
@@ -224,6 +224,10 @@ def readFileNames(fileType):
     return availableFiles
 
 
+def getRunNumberForBatch(batchNumber):
+    return getRunNumber(getTimeStampsForBatch(batchNumber)[0])
+
+
 # Get current run number
 def getRunNumber(timeStamp=""):
     
@@ -270,7 +274,6 @@ def getTimeStamp(runNumber=""):
 def getTimeStampsForBatch(batchNumber):
     
     runLog = getRunLogBatches([batchNumber])
-    
     timeStamps = []
     for row in runLog[0]:
         timeStamps.append(int(row[4]))
@@ -299,8 +302,12 @@ def getNumberOfEvents(timeStamp=""):
 # Value in negative voltage [-V].
 def getPulseAmplitudeCut(chan):
 
-    index = int(chan[-1])
-    return -float(runInfo[52+index].replace(",","."))
+    cut = 0
+
+    if getNameOfSensor(chan) == "SiPM-AFP":
+        cut = -0.2
+
+    return cut
 
 
 
@@ -362,14 +369,19 @@ def getRowForBatchNumber(batchNumber):
         if int(row[5]) == batchNumber:
             return row
 
-def getTemperature(batchNumber=""):
+def getTemperature():
 
-    if batchNumber == "":
-        return int(runInfo[10])
+    return int(runInfo[10])
+
+
 
 def getBiasVoltage(sensor):
 
+    if sensor == "SiPM-AFP":
+        return "26.5"
+
     index = runInfo.index(sensor)
+    bias_voltage = runInfo[index+1]
 
     return int(runInfo[index+1])
 
@@ -392,13 +404,33 @@ def checkIfArrayPad(chan="chan5"):
     
         return False
 
+def getDUTPos(sensor, chan):
 
-# Function for setting up ATLAS style plots
-def setupATLAS():
+    return str(runInfo[12+int(chan[-1])*5])
 
-    ROOT.gROOT.SetBatch()
-    ROOT.gROOT.LoadMacro("./resources/style/AtlasStyle.C")
-    ROOT.SetAtlasStyle()
+
+def availableDUTPos(sensor, chan=""):
+
+    if sensor == "W4-S215":
+    
+        return ["3_0", "3_1", "3_2", "3_3"]
+    
+    elif sensor == "W4-RD01":
+
+        return ["8_1", "8_2"]
+    
+    elif sensor == "W4-S204_6e14":
+    
+        return ["7_0", "7_2", "7_3"]
+
+    elif chan=="":
+    
+        return 1
+
+    else:
+
+        return getDUTPos(sensor, chan)
+
 
 
 # Set run info for selected run
@@ -427,6 +459,7 @@ def setBatchNumbers(numbers, exclude=[]):
 
                 
     batchNumbers = numbers
+
 
 
 def setLimitRunNumbers(number):

@@ -31,14 +31,14 @@ def pulseAnalysis():
         print "Batch:", runLog[0][5], len(runLog), "run files.\n"
       
         for index in range(0, len(runLog)):
-      
-            md.defineGlobalVariableRun(runLog[index])
         
+            md.defineGlobalVariableRun(runLog[index])
+            
             print "Run", md.getRunNumber()
             
-            [peak_time, peak_value, rise_time, cfd05] = pulseAnalysisPerRun()
-            dm.exportPulseData(peak_time, peak_value, rise_time, cfd05)
-            
+            [peak_time, peak_value, rise_time, cfd05, point_count] = pulseAnalysisPerRun()
+            dm.exportPulseData(peak_time, peak_value, rise_time, cfd05, point_count)
+                        
             print "Done with run", md.getRunNumber(), "\n"
 
         print "Done with batch", runLog[0][5], "Time analysing: "+str(md.dm.getTime()-startTimeBatch)+"\n"

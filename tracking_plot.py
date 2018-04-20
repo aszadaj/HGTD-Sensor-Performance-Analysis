@@ -22,14 +22,18 @@ def produceTrackingGraphs(peak_values, tracking, time_difference_peak, time_diff
     position = dm.importTrackingFile("position")
     canvas = ROOT.TCanvas("Tracking", "tracking")
 
+    # Bin size of the MIMOSA
     bin_size = 18.5 * 0.001
-    sep_x = 0.8
-    sep_y = 0.61
+    bin_size *= 2
     
-    minEntries = 5
-    arrayBinFactor = 1.5
+    # Limits of the information where a hit from the MIMOSA is seen.
+    # Also used to plot the sensor
+    sep_x = 0.85
+    sep_y = 0.65
     
-    
+    # Minimum entries in each bin
+    minEntries = 10
+
     # In case there are arrays in batch, produce seperately array plots
     if md.checkIfArrayPad():
         produceArrayPlots(peak_values, np.copy(tracking), position, time_difference_peak, time_difference_cfd05)
@@ -43,17 +47,17 @@ def produceTrackingGraphs(peak_values, tracking, time_difference_peak, time_diff
     # Produce single pad plots
     for chan in channels:
 
-            if not md.checkIfArrayPad(chan):
+        if not md.checkIfArrayPad(chan):
 
-                print "\nSingle pad", md.getNameOfSensor(chan), "\n"
+            print "\nSingle pad", md.getNameOfSensor(chan), "\n"
 
-                pos_x = position[chan][0][0]
-                pos_y = position[chan][0][1]
+            pos_x = position[chan][0][0]
+            pos_y = position[chan][0][1]
 
-                tracking_chan = changeCenterPositionSensor(np.copy(tracking), pos_x, pos_y)
+            tracking_chan = changeCenterPositionSensor(np.copy(tracking), pos_x, pos_y)
 
-                produceTProfilePlots(peak_values[chan], tracking_chan, time_difference_peak[chan], time_difference_cfd05[chan], chan)
-                produceEfficiencyPlot(peak_values[chan], tracking_chan, chan)
+            produceTProfilePlots(peak_values[chan], tracking_chan, time_difference_peak[chan], time_difference_cfd05[chan], chan)
+            produceEfficiencyPlot(peak_values[chan], tracking_chan, chan)
 
 
 ###########################################
@@ -74,6 +78,11 @@ def produceTProfilePlots(peak_values, tracking, time_difference_peak, time_diffe
 
     xbin = int(2*sep_x/bin_size)
     ybin = int(2*sep_y/bin_size)
+    
+    
+    timing_bin_increase = 2
+    xbin_timing = int(xbin/timing_bin_increase)
+    ybin_timing = int(ybin/timing_bin_increase)
 
     mean_values = dict()
     timing_resolution_peak = dict()
@@ -85,14 +94,15 @@ def produceTProfilePlots(peak_values, tracking, time_difference_peak, time_diffe
 
     mean_values[chan] = ROOT.TProfile2D("Mean value","Mean value", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y)
 
-    timing_resolution_peak[chan] = ROOT.TProfile2D("Timing resolution peak copy", "timing resolution peak temp", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y, "s")
-    timing_resolution_cfd05[chan] = ROOT.TProfile2D("Timing resolution cdf05 temp", "timing resolution cdf05", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y, "s")
+    timing_resolution_peak[chan] = ROOT.TProfile2D("Timing resolution peak copy", "timing resolution peak temp", xbin_timing, -sep_x, sep_x, ybin_timing, -sep_y, sep_y, "s")
+    timing_resolution_cfd05[chan] = ROOT.TProfile2D("Timing resolution cdf05 copy", "timing resolution cdf05", xbin_timing, -sep_x, sep_x, ybin_timing, -sep_y, sep_y, "s")
 
-    timing_resolution_peak_copy[chan] = ROOT.TH2D("Timing resolution peak", "timing resolution peak", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y)
-    timing_resolution_cfd05_copy[chan] = ROOT.TH2D("Timing resolution cdf05", "timing resolution cdf05", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y)
+    timing_resolution_peak_copy[chan] = ROOT.TH2D("Timing resolution peak", "timing resolution peak", xbin_timing, -sep_x, sep_x, ybin_timing, -sep_y, sep_y)
+    timing_resolution_cfd05_copy[chan] = ROOT.TH2D("Timing resolution cdf05", "timing resolution cdf05", xbin_timing, -sep_x, sep_x, ybin_timing, -sep_y, sep_y)
 
     # Fill mean values and time differences in each bin, for peak reference and rise time reference
     
+    # If the sensor have more than one channel in each run, multiple tracking info is considered.
     if array_pad:
     
         for event in range(0, len(tracking)):
@@ -130,10 +140,14 @@ def produceTProfilePlots(peak_values, tracking, time_difference_peak, time_diffe
                     if time_difference_cfd05[event] != 0:
 
                         timing_resolution_cfd05[chan].Fill(tracking['X'][event], tracking['Y'][event], time_difference_cfd05[event])
+
+    # Introduce the dependence on the SiPM time resolution if it is cooled or not
+    sigma_sipm = 15
+
+    if md.getTemperature() < 0:
+
+        sigma_sipm = 9
     
-
-
-    sigma_sipm = 16.14
 
     # Filter bins and fill time resolution values
     for i in range(1, xbin+1):
@@ -147,6 +161,15 @@ def produceTProfilePlots(peak_values, tracking, time_difference_peak, time_diffe
             if 0 < num_mean < minEntries:
                 mean_values[chan].SetBinContent(bin, 0)
                 mean_values[chan].SetBinEntries(bin, 0)
+
+
+    for i in range(1, xbin_timing+1):
+        for j in range(1, ybin_timing+1):
+        
+            bin = timing_resolution_peak[chan].GetBin(i,j)
+            num_time_peak = timing_resolution_peak[chan].GetBinEntries(bin)
+            num_time_rtref = timing_resolution_cfd05[chan].GetBinEntries(bin)
+
 
             if num_time_peak > minEntries:
                 sigma_dut_conv = timing_resolution_peak[chan].GetBinError(bin)*1000
@@ -165,11 +188,28 @@ def produceTProfilePlots(peak_values, tracking, time_difference_peak, time_diffe
 
     mean_values[chan].ResetStats()
     ROOT.gStyle.SetOptStat(1)
+    
+    position = dm.importTrackingFile("position")
+    
+    print mean_values[chan].GetMean()
+    print mean_values[chan].GetMean(2)
+    
+    new_pos_x = mean_values[chan].GetMean() + position[chan][0][0]
+    new_pos_y = mean_values[chan].GetMean(2) + position[chan][0][1]
+
+    
+    new_arr = np.array([new_pos_x, new_pos_y])
+
+    print position[chan]
+
+    position[chan][0] = new_arr
+
+    #dm.exportTrackingData(position)
 
     totalEntries = mean_values[chan].GetEntries()
 
     # Print mean value 2D plot
-    headTitle = "Averaged pulse amplitude in each bin " + md.getNameOfSensor(chan) + " B" + str(md.getBatchNumber()) +"; X [mm] ; Y [mm] ; V [mV]"
+    headTitle = "Mean pulse amplitude value - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"+"; X [mm] ; Y [mm] ; V [mV]"
     fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/mean_value/tracking_mean_value_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
     if array_pad:
         fileName = fileName.replace(".pdf", "_array.pdf")
@@ -180,7 +220,7 @@ def produceTProfilePlots(peak_values, tracking, time_difference_peak, time_diffe
 
 
     # Print time resolution peak reference
-    headTitle = "Time resolution (peak ref) in each bin " + md.getNameOfSensor(chan) + " B" + str(md.getBatchNumber()) +"; X [mm] ; Y [mm] ; \sigma_{t} [ps]"
+    headTitle = "Time resolution (peak ref.) - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"+"; X [mm] ; Y [mm] ; \sigma_{t} [ps]"
     fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/time_resolution/tracking_time_resolution_peak_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
     if array_pad:
         fileName = fileName.replace(".pdf", "_array.pdf")
@@ -190,7 +230,7 @@ def produceTProfilePlots(peak_values, tracking, time_difference_peak, time_diffe
 
 
     # Print time resolution rise time ref
-    headTitle = "Time resolution (rise time ref) in each bin " + md.getNameOfSensor(chan) + " B" + str(md.getBatchNumber()) +"; X [mm] ; Y [mm] ; \sigma_{t} [ps]"
+    headTitle = "Time resolution (CFD ref) - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"+"; X [mm] ; Y [mm] ; \sigma_{t} [ps]"
     fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/time_resolution/tracking_time_resolution_cfd05_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
     if array_pad:
         fileName = fileName.replace(".pdf", "_array.pdf")
@@ -245,7 +285,7 @@ def produceEfficiencyPlot(peak_values, tracking, chan, array_pad=False):
     efficiency_projectionY[chan] = ROOT.TProfile("Projection Y", "projection y", ybin,-sep_y,sep_y)
     
     
-    # Fill MIMOSA[chan] and LGAD[chan] (TH2 objects)
+    # Fill MIMOSA and LGAD (TH2 objects)
     
     if array_pad:
         
@@ -330,21 +370,23 @@ def produceEfficiencyPlot(peak_values, tracking, chan, array_pad=False):
      
         fit_sigmoid_x = ROOT.TF1("sigmoid_x", "([0]/(1+ TMath::Exp(-[1]*(x-[2]))) - [0]/(1+ TMath::Exp(-[1]*(x-[3]))))", -sep_x, sep_x)
         fit_sigmoid_x.SetParameters(100, 70, -0.5, 0.5)
+        fit_sigmoid_x.SetParNames("Constant", "k", "Pos left", "Pos right")
         efficiency_projectionX[chan].Fit("sigmoid_x", "Q","", -sep_x, sep_x)
         
         fit_sigmoid_y = ROOT.TF1("sigmoid_y", "([0]/(1+ TMath::Exp(-[1]*(x-[2]))) - [0]/(1+ TMath::Exp(-[1]*(x-[3]))))", -sep_y, sep_y)
         fit_sigmoid_y.SetParameters(100, 70, -0.5, 0.5)
+        fit_sigmoid_x.SetParNames("Constant", "k", "Pos left", "Pos right")
         efficiency_projectionY[chan].Fit("sigmoid_y", "Q","", -sep_y, sep_y)
      
      
         # Print projection X plot
-        headTitle = "Projection along x-axis of efficiency plot " + md.getNameOfSensor(chan) + " B" + str(md.getBatchNumber()) + "; X [mm] ; Efficiency (%)"
+        headTitle = "Projection of X-axis of efficiency 2D plot - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"+ "; X [mm] ; Efficiency (%)"
         fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/projection/tracking_projectionX_efficiency_" + str(md.getBatchNumber()) +"_" + chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, fileName]
         printProjectionPlot(efficiency_projectionX[chan], titles)
         
         # Print projection Y plot
-        headTitle = "Projection along y-axis of efficiency plot " + md.getNameOfSensor(chan) + " B" + str(md.getBatchNumber()) + "; Y [mm] ; Efficiency (%)"
+        headTitle = "Projection of Y-axis of efficiency 2D plot - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"+ "; Y [mm] ; Efficiency (%)"
         fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/projection/tracking_projectionY_efficiency_" + str(md.getBatchNumber()) +"_" + chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, fileName]
         printProjectionPlot(efficiency_projectionY[chan], titles)
@@ -353,7 +395,7 @@ def produceEfficiencyPlot(peak_values, tracking, chan, array_pad=False):
     totalEntries = efficiency[chan].GetPassedHistogram().GetEntries()
 
     # Print efficiency plot
-    headTitle = "Efficiency in each bin " + md.getNameOfSensor(chan) + " B" + str(md.getBatchNumber()) + "; X [mm] ; Y [mm] ; Efficiency (%)"
+    headTitle = "Efficiency - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"+ "; X [mm] ; Y [mm] ; Efficiency (%)"
     fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/efficiency/tracking_efficiency_" + str(md.getBatchNumber()) +"_" + chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
 
     if array_pad:
@@ -364,7 +406,7 @@ def produceEfficiencyPlot(peak_values, tracking, chan, array_pad=False):
 
 
     # Print inefficiency plot
-    headTitle = "Inefficiency in each bin " + md.getNameOfSensor(chan) + " B" + str(md.getBatchNumber()) + "; X [mm] ; Y [mm] ; Inefficiency (%)"
+    headTitle = "Inefficiency - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"+ "; X [mm] ; Y [mm] ; Inefficiency (%)"
     fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/inefficiency/tracking_inefficiency_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
 
     if array_pad:
@@ -506,8 +548,9 @@ def printTHPlot(graphList, info, efficiency=False, inefficiency=False, array_pad
 # Print projection plot
 def printProjectionPlot(graphList, info):
 
-    ROOT.gStyle.SetOptStat(1)
-    ROOT.gStyle.SetOptFit(1)
+    ROOT.gStyle.SetOptStat("ne")
+    ROOT.gStyle.SetOptFit(0012)
+    ROOT.gStyle.SetStatW(0.15)
 
     graphList.SetTitle(info[0])
     graphList.SetStats(1)

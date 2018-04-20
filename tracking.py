@@ -5,6 +5,7 @@ from datetime import datetime
 
 import metadata as md
 import tracking_plot as tplot
+import tracking_plot_pos as tpos
 import data_management as dm
 
 #md.setupATLAS()
@@ -16,16 +17,10 @@ ROOT.gROOT.SetBatch(True)
 def trackingAnalysis():
 
     dm.checkIfRepositoryOnStau()
-    
     startTime = md.dm.getTime()
+    runLog_batch = md.getRunLogBatches(md.batchNumbers)
     
-    batchListLarge = [101, 108, 207, 306, 401, 507, 707]
-    
-    batchList = [i for i in md.batchNumbers if i in batchListLarge]
-    
-    runLog_batch = md.getRunLogBatches(batchList)
-    
-    print "\nStart TRACKING analysis, batches:", batchList
+    print "\nStart TRACKING analysis, batches:", md.batchNumbers
 
     for runLog in runLog_batch:
     
@@ -39,7 +34,7 @@ def trackingAnalysis():
         print "\n Importing and concatenating...\n"
 
         for index in range(0, len(runLog)):
-           
+        
             md.defineGlobalVariableRun(runLog[index])
             
             if (md.isTrackingFileAvailable()):
@@ -75,6 +70,8 @@ def trackingAnalysis():
                 time_difference_cfd05            = np.concatenate((time_difference_cfd05,  results_run[3]), axis = 0)
         
             tplot.produceTrackingGraphs(peak_values, tracking, time_difference_peak, time_difference_cfd05)
+            #tpos.produceTrackingGraphs(peak_values, tracking)
+
 
             print "\nDone with batch",runLog[0][5],"Time analysing: "+str(md.dm.getTime()-startTimeBatch)+"\n"
 

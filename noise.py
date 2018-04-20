@@ -24,7 +24,7 @@ def noiseAnalysis():
         if md.limitRunNumbers != 0:
             runLog = runLog[0:md.limitRunNumbers] # Restrict to some run numbers
     
-        startTimeBatch = md.dm.getTime()
+        startTimeBatch = dm.getTime()
         dm.printTime()
         
         print "Batch:", runLog[0][5], len(runLog), "run files.\n"
@@ -36,9 +36,7 @@ def noiseAnalysis():
             print "Run", md.getRunNumber()
             
             noise_average, noise_std = noiseAnalysisPerRun()
-            noise, pedestal = n_calc.getPedestalAndNoisePerChannel(noise_std, noise_average)
-            
-            dm.exportNoiseData(noise, pedestal)
+            dm.exportNoiseDataPlot(noise_std, noise_average)
             
             print "Done with run", md.getRunNumber(),"\n"
 

@@ -25,27 +25,22 @@ def noisePlots():
         if md.limitRunNumbers != 0:
             runNumbers = runNumbers[0:md.limitRunNumbers] # Restrict to some run numbers
 
-        availableRunNumbersNoise        = md.readFileNames("noise_noise")
-        availableRunNumbersPedestal     = md.readFileNames("noise_pedestal")
-      
+
         for runNumber in runNumbers:
             
-            if runNumber in availableRunNumbersPedestal:
+            md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
             
-                md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
-                
-                print "Importing run", md.getRunNumber(), "\n"
-                
-                if noise_average.size == 0:
-                
-                    noise_average  = dm.importNoiseFilePlot("pedestal")
-                    noise_std      = dm.importNoiseFilePlot("noise")
-                
+            print "Importing run", md.getRunNumber(), "\n"
             
-                else:
+            if noise_average.size == 0:
+            
+                noise_average  = dm.importNoiseFilePlot("pedestal")
+                noise_std      = dm.importNoiseFilePlot("noise")
+            
+            else:
 
-                    noise_average = np.concatenate((noise_average, dm.importNoiseFilePlot("pedestal")), axis = 0)
-                    noise_std = np.concatenate((noise_std, dm.importNoiseFilePlot("noise")), axis = 0)
+                noise_average = np.concatenate((noise_average, dm.importNoiseFilePlot("pedestal")), axis = 0)
+                noise_std = np.concatenate((noise_std, dm.importNoiseFilePlot("noise")), axis = 0)
     
         if len(noise_average) != 0:
         
@@ -63,12 +58,15 @@ def produceNoisePlots(noise_average, noise_std):
     noise_average, noise_std = dm.convertNoiseData(noise_average, noise_std)
     
     canvas = ROOT.TCanvas("Noise", "noise")
-
-    pedestal_graph = dict()
-    noise_graph = dict()
     
     channels = noise_average.dtype.names
     #channels = ["chan0"]
+ 
+    # This is used to export data for pulse analysis. Takes the value from the
+    # fitted function
+    pedestal_data = dm.changeDTYPEOfData(np.empty(1, dtype=noise_average.dtype))
+    noise_data    = dm.changeDTYPEOfData(np.empty(1, dtype=noise_std.dtype))
+    
  
     # First fill pedestal and noise histograms and create fits
     for chan in channels:
@@ -82,7 +80,6 @@ def produceNoisePlots(noise_average, noise_std):
         pedestal_min = pedestal_mean - width * pedestal_width
         pedestal_max = pedestal_mean + width * pedestal_width
         
-  
         noise_mean = np.average(noise_std[chan][np.nonzero(noise_std[chan])])
         noise_width  = np.std(noise_std[chan][np.nonzero(noise_std[chan])])
         
@@ -90,15 +87,15 @@ def produceNoisePlots(noise_average, noise_std):
         noise_max = noise_mean + width * noise_width
         
         
-        pedestal_graph[chan] = ROOT.TH1D("Pedestal", "pedestal"+chan, 1000, pedestal_min, pedestal_max)
+        pedestal_graph = ROOT.TH1D("Pedestal", "pedestal"+chan, 100, pedestal_min, pedestal_max)
         
-        noise_graph[chan]    = ROOT.TH1D("Noise", "noise"+chan, 1000, noise_min, noise_max)
+        noise_graph    = ROOT.TH1D("Noise", "noise"+chan, 100, noise_min, noise_max)
 
         for entry in range(0, len(noise_average)):
 
             if noise_std[entry][chan] != 0:
-                pedestal_graph[chan].Fill(noise_average[entry][chan])
-                noise_graph[chan].Fill(noise_std[entry][chan])
+                pedestal_graph.Fill(noise_average[entry][chan])
+                noise_graph.Fill(noise_std[entry][chan])
     
         # Automized constants for setting the range of the Gauss Fit
         width = 4.5
@@ -111,40 +108,63 @@ def produceNoisePlots(noise_average, noise_std):
 
         ROOT.gStyle.SetOptFit()
 
-        pedestal_graph[chan].Fit("gaus","Q","", pedestal_min, pedestal_max)
-        noise_graph[chan].Fit("gaus","Q","", noise_min, noise_max)
+        pedestal_graph.Fit("gaus","Q","", pedestal_min, pedestal_max)
+        noise_graph.Fit("gaus","Q","", noise_min, noise_max)
         
         yAxisTitle = "Entries"
-        
-        headTitle = "Noise - standard deviation values "+md.getNameOfSensor(chan)+", B"+str(md.getBatchNumber())
+
+
+        headTitle = "Noise - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
         xAxisTitle = "Standard deviation [mV]"
         fileName = str(dm.getSourceFolderPath()) + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/noise/noise_plots/noise_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
-        exportHistograms(noise_graph[chan], titles)
+        exportHistograms(noise_graph, titles)
         
         
-        headTitle = "Pedestal - average values "+md.getNameOfSensor(chan)+", B"+str(md.getBatchNumber())
+        headTitle = "Pedestal - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
         xAxisTitle = "Average value [mV]"
         fileName = str(dm.getSourceFolderPath()) + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/noise/pedestal_plots/pedestal_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
-        exportHistograms(pedestal_graph[chan], titles)
+        exportHistograms(pedestal_graph, titles)
         
-        pedestal_mean = pedestal_graph[chan].GetFunction("gaus").GetParameter(1)
-        noise_mean = noise_graph[chan].GetFunction("gaus").GetParameter(1)
+        # Export results
+        pedestal_result = np.empty(2, dtype=[('pedestal', '<f8')])
+        noise_result    = np.empty(2, dtype=[('noise', '<f8')])
+        
+        pedestal_mean   = pedestal_graph.GetFunction("gaus").GetParameter(1)
+        pedestal_error  = pedestal_graph.GetFunction("gaus").GetParError(1)
+        
+        noise_mean = noise_graph.GetFunction("gaus").GetParameter(1)
+        noise_error = noise_graph.GetFunction("gaus").GetParError(1)
 
-        dt = (  [('noise', '<f8'), ('pedestal', '<f8') ])
-        noise_characteristics_results = np.empty(1, dtype=dt)
+        pedestal_result["pedestal"][0] = pedestal_mean
+        pedestal_result["pedestal"][1] = pedestal_error
 
-
-        noise_characteristics_results["noise"][0] = noise_mean
-        noise_characteristics_results["pedestal"][0] = pedestal_mean
-
+        noise_result["noise"][0] = noise_mean
+        noise_result["noise"][1] = noise_error
+        
+        # Export results per sensor
         sensor_info = [md.getNameOfSensor(chan), chan]
-        dm.exportNoiseResults(noise_characteristics_results, sensor_info)
+        dm.exportNoiseResults(pedestal_result, noise_result, sensor_info)
+        
+
+        # Export data to be used by the code (pulse calculation)
+        pedestal_data[chan][0] = pedestal_mean*-0.001
+        noise_data[chan][0] = noise_mean*0.001
+        
+        del pedestal_graph, noise_graph
+
+    # Here export the data for pulse analysis
+    dm.exportNoiseData(noise_data, pedestal_data)
+
+
 
 
 # Produce histograms
 def exportHistograms(graphList, titles):
+
+    ROOT.gStyle.SetOptStat("ne")
+    ROOT.gStyle.SetOptFit(0012)
 
     graphList.SetLineColor(1)
     graphList.SetTitle(titles[0])
