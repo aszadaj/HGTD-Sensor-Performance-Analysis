@@ -46,12 +46,12 @@ def pulseAnalysis():
     print "Done with PULSE analysis. Time analysing: "+str(md.dm.getTime()-startTime)+"\n"
 
 
-# Perform noise, pulse and telescope analysis
+# Analyze pulse analysis for each run
 def pulseAnalysisPerRun():
     
     # Configure inputs for multiprocessing
     max = md.getNumberOfEvents()
-    step = 10000
+    step = 5000
 
     # Quick Analysis
     if md.maxEntries != 0:
@@ -63,7 +63,7 @@ def pulseAnalysisPerRun():
     
     dataPath = dm.getDataPath()
     pedestal = dm.importNoiseFile("pedestal")
-    noise     = dm.importNoiseFile("noise")
+    noise    = dm.importNoiseFile("noise")
     results = p.map(lambda chunk: multiProcess(dataPath, pedestal, noise, chunk, chunk+step), ranges)
     
     # results change form, now each element is a variable

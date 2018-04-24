@@ -83,9 +83,18 @@ def producePulsePlots(peak_values, rise_times, peak_time, cfd05, point_count):
     #channels = [x for x in channels if md.getNameOfSensor(x) == "50D-GBGR2"]
     #channels = ["chan3"]
 
+    if md.getBatchNumber() == 102:
+        channels = [x for x in channels if md.getNameOfSensor(x) in ["W9-LGA35", "50D-GBGR2", "W4-LG12", "W4-S215"]]
+    
+    if md.getBatchNumber() == 302:
+        channels = [x for x in channels if md.getNameOfSensor(x) in ["W4-S203", "W4-S1061", "W4-S1022", "W4-RD01"]]
+    
+    if md.getBatchNumber() == 502:
+        channels = [x for x in channels if md.getNameOfSensor(x) in ["W4-S204_6e14"]]
+
     for chan in channels:
  
-        peak_values_th1d    = ROOT.TH1D("Pulse amplitude", "peak_value" + chan, 80, 0, 500)
+        peak_values_th1d    = ROOT.TH1D("Pulse amplitude", "peak_value" + chan, 100, 0, 500)
         rise_times_th1d     = ROOT.TH1D("Rise time", "rise_time" + chan, 600, 0, 4000)
         peak_time_th1d      = ROOT.TH1D("Peak time", "peak_time" + chan, 400, 0, 100)
         cfd05_th1d          = ROOT.TH1D("CFD05 time", "cfd05" + chan, 400, 0, 100)
@@ -109,13 +118,13 @@ def producePulsePlots(peak_values, rise_times, peak_time, cfd05, point_count):
             if point_count[chan][entry] != 0:
                 point_count_th1d.Fill(point_count[chan][entry])
 
-        N = 4
-        bin_max_rise_time = rise_times_th1d.GetMaximumBin()
-        max_value_rise_time = rise_times_th1d.GetBinCenter(bin_max_rise_time)
-        xMin = max_value_rise_time - N * rise_times_th1d.GetStdDev()
-        xMax = max_value_rise_time + N * rise_times_th1d.GetStdDev()
-        rise_times_th1d.SetAxisRange(xMin, xMax)
-        
+#        N = 4
+#        bin_max_rise_time = rise_times_th1d.GetMaximumBin()
+#        max_value_rise_time = rise_times_th1d.GetBinCenter(bin_max_rise_time)
+#        xMin = max_value_rise_time - N * rise_times_th1d.GetStdDev()
+#        xMax = max_value_rise_time + N * rise_times_th1d.GetStdDev()
+#        rise_times_th1d.SetAxisRange(xMin, xMax)
+
         N = 1
         bin_max_rise_time = rise_times_th1d.GetMaximumBin()
         max_value_rise_time = rise_times_th1d.GetBinCenter(bin_max_rise_time)
@@ -151,7 +160,9 @@ def producePulsePlots(peak_values, rise_times, peak_time, cfd05, point_count):
         # Print maximum amplitude plots
         headTitle = "Pulse amplitude - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
         xAxisTitle = "Pulse amplitude [mV]"
-        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/peak_value_plots/pulse_amplitude_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        #fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/peak_value_plots/pulse_amplitude_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        fileName = "/Users/aszadaj/cernbox/SH203X/Logs/22042018/TRY1/"+md.getNameOfSensor(chan)+"_debug/pulse_amplitude_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+  
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistogram(peak_values_th1d, titles)
 
@@ -159,7 +170,9 @@ def producePulsePlots(peak_values, rise_times, peak_time, cfd05, point_count):
         # Print rise time plots
         headTitle = "Rise time - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
         xAxisTitle = "Rise time [ps]"
-        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/rise_time_plots/rise_time_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        fileName = "/Users/aszadaj/cernbox/SH203X/Logs/22042018/TRY1/"+md.getNameOfSensor(chan)+"_debug/rise_time_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        #fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/rise_time_plots/rise_time_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistogram(rise_times_th1d, titles)
 
@@ -181,7 +194,8 @@ def producePulsePlots(peak_values, rise_times, peak_time, cfd05, point_count):
         # Print point count plots
         headTitle = "Point count - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
         xAxisTitle = "Number of points above 10%"
-        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/point_count_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        #fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/point_count_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        fileName = "/Users/aszadaj/cernbox/SH203X/Logs/22042018/TRY1/"+md.getNameOfSensor(chan)+"_debug/point_count_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistogram(point_count_th1d, titles)
 
@@ -224,7 +238,7 @@ def exportHistogram(graphList, titles):
   
     canvas.Update()
     canvas.Print(titles[3])
-    dm.exportROOTHistogram(graphList, titles[3])
+    #dm.exportROOTHistogram(graphList, titles[3])
 
 
 
