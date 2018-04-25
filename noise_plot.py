@@ -10,12 +10,11 @@ import data_management as dm
 def noisePlots():
 
     print "\nStart producing NOISE plots, batches:", md.batchNumbers
-    
+        
+    dm.defineDataFolderPath()
     for batchNumber in md.batchNumbers:
         
         print "Batch", batchNumber,"\n"
-        
-        dm.checkIfRepositoryOnStau()
 
         noise_average   = np.empty(0)
         noise_std       = np.empty(0)

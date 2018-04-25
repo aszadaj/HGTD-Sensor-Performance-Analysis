@@ -16,7 +16,7 @@ def timingPlots():
         
         print "\nBatch", batchNumber,"\n"
         
-        dm.checkIfRepositoryOnStau()
+        dm.defineDataFolderPath()
         
         time_difference_linear = np.empty(0)
         time_difference_sys_eq = np.empty(0)

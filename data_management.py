@@ -21,13 +21,15 @@ def exportNoiseDataPlot(noise, pedestal):
 
 
 # Export pulse data
-def exportPulseData(peak_times, peak_values, rise_times, cfd05, point_count):
+def exportPulseData(variable_array):
+
+    [peak_times, peak_values, rise_times, cfd05, points] = [i for i in variable_array]
 
     exportROOTFile(peak_times, "pulse", "peak_time")
     exportROOTFile(peak_values, "pulse", "peak_value")
     exportROOTFile(rise_times, "pulse", "rise_time")
     exportROOTFile(cfd05, "pulse", "cfd05")
-    exportROOTFile(point_count, "pulse", "point_count")
+    exportROOTFile(points, "pulse", "points")
 
 
 # Export timing data
@@ -268,14 +270,6 @@ def convertTrackingData(tracking, peak_values):
     return tracking, peak_values
 
 
-
-def convertPulseData(peak_values):
-    
-    for chan in peak_values.dtype.names:
-        peak_values[chan] =  np.multiply(peak_values[chan], -1000)
-
-    return peak_values
-
 def convertPulseData(peak_values):
     
     for chan in peak_values.dtype.names:
@@ -321,26 +315,6 @@ def createCenterPositionArray():
     return np.zeros(1, dtype = dt)
 
 
-# Check if the repository is on the stau server
-def checkIfRepositoryOnStau():
-
-    threadNumber = 4
-    
-    # sourceFolderPath is for plots, data, tracking data etc
-    sourceFolderPath = "/Users/aszadaj/cernbox/SH203X/HGTD_material/"
-    
-    if os.path.dirname(os.path.realpath(__file__)) == "/home/aszadaj/Gitlab/HGTD-Efficiency-analysis":
-    
-        threadNumber = 16
-        sourceFolderPath = "/home/warehouse/aszadaj/HGTD_material/"
-        onStau = True
-    
-        setIfOnHDD(False)
-
-    defineNumberOfThreads(threadNumber)
-    defineDataFolderPath(sourceFolderPath)
-
-
 # Get actual time
 def getTime():
 
@@ -353,24 +327,10 @@ def printTime():
     time = str(dt.datetime.now().time())
     print  "\nTime: " + str(time[:-7])
 
-def isOnHDD():
-
-    if "HDD500" in os.listdir("/Volumes"):
-        return True
-    else:
-        return False
-
-
-def isOnHITACHI():
-
-    if "HITACHI" in os.listdir("/Volumes"):
-        return True
-    else:
-        return False
 
 # Define folder where the pickle files should be
-def defineDataFolderPath(source):
-
+def defineDataFolderPath():
+    source  = "/Users/aszadaj/cernbox/SH203X/HGTD_material/"
     global sourceFolderPath
     sourceFolderPath = source
 
@@ -385,24 +345,14 @@ def getDataPath():
 
     dataPath = getSourceFolderPath() + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
     
-    if isOnHDD():
+    if "HDD500" in os.listdir("/Volumes"):
     
         dataPath = "/Volumes/HDD500/" + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
 
-    elif isOnHITACHI():
+    elif "HITACHI" in os.listdir("/Volumes"):
     
         dataPath = "/Volumes/HITACHI/" + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
 
 
     return dataPath
-
-
-# Define thread number or multiprocessing
-def defineNumberOfThreads(number):
-
-    global threads
-    threads = number
-
-def setNumberOfThreads(number):
-    threads = number
 

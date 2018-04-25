@@ -16,7 +16,7 @@ ROOT.gROOT.SetBatch(True)
 # matches the sizes of them
 def trackingAnalysis():
 
-    dm.checkIfRepositoryOnStau()
+    dm.defineDataFolderPath()
     startTime = md.dm.getTime()
     runLog_batch = md.getRunLogBatches(md.batchNumbers)
     

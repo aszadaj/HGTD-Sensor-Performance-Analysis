@@ -14,7 +14,7 @@ ROOT.gROOT.SetBatch(True)
 # Start analysis of selected run numbers
 def timingAnalysis():
 
-    dm.checkIfRepositoryOnStau()
+    dm.defineDataFolderPath()
     
     startTime = dm.getTime()
     runLog_batch = md.getRunLogBatches(md.batchNumbers)

@@ -9,8 +9,8 @@ import data_management as dm
 
 def produceResults():
     
-    dm.checkIfRepositoryOnStau()
-    startTime = md.dm.getTime()
+    dm.defineDataFolderPath()
+    startTime = dm.getTime()
    
     runLog = md.getRunLog()
     

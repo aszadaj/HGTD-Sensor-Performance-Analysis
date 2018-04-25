@@ -13,7 +13,7 @@ ROOT.gROOT.SetBatch(True)
 
 def noiseAnalysis():
     
-    dm.checkIfRepositoryOnStau()
+    dm.defineDataFolderPath()
     startTime = md.dm.getTime()
     runLog_batch = md.getRunLogBatches(md.batchNumbers)
     
