@@ -11,42 +11,51 @@ def pulseAnalysis(data, pedestal, noise):
     
     # Set the time scope to 0.1 ns
     defTimeScope()
-    defCountRejection()
-    defCountPass()
-
+    
     # Time in event when the pulse reaches maximum
-    peak_times      =   np.zeros(len(data), dtype = data.dtype)
+    peak_time       =   np.zeros(len(data), dtype = data.dtype)
     
     # Pulse amplitude
-    peak_values     =   np.zeros(len(data), dtype = data.dtype)
+    peak_value      =   np.zeros(len(data), dtype = data.dtype)
     
     # Rise time
-    rise_times      =   np.zeros(len(data), dtype = data.dtype)
+    rise_time       =   np.zeros(len(data), dtype = data.dtype)
     
     # Time at 50% of the rising edge
     cfd05           =   np.zeros(len(data), dtype = data.dtype)
     
     # Points above the threshold
     points           =   np.zeros(len(data), dtype = data.dtype)
+    
+    # Max sample of event given that there are points above the threshold
+    max_sample           =   np.zeros(len(data), dtype = data.dtype)
+    
+    variable_results = [peak_time, peak_value, rise_time, cfd05, points, max_sample]
 
     for chan in channels:
         for event in range(0, len(data)):
         
-            variables = [data[chan][event], pedestal[chan], noise[chan], chan, event, osc_limit[chan]]
+            variables = [data[chan][event], pedestal[chan], noise[chan], osc_limit[chan]]
             
-        
             results = getPulseInfo(variables)
             
-            
-            [peak_times[event][chan], peak_values[event][chan], rise_times[event][chan], cfd05[event][chan], points[event][chan]] = [i for i in results]
+            for type in range(0, len(variable_results)):
+                variable_results[type][event][chan] = results[type]
 
-
-    return peak_times, peak_values, rise_times, cfd05, points
+    return variable_results
 
 
 def getPulseInfo(variables):
 
-    [data, pedestal, noise, chan, event, osc_limit] = [i for i in variables]
+    [data, pedestal, noise, osc_limit] = [i for i in variables]
+    
+    # Set start values
+    peak_value = 0
+    peak_time = 0
+    rise_time = 0
+    cfd05 = 0
+    max_sample = 0
+    points = 0
     
     # Invert waveform data
     data = -data
@@ -55,25 +64,24 @@ def getPulseInfo(variables):
     
     # Define threhsold and sigma level
     N = 4
-    points = 1
+    # This number has been argumented as a combined plot between max sample
+    # point and number of points above the threhsold. See report.
+    threshold_points = 5
     threshold = N * noise + pedestal
     
-    if np.sum(data > threshold) >= points:
+    if np.sum(data > threshold) >= threshold_points:
         
         points = calculatePoints(data, threshold)
+        max_sample = np.amax(data)
         peak_value, peak_time  = calculatePeakValue(data, pedestal, noise, osc_limit)
         rise_time, cfd05  = calculateRiseTime(data, pedestal, noise)
         
         # Condition: if rise time or peak value cannot be found, disregard the pulse
         if peak_value == 0 or rise_time == 0:
-            return 0, 0, 0, 0, 0
+            peak_value = peak_time = rise_time = cfd05 = 0
         
-        # Invert again to maintain the same shape
-        return peak_time, -peak_value, rise_time, cfd05, points
-
-    
-    else:
-        return 0, 0, 0, 0, 0
+    # Invert again to maintain the same shape
+    return peak_time, -peak_value, rise_time, cfd05, points, -max_sample
 
 
 # Get Rise time
@@ -165,33 +173,6 @@ def calculatePoints(data, threshold):
         return 0
 
 
-def calculateCFD05_V2(data, pedestal, noise):
-    
-    # Default values
-    cfd05_V2 = 0
-    
-    # Select points betweem 10 and 90 procent, before the max point and above noise and pedestal.
-    linear_fit_bool = (data < np.amax(data)*0.9) & (data > np.amax(data)*0.1) & (data > (noise + pedestal)) & (np.nonzero(data) < np.argmax(data))[0]
-
-    
-    if np.sum(linear_fit_bool) > 0:
-        
-        linear_fit_indices = np.argwhere(linear_fit_bool).flatten()
-        linear_fit_indices = getConsecutiveSeriesLinearFit(linear_fit_indices)
-        
-        value_05 = find_nearest(data[linear_fit_indices], (np.amax(data)+pedestal)*0.5)
-        arg_05 = np.argwhere((data == value_05))[0]
-    
-        x_values = np.arange(arg_05-1,arg_05+2) * timeScope
-        y_values = data[np.arange(arg_05-1,arg_05+2)]
-       
-        linear_fit = np.polyfit(x_values, y_values, 1)
-      
-        if linear_fit[0] > 0:
-            cfd05_V2 = (0.5 * (np.amax(data) + pedestal) - linear_fit[1]) / linear_fit[0]
-
-
-    return cfd05_V2
 
 # Group each consequential numbers in each separate list
 def group_consecutives(data, stepsize=1):
@@ -217,10 +198,6 @@ def getConsecutiveSeriesPointCalc(data, points_condition):
     return max_arg_series
 
 
-def find_nearest(array,value):
-    idx = (np.abs(array-value)).argmin()
-    return array[idx]
-
 
 # Get maximum values for given channel and oscilloscope
 def findOscilloscopeLimit(data):
@@ -232,6 +209,7 @@ def findOscilloscopeLimit(data):
         osc_limit[chan] = np.amin(np.concatenate(data[chan]))
 
     return osc_limit
+
 
 # related to multiprocessing
 def concatenateResults(results):
@@ -252,32 +230,9 @@ def concatenateResults(results):
 
     return variable_array
 
-# Number of rejected signals which are passed by the threshold
-def defCountRejection():
-    global rejection
-    rejection = 0.0
-
-# Number of passed
-def defCountPass():
-    global threshold_pass
-    threshold_pass = 0.0
-
-
-def addCountRejection():
-    global rejection
-    rejection = rejection + 1
-
-def addCountPass():
-    global threshold_pass
-    threshold_pass = threshold_pass + 1
-
 
 def defTimeScope():
     global timeScope
     timeScope = 0.1
-
-
     return timeScope
-
-
 

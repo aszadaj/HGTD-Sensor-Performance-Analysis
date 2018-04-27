@@ -23,13 +23,14 @@ def exportNoiseDataPlot(noise, pedestal):
 # Export pulse data
 def exportPulseData(variable_array):
 
-    [peak_times, peak_values, rise_times, cfd05, points] = [i for i in variable_array]
+    [peak_times, peak_values, rise_times, cfd05, points, max_sample] = [i for i in variable_array]
 
     exportROOTFile(peak_times, "pulse", "peak_time")
     exportROOTFile(peak_values, "pulse", "peak_value")
     exportROOTFile(rise_times, "pulse", "rise_time")
     exportROOTFile(cfd05, "pulse", "cfd05")
     exportROOTFile(points, "pulse", "points")
+    exportROOTFile(max_sample, "pulse", "max_sample")
 
 
 # Export timing data

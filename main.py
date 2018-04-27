@@ -27,7 +27,7 @@ def main():
     #############################################################
     
     # Choose batch numbers to run
-    metadata.setLimitRunNumbers(1)
+    metadata.setLimitRunNumbers(0)
     # Yellow marked batches
     # batch 306 mark 3796, noise and pulse
     #metadata.setBatchNumbers([201, 202, 203, 207, 301, 306, 402, 604, 701, 705, 706, 805])

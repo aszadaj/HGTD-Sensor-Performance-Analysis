@@ -21,6 +21,10 @@ def pulsePlots():
         
         peak_values = np.empty(0)
         rise_times = np.empty(0)
+        points = np.empty(0)
+        max_sample = np.empty(0)
+        cfd05 = np.empty(0)
+        peak_time = np.empty(0)
 
         runNumbers = md.getAllRunNumbers(batchNumber)
         
@@ -37,25 +41,31 @@ def pulsePlots():
                 peak_values = dm.importPulseFile("peak_value")
                 rise_times  = dm.importPulseFile("rise_time")
                 points  = dm.importPulseFile("points")
+                max_sample = dm.importPulseFile("max_sample")
+                cfd05 = dm.importPulseFile("cfd05")
+                peak_time = dm.importPulseFile("peak_time")
 
             else:
 
                 peak_values = np.concatenate((peak_values, dm.importPulseFile("peak_value")), axis = 0)
                 rise_times = np.concatenate((rise_times, dm.importPulseFile("rise_time")), axis = 0)
                 points = np.concatenate((points, dm.importPulseFile("points")), axis = 0)
+                max_sample = np.concatenate((max_sample, dm.importPulseFile("max_sample")), axis = 0)
+                cfd05 = np.concatenate((cfd05, dm.importPulseFile("cfd05")), axis = 0)
+                peak_time = np.concatenate((peak_time, dm.importPulseFile("peak_time")), axis = 0)
                 
 
         if len(peak_values) != 0:
         
             print "Done with importing files for", batchNumber, "producing plots.\n"
             
-            producePulsePlots(peak_values, rise_times, points)
+            producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_time)
 
     print "Done with producing PULSE plots.\n"
 
 
 # Fill TH1 objects
-def producePulsePlots(peak_values, rise_times, points):
+def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_time):
 
     global canvas
     
@@ -63,7 +73,9 @@ def producePulsePlots(peak_values, rise_times, points):
     osc_limit = 350
     
     peak_values = dm.convertPulseData(peak_values)
+    max_sample = dm.convertPulseData(max_sample)
     rise_times = dm.convertRiseTimeData(rise_times)
+
 
     canvas = ROOT.TCanvas("Pulse", "pulse")
 
@@ -77,7 +89,11 @@ def producePulsePlots(peak_values, rise_times, points):
  
         peak_values_th1d    = ROOT.TH1D("Pulse amplitude", "peak_value" + chan, 100, 0, 500)
         rise_times_th1d     = ROOT.TH1D("Rise time", "rise_time" + chan, 600, 0, 4000)
-        peak_value_vs_points_threshold_th2d = ROOT.TH2D("Amplitude vs points", "amp_vs_points", 40, 0, 40, 100, 0, 400)
+        point_count_th1d     = ROOT.TH1D("Point count", "point_count" + chan, 100, 0, 100)
+        max_sample_th1d     = ROOT.TH1D("Max sample", "max_sample" + chan, 100, 0, 360)
+        cfd05_th1d     = ROOT.TH1D("CFD05", "CFD05_plot" + chan, 100, 0, 100)
+        peak_time_th1d     = ROOT.TH1D("Peak time", "peak_time" + chan, 100, 0, 100)
+        max_sample_vs_points_threshold_th2d = ROOT.TH2D("Max sample vs no of points", "amp_vs_points", 80, 0, 80, 100, 0, 200)
 
         for entry in range(0, len(peak_values[chan])):
    
@@ -86,13 +102,26 @@ def producePulsePlots(peak_values, rise_times, points):
             
             if rise_times[chan][entry] != 0:
                 rise_times_th1d.Fill(rise_times[chan][entry])
+
+            if points[chan][entry] != 0:
+                point_count_th1d.Fill(points[chan][entry])
+            
+            if max_sample[chan][entry] != 0:
+                max_sample_th1d.Fill(max_sample[chan][entry])
+            
+            
+            if cfd05[chan][entry] != 0:
+                cfd05_th1d.Fill(cfd05[chan][entry])
+            
+            if peak_time[chan][entry] != 0:
+                peak_time_th1d.Fill(peak_time[chan][entry])
     
-            if peak_values[chan][entry] != 0 and points[chan][entry] != 0:
-                peak_value_vs_points_threshold_th2d.Fill(points[entry][chan], peak_values[entry][chan])
+            if max_sample[chan][entry] != 0 and points[chan][entry] != 0:
+                max_sample_vs_points_threshold_th2d.Fill(points[entry][chan], max_sample[entry][chan])
 
 
-        peak_value_vs_points_threshold_th2d.ResetStats()
-        peak_value_vs_points_threshold_th2d.SetAxisRange(0, 500, "Z")
+        max_sample_vs_points_threshold_th2d.ResetStats()
+        max_sample_vs_points_threshold_th2d.SetAxisRange(0, 500, "Z")
 
 
         N = 4
@@ -137,7 +166,7 @@ def producePulsePlots(peak_values, rise_times, points):
         # Print maximum amplitude plots
         headTitle = "Pulse amplitude - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
         xAxisTitle = "Pulse amplitude [mV]"
-        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/peak_value_plots/pulse_amplitude_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/peak_value/pulse_amplitude_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistogram(peak_values_th1d, titles)
 
@@ -145,17 +174,48 @@ def producePulsePlots(peak_values, rise_times, points):
         # Print rise time plots
         headTitle = "Rise time - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
         xAxisTitle = "Rise time [ps]"
-        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/rise_time_plots/rise_time_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/rise_time/rise_time_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistogram(rise_times_th1d, titles)
         
-        # Print th2d plot
-        headTitle = "Amplitude vs points - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
-        xAxisTitle = "Number points > threshold"
-        yAxisTitle = "Pulse amplitude value [mV]"
-        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/amp_vs_points_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        
+        # Print point count plots
+        headTitle = "Point count over threshold - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
+        xAxisTitle = "Point count over threshold [N]"
+        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/point_count/point_count_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
-        exportHistogram2D(peak_value_vs_points_threshold_th2d, titles)
+        exportHistogram(point_count_th1d, titles)
+        
+        
+        # Print max sample plots
+        headTitle = "Max sample in event over threshold - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
+        xAxisTitle = "Max sample in event [mV]"
+        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/max_sample/max_sample_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
+        exportHistogram(max_sample_th1d, titles)
+        
+        # Print cfd05  plots
+        headTitle = "CFD05 time locaiton - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
+        xAxisTitle = "Time location [ns]"
+        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/cfd05/cfd05_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
+        exportHistogram(cfd05_th1d, titles)
+        
+        
+        # Print peak time plots
+        headTitle = "Peak time locaiton - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
+        xAxisTitle = "Time location [ns]"
+        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/peak_time/peak_time_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
+        exportHistogram(peak_time_th1d, titles)
+        
+        # Print th2d plot
+        headTitle = "Max sample point vs no of points over threshold - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
+        xAxisTitle = "Number points > threshold"
+        yAxisTitle = "Max sample value [mV]"
+        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/max_sample_vs_point_count/amp_vs_points_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
+        exportHistogram2D(max_sample_vs_points_threshold_th2d, titles)
 
 
         # Export results to root file
@@ -204,10 +264,23 @@ def exportHistogram2D(graphList, titles):
     graphList.GetXaxis().SetTitle(titles[1])
     graphList.GetYaxis().SetTitle(titles[2])
     
+    # Move the stats box
+
+
     graphList.Draw("COLZ")
-
-
     canvas.Update()
+
+    stats_box = graphList.GetListOfFunctions().FindObject("stats")
+    stats_box.SetX1NDC(0.1)
+    stats_box.SetX2NDC(0.3)
+    stats_box.SetY1NDC(0.93)
+    stats_box.SetY2NDC(0.83)
+    
+    # Recreate stats box
+    stats_box.SetOptStat(1000000011)
+
+
+
     canvas.Print(titles[3])
 
 

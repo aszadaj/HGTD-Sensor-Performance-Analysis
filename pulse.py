@@ -59,7 +59,7 @@ def pulseAnalysisPerRun():
         max = step = md.maxEntries
         threads = 1
     
-    p = Pool(threads)
+    p = Pool(4)
     ranges = range(0, max, step)
     
     dataPath = dm.getDataPath()
@@ -68,6 +68,9 @@ def pulseAnalysisPerRun():
     
     # Form of results
     results = p.map(lambda chunk: multiProcess(dataPath, pedestal, noise, chunk, chunk+step), ranges)
+    
+    # Used for debugging
+    #results = multiProcess(dataPath, pedestal, noise, 0, step)
     
     # results change form, now each element is a variable
     results_variables = p_calc.concatenateResults(results)
