@@ -37,7 +37,7 @@ def pulseAnalysis():
             print "Run", md.getRunNumber()
             
             variable_array = pulseAnalysisPerRun()
-            dm.exportPulseData(variable_array)
+            #dm.exportPulseData(variable_array)
                         
             print "Done with run", md.getRunNumber(), "\n"
 
@@ -58,8 +58,9 @@ def pulseAnalysisPerRun():
     if md.maxEntries != 0:
         max = step = md.maxEntries
         threads = 1
-    
-    p = Pool(4)
+
+
+    p = Pool(threads)
     ranges = range(0, max, step)
     
     dataPath = dm.getDataPath()

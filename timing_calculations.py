@@ -2,20 +2,20 @@ import numpy as np
 import metadata as md
 import ROOT
 
-def timingAnalysisPerRun(time_location):
+def getTimeDifferencePerRun(time_location):
     
     time_difference = np.zeros(len(time_location), dtype = time_location.dtype)
     
     SiPM_chan = md.getChannelNameForSensor("SiPM-AFP")
 
     for chan in time_location.dtype.names:
-
-        if chan != SiPM_chan:
+        
+        if SiPM_chan == chan:
+            continue
             
-            for event in range (0, len(time_location)):
-                if time_location[SiPM_chan][event] != 0 and time_location[chan][event] != 0:
-                    # This is for the case if the SiPM is in the same oscilloscope as the DUT
-                    time_difference[chan][event] = time_location[event][chan] - time_location[event][SiPM_chan]
+        for event in range (0, len(time_location)):
+            if time_location[SiPM_chan][event] != 0 and time_location[chan][event] != 0:
+                time_difference[chan][event] = (time_location[chan][event] - time_location[SiPM_chan][event])*1000
 
 
     return time_difference
@@ -24,7 +24,7 @@ def timingAnalysisPerRun(time_location):
 # This is used to produce ROOT files which have multiple solutions
 # Note that the system of equations only applies to the first oscilloscope
 # Reason: the first oscilloscope contains different sensors.
-def timingAnalysisPerRunSysEq(time_location):
+def getTimeDifferencePerRunSysEq(time_location):
     
     dt = (  [('chan0',  '<f8', 3), ('chan1',  '<f8', 3) ,('chan2',  '<f8', 3) ,('chan3',  '<f8', 3)] )
     
@@ -68,92 +68,56 @@ def solveLinearEq(sigmas_mix):
     return sigma_chan
 
 
-def getFitFunction(th1d_list, chan, same_osc):
+def getSigmasFromFit(th1d_list, chan):
 
-
-    # Choose the range for the fit and the plot
-    N = 2
-    xMin = th1d_list.GetMean() - N * th1d_list.GetStdDev()
-    xMax = th1d_list.GetMean() + N * th1d_list.GetStdDev()
+    # Find the maximal value
+    MPV_bin = th1d_list.GetMaximumBin()
+    MPV_time_diff = int(th1d_list.GetXaxis().GetBinCenter(MPV_bin))
+    MPV_entries = th1d_list.GetMaximum()
     
-    # For the case when the large peak is on the right
-    bin_high_peak = th1d_list.GetMaximumBin()
-    mean_value_high_peak = int(th1d_list.GetXaxis().GetBinCenter(bin_high_peak))
-    amplitude_high_peak = th1d_list.GetMaximum()
+    # Change the window
+    window_range = 1000
+    xMin = MPV_time_diff - window_range
+    xMax = MPV_time_diff + window_range
+    th1d_list.SetAxisRange(xMin, xMax)
     
-    # Change manually depending if the peak is on the left or right side
-    largePeakOnRight = True
-    timeScopeShift = -100
-    batchConfig = md.getBatchNumber()/100
-    
-    # How the shift behaves, based on observation from plots
-    if batchConfig == 1 or batchConfig == 2 or batchConfig == 4:
-        largePeakOnRight = False
-        timeScopeShift = 100
-    
-    elif int(md.getBatchNumber()/100) == 5:
-        largePeakOnRight = False
-        timeScopeShift = 100
-    
-    mean_value_low_peak = mean_value_high_peak + timeScopeShift
-    bin_low_peak = th1d_list.FindBin(mean_value_low_peak)
-    amplitude_low_peak = th1d_list.GetBinContent(bin_low_peak)
-    sigma_double_peak = th1d_list.GetStdDev()
-
-    
-    SiPM_chan = md.getChannelNameForSensor("SiPM-AFP")
+    # Fit using normal gaussian
+    N = 1
+    sigma_window = th1d_list.GetStdDev()
+    mean_window = th1d_list.GetMean()
+    xMin = mean_window - N * sigma_window
+    xMax = mean_window + N * sigma_window
 
     # Within the same oscilloscope
-    if same_osc:
-
-        # Fit using normal gaussian
-        defined_fit = ROOT.TF1("gaussian_mod_fit", "gaus", xMin, xMax)
-
+    if md.checkIfSameOscAsSiPM(chan):
+        
+        fit_function = ROOT.TF1("gaus_fit", "gaus", xMin, xMax)
 
     # Else in different oscilloscopes
     else:
 
-        defined_fit = ROOT.TF1("gaussian_mod_fit", "[0]*exp(-0.5*((x-[1])/[2])^2) + [3]*exp(-0.5*((x-([1]+100))/[2])^2)", xMin, xMax)
+        fit_function = ROOT.TF1("gaus_fit", "[0]*exp(-0.5*((x-[3])/[2])^2) + [1]*exp(-0.5*((x-([3]+100))/[2])^2)", xMin, xMax)
+        fit_function.SetParameters(MPV_entries, MPV_entries, sigma_window, mean_window)
+        fit_function.SetParNames("Constant 1", "Constant 2", "\sigma_{tot}", "Mean 1")
 
-        if largePeakOnRight:
-
-            defined_fit.SetParameters(amplitude_low_peak, mean_value_high_peak, sigma_double_peak, amplitude_high_peak)
-            defined_fit.SetParNames("Constant low peak", "Mean high peak ", "\sigma_{tot}", "Constant high peak")
-
-        else:            
-            defined_fit.SetParameters(amplitude_high_peak, mean_value_high_peak, sigma_double_peak, amplitude_low_peak)
-            defined_fit.SetParNames("Constant high peak", "Mean high peak", "\sigma_{tot}", "Constant low peak")
-
-
-    th1d_list.Fit("gaussian_mod_fit", "Q", "", xMin, xMax)
-    fit_function = th1d_list.GetFunction("gaussian_mod_fit")
+    try:
+        # Create fit and calculate the width
+        th1d_list.Fit("gaus_fit", "Q", "", xMin, xMax)
+        sigma_SiPM = md.getSigmaSiPM()
+        sigma_fit = th1d_list.GetFunction("gaus_fit").GetParameter(2)
+        sigma_fit_error = th1d_list.GetFunction("gaus_fit").GetParError(2)
     
-    
-    fit_function.SetRange(xMin, xMax)
-    
-    N = 4
-    xMin = th1d_list.GetMean() - N * th1d_list.GetStdDev()
-    xMax = th1d_list.GetMean() + N * th1d_list.GetStdDev()
-    th1d_list.SetAxisRange(xMin, xMax)
-        
-    sigma_SiPM = 15
-    
-    if md.getTemperature() < 0:
-        sigma_SiPM = 9
-    
-    sigma_fit = fit_function.GetParameter(2)
-    sigma_fit_error = fit_function.GetParError(2)
-    
-    # Here assume that the error is zero fro
+        if sigma_fit > sigma_SiPM:
+            sigma_DUT = np.sqrt(np.power(sigma_fit, 2) - np.power(sigma_SiPM, 2))
 
+        else:
+            sigma_DUT = 0
 
-    if sigma_fit > sigma_SiPM:
-        sigma_DUT = np.sqrt(np.power(sigma_fit, 2) - np.power(sigma_SiPM, 2))
+    # In case that the fit fails, due to no data, ignore the result.
+    except:
 
-    else:
         sigma_DUT = 0
+        sigma_fit_error = 0
 
 
-    del defined_fit
-
-    return fit_function, sigma_DUT, sigma_fit_error
+    return sigma_DUT, sigma_fit_error

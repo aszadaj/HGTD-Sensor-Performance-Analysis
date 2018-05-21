@@ -8,7 +8,7 @@ import timing_calculations as t_calc
 import tracking_calc as track_calc
 
 ROOT.gStyle.SetPalette(1)
-ROOT.gStyle.SetNumberContours(20)
+ROOT.gStyle.SetNumberContours(300)
 
 def produceTrackingGraphs(peak_values, tracking, time_difference_peak, time_difference_cfd05):
    
@@ -230,6 +230,10 @@ def produceEfficiencyPlot(peak_values, tracking, chan, array_pad=False):
     if array_pad:
         sep_x *= 2
         sep_y *= 2
+    
+    if md.getNumberOfRunsPerBatch() < 3:
+        bin_size *= 1.5
+
 
     xbin = int(2*sep_x/bin_size)
     ybin = int(2*sep_y/bin_size)
@@ -313,11 +317,9 @@ def produceEfficiencyPlot(peak_values, tracking, chan, array_pad=False):
 
     for i in range(1, xbin+1):
         for j in range(1, ybin+1):
-            
-            
             bin = efficiency[chan].GetGlobalBin(i,j)
             eff = efficiency[chan].GetEfficiency(bin)
-  
+            
             # Compensate for array pads, one trigger per pad
             if array_pad:
                 eff *= 4
@@ -464,7 +466,7 @@ def printTHPlot(graphList, info, efficiency=False, inefficiency=False, array_pad
             graphList.GetPaintedHistogram().Scale(4)
         
         graphList.GetPaintedHistogram().Scale(100)
-        graphList.GetPaintedHistogram().SetAxisRange(80, 100, "Z")
+        graphList.GetPaintedHistogram().SetAxisRange(0, 100, "Z")
         graphList.GetPaintedHistogram().SetNdivisions(10, "Z")
         graphList.GetPaintedHistogram().SetTitle(info[0])
         

@@ -14,7 +14,7 @@ def produceResults():
    
     runLog = md.getRunLog()
     
-    fileDirectoryResults = dm.getSourceFolderPath() + "results/"
+    fileDirectoryResults = dm.getSourceFolderPath() + "results_hgtd_efficiency_sep_2017/"
     
     print "\nStart RESULTS"
     
@@ -24,34 +24,31 @@ def produceResults():
     canvas = ROOT.TCanvas("Results", "Results")
     
     sensorNames = md.getAllSensorNames()
-    #sensorNames = ["W4-S1061"]
     sensorNames.remove("SiPM-AFP")
     
-    sourceResultsFiles = dm.getSourceFolderPath() + "results_hgtd_efficiency_sep_2017/"
-    
-    #categories = ["noise", "pedestal", "peak_value", "rise_time" "timing_normal", "timing_system"]
-    categories = ["noise", "pedestal", "peak_value", "rise_time", "timing_normal"]
+#    sensorNames = ["W4-S215"]
 
-    #categories = ["timing_system"]
-    #categories = ["peak_value"]
+    sourceResultsFiles = dm.getSourceFolderPath() + "results_data_hgtd_efficiency_sep_2017/"
     
+    categories = ["noise", "pedestal", "peak_value", "rise_time", "timing_normal", "timing_system", "timing_normal_cfd05", "timing_system_cfd05"]
+#    categories = ["peak_value"]
+
     resultsDict = dict()
+    
     
     for sensor in sensorNames:
         
-        if sensor != "W9-LGA44" and sensor != "W4-S1030":
-            continue
-    
         print "\nSensor", sensor
         fileDirectory = sourceResultsFiles + sensor + "/"
  
         for category in categories:
-            # Have to define the global variable to make the code work
             
-            if category == "timing_system" and (sensor == "W4-S215" or sensor == "W4-S204_6e14" or sensor == "W4-RD01"):
+            if category.find("system") != -1 and (sensor == "W4-S215" or sensor == "W4-S204_6e14" or sensor == "W4-RD01"):
                 continue
-            
-            files = readFileNames(fileDirectory+"/"+category)
+        
+        
+            # Have to define the global variable to make the code work
+            files = readFileNames(fileDirectory+category+"/")
             file = files[0]
             fileName = fileDirectory+category+"/"+file
             chan = "chan" + file[file.find("chan")+4]
@@ -59,9 +56,10 @@ def produceResults():
             batchNumber = getBatchNumberFromFile(file)
             md.defineGlobalVariableRun(md.getRowForBatchNumber(batchNumber))
             
+            # Change positions and size of legend box
             extend_legend_box = 0
             
-            if len(md.availableDUTPos(sensor, chan)) > 3:
+            if len(md.numberDUTPos(sensor, chan)) > 3:
             
                 extend_legend_box = 0.1
             
@@ -69,7 +67,7 @@ def produceResults():
                 
                 legend[category] = ROOT.TLegend(0.6, 0.9, 0.9, 0.7-extend_legend_box)
             
-            elif category == "rise_time" or category == "timing_normal" or category == "timing_system":
+            elif category.find("timing") != -1:
             
                 legend[category] = ROOT.TLegend(0.75, 0.9, 0.9, 0.7-extend_legend_box)
             
@@ -77,34 +75,42 @@ def produceResults():
             
                 legend[category] = ROOT.TLegend(0.15, 0.9, 0.3, 0.7-extend_legend_box)
             
-
+            # Define titles, head and axes
             if category == "noise":
-                titleGraph = "Noise values per bias voltage "
+                titleGraph = "Noise values per bias voltage"
                 xTitle = "Bias voltage [V]"
                 yTitle = "Noise [mV]"
             
             elif category == "pedestal":
-                titleGraph = "Pedestal values per bias voltage "
+                titleGraph = "Pedestal values per bias voltage"
                 xTitle = "Bias voltage [V]"
                 yTitle = "Pedestal [mV]"
 
             elif category == "peak_value":
             
-                titleGraph = "Pulse amplitude values per voltage "
+                titleGraph = "Pulse amplitude values per voltage"
                 xTitle = "Bias voltage [V]"
                 yTitle = "Pulse amplitude [mV]"
 
             elif category == "rise_time":
                 
-                titleGraph = "Rise time values per voltage "
+                titleGraph = "Rise time values per voltage"
                 xTitle = "Bias voltage [V]"
                 yTitle = "Rise time [ps]"
 
             elif category == "timing_normal":
             
-                titleGraph = "Time resolution values per voltage "
+                titleGraph = "Time resolution values per voltage"
                 xTitle = "Bias voltage [V]"
                 yTitle = "Time resolution [ps]"
+
+
+            elif category == "timing_normal_cfd05":
+            
+                titleGraph = "Time resolution values per voltage (cfd05)"
+                xTitle = "Bias voltage [V]"
+                yTitle = "Time resolution [ps]"
+
             
             elif category == "timing_system":
             
@@ -113,18 +119,26 @@ def produceResults():
                 yTitle = "Time resolution [ps]"
 
 
-            # Goal: create three TGraphAsym
+            elif category == "timing_system_cfd05":
+            
+                titleGraph = "Time resolution values per voltage (system, cfd05)"
+                xTitle = "Bias voltage [V]"
+                yTitle = "Time resolution [ps]"
+
+
 
             resultsDict.clear()
 
             # Fill TGraphs according to DUT pos and temperature
             
+            resultsDict["20"] = dict()
             resultsDict["22"] = dict()
             resultsDict["-30"] = dict()
             resultsDict["-40"] = dict()
             
-            for pos in md.availableDUTPos(sensor, chan):
+            for pos in md.numberDUTPos(sensor, chan):
             
+                resultsDict["20"][pos] = []
                 resultsDict["22"][pos] = []
                 resultsDict["-30"][pos] = []
                 resultsDict["-40"][pos] = []
@@ -154,31 +168,34 @@ def produceResults():
 
             graph = dict()
             
-            for temperature in ["22", "-30", "-40"]:
+            for temperature in ["20", "22", "-30", "-40"]:
                 markerStyle = 20
-                for pos in md.availableDUTPos(sensor, chan):
+                for pos in md.numberDUTPos(sensor, chan):
                     if len(resultsDict[temperature][pos]) != 0:
                         graph[category] = ROOT.TGraphErrors()
+
 
                         graph[category].SetMarkerColor(colorNumber)
                         graph[category].SetMarkerStyle(markerStyle)
                         i = 0
-    
-
 
                         for voltage, result in resultsDict[temperature][pos]:
+        
                             graph[category].SetPoint(i, voltage, result[category][0])
                             
-                            # For now, the error is not obtained
-                            if category != "timing_system":
+                            # For system of equations, no error is incorporated
+                            if category.find("system") == -1:
                                 graph[category].SetPointError(i, 0, result[category][1])
+                            
                             else:
                                 graph[category].SetPointError(i, 0, 0)
+                            
                             i += 1
                         
                         
                         resultGraphs[category].Add(graph[category])
                         
+                        # Add variance to legend box for noise plots
                         if category == "noise":
                             legend[category].AddEntry(graph[category], str(temperature) + " \circC, " + str(round(graph[category].GetMean(2),1)) + " \pm "+ str(round(graph[category].GetRMS(2),1)) + " mV" , "p")
                         else:
@@ -215,27 +232,18 @@ def produceResults():
             canvas.Update()
 
             fileName = fileDirectoryResults +category+"/" + category + "_results_"+sensor+".pdf"
-
+            
             canvas.Print(fileName)
 
             canvas.Clear()
 
-
+# Read in results files for each category
 def readFileNames(directory):
 
-    # select those which have cfd05 reference
-    if directory.find("timing") != -1:
-        
-        # CFD reference
-        availableFiles = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) and f != '.DS_Store' and f.find("cfd05") != -1]
-        
-        # Peak reference
-        availableFiles = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) and f != '.DS_Store' and f.find("cfd05") == -1]
-    
-    else:
-        availableFiles = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) and f != '.DS_Store']
-    availableFiles.sort()
+    availableFiles = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) and f != '.DS_Store']
 
+    availableFiles.sort()
+    
     return availableFiles
 
 

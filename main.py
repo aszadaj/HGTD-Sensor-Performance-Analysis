@@ -22,19 +22,10 @@ def main():
     
     data_management.printTime()
 
-    #### Settings used for debugging noise and pulse analysis ####
-    metadata.setEntriesForQuickAnalysis(0)
-    #############################################################
-    
     # Choose batch numbers to run
+    metadata.setEntriesForQuickAnalysis(0)
     metadata.setLimitRunNumbers(0)
-    # Yellow marked batches
-    # batch 306 mark 3796, noise and pulse
-    #metadata.setBatchNumbers([201, 202, 203, 207, 301, 306, 402, 604, 701, 705, 706, 805])
-    #metadata.setBatchNumbers([604, 701, 805])
-    #metadata.setBatchNumbers([301, 501, 701])
-    metadata.setBatchNumbers([102, 301])
-
+    metadata.setBatchNumbers([101])
 
     ############## METHODS ###############
     
@@ -63,7 +54,7 @@ def main():
     
     ###### TRACKING #########
     
-    #tracking.trackingAnalysis()
+    tracking.trackingAnalysis()
     
     #########################
     
@@ -71,7 +62,7 @@ def main():
     ### PLOTS ###
     
     #noise_plot.noisePlots()
-    pulse_plot.pulsePlots()
+    #pulse_plot.pulsePlots()
     #timing_plot.timingPlots()
 
     ### RESULTS ###

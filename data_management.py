@@ -36,22 +36,22 @@ def exportPulseData(variable_array):
 # Export timing data
 def exportTimingLinearData(time_difference):
 
-    exportROOTFile(time_difference, "timing","linear")
+    exportROOTFile(time_difference, "timing", "linear")
 
 
 def exportTimingLinearRiseTimeRefData(time_difference):
 
-    exportROOTFile(time_difference, "timing","linear_cfd05")
+    exportROOTFile(time_difference, "timing", "linear_cfd05")
 
 
 def exportTimingSysEqData(time_difference):
 
-    exportROOTFile(time_difference, "timing","sys_eq")
+    exportROOTFile(time_difference, "timing", "sys_eq")
 
 
-def exportTimingSysEqRiseTimeRefData(time_difference):
+def exportTimingSysEqCFD05RefData(time_difference):
 
-    exportROOTFile(time_difference, "timing","sys_eq_cfd05")
+    exportROOTFile(time_difference, "timing", "sys_eq_cfd05")
 
 
 
@@ -91,27 +91,28 @@ def exportROOTFile(data, group, category="", sensor_info=[], same_osc=False, cfd
     
     if group == "timing":
     
-        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
+        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+group+"_"+category+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
     
     elif category == "position":
     
         fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(category)+"_"+str(md.getBatchNumber()/100)+".root"
 
     elif group == "results":
-    
-        if category == "timing_normal" or category == "timing_system":
+
+        if category.find("timing") != -1:
         
-            fileName = getSourceFolderPath()+"results_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category+"/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_diff_osc_cfd05_results.root"
+            fileName = getSourceFolderPath()+"results_data_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category+"_cfd05"+"/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_diff_osc_cfd05_results.root"
         
             if same_osc:
                 fileName = fileName.replace("diff_osc", "same_osc")
         
             if not cfd05:
-                fileName = fileName.replace("cfd05_", "")
+                fileName = fileName.replace("_cfd05", "")
+
 
         else:
         
-            fileName = getSourceFolderPath()+"results_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category+"/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_results.root"
+            fileName = getSourceFolderPath()+"results_data_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category+"/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_results.root"
             
     elif group == "noise_plot":
 
@@ -204,15 +205,15 @@ def importROOTFile(group, category="", sensor_info=[], same_osc=False, cfd05=Fal
 
     
     elif group == "timing":
-    
-        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
+
+        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+group+"_"+category+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
 
 
     elif group == "results":
     
         if category == "timing":
         
-            fileName = getSourceFolderPath()+"results_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category+"/diff_osc/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_diff_osc_cfd05_results.root"
+            fileName = getSourceFolderPath()+"results_data_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category+"/diff_osc/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_diff_osc_cfd05_results.root"
         
             if same_osc:
                 fileName = fileName.replace("diff_osc", "same_osc")
@@ -224,14 +225,14 @@ def importROOTFile(group, category="", sensor_info=[], same_osc=False, cfd05=Fal
             
             category = category.replace("timing_sys_eq", "timing")
 
-            fileName = getSourceFolderPath()+"results_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category+"/system/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_sys_eq_cfd05_results.root"
+            fileName = getSourceFolderPath()+"results_data_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category+"/system/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_sys_eq_cfd05_results.root"
             
             if not cfd05:
                 fileName = fileName.replace("cfd05_", "")
         
         else:
         
-            fileName = getSourceFolderPath()+"results_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category+"/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_results.root"
+            fileName = getSourceFolderPath()+"results_data_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category+"/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_results.root"
     
     elif group == "noise_plot":
     

@@ -62,20 +62,8 @@ def getRunLogBatches(batchNumbers):
     return runLog
 
 
-# Check if the oscilloscope file is available
-def isRootFileAvailable():
-
-    availableFiles = readFileNames("oscilloscope")
-    
-    for file_name in availableFiles:
-        if file_name == int(getTimeStamp()):
-            return True
-
-    return False
-
 # Check if the pulse file for timing is available
 def isTimingDataFilesAvailable():
-
 
     availableFilesPulse         = readFileNames("peak_value")
     found = False
@@ -214,10 +202,6 @@ def readFileNames(fileType):
 
     mainFolderPath = dm.getSourceFolderPath() + folderPath
     
-    if dm.isOnHDD() and fileType == "oscilloscope":
-    
-        mainFolderPath = "/Volumes/HDD500/" + folderPath
-
     availableFiles = [int(f[first_index:last_index]) for f in os.listdir(mainFolderPath) if os.path.isfile(os.path.join(mainFolderPath, f)) and f != '.DS_Store']
     availableFiles.sort()
 
@@ -301,13 +285,24 @@ def getNumberOfEvents(timeStamp=""):
 # Get the voltage value which cuts the amplitude (to restrict from noise furthermore).
 # Value in negative voltage [-V].
 def getPulseAmplitudeCut(chan):
+    
+    amplitudeCuts = {}
+    
+    amplitudeCuts["50D-GBGR2"] = -20 * 0.001
+    amplitudeCuts["SiPM-AFP"] = -200 * 0.001
+    amplitudeCuts["W4-LG12"] = -15 * 0.001
+    amplitudeCuts["W4-RD01"] = -20 * 0.001
+    amplitudeCuts["W4-S203"] = -15 * 0.001
+    amplitudeCuts["W4-S204_6e14"] = -15 * 0.001 # Radiated sensor
+    amplitudeCuts["W4-S215"] = -20 * 0.001
+    amplitudeCuts["W4-S1022"] = -20 * 0.001
+    amplitudeCuts["W4-S1030"] = -20 * 0.001 # Batch 8
+    amplitudeCuts["W4-S1061"] = -15 * 0.001
+    amplitudeCuts["W9-LGA35"] = -20 * 0.001
+    amplitudeCuts["W9-LGA44"] = -20 * 0.001 # Batch 8
 
-    cut = 0
 
-    if getNameOfSensor(chan) == "SiPM-AFP":
-        cut = -0.2
-
-    return cut
+    return amplitudeCuts[getNameOfSensor(chan)]
 
 
 
@@ -373,6 +368,13 @@ def getTemperature():
 
     return int(runInfo[10])
 
+# This is a reference to Vagelis conference about SiPM-s RD50 Workshop in Krakow
+def getSigmaSiPM():
+
+    if getTemperature() < 0:
+        return 9
+    else:
+        return 15
 
 
 def getBiasVoltage(sensor):
@@ -409,7 +411,7 @@ def getDUTPos(sensor, chan):
     return str(runInfo[12+int(chan[-1])*5])
 
 
-def availableDUTPos(sensor, chan=""):
+def numberDUTPos(sensor, chan=""):
 
     if sensor == "W4-S215":
     
@@ -422,6 +424,10 @@ def availableDUTPos(sensor, chan=""):
     elif sensor == "W4-S204_6e14":
     
         return ["7_0", "7_2", "7_3"]
+
+    elif sensor == "W4-LG12":
+    
+        return ["3", "6"]
 
     elif chan=="":
     

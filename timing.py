@@ -16,7 +16,6 @@ def timingAnalysis():
 
     dm.defineDataFolderPath()
     
-    startTime = dm.getTime()
     runLog_batch = md.getRunLogBatches(md.batchNumbers)
     print "\nStart TIMING analysis, batches:", md.batchNumbers
 
@@ -25,9 +24,7 @@ def timingAnalysis():
         # Restrict run numbers
         if md.limitRunNumbers != 0:
             runLog = runLog[0:md.limitRunNumbers]
-    
-        startTimeBatch = dm.getTime()
-        dm.printTime()
+
         
         print "Batch:", runLog[0][5], len(runLog), "run files.\n"
       
@@ -38,29 +35,30 @@ def timingAnalysis():
             print "Run", md.getRunNumber()
             
             # Import files per run
-            peak_time_run = dm.importPulseFile("peak_time")
+            peak_time = dm.importPulseFile("peak_time")
             cfd05 = dm.importPulseFile("cfd05")
             
-            # Perform calculations
-            time_difference_linear_run = t_calc.timingAnalysisPerRun(peak_time_run)
-            time_difference_linear_cfd05_run = t_calc.timingAnalysisPerRun(cfd05)
+            # Perform calculations linear
+            time_diff_peak = t_calc.getTimeDifferencePerRun(peak_time)
+            time_diff_cfd05 = t_calc.getTimeDifferencePerRun(cfd05)
             
-            time_difference_sys_eq_run = t_calc.timingAnalysisPerRunSysEq(peak_time_run)
-            time_difference_sys_eq_cfd05_run = t_calc.timingAnalysisPerRunSysEq(cfd05)
+            # Export per run number linear
+            dm.exportTimingLinearData(time_diff_peak)
+            dm.exportTimingLinearRiseTimeRefData(time_diff_cfd05)
+        
+            if md.getBatchNumber()/100 != 6:
+                # Perform calculations sys eq
+                time_diff_peak_sys_eq = t_calc.getTimeDifferencePerRunSysEq(peak_time)
+                time_diff_cfd05_sys_eq = t_calc.getTimeDifferencePerRunSysEq(cfd05)
 
-            
-            # Export per run number
-            dm.exportTimingLinearData(time_difference_linear_run)
-            dm.exportTimingLinearRiseTimeRefData(time_difference_linear_cfd05_run)
-            
-            dm.exportTimingSysEqData(time_difference_sys_eq_run)
-            dm.exportTimingSysEqRiseTimeRefData(time_difference_sys_eq_cfd05_run)
+                # Export per run number sys eq
+                dm.exportTimingSysEqData(time_diff_peak_sys_eq)
+                dm.exportTimingSysEqCFD05RefData(time_diff_cfd05_sys_eq)
             
             print "Done with run", md.getRunNumber(), "\n"
 
+        print "Done with batch", runLog[0][5], "\n"
 
-        print "Done with batch", runLog[0][5], "Time analysing: "+str(dm.getTime()-startTimeBatch)+"\n"
-
-    print "Done with TIMING analysis. Time analysing: "+str(dm.getTime()-startTime)+"\n"
+    print "Done with TIMING analysis\n"
 
 

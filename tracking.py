@@ -27,11 +27,10 @@ def trackingAnalysis():
         if md.limitRunNumbers != 0:
             runLog = runLog[0:md.limitRunNumbers] # Restrict to some run numbers
 
-        startTimeBatch = md.dm.getTime()
+        startTimeBatch = dm.getTime()
     
         results_batch = []
         
-        print "\n Importing and concatenating...\n"
 
         for index in range(0, len(runLog)):
         
@@ -39,18 +38,21 @@ def trackingAnalysis():
             
             if (md.isTrackingFileAvailable()):
                 
-                print "Run", md.getRunNumber()
                 peak_values_run = dm.importPulseFile("peak_value")
                 tracking_run = dm.importTrackingFile()
                 time_difference_peak_run = dm.importTimingFile("linear")
                 time_difference_cfd05_run = dm.importTimingFile("linear_cfd05")
-    
+                
                 # Slice the peak values to match the tracking files
                 if len(peak_values_run) > len(tracking_run):
                 
                     peak_values_run                    = np.take(peak_values_run, np.arange(0, len(tracking_run)))
                     time_difference_peak_run           = np.take(time_difference_peak_run, np.arange(0, len(tracking_run)))
                     time_difference_cfd05_run          = np.take(time_difference_cfd05_run, np.arange(0, len(tracking_run)))
+                
+                else:
+                
+                    tracking_run                       = np.take(tracking_run, np.arange(0, len(peak_values_run)))
 
                 results_batch.append([peak_values_run, tracking_run, time_difference_peak_run, time_difference_cfd05_run])
     
@@ -70,7 +72,6 @@ def trackingAnalysis():
                 time_difference_cfd05            = np.concatenate((time_difference_cfd05,  results_run[3]), axis = 0)
         
             tplot.produceTrackingGraphs(peak_values, tracking, time_difference_peak, time_difference_cfd05)
-            #tpos.produceTrackingGraphs(peak_values, tracking)
 
 
             print "\nDone with batch",runLog[0][5],"Time analysing: "+str(md.dm.getTime()-startTimeBatch)+"\n"

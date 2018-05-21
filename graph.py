@@ -8,8 +8,8 @@ import pulse_calculations as p_calc
 
 ROOT.gROOT.SetBatch(True)
 
-batchNumber = 301
-sensor = "W9-LGA35"
+batch = 102
+sensor = "50D-GBGR2"
 event = 0
 
 # Start analysis of selected run numbers
@@ -39,7 +39,7 @@ def printWaveform(batchNumber, sensor, event=0):
 
     # Randomly select event based on a property and import it
     if event == 0:
-        selected_event =  np.argwhere((peak_value_import[chan] < -0.150) & (points_import[chan] > 60)).flatten()
+        selected_event =  np.argwhere(rise_time_import[chan]).flatten()
         np.random.shuffle(selected_event)
         event = selected_event[0]
     
@@ -64,9 +64,8 @@ def printWaveform(batchNumber, sensor, event=0):
     rise_time, cfd05, linear_fit, linear_fit_indices = p_calc.calculateRiseTime(data, pedestal, noise, True)
     peak_value, peak_time, poly_fit = p_calc.calculatePeakValue(data, pedestal, noise, 350, True)
     point_count = p_calc.calculatePoints(data, threshold)
-    cfd05_v2 = p_calc.calculateCFD05_V2(data, pedestal, noise)
     
-    noise_event = np.std(data)
+    noise_event = np.std(data[0:int(cfd05)*10-10])
 
     # Create TMultigraph and define underlying graphs
 
@@ -81,7 +80,6 @@ def printWaveform(batchNumber, sensor, event=0):
     graph_cfd05 = ROOT.TGraph(2)
     graph_10 = ROOT.TGraph(2)
     graph_90 = ROOT.TGraph(2)
-    graph_cfd05_v2 = ROOT.TGraph(2)
     graph_pedestal = ROOT.TGraph(2)
     
     histogram_std = ROOT.TH1D("h1", "h1", 200, -20, 20)
@@ -130,9 +128,6 @@ def printWaveform(batchNumber, sensor, event=0):
     graph_pedestal.SetPoint(0,0, pedestal)
     graph_pedestal.SetPoint(1,1002, pedestal)
     
-    graph_cfd05_v2.SetPoint(0,cfd05_v2, -30)
-    graph_cfd05_v2.SetPoint(1,cfd05_v2, 500)
-    
     graph_10.SetPoint(0,0, peak_value*0.1*1000)
     graph_10.SetPoint(1,1002, peak_value*0.1*1000)
     graph_90.SetPoint(0,0, peak_value*0.9*1000)
@@ -152,19 +147,18 @@ def printWaveform(batchNumber, sensor, event=0):
     graph_linear_fit.SetMarkerColorAlpha(1, 0.0)
     graph_2nd_deg_fit.SetMarkerColorAlpha(1, 0.0)
     graph_2nd_deg_fit.SetMarkerColorAlpha(1, 0.0)
-    graph_pedestal.SetLineColor(8)
+    graph_pedestal.SetLineColor(9)
 
 
     # Add the graphs to multigraph
     multi_graph.Add(graph_waveform)
     multi_graph.Add(graph_threshold)
-    #multi_graph.Add(graph_2nd_deg_fit)
-    #multi_graph.Add(graph_linear_fit)
+    multi_graph.Add(graph_2nd_deg_fit)
+    multi_graph.Add(graph_linear_fit)
     #multi_graph.Add(graph_peak_value)
     #multi_graph.Add(graph_10)
     #multi_graph.Add(graph_90)
     #multi_graph.Add(graph_cfd05)
-    #multi_graph.Add(graph_cfd05_v2)
     multi_graph.Add(graph_pedestal)
 
     
@@ -173,12 +167,12 @@ def printWaveform(batchNumber, sensor, event=0):
     legend.AddEntry(graph_threshold, "Threshold: "+str(threshold[0]*1000)[:5]+" mV", "l")
     legend.AddEntry(graph_waveform, "Noise event: "+str(noise_event*1000)[:3]+" mV", "l")
     legend.AddEntry(graph_pedestal, "Pedestal: "+str(pedestal[0]*1000)[:3]+" mV", "l")
-    legend.AddEntry(graph_waveform, "Points above threshold: "+str(point_count), "l")
-    #legend.AddEntry(graph_linear_fit, "Rise time: "+str(rise_time[0]*1000)[:5]+" ps", "l")
+   # legend.AddEntry(graph_waveform, "Points above threshold: "+str(point_count), "l")
+    legend.AddEntry(graph_linear_fit, "Rise time: "+str(rise_time[0]*1000)[:5]+" ps", "l")
     #legend.AddEntry(graph_peak_value, "Peak value: "+str(peak_value_import[chan][event]*-1000)[:5]+" mV", "l")
     #legend.AddEntry(graph_90, "10% and 90% limit", "l")
     #legend.AddEntry(graph_cfd05, "cfd05 " + str(cfd05[0])[0:4] + " ns", "l")
-    #legend.AddEntry(graph_cfd05_v2, "cfd05 v2 " + str(cfd05_v2)[0:4] + " ns", "l")
+
     #legend.AddEntry(graph_cfd05, "Point count above 10% " + str(point_count), "l")
 
     # Define the titles and draw the graph
@@ -193,14 +187,13 @@ def printWaveform(batchNumber, sensor, event=0):
     multi_graph.GetYaxis().SetTitle(yAxisTitle)
 
     # Set ranges on axis
-    multi_graph.GetYaxis().SetRangeUser(-30,400)
-    #multi_graph.GetXaxis().SetRangeUser(cfd05_v2-5,cfd05_v2+5)
-    #multi_graph.GetXaxis().SetRangeUser(cfd05-5,cfd05+5)
-    multi_graph.GetXaxis().SetRangeUser(0,100)
+    multi_graph.GetYaxis().SetRangeUser(-30,300)
+    multi_graph.GetXaxis().SetRangeUser(cfd05-3,cfd05+5)
+    #multi_graph.GetXaxis().SetRangeUser(0,100)
 
     # Export the PDF file
     fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/waveforms/waveform"+"_"+str(md.getBatchNumber())+"_"+str(runNumber)+"_event_"+str(event)+"_"+str(sensor)+".pdf"
-    #fileName = "/Users/aszadaj/cernbox/SH203X/Logs/22042018/TRY1/"+md.getNameOfSensor(chan)+"_debug/waveform"+"_"+str(md.getBatchNumber())+"_"+str(runNumber)+"_event_"+str(event)+"_"+str(sensor)+".pdf"
+
     canvas.Print(fileName)
 
     canvas.Clear()
@@ -216,19 +209,12 @@ def printWaveform(batchNumber, sensor, event=0):
 def group_consecutives(data, stepsize=1):
     return np.split(data, np.where(np.diff(data) != stepsize)[0]+1)
 
-printWaveform(batchNumber, sensor,  event)
 
-#def mainPrint():
-#    batchSensor = [[102, ["W9-LGA35", "50D-GBGR2", "W4-LG12", "W4-S215"]], [302, ["W4-S203", "W4-S1061", "W4-S1022", "W4-RD01"]], [502, ["W4-S204_6e14"]]]
-#
-#    for selection in batchSensor:
-#
-#        batch = selection[0]
-#
-#        for sensor in selection[1]:
-#
-#            i = 0
-#            while i < 15:
-#                i+=1
-#
-#                printWaveform(batch, sensor)
+def mainPrint():
+
+    i = 0
+    while i < 20:
+        i+=1
+        printWaveform(batch, sensor)
+
+mainPrint()

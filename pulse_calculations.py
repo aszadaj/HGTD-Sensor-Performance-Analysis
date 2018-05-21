@@ -9,6 +9,9 @@ def pulseAnalysis(data, pedestal, noise):
     
     osc_limit = findOscilloscopeLimit(data)
     
+    # Debug
+    defCountGroup()
+    
     # Set the time scope to 0.1 ns
     defTimeScope()
     
@@ -41,6 +44,10 @@ def pulseAnalysis(data, pedestal, noise):
             
             for type in range(0, len(variable_results)):
                 variable_results[type][event][chan] = results[type]
+    
+        #print getCount()/len(data)*100, "%", chan
+        
+        defCountGroup()
 
     return variable_results
 
@@ -78,6 +85,7 @@ def getPulseInfo(variables):
         
         # Condition: if rise time or peak value cannot be found, disregard the pulse
         if peak_value == 0 or rise_time == 0:
+            
             peak_value = peak_time = rise_time = cfd05 = 0
         
     # Invert again to maintain the same shape
@@ -149,7 +157,7 @@ def calculatePeakValue(data, pedestal, noise, osc_limit=350, graph=False):
     
 
     # This is an extra check to prevent the second degree fit to fail and assign the maximum value instead
-    if np.amax(data) == osc_limit:
+    if np.abs(np.amax(data) - osc_limit) < 0.01:
 
         peak_time = 0
         peak_value = np.amax(data)
@@ -236,3 +244,14 @@ def defTimeScope():
     timeScope = 0.1
     return timeScope
 
+
+def defCountGroup():
+    global count
+    count = 0.0
+
+def incrementCount():
+    global count
+    count +=1
+
+def getCount():
+    return count
