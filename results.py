@@ -174,7 +174,6 @@ def produceResults():
                     if len(resultsDict[temperature][pos]) != 0:
                         graph[category] = ROOT.TGraphErrors()
 
-
                         graph[category].SetMarkerColor(colorNumber)
                         graph[category].SetMarkerStyle(markerStyle)
                         i = 0
@@ -182,16 +181,9 @@ def produceResults():
                         for voltage, result in resultsDict[temperature][pos]:
         
                             graph[category].SetPoint(i, voltage, result[category][0])
-                            
-                            # For system of equations, no error is incorporated
-                            if category.find("system") == -1:
-                                graph[category].SetPointError(i, 0, result[category][1])
-                            
-                            else:
-                                graph[category].SetPointError(i, 0, 0)
-                            
+                            graph[category].SetPointError(i, 0, result[category][1])
+
                             i += 1
-                        
                         
                         resultGraphs[category].Add(graph[category])
                         

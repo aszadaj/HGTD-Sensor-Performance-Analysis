@@ -25,7 +25,8 @@ def main():
     # Choose batch numbers to run
     metadata.setEntriesForQuickAnalysis(0)
     metadata.setLimitRunNumbers(0)
-    metadata.setBatchNumbers([101])
+    #metadata.setBatchNumbers([102, 202, 302, 402, 501, 602, 702])
+    metadata.setBatchNumbers("all")
 
     ############## METHODS ###############
     
@@ -54,7 +55,7 @@ def main():
     
     ###### TRACKING #########
     
-    tracking.trackingAnalysis()
+    #tracking.trackingAnalysis()
     
     #########################
     
@@ -63,11 +64,11 @@ def main():
     
     #noise_plot.noisePlots()
     #pulse_plot.pulsePlots()
-    #timing_plot.timingPlots()
+    timing_plot.timingPlots()
 
     ### RESULTS ###
     
-    #results.produceResults()
+    results.produceResults()
 
    
     #######################################

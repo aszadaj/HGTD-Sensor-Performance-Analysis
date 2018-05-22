@@ -51,21 +51,31 @@ def getTimeDifferencePerRunSysEq(time_location):
 
     return time_difference
 
-# Solve system of linear equation
-# Note, there are multiple to choose from, 4 unknowns, 6 different equations, not all are independent
-def solveLinearEq(sigmas_mix):
+# The input is of the convoluted form, that is \sigma_{ij} (here the DUT and the SiPM) and the
+# corresponding errors, that is \Delta\sigma_{ij}
+# Output are the solutions for the individual widths, \sigma_{k} and
+# the corresponding errors, \Delta\sigma_{k}, where k is the connected LGAD in
+# the oscilloscope (up to four different)
+def solveLinearEq(sigmas, sigmas_error):
 
     # Non-singular matrix selected
     matrix = np.matrix([[1, 0, 0, 1], [0, 1, 1, 0], [0, 0, 1, 1], [0, 1, 0, 1]])
     inverse = np.linalg.inv(matrix)
-    vector = np.array([sigmas_mix[0][3], sigmas_mix[1][2], sigmas_mix[2][3], sigmas_mix[1][3]])
-    vector = np.power(vector, 2)
-    solution = inverse.dot(vector)
-    sigma_chan = np.sqrt(solution)
     
-    # Warning, need to take into consideration the error as a function of two variables
+    sigma_vector = np.power(np.array([sigmas[0][3], sigmas[1][2], sigmas[2][3], sigmas[1][3]]), 2)
+    sigma_vector_error = np.power(np.array([sigmas_error[0][3], sigmas_error[1][2], sigmas_error[2][3], sigmas_error[1][3]]), 2)
     
-    return sigma_chan
+    sigma_chan = np.sqrt(inverse.dot(sigma_vector))
+    sigma_chan_error = np.sqrt((inverse.dot(sigma_vector)).dot(sigma_vector_error)*np.power(inverse.dot(sigma_vector), -1))
+    
+    
+    # Given that width can be expressed as \sigma_{i}^2 = C_1\sigma_{A}^2 + C_2\sigma_{B}^2 and
+    # the error is given for \Delta\sigma_{A} and \Delta\sigma_{A},
+    # then the total error for \sigma_{i} will be
+    #
+    # \Delta_sigma_{i} = \sqrt{\frac{C_1\sigma_{A}^2\Delta\sigma_{A}^2 + C_2\sigma_{B}^2\Delta\sigma_{B}^2}{C_1\sigma_{A}^2 + C_2\sigma_{B}^2}}
+    
+    return sigma_chan, sigma_chan_error
 
 
 def getSigmasFromFit(th1d_list, chan):
@@ -82,7 +92,7 @@ def getSigmasFromFit(th1d_list, chan):
     th1d_list.SetAxisRange(xMin, xMax)
     
     # Fit using normal gaussian
-    N = 1
+    N = 3
     sigma_window = th1d_list.GetStdDev()
     mean_window = th1d_list.GetMean()
     xMin = mean_window - N * sigma_window

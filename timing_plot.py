@@ -11,7 +11,7 @@ ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
 canvas = ROOT.TCanvas("Timing", "timing")
 
 # Range and bins for the window for TH1 objects
-xbins = 1800
+xbins = 1900
 bin_range = 15000
 
 def timingPlots():
@@ -95,9 +95,9 @@ def produceTimingDistributionPlots(time_difference, peak_value, cfd05=False):
 
         time_diff_th1d[chan] = ROOT.TH1D("Time difference "+md.getNameOfSensor(chan), "time_difference" + chan, xbins, -bin_range, bin_range)
      
-        # Fill TH1 object and cut the noise for the DUT and SiPM < -200 mV, specified in run log
+        # Fill the objects, without cuts on the SiPM
         for entry in range(0, len(time_difference[chan])):
-            if time_difference[chan][entry] != 0 and peak_value[chan][entry] < md.getPulseAmplitudeCut(chan) and peak_value[SiPM_chan][entry] < md.getPulseAmplitudeCut(SiPM_chan):
+            if time_difference[chan][entry] != 0:
                 time_diff_th1d[chan].Fill(time_difference[chan][entry])
 
         # Get fit function with width of the distributions
@@ -116,7 +116,7 @@ def produceTimingDistributionPlots(time_difference, peak_value, cfd05=False):
                 fileName = fileName.replace("cfd05", "peak")
 
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
-        exportTHPlot(time_diff_th1d[chan], titles, chan, sigma_DUT)
+        exportTHPlot(time_diff_th1d[chan], titles, chan, [sigma_DUT, sigma_fit_error] )
 
 
         # Export the result together with its error
@@ -138,7 +138,8 @@ def produceTimingDistributionPlotsSysEq(time_difference, peak_value, cfd05=False
     time_diff_th1d = dict()
     
     osc1 = ["chan0", "chan1", "chan2", "chan3"]
-    sigmas_mix = np.zeros((4,4))
+    sigma_convoluted = np.zeros((4,4))
+    sigma_error      = np.zeros((4,4))
     
     # First loop, calculate the sigmas for each combination of time differences
     for chan in osc1:
@@ -159,8 +160,8 @@ def produceTimingDistributionPlotsSysEq(time_difference, peak_value, cfd05=False
             for index in range(0, len(chan2_list)):
                 chan2 = chan2_list[index]
                 
-                # Cuts introduced, which can limit the data
-                if time_difference[chan][entry][index] != 0 and peak_value[chan][entry] < md.getPulseAmplitudeCut(chan) and peak_value[chan2][entry] < md.getPulseAmplitudeCut(chan2):
+                # No amplitude cuts here!
+                if time_difference[chan][entry][index] != 0:
                     time_diff_th1d[chan][chan2].Fill(time_difference[chan][entry][index])
 
         # Get sigma and adapt distribution curve
@@ -172,13 +173,13 @@ def produceTimingDistributionPlotsSysEq(time_difference, peak_value, cfd05=False
             MPV_entries = time_diff_th1d[chan][chan2].GetMaximum()
 
             # Change the window
-            window_range = 500
+            window_range = 1000
             xMin = MPV_time_diff - window_range
             xMax = MPV_time_diff + window_range
             time_diff_th1d[chan][chan2].SetAxisRange(xMin, xMax)
 
             # Redefine range for the fit
-            N = 2
+            N = 3
             sigma_window = time_diff_th1d[chan][chan2].GetStdDev()
             mean_window = time_diff_th1d[chan][chan2].GetMean()
             xMin = mean_window - N * sigma_window
@@ -192,20 +193,18 @@ def produceTimingDistributionPlotsSysEq(time_difference, peak_value, cfd05=False
             j = int(chan2[-1]) % 4
             
             try:
-                
-                fitted_parameters = [fit_function.GetParameter(0), fit_function.GetParameter(1), fit_function.GetParameter(2)]
-                
+           
                 # Get sigma between two channels
-                sigmas_mix[i][j] = fit_function.GetParameter(2)
-                sigmas_mix[j][i] = fit_function.GetParameter(2)
+                sigma_convoluted[i][j] = sigma_convoluted[j][i] = fit_function.GetParameter(2)
+                sigma_error[i][j] = sigma_error[j][i] = fit_function.GetParError(2)
                 
             except:
             
-                sigmas_mix[i][j] = 0
-                sigmas_mix[j][i] = 0
+                sigma_convoluted[i][j] = sigma_convoluted[j][i] = 0
+                sigma_error[i][j] = sigma_error[j][i] = 0
 
     # Solve the system
-    sigmas_chan = t_calc.solveLinearEq(sigmas_mix)
+    sigmas_chan, sigmas_error = t_calc.solveLinearEq(sigma_convoluted, sigma_error)
 
     # Second loop, print the graphs together with the solutions
     for chan in osc1:
@@ -217,7 +216,7 @@ def produceTimingDistributionPlotsSysEq(time_difference, peak_value, cfd05=False
         if cfd05:
             type += "_cfd05"
         dt = ([(type, '<f8')])
-        timing_results_sys_eq = np.empty(1, dtype = dt)
+        timing_results_sys_eq = np.empty(2, dtype = dt)
         
         # Loop through the combinations
         for chan2 in chan2_list:
@@ -233,17 +232,20 @@ def produceTimingDistributionPlotsSysEq(time_difference, peak_value, cfd05=False
         
             titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
 
+            sigma_DUT = sigmas_chan.item((0, index))
+            sigma_DUT_error = sigmas_error.item((0, index))
             index = int(chan[-1]) % 4
-            exportTHPlot(time_diff_th1d[chan][chan2], titles, chan, sigmas_chan.item((0, index)))
+            exportTHPlot(time_diff_th1d[chan][chan2], titles, chan,[sigma_DUT, sigma_DUT_error])
 
-            timing_results_sys_eq[type] = sigmas_chan.item((0, index))
+            timing_results_sys_eq[type][0] = sigma_DUT
+            timing_results_sys_eq[type][1] = sigma_DUT_error
 
         # Export results
         sensor_info = [md.getNameOfSensor(chan), chan]
         dm.exportTimingResultsSysEq(timing_results_sys_eq, sensor_info, cfd05)
 
 
-def exportTHPlot(graphList, titles, chan, sigma=0):
+def exportTHPlot(graphList, titles, chan, sigma):
 
     canvas.Clear()
  
@@ -262,7 +264,7 @@ def exportTHPlot(graphList, titles, chan, sigma=0):
     statsBox = canvas.GetPrimitive("stats")
     statsBox.SetName("Mystats")
     graphList.SetStats(0)
-    statsBox.AddText("\sigma_{"+md.getNameOfSensor(chan)+"} = "+str(sigma)[0:6])
+    statsBox.AddText("\sigma_{"+md.getNameOfSensor(chan)+"} = "+str(sigma[0])[0:6] + " \pm " + str(sigma[1])[0:4])
     canvas.Modified()
     canvas.Update()
     

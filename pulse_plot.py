@@ -11,7 +11,7 @@ ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
 canvas = ROOT.TCanvas("Pulse", "pulse")
 
 # Amplitude limit for the oscilloscope
-osc_limit = 350
+osc_limit = 345
 
 def pulsePlots():
 
@@ -87,10 +87,6 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_t
         max_sample_vs_points_threshold_th2d = ROOT.TH2D("Max sample vs no of points", "amp_vs_points", 80, 0, 80, 100, 0, 200)
         
         for entry in range(0, len(peak_values[chan])):
-            
-            # Ignore events which are below the cut
-            if peak_values[chan][entry] < -md.getPulseAmplitudeCut(chan)*1000 or peak_values[chan][entry] > osc_limit:
-                continue
 
             if peak_values[chan][entry] != 0:
                 peak_values_th1d.Fill(peak_values[chan][entry])
@@ -130,13 +126,15 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_t
 
 
         # Create parameters for landau (*) gaus fit
+        peak_values_th1d.SetAxisRange(0, osc_limit)
         std_dev = peak_values_th1d.GetStdDev()
         integral = peak_values_th1d.Integral()
         MPV_bin = peak_values_th1d.GetMaximumBin()
         MPV_value = peak_values_th1d.GetBinCenter(MPV_bin)
         
+        
         # Set range for fit
-        xMin = max((MPV_value - std_dev), -md.getPulseAmplitudeCut(chan)*1000)
+        xMin = max((MPV_value - std_dev), 5.0)
         xMax = osc_limit
         
         # Define range of fit, limits for parameters
@@ -152,6 +150,8 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_t
         param_limits_high = np.array([std_dev*10, MPV_value*10, integral*10, std_dev*10])
         
         landau_gaus_fit_function = ROOT.langaufit(peak_values_th1d, fit_range, start_values, param_limits_low, param_limits_high)
+        
+        peak_values_th1d.SetAxisRange(0, 500)
 
         # Define and print plot titles for all types of TH objects
         yAxisTitle = "Entries"
