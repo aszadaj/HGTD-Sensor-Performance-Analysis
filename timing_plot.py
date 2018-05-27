@@ -11,7 +11,7 @@ ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
 canvas = ROOT.TCanvas("Timing", "timing")
 
 # Range and bins for the window for TH1 objects
-xbins = 1900
+xbins = 1800
 bin_range = 15000
 
 def timingPlots():
@@ -179,7 +179,7 @@ def produceTimingDistributionPlotsSysEq(time_difference, peak_value, cfd05=False
             time_diff_th1d[chan][chan2].SetAxisRange(xMin, xMax)
 
             # Redefine range for the fit
-            N = 3
+            N = 2
             sigma_window = time_diff_th1d[chan][chan2].GetStdDev()
             mean_window = time_diff_th1d[chan][chan2].GetMean()
             xMin = mean_window - N * sigma_window

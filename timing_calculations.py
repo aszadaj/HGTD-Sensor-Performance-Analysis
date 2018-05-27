@@ -92,9 +92,9 @@ def getSigmasFromFit(th1d_list, chan):
     th1d_list.SetAxisRange(xMin, xMax)
     
     # Fit using normal gaussian
-    N = 3
-    sigma_window = th1d_list.GetStdDev()
+    N = 2
     mean_window = th1d_list.GetMean()
+    sigma_window = th1d_list.GetStdDev()
     xMin = mean_window - N * sigma_window
     xMax = mean_window + N * sigma_window
 
@@ -114,7 +114,7 @@ def getSigmasFromFit(th1d_list, chan):
         # Create fit and calculate the width
         th1d_list.Fit("gaus_fit", "Q", "", xMin, xMax)
         sigma_SiPM = md.getSigmaSiPM()
-        sigma_fit = th1d_list.GetFunction("gaus_fit").GetParameter(2)
+        sigma_fit = abs(th1d_list.GetFunction("gaus_fit").GetParameter(2))
         sigma_fit_error = th1d_list.GetFunction("gaus_fit").GetParError(2)
     
         if sigma_fit > sigma_SiPM:

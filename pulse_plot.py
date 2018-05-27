@@ -74,7 +74,6 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_t
     
     for chan in channels:
         
-        
         print "\nPULSE PLOTS: Batch", md.getBatchNumber(),"sensor", md.getNameOfSensor(chan), chan, "\n"
         
         # Create and fill objects with values
