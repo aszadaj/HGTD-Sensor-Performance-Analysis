@@ -95,7 +95,7 @@ def exportROOTFile(data, group, category="", sensor_info=[], same_osc=False, cfd
     
     elif category == "position":
     
-        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(category)+"_"+str(md.getBatchNumber()/100)+".root"
+        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(category)+"_"+str(md.getBatchNumber())+".root"
 
     elif group == "results":
 
@@ -139,8 +139,16 @@ def exportROOTHistogram(graphList, fileName):
     rootDestination = fileName.replace("plots_hgtd_efficiency_sep_2017", "plots_data_hgtd_efficiency_sep_2017")
     rootDestination = rootDestination.replace(".pdf", ".root")
     fileObject = ROOT.TFile(rootDestination, "RECREATE")
+    graphList.Write()
     fileObject.Close()
 
+def importROOTHistogram(fileName):
+
+    rootDestination = fileName.replace("plots_hgtd_efficiency_sep_2017", "plots_data_hgtd_efficiency_sep_2017")
+    rootDestination = rootDestination.replace(".pdf", ".root")
+    fileObject = ROOT.TFile(rootDestination)
+
+    return fileObject
 
 
 # Import noise data file
@@ -201,7 +209,7 @@ def importROOTFile(group, category="", sensor_info=[], same_osc=False, cfd05=Fal
             fileName = getSourceFolderPath()+"tracking_data_sep_2017/tracking"+md.getTimeStamp()+".root"
         
         else:
-            fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+group+"/"+category+"_"+str(md.getBatchNumber()/100)+".root"
+            fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+group+"/"+category+"_"+str(md.getBatchNumber())+".root"
 
     
     elif group == "timing":
@@ -286,6 +294,13 @@ def convertRiseTimeData(rise_times):
 
     return rise_times
 
+def convertPositionData(position):
+
+    for dimension in position.dtype.names:
+        position[dimension] = np.multiply(position[dimension], 0.001)
+
+    return position
+
 
 
 def changeDTYPEOfData(data):
@@ -309,12 +324,7 @@ def changeDTYPEOfData(data):
     return data
 
 
-# Create array for exporting center positions, inside tracking
-def createCenterPositionArray():
 
-    dt = (  [('chan0', '<f8', 2), ('chan1', '<f8', 2) ,('chan2', '<f8', 2) ,('chan3', '<f8', 2) ,('chan4', '<f8', 2) ,('chan5', '<f8', 2) ,('chan6', '<f8', 2) ,('chan7', '<f8', 2)] )
-    
-    return np.zeros(1, dtype = dt)
 
 
 # Get actual time

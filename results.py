@@ -158,7 +158,7 @@ def produceResults():
                 
                 voltage = md.getBiasVoltage(sensor)
                 temperature = str(md.getTemperature())
-                DUT_pos = md.getDUTPos(sensor, chan)
+                DUT_pos = md.getDUTPos(chan)
                 resultsDict[temperature][DUT_pos].append([voltage, results])
         
             # At this point, all info is collected

@@ -5,7 +5,7 @@ from datetime import datetime
 
 import metadata as md
 import tracking_plot as tplot
-import tracking_plot_pos as tpos
+import tracking_calc as t_calc
 import data_management as dm
 
 #md.setupATLAS()
@@ -17,7 +17,7 @@ ROOT.gROOT.SetBatch(True)
 def trackingAnalysis():
 
     dm.defineDataFolderPath()
-    startTime = md.dm.getTime()
+    startTime = dm.getTime()
     runLog_batch = md.getRunLogBatches(md.batchNumbers)
     
     print "\nStart TRACKING analysis, batches:", md.batchNumbers
@@ -30,20 +30,19 @@ def trackingAnalysis():
         startTimeBatch = dm.getTime()
     
         results_batch = []
-        
 
         for index in range(0, len(runLog)):
-        
-            md.defineGlobalVariableRun(runLog[index])
             
-            if (md.isTrackingFileAvailable()):
+            md.defineGlobalVariableRun(runLog[index])
+
+            if (md.isTrackingFileAvailableAndOK()):
                 
                 peak_values_run = dm.importPulseFile("peak_value")
                 rise_times_run = dm.importPulseFile("rise_time")
                 tracking_run = dm.importTrackingFile()
                 time_difference_peak_run = dm.importTimingFile("linear")
                 time_difference_cfd05_run = dm.importTimingFile("linear_cfd05")
-                
+     
                 # Slice the peak values to match the tracking files
                 if len(peak_values_run) > len(tracking_run):
                 
@@ -75,9 +74,13 @@ def trackingAnalysis():
                 time_difference_peak             = np.concatenate((time_difference_peak,  results_run[3]), axis = 0)
                 time_difference_cfd05            = np.concatenate((time_difference_cfd05,  results_run[4]), axis = 0)
         
+            # This function calculates the center position and exports the file as position_XXX.root.
+            # One time only.
+            
+            #t_calc.calculateCenterOfSensorPerBatch(peak_values, tracking)
+            
             tplot.produceTrackingGraphs(peak_values, rise_times, tracking, time_difference_peak, time_difference_cfd05)
-
-
+            
             print "\nDone with batch",runLog[0][5],"Time analysing: "+str(md.dm.getTime()-startTimeBatch)+"\n"
 
 

@@ -75,7 +75,7 @@ def isTimingDataFilesAvailable():
     return False
 
 # Check if the tracking file is available
-def isTrackingFileAvailable():
+def isTrackingFileAvailableAndOK():
 
 
     availableFilesPulse         = readFileNames("peak_value")
@@ -87,9 +87,12 @@ def isTrackingFileAvailable():
         if pulse_file == int(getRunNumber()):
             for tracking_file in availableFilesTracking:
                 if tracking_file == int(getTimeStamp()):
-                    return True
+                    if getRunNumber() in corruptedRuns():
+                        found = False
+                    else:
+                        found = True
 
-    return False
+    return found
 
 
 # Check if the noise file (noise = standard deviation) file is made
@@ -388,25 +391,27 @@ def getBiasVoltage(sensor):
     return int(runInfo[index+1])
 
 
-def checkIfArrayPad(chan="chan5"):
+def checkIfArrayPad(chan):
 
-    if getNameOfSensor(chan) == "W4-S204_6e14":
+    array_pad = False
+    batchCategory = getBatchNumber()/100
+    sensor = getNameOfSensor(chan)
 
-        return True
+    if sensor == "W4-S215" and batchCategory != 5 and batchCategory != 7:
+        array_pad = True
 
-    elif getNameOfSensor(chan) == "W4-S215":
-        
-        batchIndex = getBatchNumber()/100
-        
-        if batchIndex == 1 or batchIndex == 2 or batchIndex == 4:
-        
-            return True
+    elif sensor == "W4-RD01":
+        array_pad = True
 
-    else:
-    
-        return False
+    elif sensor == "W4-S204_6e14":
+        array_pad = True
 
-def getDUTPos(sensor, chan):
+    return array_pad
+
+
+
+
+def getDUTPos(chan):
 
     return str(runInfo[12+int(chan[-1])*5])
 
@@ -437,6 +442,14 @@ def numberDUTPos(sensor, chan=""):
 
         return getDUTPos(sensor, chan)
 
+# Runs which are marked with yellow color, probably
+# have unsynchronized telescope numbers
+def corruptedRuns():
+
+    # Runs which are out of sync
+    runs = [3691, 3693, 3697, 3701, 3982]
+
+    return runs
 
 
 # Set run info for selected run
@@ -465,7 +478,6 @@ def setBatchNumbers(numbers, exclude=[]):
 
                 
     batchNumbers = numbers
-
 
 
 def setLimitRunNumbers(number):

@@ -4,8 +4,7 @@ import root_numpy as rnm
 
 import metadata as md
 import data_management as dm
-import timing_calculations as t_calc
-import tracking_calc as track_calc
+import tracking_calc as t_calc
 
 ROOT.gStyle.SetPalette(1)
 ROOT.gStyle.SetNumberContours(20)
@@ -14,25 +13,32 @@ def produceTrackingGraphs(peak_values, rise_times, tracking, time_difference_pea
    
     global canvas
     global bin_size
-    global sep_x
-    global sep_y
     global minEntries
+    global fill_range
     
-    # Convert pulse data to positive mV values, and x and y positions into mm.
+    t_calc.setArrayPadExportBool(False)
+    
+    # Convert pulse amplitude values from [-V] to [+mV], rise time from [ns] to [ps] and position from [um] to [mm]
+    position = dm.importTrackingFile("position")
+    position = dm.convertPositionData(position)
     peak_values = dm.convertPulseData(peak_values)
     rise_times = dm.convertRiseTimeData(rise_times)
-    position = dm.importTrackingFile("position")
+    
     canvas = ROOT.TCanvas("Tracking", "tracking")
 
     # Bin size resolution of the MIMOSA
-    sep_x = 0.85
-    sep_y = 0.65
-    bin_size = 18.5 * 0.001
-    minEntries = 6
+    fill_range = [0.85, 0.65]
+    bin_size = 18.5 * 0.001 * 2
+    minEntries = 5
     
-    createSinglePadGraphs(peak_values, rise_times, time_difference_peak, time_difference_cfd05, tracking, position)
+    if md.getNumberOfRunsPerBatch() > 2 and md.getBatchNumber() != 203:
+        bin_size *= 0.5
+        minEntries = 10
 
-    #createArrayPadGraphs()
+
+#    createSinglePadGraphs(peak_values, rise_times, time_difference_peak, time_difference_cfd05, tracking, position)
+
+    createArrayPadGraphs(position)
 
 
 ###########################################
@@ -55,10 +61,7 @@ def createSinglePadGraphs(peak_values, rise_times, time_difference_peak, time_di
 
         print "\nSingle pad", md.getNameOfSensor(chan), "\n"
 
-        pos_x = position[chan][0][0]
-        pos_y = position[chan][0][1]
-
-        tracking_chan = track_calc.changeCenterPositionSensor(np.copy(tracking), pos_x, pos_y)
+        tracking_chan = t_calc.changeCenterPositionSensor(np.copy(tracking), position, chan)
 
         produceTProfilePlots(peak_values[chan], rise_times[chan], tracking_chan, time_difference_peak[chan], time_difference_cfd05[chan])
         produceEfficiencyPlot(peak_values[chan], tracking_chan)
@@ -67,81 +70,73 @@ def createSinglePadGraphs(peak_values, rise_times, time_difference_peak, time_di
 
 ###########################################
 #                                         #
-#           ARRAY PAD GRAPHS (not done)   #
+#       ARRAY PAD GRAPHS (not done)       #
 #                                         #
 ###########################################
 
 
-def produceArrayPlots(peak_values, tracking, position, time_difference_peak, time_difference_cfd05):
-
-    arrayPadSensor = md.getNameOfSensor(["chan5"])
-    batchCategory = md.getBatchNumber()/100
+def createArrayPadGraphs(position):
     
-    # W4-S204_6e14 -40 C
-    if batchCategory == 5 or batchCategory == 7:
-        channels = ["chan5", "chan6", "chan7"]
-        
-        # Calculate mean position from position of each array sensor
-        array_pos_x = (position["chan6"][0][0] + position["chan7"][0][0])/2
-        array_pos_y = (position["chan7"][0][1] + position["chan5"][0][1])/2
+    global chan
+    t_calc.setArrayPadExportBool(True)
     
-    else:
-        # W4-S215 22 C
-        if int(md.getBatchNumber()/100) == 1:
-            channels = ["chan4", "chan5", "chan6", "chan7"]
-
-        # W4-S215 22 C
-        elif int(md.getBatchNumber()/100) == 2:
-            channels = ["chan3", "chan5", "chan6", "chan7"]
-        
-        # W4-S215 -30 C
-        elif int(md.getBatchNumber()/100) == 4:
-            channels = ["chan1", "chan5", "chan6", "chan7"]
-
-        # Calculate mean position from position of each array sensor
-        array_pos_x = (position[channels[0]][0][0] + position[channels[1]][0][0] + position[channels[2]][0][0] + position[channels[3]][0][0])/4
-        array_pos_y = (position[channels[0]][0][1] + position[channels[1]][0][1] + position[channels[2]][0][1] + position[channels[3]][0][1])/4
-
-
-    # Double the size of the window
+    [sep_x, sep_y] = getFillRange()
+ 
     sep_x *= 2
     sep_y *= 2
+    
+    xbin = int(2*sep_x/bin_size)
+    ybin = int(2*sep_y/bin_size)
+    
+    # The binning for the timing resolution are decreased
+    bin_timing_decrease = 1.8
+    xbin_timing = int(xbin/bin_timing_decrease)
+    ybin_timing = int(ybin/bin_timing_decrease)
+    
+    arrayPadChannels = t_calc.getArrayPadChannels()
+    chan = arrayPadChannels[0]
 
     peak_value_mean_th2d = ROOT.TProfile2D("Pulse amplitude mean value","Pulse amplitude mean value", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y)
     rise_time_mean_th2d = ROOT.TProfile2D("Rise time mean value","Rise time mean value", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y)
     timing_peak_th2d = ROOT.TH2D("Timing resolution peak", "timing resolution peak", xbin_timing, -sep_x, sep_x, ybin_timing, -sep_y, sep_y)
-    timing_cfd05_th2d = ROOT.TH2D("Timing resolution cdf05", "timing resolution cdf05", xbin_timing, -sep_x, sep_x, ybin_timing, -sep_y, sep_y)
-
-    efficiency_th2d = ROOT.TH2D("Inefficiency", "Inefficiency",xbin,-sep_x,sep_x,ybin,-sep_y,sep_y)
+    timing_cfd05_th2d = ROOT.TH2D("Timing resolution cfd05", "timing resolution cfd05", xbin_timing, -sep_x, sep_x, ybin_timing, -sep_y, sep_y)
+    efficiency_th2d = ROOT.TH2D("Efficiency", "Efficiency",xbin,-sep_x,sep_x,ybin,-sep_y,sep_y)
     inefficiency_th2d = ROOT.TH2D("Inefficiency", "Inefficiency",xbin,-sep_x,sep_x,ybin,-sep_y,sep_y)
     
-    for chan in channels:
-        
-        # Print pulse amptlide mean value 2D plot
-        fileName = dm.getSourceFolderPath() + "plots_data_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/mean_value/tracking_mean_value_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+    TH2D_objects_list = [peak_value_mean_th2d, rise_time_mean_th2d, timing_peak_th2d, timing_cfd05_th2d, efficiency_th2d, inefficiency_th2d]
 
-        # Print rise time mean value 2D plot
-        fileName = dm.getSourceFolderPath() + "plots_data_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/rise_time_mean/tracking_rise_time_mean_value_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
-
-        # Print time resolution peak reference
-        fileName = dm.getSourceFolderPath() + "plots_data_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/time_resolution/tracking_time_resolution_peak_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
-
-        # Print time resolution cfd05 ref
-        fileName = dm.getSourceFolderPath() + "plots_data_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/time_resolution/tracking_time_resolution_cfd05_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
-        
-        # Print efficiency plot
-        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/efficiency/tracking_efficiency_" + str(md.getBatchNumber()) +"_" + chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
-
-        # Print inefficiency plot
-        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/inefficiency/tracking_inefficiency_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+    print "\nArray Pad", md.getNameOfSensor(chan), "\n"
+    
+    for TH2D_object in TH2D_objects_list:
+        for index in range(0, len(arrayPadChannels)):
+            
+            t_calc.importAndAddHistogram(TH2D_object, index)
 
 
-    track_calc.changeCenterPositionSensor(tracking, array_pos_x, array_pos_y, True)
-    peak_values_array = peak_values[channels]
-    time_difference_peak_array = time_difference_peak[channels]
-    time_difference_cfd05_array = time_difference_cfd05[channels]
+    # Print pulse amplitude mean value 2D plot
+    peak_value_mean_th2d.SetAxisRange(0, peak_value_mean_th2d.GetMaximum(), "Z")
+    peak_value_mean_th2d.SetNdivisions(10, "Z")
+    printTHPlot(peak_value_mean_th2d)
+    
+    # Print rise time mean value 2D plot
+    peak_value_mean_th2d.SetAxisRange(rise_time_mean_th2d.GetMaximum()-400, rise_time_mean_th2d.GetMaximum()+400, "Z")
+    peak_value_mean_th2d.SetNdivisions(10, "Z")
+    printTHPlot(rise_time_mean_th2d)
 
-    print "\nArray Pad", md.getNameOfSensor(channels[0]), "\n"
+
+    # Print time resolution peak reference
+    timing_peak_th2d.SetAxisRange(0, 200, "Z")
+    printTHPlot(timing_peak_th2d)
+
+    # Print time resolution cfd05 ref
+    timing_cfd05_th2d.SetAxisRange(0, 200, "Z")
+    printTHPlot(timing_cfd05_th2d)
+
+    efficiency_th2d.SetAxisRange(0, 100, "Z")
+    printTHPlot(efficiency_th2d)
+
+    inefficiency_th2d.SetAxisRange(0, 100, "Z")
+    printTHPlot(inefficiency_th2d)
 
 
 
@@ -155,6 +150,13 @@ def produceArrayPlots(peak_values, tracking, position, time_difference_peak, tim
 # Produce mean value and time resolution plots
 def produceTProfilePlots(peak_values, rise_times, tracking, time_difference_peak, time_difference_cfd05):
 
+    [sep_x, sep_y] = getFillRange()
+
+    if md.checkIfArrayPad(chan):
+    
+        sep_x *= 2
+        sep_y *= 2
+    
     xbin = int(2*sep_x/bin_size)
     ybin = int(2*sep_y/bin_size)
 
@@ -172,10 +174,10 @@ def produceTProfilePlots(peak_values, rise_times, tracking, time_difference_peak
     rise_time_mean_th2d = ROOT.TProfile2D("Rise time mean value","Rise time mean value", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y)
 
     timing_peak_th2d_temp = ROOT.TProfile2D("Timing resolution peak temp", "timing resolution peak temp", xbin_timing, -sep_x, sep_x, ybin_timing, -sep_y, sep_y, "s")
-    timing_cfd05_th2d_temp = ROOT.TProfile2D("Timing resolution cdf05 temp", "timing resolution cdf05 temp", xbin_timing, -sep_x, sep_x, ybin_timing, -sep_y, sep_y, "s")
+    timing_cfd05_th2d_temp = ROOT.TProfile2D("Timing resolution cfd05 temp", "timing resolution cfd05 temp", xbin_timing, -sep_x, sep_x, ybin_timing, -sep_y, sep_y, "s")
 
     timing_peak_th2d = ROOT.TH2D("Timing resolution peak", "timing resolution peak", xbin_timing, -sep_x, sep_x, ybin_timing, -sep_y, sep_y)
-    timing_cfd05_th2d = ROOT.TH2D("Timing resolution cdf05", "timing resolution cdf05", xbin_timing, -sep_x, sep_x, ybin_timing, -sep_y, sep_y)
+    timing_cfd05_th2d = ROOT.TH2D("Timing resolution cfd05", "timing resolution cfd05", xbin_timing, -sep_x, sep_x, ybin_timing, -sep_y, sep_y)
 
     # Fill mean values and time differences in each bin, for peak reference and rise time reference
     for event in range(0, len(tracking)):
@@ -205,8 +207,8 @@ def produceTProfilePlots(peak_values, rise_times, tracking, time_difference_peak
     sigma_SiPM = md.getSigmaSiPM()
     
     # Filter pulse amplitude and rise time mean value bins
-    for i in range(1, xbin_timing+1):
-        for j in range(1, ybin_timing+1):
+    for i in range(1, xbin+1):
+        for j in range(1, ybin+1):
         
             bin = peak_value_mean_th2d.GetBin(i,j)
             num_mean = peak_value_mean_th2d.GetBinEntries(bin)
@@ -247,42 +249,29 @@ def produceTProfilePlots(peak_values, rise_times, tracking, time_difference_peak
     timing_cfd05_th2d_temp.ResetStats()
     ROOT.gStyle.SetOptStat(1)
 
+
     # Print pulse amplitude mean value 2D plot
-    headTitle = "Mean pulse amplitude value - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"+"; X [mm] ; Y [mm] ; V [mV]"
-    fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/mean_value/tracking_mean_value_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
-    totalEntries = peak_value_mean_th2d.GetEntries()
-    titles = [headTitle, fileName, totalEntries]
     peak_value_mean_th2d.SetAxisRange(0, peak_value_mean_th2d.GetMaximum(), "Z")
     peak_value_mean_th2d.SetNdivisions(10, "Z")
-    printTHPlot(peak_value_mean_th2d, titles)
+    printTHPlot(peak_value_mean_th2d)
 
 
     # Print rise time mean value 2D plot
-    headTitle = "Mean pulse rise time value - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"+"; X [mm] ; Y [mm] ; t [ps]"
-    fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/rise_time_mean/tracking_rise_time_mean_value_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
-    totalEntries = rise_time_mean_th2d.GetEntries()
-    titles = [headTitle, fileName, totalEntries]
-    peak_value_mean_th2d.SetAxisRange(rise_time_mean_th2d.GetMaximum()-400, rise_time_mean_th2d.GetMaximum()+400, "Z")
-    peak_value_mean_th2d.SetNdivisions(10, "Z")
-    printTHPlot(rise_time_mean_th2d, titles)
+    rise_time_mean_th2d.SetAxisRange(rise_time_mean_th2d.GetMaximum()-400, rise_time_mean_th2d.GetMaximum()+400, "Z")
+    rise_time_mean_th2d.SetNdivisions(10, "Z")
+    printTHPlot(rise_time_mean_th2d)
 
 
     # Print time resolution peak reference
-    headTitle = "Time resolution (peak ref.) - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"+"; X [mm] ; Y [mm] ; \sigma_{t} [ps]"
-    fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/time_resolution/tracking_time_resolution_peak_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
     totalEntries = timing_peak_th2d_temp.GetEntries()
-    titles = [headTitle, fileName, totalEntries]
     timing_peak_th2d.SetAxisRange(0, 200, "Z")
-    printTHPlot(timing_peak_th2d, titles)
+    printTHPlot(timing_peak_th2d, totalEntries)
 
 
     # Print time resolution cfd05 ref
-    headTitle = "Time resolution (CFD ref) - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"+"; X [mm] ; Y [mm] ; \sigma_{t} [ps]"
-    fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/time_resolution/tracking_time_resolution_cfd05_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
     totalEntries = timing_cfd05_th2d_temp.GetEntries()
-    titles = [headTitle, fileName, totalEntries]
     timing_cfd05_th2d.SetAxisRange(0, 200, "Z")
-    printTHPlot(timing_cfd05_th2d, titles)
+    printTHPlot(timing_cfd05_th2d, totalEntries)
 
 
 ###########################################
@@ -294,6 +283,13 @@ def produceTProfilePlots(peak_values, rise_times, tracking, time_difference_peak
 
 # Produce efficiency graphs (for array and single pads) and projection histograms (single pad arrays only)
 def produceEfficiencyPlot(peak_values, tracking):
+
+    [sep_x, sep_y] = getFillRange()
+    
+    if md.checkIfArrayPad(chan):
+    
+        sep_x *= 2
+        sep_y *= 2
 
     xbin = int(2*sep_x/bin_size)
     ybin = int(2*sep_y/bin_size)
@@ -373,27 +369,21 @@ def produceEfficiencyPlot(peak_values, tracking):
 
 
     # Create projection plots for single pad arrays only
-    produceProjectionPlots(projectionX_th1d, projectionY_th1d)
+    produceProjectionPlots(projectionX_th1d, projectionY_th1d, sep_x, sep_y)
+    
     
     totalEntries = efficiency_TEff.GetPassedHistogram().GetEntries()
 
-    # Print efficiency plot
-    headTitle = "Efficiency - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"+ "; X [mm] ; Y [mm] ; Efficiency (%)"
-    fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/efficiency/tracking_efficiency_" + str(md.getBatchNumber()) +"_" + chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
-    titles = [headTitle, fileName, totalEntries]
     efficiency_TEff.Draw("COLZ")
     canvas.Update()
-    efficiency_TEff.GetPaintedHistogram().Scale(100)
-    efficiency_TEff.GetPaintedHistogram().SetAxisRange(0, 100, "Z")
-    printTHPlot(efficiency_TEff.GetPaintedHistogram(), titles)
+    efficiency_TH2D = efficiency_TEff.GetPaintedHistogram()
+    efficiency_TH2D.Scale(100)
+    efficiency_TH2D.SetAxisRange(0, 100, "Z")
+    efficiency_TH2D.SetName("Efficiency")
+    printTHPlot(efficiency_TH2D, totalEntries)
 
-
-    # Print inefficiency plot
-    headTitle = "Inefficiency - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"+ "; X [mm] ; Y [mm] ; Inefficiency (%)"
-    fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/inefficiency/tracking_inefficiency_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
-    titles = [headTitle, fileName, totalEntries]
     inefficiency_th2d.SetAxisRange(0, 100, "Z")
-    printTHPlot(inefficiency_th2d, titles)
+    printTHPlot(inefficiency_th2d, totalEntries)
 
 
 
@@ -405,16 +395,20 @@ def produceEfficiencyPlot(peak_values, tracking):
 
 
 # Print TH2 Object plot
-def printTHPlot(graphList, info):
+def printTHPlot(graphList, entries=0):
     
+    if entries == 0:
+        entries = graphList.GetEntries()
+    
+    objectName = graphList.GetName()
+    fileName, headTitle = t_calc.getTitleAndFileName(objectName, chan)
+
+    graphList.SetTitle(headTitle)
     canvas.SetRightMargin(0.14)
-    graphList.SetEntries(info[2])
     graphList.SetStats(1)
-    graphList.SetTitle(info[0])
     graphList.Draw("COLZ")
     canvas.Update()
-    
-    
+
     # Move the stats box
     stats_box = graphList.GetListOfFunctions().FindObject("stats")
     stats_box.SetX1NDC(0.1)
@@ -424,15 +418,19 @@ def printTHPlot(graphList, info):
 
     # Recreate stats box
     stats_box.SetOptStat(1000000011)
-
-
+    graphList.SetEntries(entries)
+    
+    # Draw again to update the canvas
+    graphList.Draw("COLZ")
+    canvas.Update()
+    
     # Export PDF and Histogram
-    canvas.Print(info[1])
-    dm.exportROOTHistogram(graphList, info[1])
+    canvas.Print(fileName)
+    dm.exportROOTHistogram(graphList, fileName)
     canvas.Clear()
 
 
-def produceProjectionPlots(projectionX_th1d, projectionY_th1d):
+def produceProjectionPlots(projectionX_th1d, projectionY_th1d, sep_x, sep_y):
 
     fit_sigmoid_x = ROOT.TF1("sigmoid_x", "([0]/(1+ TMath::Exp(-[1]*(x-[2]))) - [0]/(1+ TMath::Exp(-[1]*(x-[3]))))", -sep_x, sep_x)
     fit_sigmoid_x.SetParameters(100, 70, -0.5, 0.5)
@@ -476,4 +474,9 @@ def printProjectionPlot(graphList, info):
     # Export histogram as ROOT file
     dm.exportROOTHistogram(graphList, info[1])
     canvas.Clear()
+
+
+def getFillRange():
+
+    return fill_range[0], fill_range[1]
 
