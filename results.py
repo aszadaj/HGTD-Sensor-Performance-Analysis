@@ -7,14 +7,11 @@ import math
 import metadata as md
 import data_management as dm
 
+
 def produceResults():
-    
+
     dm.defineDataFolderPath()
-    startTime = dm.getTime()
-   
     runLog = md.getRunLog()
-    
-    fileDirectoryResults = dm.getSourceFolderPath() + "results_hgtd_efficiency_sep_2017/"
     
     print "\nStart RESULTS"
     
@@ -24,216 +21,132 @@ def produceResults():
     canvas = ROOT.TCanvas("Results", "Results")
     
     sensorNames = md.getAllSensorNames()
-    sensorNames.remove("SiPM-AFP")
     
-#    sensorNames = ["W4-S215"]
-
+    # ROOT data sournce
     sourceResultsFiles = dm.getSourceFolderPath() + "results_data_hgtd_efficiency_sep_2017/"
     
+    # Export directory
+    fileDirectoryResults = dm.getSourceFolderPath() + "results_hgtd_efficiency_sep_2017/"
+    
     categories = ["noise", "pedestal", "peak_value", "rise_time", "timing_normal", "timing_system", "timing_normal_cfd05", "timing_system_cfd05"]
-#    categories = ["peak_value"]
+    
+#    sensorNames = ["W4-S215"]
+#    categories = ["timing_normal", "timing_system", "timing_normal_cfd05", "timing_system_cfd05"]
 
     resultsDict = dict()
+
     
+    # loop through each category
+    for category in categories:
     
-    for sensor in sensorNames:
+        print category, "\n"
+    
+        category_graph = ROOT.TMultiGraph()
+        legend_graph = ROOT.TLegend(0.7, 0.9, 0.9, 0.6)
         
-        print "\nSensor", sensor
-        fileDirectory = sourceResultsFiles + sensor + "/"
- 
-        for category in categories:
-            
-            if category.find("system") != -1 and (sensor == "W4-S215" or sensor == "W4-S204_6e14" or sensor == "W4-RD01"):
-                continue
+        graph = dict()
         
+        for sensor in sensorNames:
         
-            # Have to define the global variable to make the code work
-            files = readFileNames(fileDirectory+category+"/")
-            file = files[0]
-            fileName = fileDirectory+category+"/"+file
-            chan = "chan" + file[file.find("chan")+4]
-            results = rnm.root2array(fileName)
-            batchNumber = getBatchNumberFromFile(file)
-            md.defineGlobalVariableRun(md.getRowForBatchNumber(batchNumber))
+            graph[sensor] = dict()
+            sensor_data = dict()
             
-            # Change positions and size of legend box
-            extend_legend_box = 0
-            
-            if len(md.numberDUTPos(sensor, chan)) > 3:
-            
-                extend_legend_box = 0.1
-            
-            if category == "noise" or category == "pedestal":
+            # Create TGraphErrors for each sensor, temperature and position (in the case of array pads)
+            for temperature in md.availableTemperatures():
                 
-                legend[category] = ROOT.TLegend(0.6, 0.9, 0.9, 0.7-extend_legend_box)
-            
-            elif category.find("timing") != -1:
-            
-                legend[category] = ROOT.TLegend(0.75, 0.9, 0.9, 0.7-extend_legend_box)
-            
-            else:
-            
-                legend[category] = ROOT.TLegend(0.15, 0.9, 0.3, 0.7-extend_legend_box)
-            
-            # Define titles, head and axes
-            if category == "noise":
-                titleGraph = "Noise values per bias voltage"
-                xTitle = "Bias voltage [V]"
-                yTitle = "Noise [mV]"
-            
-            elif category == "pedestal":
-                titleGraph = "Pedestal values per bias voltage"
-                xTitle = "Bias voltage [V]"
-                yTitle = "Pedestal [mV]"
-
-            elif category == "peak_value":
-            
-                titleGraph = "Pulse amplitude values per voltage"
-                xTitle = "Bias voltage [V]"
-                yTitle = "Pulse amplitude [mV]"
-
-            elif category == "rise_time":
+                graph[sensor][temperature] = dict()
+                sensor_data[temperature] = dict()
                 
-                titleGraph = "Rise time values per voltage"
-                xTitle = "Bias voltage [V]"
-                yTitle = "Rise time [ps]"
-
-            elif category == "timing_normal":
-            
-                titleGraph = "Time resolution values per voltage"
-                xTitle = "Bias voltage [V]"
-                yTitle = "Time resolution [ps]"
-
-
-            elif category == "timing_normal_cfd05":
-            
-                titleGraph = "Time resolution values per voltage (cfd05)"
-                xTitle = "Bias voltage [V]"
-                yTitle = "Time resolution [ps]"
+                # availableDUTPositions(sensor) consider only one pad so far.
+                
+                for DUT_pos in md.availableDUTPositions(sensor):
+                    graph[sensor][temperature][DUT_pos] = ROOT.TGraphErrors()
+                    sensor_data[temperature][DUT_pos] = []
+                    
+                    # Change each marker type and color
+                    setMarkerType(graph[sensor][temperature][DUT_pos], sensor, DUT_pos, temperature)
+        
+            # Import results for the sensor and category
+            fileDirectory = sourceResultsFiles + sensor + "/" + category + "/"
+            files = readFileNames(fileDirectory)
 
             
-            elif category == "timing_system":
-            
-                titleGraph = "Time resolution values per voltage (system)"
-                xTitle = "Bias voltage [V]"
-                yTitle = "Time resolution [ps]"
-
-
-            elif category == "timing_system_cfd05":
-            
-                titleGraph = "Time resolution values per voltage (system, cfd05)"
-                xTitle = "Bias voltage [V]"
-                yTitle = "Time resolution [ps]"
-
-
-
-            resultsDict.clear()
-
-            # Fill TGraphs according to DUT pos and temperature
-            
-            resultsDict["20"] = dict()
-            resultsDict["22"] = dict()
-            resultsDict["-30"] = dict()
-            resultsDict["-40"] = dict()
-            
-            for pos in md.numberDUTPos(sensor, chan):
-            
-                resultsDict["20"][pos] = []
-                resultsDict["22"][pos] = []
-                resultsDict["-30"][pos] = []
-                resultsDict["-40"][pos] = []
-
-            
-            resultGraphs[category] = ROOT.TMultiGraph()
-            
-
+            # here are imported all files, that is for each pad, temperature and bias voltage
             for file in files:
-                
-                fileName = fileDirectory+category+"/"+file
+
                 chan = "chan" + file[file.find("chan")+4]
-                results = rnm.root2array(fileName)
-            
+                results = rnm.root2array(fileDirectory+file)
+                
                 batchNumber = getBatchNumberFromFile(file)
                 md.defineGlobalVariableRun(md.getRowForBatchNumber(batchNumber))
+        
+                if batchNumber in omitBadDataBatches(chan):
+                    continue
+            
                 
+                value = results[0][0]
+                error = results[1][0]
                 voltage = md.getBiasVoltage(sensor)
                 temperature = str(md.getTemperature())
                 DUT_pos = md.getDUTPos(chan)
-                resultsDict[temperature][DUT_pos].append([voltage, results])
-        
-            # At this point, all info is collected
-
-            colorNumber = 6
+                sensor_data[temperature][DUT_pos].append([voltage, value, error])
 
 
-            graph = dict()
+            oneSensorInLegend = True
             
-            for temperature in ["20", "22", "-30", "-40"]:
-                markerStyle = 20
-                for pos in md.numberDUTPos(sensor, chan):
-                    if len(resultsDict[temperature][pos]) != 0:
-                        graph[category] = ROOT.TGraphErrors()
-
-                        graph[category].SetMarkerColor(colorNumber)
-                        graph[category].SetMarkerStyle(markerStyle)
-                        i = 0
-
-                        for voltage, result in resultsDict[temperature][pos]:
-        
-                            graph[category].SetPoint(i, voltage, result[category][0])
-                            graph[category].SetPointError(i, 0, result[category][1])
-
-                            i += 1
-                        
-                        resultGraphs[category].Add(graph[category])
-                        
-                        # Add variance to legend box for noise plots
-                        if category == "noise":
-                            legend[category].AddEntry(graph[category], str(temperature) + " \circC, " + str(round(graph[category].GetMean(2),1)) + " \pm "+ str(round(graph[category].GetRMS(2),1)) + " mV" , "p")
-                        else:
-                            legend[category].AddEntry(graph[category], str(temperature) + " \circC", "p")
-
-                    markerStyle += 1
-                colorNumber += 1
-
-
-            resultGraphs[category].Draw("AP")
-            legend[category].SetTextSize(0.03)
-            legend[category].SetBorderSize(1)
-            legend[category].Draw()
-
-            resultGraphs[category].SetTitle((titleGraph+" "+sensor))
-            resultGraphs[category].GetXaxis().SetTitle(xTitle)
-            resultGraphs[category].GetYaxis().SetTitle(yTitle)
-
-            yMin = resultGraphs[category].GetHistogram().GetMinimum()
-            yMax = resultGraphs[category].GetHistogram().GetMaximum()
-            d = yMax-yMin
-
-            dist = 7
-
-            y_low = yMin - dist*d
-            y_high = yMax + dist*d
-
-
-            # Adapt this depending on graph
-            if category == "noise" or category == "pedestal":
-                resultGraphs[category].SetMinimum(y_low)
-                resultGraphs[category].SetMaximum(y_high)
-
-            canvas.Update()
-
-            fileName = fileDirectoryResults +category+"/" + category + "_results_"+sensor+".pdf"
+            # availableDUTPositions(sensor) consider only one pad so far.
+            for DUT_pos in md.availableDUTPositions(sensor):
             
-            canvas.Print(fileName)
+                if DUT_pos in ["3_0", "3_1", "3_3", "8_1", "7_2", "7_3"]:
+                    continue
+                
+                for temperature in md.availableTemperatures():
+                
+                    sensor_data[temperature][DUT_pos].sort()
+                    
+                    
+                    i = 0
+                    for data in sensor_data[temperature][DUT_pos]:
+                    
+                        graph[sensor][temperature][DUT_pos].SetPoint(i, data[0], data[1])
+                        graph[sensor][temperature][DUT_pos].SetPointError(i, 0, data[2])
+                        
+                        i += 1
+                    
+                    if graph[sensor][temperature][DUT_pos].GetN() != 0:
+                        category_graph.Add(graph[sensor][temperature][DUT_pos])
+                        
+                        if oneSensorInLegend:
+                            legend_graph.AddEntry(graph[sensor][temperature][DUT_pos], sensor, "p")
+                        
+                        oneSensorInLegend = False
+            
 
-            canvas.Clear()
+    
+    
+        category_graph.Draw("APL")
+        setGraphAttributes(category_graph, category, sensor)
+
+
+        legend_graph.Draw()
+        
+        # Draw extra legend with information about the coloring
+        legend_text = ROOT.TLatex()
+        legend_text.SetTextSize(0.035)
+        legend_text.SetNDC(True)
+        legend_text.DrawLatex(.7, .55, "Marker color")
+        legend_text.DrawLatex(.7, .5, "#color[2]{Red}    = 22\circC")
+        legend_text.DrawLatex(.7, .45, "#color[4]{Blue}   = -30\circC")
+        legend_text.DrawLatex(.7, .4, "#color[3]{Green} = -40\circC")
+        
+        fileName = fileDirectoryResults + "/" + category + "_results.pdf"
+        canvas.Print(fileName)
+
 
 # Read in results files for each category
 def readFileNames(directory):
 
     availableFiles = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) and f != '.DS_Store']
-
     availableFiles.sort()
     
     return availableFiles
@@ -241,5 +154,181 @@ def readFileNames(directory):
 
 def getBatchNumberFromFile(file):
     return int(file[file.find("chan")-4:file.find("chan")-1])
+
+
+def omitBadDataBatches(chan):
+
+    list = [801, 802, 803, 804, 805, 806]
+
+    sensor = md.getNameOfSensor(chan)
+
+    if sensor == "W4-RD01":
+
+        list.append(606)
+    
+    elif sensor == "W4-S203":
+
+        list.append(704)
+        list.append(705)
+        list.append(706)
+
+    elif sensor == "W4-S215" or sensor == "W4-S1022" or sensor == "W4-S1061":
+    
+        list.append(405)
+        list.append(406)
+        list.append(706)
+
+    return list
+
+
+def setGraphAttributes(category_graph, category, sensor):
+
+    # Define titles, head and axes
+    if category == "noise":
+        titleGraph = "Noise values per bias voltage"
+        xTitle = "Bias voltage [V]"
+        yTitle = "Noise [mV]"
+        y_lim = [0, 10]
+    
+    elif category == "pedestal":
+        titleGraph = "Pedestal values per bias voltage"
+        xTitle = "Bias voltage [V]"
+        yTitle = "Pedestal [mV]"
+        y_lim = [-10, 10]
+
+    elif category == "peak_value":
+    
+        titleGraph = "Pulse amplitude values per voltage"
+        xTitle = "Bias voltage [V]"
+        yTitle = "Pulse amplitude [mV]"
+        y_lim = [0, 300]
+
+    elif category == "rise_time":
+        
+        titleGraph = "Rise time values per voltage"
+        xTitle = "Bias voltage [V]"
+        yTitle = "Rise time [ps]"
+        y_lim = [0, 2000]
+
+    elif category == "timing_normal":
+    
+        titleGraph = "Time resolution values per voltage"
+        xTitle = "Bias voltage [V]"
+        yTitle = "Time resolution [ps]"
+        y_lim = [0, 300]
+
+
+    elif category == "timing_normal_cfd05":
+    
+        titleGraph = "Time resolution values per voltage (cfd05)"
+        xTitle = "Bias voltage [V]"
+        yTitle = "Time resolution [ps]"
+        y_lim = [0, 300]
+
+    elif category == "timing_system":
+    
+        titleGraph = "Time resolution values per voltage (system)"
+        xTitle = "Bias voltage [V]"
+        yTitle = "Time resolution [ps]"
+        y_lim = [0, 300]
+
+    elif category == "timing_system_cfd05":
+    
+        titleGraph = "Time resolution values per voltage (system, cfd05)"
+        xTitle = "Bias voltage [V]"
+        yTitle = "Time resolution [ps]"
+        y_lim = [0, 300]
+
+    category_graph.SetTitle(titleGraph)
+    category_graph.GetXaxis().SetTitle(xTitle)
+    category_graph.GetYaxis().SetTitle(yTitle)
+
+    category_graph.GetXaxis().SetLimits(0, 500)
+    category_graph.SetMinimum(y_lim[0])
+    category_graph.SetMaximum(y_lim[1])
+
+    # Future fix, set ranges
+
+
+def setMarkerType(graph, sensor, pos, temperature, marker_style = False):
+
+    size = 1
+    
+    # Red 22 deg C
+    if temperature == "22":
+        color = 2
+    
+    # Blue -30 deg C
+    elif temperature == "-30":
+        color = 4
+
+    # Green -40 deg C
+    else:
+        color = 8
+
+    if sensor == "W9-LGA35":
+        marker = 20
+
+    elif sensor == "W4-S203":
+        marker = 21
+
+    elif sensor == "W4-S215":
+        marker = 22
+        
+        if pos == "3_0":
+            size = 1.2
+        
+        elif pos == "3_1":
+             size = 1.4
+        
+        elif pos == "3_2":
+             size = 1.6
+
+        elif pos == "3_3":
+             size = 1.8
+
+    elif sensor == "50D-GBGR2":
+        marker = 23
+
+    elif sensor == "W4-LG07":
+        marker = 24
+
+    elif sensor == "W4-LG12":
+        marker = 25
+
+    elif sensor == "W4-S1061":
+        marker = 26
+
+    elif sensor == "W4-S1022":
+        marker = 27
+
+    elif sensor == "W4-S204_6e14":
+        marker = 28
+        if pos == "7_0":
+            size = 1.2
+        
+        elif pos == "7_2":
+            size = 1.4
+        
+        elif pos == "7_3":
+            size = 1.8
+
+
+    elif sensor == "W4-RD01":
+        marker = 29
+        if pos == "7_0":
+            size = 1.2
+        
+        elif pos == "7_2":
+            size = 1.4
+
+
+    if marker_style:
+        graph.SetMarkerColor(1)
+    else:
+        graph.SetMarkerColor(color)
+
+    graph.SetMarkerStyle(marker)
+    graph.SetMarkerSize(size)
 
 

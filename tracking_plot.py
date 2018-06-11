@@ -29,16 +29,17 @@ def produceTrackingGraphs(peak_values, rise_times, tracking, time_difference_pea
     # Bin size resolution of the MIMOSA
     fill_range = [0.85, 0.65]
     bin_size = 18.5 * 0.001 * 2
-    minEntries = 5
+    minEntries = 3
     
     if md.getNumberOfRunsPerBatch() > 2 and md.getBatchNumber() != 203:
         bin_size *= 0.5
-        minEntries = 10
+        minEntries = 6
 
 
-#    createSinglePadGraphs(peak_values, rise_times, time_difference_peak, time_difference_cfd05, tracking, position)
+    createSinglePadGraphs(peak_values, rise_times, time_difference_peak, time_difference_cfd05, tracking, position)
 
-    createArrayPadGraphs(position)
+    if md.getBatchNumber()/100 != 8:
+        createArrayPadGraphs(position)
 
 
 ###########################################
@@ -58,7 +59,7 @@ def createSinglePadGraphs(peak_values, rise_times, time_difference_peak, time_di
     
         if md.getNameOfSensor(chan) == "SiPM-AFP":
             continue
-
+    
         print "\nSingle pad", md.getNameOfSensor(chan), "\n"
 
         tracking_chan = t_calc.changeCenterPositionSensor(np.copy(tracking), position, chan)
@@ -78,7 +79,6 @@ def createSinglePadGraphs(peak_values, rise_times, time_difference_peak, time_di
 def createArrayPadGraphs(position):
     
     global chan
-    t_calc.setArrayPadExportBool(True)
     
     [sep_x, sep_y] = getFillRange()
  
@@ -109,9 +109,11 @@ def createArrayPadGraphs(position):
     
     for TH2D_object in TH2D_objects_list:
         for index in range(0, len(arrayPadChannels)):
-            
+         
             t_calc.importAndAddHistogram(TH2D_object, index)
 
+    # Change the exported file name to include array, so it is not overwritten.
+    t_calc.setArrayPadExportBool(True)
 
     # Print pulse amplitude mean value 2D plot
     peak_value_mean_th2d.SetAxisRange(0, peak_value_mean_th2d.GetMaximum(), "Z")
@@ -119,7 +121,7 @@ def createArrayPadGraphs(position):
     printTHPlot(peak_value_mean_th2d)
     
     # Print rise time mean value 2D plot
-    peak_value_mean_th2d.SetAxisRange(rise_time_mean_th2d.GetMaximum()-400, rise_time_mean_th2d.GetMaximum()+400, "Z")
+    peak_value_mean_th2d.SetAxisRange(rise_time_mean_th2d.GetMean(3)-400, rise_time_mean_th2d.GetMean(3)+400, "Z")
     peak_value_mean_th2d.SetNdivisions(10, "Z")
     printTHPlot(rise_time_mean_th2d)
 
@@ -170,14 +172,14 @@ def produceTProfilePlots(peak_values, rise_times, tracking, time_difference_peak
     mpv_time_diff_peak =  np.average(time_difference_peak[np.nonzero(time_difference_peak)])
     mpv_time_diff_cfd05 =  np.average(time_difference_cfd05[np.nonzero(time_difference_cfd05)])
 
+
     peak_value_mean_th2d = ROOT.TProfile2D("Pulse amplitude mean value","Pulse amplitude mean value", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y)
     rise_time_mean_th2d = ROOT.TProfile2D("Rise time mean value","Rise time mean value", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y)
-
-    timing_peak_th2d_temp = ROOT.TProfile2D("Timing resolution peak temp", "timing resolution peak temp", xbin_timing, -sep_x, sep_x, ybin_timing, -sep_y, sep_y, "s")
-    timing_cfd05_th2d_temp = ROOT.TProfile2D("Timing resolution cfd05 temp", "timing resolution cfd05 temp", xbin_timing, -sep_x, sep_x, ybin_timing, -sep_y, sep_y, "s")
-
+    timing_peak_th2d_temp = ROOT.TProfile2D("Timing resolution peak temp", "timing resolution peak", xbin_timing, -sep_x, sep_x, ybin_timing, -sep_y, sep_y, "s")
+    timing_cfd05_th2d_temp = ROOT.TProfile2D("Timing resolution cfd05 temp", "timing resolution cfd05", xbin_timing, -sep_x, sep_x, ybin_timing, -sep_y, sep_y, "s")
     timing_peak_th2d = ROOT.TH2D("Timing resolution peak", "timing resolution peak", xbin_timing, -sep_x, sep_x, ybin_timing, -sep_y, sep_y)
     timing_cfd05_th2d = ROOT.TH2D("Timing resolution cfd05", "timing resolution cfd05", xbin_timing, -sep_x, sep_x, ybin_timing, -sep_y, sep_y)
+    
 
     # Fill mean values and time differences in each bin, for peak reference and rise time reference
     for event in range(0, len(tracking)):
@@ -202,53 +204,25 @@ def produceTProfilePlots(peak_values, rise_times, tracking, time_difference_peak
 
                 timing_cfd05_th2d_temp.Fill(tracking['X'][event], tracking['Y'][event], time_difference_cfd05[event])
 
-
-    # Get width of the SiPM
-    sigma_SiPM = md.getSigmaSiPM()
-    
     # Filter pulse amplitude and rise time mean value bins
     for i in range(1, xbin+1):
         for j in range(1, ybin+1):
         
             bin = peak_value_mean_th2d.GetBin(i,j)
-            num_mean = peak_value_mean_th2d.GetBinEntries(bin)
-            num_rise = rise_time_mean_th2d.GetBinEntries(bin)
-            
-            if num_mean < minEntries:
-                peak_value_mean_th2d.SetBinContent(bin, 0)
-                peak_value_mean_th2d.SetBinEntries(bin, 0)
-            
-            if num_rise < minEntries:
-                rise_time_mean_th2d.SetBinContent(bin, 0)
-                rise_time_mean_th2d.SetBinEntries(bin, 0)
-            
+            t_calc.removeBin(bin, peak_value_mean_th2d, minEntries)
+            t_calc.removeBin(bin, rise_time_mean_th2d, minEntries)
+
+    peak_value_mean_th2d.ResetStats()
+    rise_time_mean_th2d.ResetStats()
 
     for i in range(1, xbin_timing+1):
         for j in range(1, ybin_timing+1):
         
             bin = timing_peak_th2d_temp.GetBin(i,j)
-            num_time_peak = timing_peak_th2d_temp.GetBinEntries(bin)
-            num_time_cfd = timing_cfd05_th2d_temp.GetBinEntries(bin)
-            
-            if num_time_peak > 10:
+            t_calc.fillTimeResBin(bin, timing_peak_th2d_temp, timing_peak_th2d)
+            t_calc.fillTimeResBin(bin, timing_cfd05_th2d_temp, timing_cfd05_th2d)
 
-                sigma_convoluted_peak = timing_peak_th2d_temp.GetBinError(bin)
-                sigma_DUT = np.sqrt(np.power(sigma_convoluted_peak, 2) - np.power(sigma_SiPM, 2))
-                timing_peak_th2d.SetBinContent(bin, sigma_DUT)
-
-            if num_time_cfd > 10:
-
-                sigma_convoluted_cfd05 = timing_cfd05_th2d_temp.GetBinError(bin)
-                sigma_DUT = np.sqrt(np.power(sigma_convoluted_cfd05, 2) - np.power(sigma_SiPM, 2))
-                timing_cfd05_th2d.SetBinContent(bin, sigma_DUT)
-
-
-    peak_value_mean_th2d.ResetStats()
-    rise_time_mean_th2d.ResetStats()
-    timing_peak_th2d_temp.ResetStats()
-    timing_cfd05_th2d_temp.ResetStats()
     ROOT.gStyle.SetOptStat(1)
-
 
     # Print pulse amplitude mean value 2D plot
     peak_value_mean_th2d.SetAxisRange(0, peak_value_mean_th2d.GetMaximum(), "Z")
@@ -257,7 +231,7 @@ def produceTProfilePlots(peak_values, rise_times, tracking, time_difference_peak
 
 
     # Print rise time mean value 2D plot
-    rise_time_mean_th2d.SetAxisRange(rise_time_mean_th2d.GetMaximum()-400, rise_time_mean_th2d.GetMaximum()+400, "Z")
+    rise_time_mean_th2d.SetAxisRange(rise_time_mean_th2d.GetMean(3)-400, rise_time_mean_th2d.GetMean(3)+400, "Z")
     rise_time_mean_th2d.SetNdivisions(10, "Z")
     printTHPlot(rise_time_mean_th2d)
 
@@ -370,7 +344,6 @@ def produceEfficiencyPlot(peak_values, tracking):
 
     # Create projection plots for single pad arrays only
     produceProjectionPlots(projectionX_th1d, projectionY_th1d, sep_x, sep_y)
-    
     
     totalEntries = efficiency_TEff.GetPassedHistogram().GetEntries()
 

@@ -35,7 +35,7 @@ def restrictToBatch(metaData, batchNumber):
 
 def getAllSensorNames():
 
-    return ["50D-GBGR2", "SiPM-AFP", "W4-LG12", "W4-RD01", "W4-S203", "W4-S204_6e14", "W4-S215", "W4-S1022", "W4-S1061", "W9-LGA35"]
+    return ["50D-GBGR2", "W4-LG12", "W4-RD01", "W4-S203", "W4-S204_6e14", "W4-S215", "W4-S1022", "W4-S1061", "W9-LGA35"]
 
 
 
@@ -285,6 +285,21 @@ def getNumberOfEvents(timeStamp=""):
             if int(row[4]) == timeStamp:
                 return int(row[6])
 
+
+# Get total numer of events within batch
+def getNumberOfEventsBatch():
+
+    if getNumberOfRunsPerBatch() > 2:
+
+
+        runLog = getRunLog()
+
+        for row in runLog:
+            if int(row[4]) == timeStamp:
+                return int(row[7])
+    else:
+        return getNumberOfEvents()
+
 # Get the voltage value which cuts the amplitude (to restrict from noise furthermore).
 # Value in negative voltage [-V].
 def getPulseAmplitudeCut(chan):
@@ -367,9 +382,22 @@ def getRowForBatchNumber(batchNumber):
         if int(row[5]) == batchNumber:
             return row
 
+def getFirstBatchNumberForSensor(sensor):
+
+    runLog = getRunLog()
+
+    for row in runLog:
+        if sensor in row:
+            return int(row[5])
+
 def getTemperature():
 
     return int(runInfo[10])
+
+
+def availableTemperatures():
+
+    return ["22", "-30", "-40"]
 
 # This is a reference to Vagelis conference about SiPM-s RD50 Workshop in Krakow
 def getSigmaSiPM():
@@ -416,7 +444,7 @@ def getDUTPos(chan):
     return str(runInfo[12+int(chan[-1])*5])
 
 
-def numberDUTPos(sensor, chan=""):
+def availableDUTPositions(sensor):
 
     if sensor == "W4-S215":
     
@@ -430,17 +458,12 @@ def numberDUTPos(sensor, chan=""):
     
         return ["7_0", "7_2", "7_3"]
 
-    elif sensor == "W4-LG12":
-    
-        return ["3", "6"]
-
-    elif chan=="":
-    
-        return 1
-
     else:
-
-        return getDUTPos(sensor, chan)
+        
+        batch = getFirstBatchNumberForSensor(sensor)
+        defineGlobalVariableRun(getRowForBatchNumber(batch))
+        chan = getChannelNameForSensor(sensor)
+        return getDUTPos(chan)
 
 # Runs which are marked with yellow color, probably
 # have unsynchronized telescope numbers

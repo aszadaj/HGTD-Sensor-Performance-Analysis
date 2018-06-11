@@ -17,30 +17,43 @@ def changeCenterPositionSensor(tracking, position, chan):
     
         dist_center = getDistanceFromCenterArrayPad(position)
  
-        tracking["X"] = tracking["X"] - dist_center[chan][0][0]
-        tracking["Y"] = tracking["Y"] - dist_center[chan][0][1]
-
-
-    tracking["X"] = tracking["X"] - center[0]
-    tracking["Y"] = tracking["Y"] - center[1]
+        tracking["X"] = tracking["X"] + dist_center[chan][0][0]
+        tracking["Y"] = tracking["Y"] + dist_center[chan][0][1]
     
+        # Center the pad or array
+        tracking["X"] = tracking["X"] - center[0]
+        tracking["Y"] = tracking["Y"] - center[1]
 
-#    if array_pad:
-#
-#        # Rotation for W4-S204_6e14
-#        tan_theta = 0.15/1.75
-#
-#        if md.getNameOfSensor("chan5") == "W4-S215":
-#
-#            tan_theta = 4./300
-#
-#        cos_theta = np.sqrt(1./(1+np.power(tan_theta, 2)))
-#        sin_theta = np.sqrt(1-np.power(cos_theta, 2))
-#
-#        # Use the rotation matrix around z
-#        tracking["X"] = np.multiply(tracking["X"], cos_theta) - np.multiply(tracking["Y"], sin_theta)
-#        tracking["Y"] = np.multiply(tracking["X"], sin_theta) + np.multiply(tracking["Y"], cos_theta)
+        # Rotation for W4-S204_6e14
+        if md.getNameOfSensor(chan) == "W4-S204_6e14":
 
+            tan_theta = 0.15/1.75
+
+            cos_theta = np.sqrt(1./(1+np.power(tan_theta, 2)))
+            sin_theta = np.sqrt(1-np.power(cos_theta, 2))
+
+            # Use the rotation matrix around z
+            tracking["X"] = np.multiply(tracking["X"], cos_theta) - np.multiply(tracking["Y"], sin_theta)
+            tracking["Y"] = np.multiply(tracking["X"], sin_theta) + np.multiply(tracking["Y"], cos_theta)
+
+         # Rotation for W4-S215
+        elif md.getNameOfSensor(chan) == "W4-S215":
+
+            tan_theta = 4./300
+
+            cos_theta = np.sqrt(1./(1+np.power(tan_theta, 2)))
+            sin_theta = np.sqrt(1-np.power(cos_theta, 2))
+
+            # Use the rotation matrix around z
+            tracking["X"] = np.multiply(tracking["X"], cos_theta) - np.multiply(tracking["Y"], sin_theta)
+            tracking["Y"] = np.multiply(tracking["X"], sin_theta) + np.multiply(tracking["Y"], cos_theta)
+
+    
+    else:
+    
+        # Center the pad or array
+        tracking["X"] = tracking["X"] - center[0]
+        tracking["Y"] = tracking["Y"] - center[1]
 
     return tracking
 
@@ -66,8 +79,6 @@ def getDistanceFromCenterArrayPad(position):
         newArrayPositions[chan][0] = pos_pad[index] - centerArrayPadPosition
 
     return newArrayPositions
-
-
 
 
 # Create array for exporting center positions, inside tracking
@@ -160,22 +171,23 @@ def getArrayPadChannels():
         channels = ["chan0", "chan1"]
 
     elif batchCategory == 7:
-        channels = ["chan4", "chan6", "chan7"]
+        channels = ["chan5", "chan6", "chan7"]
 
     return channels
 
 
 def importAndAddHistogram(TH2D_object, index, export=False):
-    
+
     arrayPadChannels = getArrayPadChannels()
     chan = arrayPadChannels[index]
     objectName = TH2D_object.GetName()
 
     fileName, headTitle = getTitleAndFileName(objectName, chan)
-
+    
     TH2D_file = dm.importROOTHistogram(fileName)
     TH2D_object_import = TH2D_file.Get(objectName)
     TH2D_object.Add(TH2D_object_import)
+
 
 
 def getTitleAndFileName(objectName, chan):
@@ -193,11 +205,11 @@ def getTitleAndFileName(objectName, chan):
     
     elif objectName.find("peak") != -1:
         headTitle = "Time resolution (peak ref.) - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"+"; X [mm] ; Y [mm] ; \sigma_{t} [ps]"
-        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/time_resolution/tracking_time_resolution_peak_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/time_resolution/peak/tracking_time_resolution_peak_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
 
     elif objectName.find("cfd05") != -1:
         headTitle = "Time resolution (CFD ref) - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"+"; X [mm] ; Y [mm] ; \sigma_{t} [ps]"
-        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/time_resolution/tracking_time_resolution_cfd05_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/time_resolution/cfd05/tracking_time_resolution_cfd05_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
     
     elif objectName.find("Efficiency") != -1:
         headTitle = "Efficiency - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"+ "; X [mm] ; Y [mm] ; Efficiency (%)"
@@ -211,6 +223,30 @@ def getTitleAndFileName(objectName, chan):
         fileName = fileName.replace(".pdf", "_array.pdf")
 
     return fileName, headTitle
+
+
+
+def removeBin(bin, th2d_object, minEntries):
+
+    num = th2d_object.GetBinEntries(bin)
+    
+    if num < minEntries:
+        th2d_object.SetBinContent(bin, 0)
+        th2d_object.SetBinEntries(bin, 0)
+
+
+def fillTimeResBin(bin, th2d_object_temp, th2d_object):
+    sigma_SiPM = md.getSigmaSiPM()
+
+    num = th2d_object_temp.GetBinEntries(bin)
+
+    if num > 10:
+
+        sigma_convoluted = th2d_object_temp.GetBinError(bin)
+        sigma_DUT = np.sqrt(np.power(sigma_convoluted, 2) - np.power(sigma_SiPM, 2))
+        th2d_object.SetBinContent(bin, sigma_DUT)
+
+
 
 
 def setArrayPadExportBool(bool):

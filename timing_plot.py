@@ -11,7 +11,7 @@ ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
 canvas = ROOT.TCanvas("Timing", "timing")
 
 # Range and bins for the window for TH1 objects
-xbins = 1800
+xbins = 1700
 bin_range = 15000
 
 def timingPlots():
@@ -71,11 +71,11 @@ def timingPlots():
             produceTimingDistributionPlots(time_difference_linear, peak_value)
             produceTimingDistributionPlots(time_difference_linear_cfd05, peak_value, True)
 
-            # System of linear equations between sensors, wrt peak time and cfd05 reference
-            # Batch 6 is omitted the calculation of system of equations
-            if md.getBatchNumber()/100 != 6:
-                produceTimingDistributionPlotsSysEq(time_difference_sys_eq, peak_value)
-                produceTimingDistributionPlotsSysEq(time_difference_sys_eq_cfd05, peak_value, True)
+#            # System of linear equations between sensors, wrt peak time and cfd05 reference
+#            # Batch 6 is omitted the calculation of system of equations
+#            if md.getBatchNumber()/100 != 6:
+#                produceTimingDistributionPlotsSysEq(time_difference_sys_eq, peak_value)
+#                produceTimingDistributionPlotsSysEq(time_difference_sys_eq_cfd05, peak_value, True)
 
 
     print "\nDone with producing TIMING plots.\n"
@@ -89,6 +89,9 @@ def produceTimingDistributionPlots(time_difference, peak_value, cfd05=False):
     for chan in time_difference.dtype.names:
     
         if SiPM_chan == chan:
+            continue
+        
+        if md.getNameOfSensor(chan) != "W9-LGA35":
             continue
     
         print "\nTIMING NORMAL PLOTS: Batch", md.getBatchNumber(),"sensor", md.getNameOfSensor(chan), chan, "\n"

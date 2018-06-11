@@ -74,10 +74,14 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_t
     
     for chan in channels:
         
+        if md.getNameOfSensor(chan) == "SiPM-AFP":
+            continue
+
+
         print "\nPULSE PLOTS: Batch", md.getBatchNumber(),"sensor", md.getNameOfSensor(chan), chan, "\n"
         
         # Create and fill objects with values
-        peak_values_th1d   = ROOT.TH1F("Pulse amplitude", "peak_value", 90, 0, 500)
+        peak_values_th1d   = ROOT.TH1F("Pulse amplitude", "peak_value", 92, 0, 500)
         rise_times_th1d    = ROOT.TH1F("Rise time", "rise_time", 300, 0, 4000)
         point_count_th1d   = ROOT.TH1F("Point count", "point_count", 100, 0, 100)
         max_sample_th1d    = ROOT.TH1F("Max sample", "max_sample", 100, 0, 360)
@@ -191,7 +195,7 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_t
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistogram(max_sample_th1d, titles)
 
-        # Print cfd05  plots
+        # Print cfd05 plots
         headTitle = "CFD05 time locaiton - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
         xAxisTitle = "Time location [ns]"
         fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/cfd05/cfd05_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
@@ -214,14 +218,20 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_t
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistogram2D(max_sample_vs_points_threshold_th2d, titles)
         
+        getAndExportResults(landau_gaus_fit_function, rise_times_th1d, chan)
+
+
+
+def getAndExportResults(fit_function, rise_times_th1d, chan):
+
 
         # Export results to root file
         peak_value_result   = np.empty(2, dtype=[('peak_value', '<f8')])
         rise_time_result    = np.empty(2, dtype=[('rise_time', '<f8')])
 
         # Here assume that the error is the same as with calculating the MPV in the fit
-        peak_value_max   = landau_gaus_fit_function.GetMaximumX()
-        peak_value_error = landau_gaus_fit_function.GetParError(1)
+        peak_value_max   = fit_function.GetMaximumX()
+        peak_value_error = fit_function.GetParError(1)
 
         rise_time_mean = rise_times_th1d.GetFunction("gaus").GetParameter(1)
         rise_time_error = rise_times_th1d.GetFunction("gaus").GetParError(1)
