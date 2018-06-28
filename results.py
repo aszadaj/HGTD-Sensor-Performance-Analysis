@@ -172,11 +172,24 @@ def omitBadDataBatches(chan):
         list.append(705)
         list.append(706)
 
-    elif sensor == "W4-S215" or sensor == "W4-S1022" or sensor == "W4-S1061":
+    elif sensor == "W4-S215":
     
         list.append(405)
         list.append(406)
         list.append(706)
+    
+    elif sensor == "W4-S1022":
+        
+        list.append(405)
+        list.append(705)
+        list.append(706)
+
+    elif sensor == "W4-S1061":
+        
+        list.append(406)
+        list.append(705)
+        list.append(706)
+
 
     return list
 

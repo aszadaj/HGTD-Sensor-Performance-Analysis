@@ -90,9 +90,6 @@ def produceTimingDistributionPlots(time_difference, peak_value, cfd05=False):
     
         if SiPM_chan == chan:
             continue
-        
-        if md.getNameOfSensor(chan) != "W9-LGA35":
-            continue
     
         print "\nTIMING NORMAL PLOTS: Batch", md.getBatchNumber(),"sensor", md.getNameOfSensor(chan), chan, "\n"
 
