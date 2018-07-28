@@ -8,10 +8,7 @@ def pulseAnalysis(data, pedestal, noise):
     channels = data.dtype.names
     
     osc_limit = findOscilloscopeLimit(data)
-    
-    # Debug
-    defCountGroup()
-    
+
     # Set the time scope to 0.1 ns
     defTimeScope()
     
@@ -31,9 +28,12 @@ def pulseAnalysis(data, pedestal, noise):
     points           =   np.zeros(len(data), dtype = data.dtype)
     
     # Max sample of event given that there are points above the threshold
-    max_sample           =   np.zeros(len(data), dtype = data.dtype)
+    max_sample      =   np.zeros(len(data), dtype = data.dtype)
     
-    variable_results = [peak_time, peak_value, rise_time, cfd05, points, max_sample]
+    # Charge collected from the MIP
+    charge          =   np.zeros(len(data), dtype = data.dtype)
+    
+    properties = [peak_time, peak_value, rise_time, cfd05, points, max_sample, charge]
 
     for chan in channels:
         for event in range(0, len(data)):
@@ -42,14 +42,10 @@ def pulseAnalysis(data, pedestal, noise):
             
             results = getPulseInfo(variables)
             
-            for type in range(0, len(variable_results)):
-                variable_results[type][event][chan] = results[type]
-    
-        #print getCount()/len(data)*100, "%", chan
-        
-        defCountGroup()
+            for type in range(0, len(results)):
+                properties[type][event][chan] = results[type]
 
-    return variable_results
+    return properties
 
 
 def getPulseInfo(variables):
@@ -63,6 +59,7 @@ def getPulseInfo(variables):
     cfd05 = 0
     max_sample = 0
     points = 0
+    charge = 0
     
     # Invert waveform data
     data = -data
@@ -82,14 +79,15 @@ def getPulseInfo(variables):
         max_sample = np.amax(data)
         peak_value, peak_time  = calculatePeakValue(data, pedestal, noise, osc_limit)
         rise_time, cfd05  = calculateRiseTime(data, pedestal, noise)
-        
+        charge = calculateCharge(data, threshold)
+
         # Condition: if rise time or peak value cannot be found, disregard the pulse
         if peak_value == 0 or rise_time == 0:
             
-            peak_value = peak_time = rise_time = cfd05 = 0
+            peak_value = peak_time = rise_time = cfd05 = charge = 0
         
     # Invert again to maintain the same shape
-    return peak_time, -peak_value, rise_time, cfd05, points, -max_sample
+    return peak_time, -peak_value, rise_time, cfd05, points, -max_sample, charge
 
 
 # Get Rise time
@@ -170,6 +168,15 @@ def calculatePeakValue(data, pedestal, noise, osc_limit=350, graph=False):
         return peak_value, peak_time
 
 
+def calculateCharge(data, threshold):
+    
+    # transimpendence is the same for all sensors, except for W4-RD01, which is unknown
+    transimpendence = 4700
+    voltage_integral = np.trapz(data[data > threshold], dx = timeScope)*10**(-9)
+    charge = voltage_integral / transimpendence
+
+    return charge
+
 def calculatePoints(data, threshold):
 
     point_bool = data > threshold
@@ -245,13 +252,3 @@ def defTimeScope():
     return timeScope
 
 
-def defCountGroup():
-    global count
-    count = 0.0
-
-def incrementCount():
-    global count
-    count +=1
-
-def getCount():
-    return count

@@ -11,7 +11,6 @@ import data_management as dm
 def produceResults():
 
     dm.defineDataFolderPath()
-    runLog = md.getRunLog()
     
     print "\nStart RESULTS"
     
@@ -22,16 +21,11 @@ def produceResults():
     
     sensorNames = md.getAllSensorNames()
     
-    # ROOT data sournce
+    # ROOT data source
     sourceResultsFiles = dm.getSourceFolderPath() + "results_data_hgtd_efficiency_sep_2017/"
     
-    # Export directory
-    fileDirectoryResults = dm.getSourceFolderPath() + "results_hgtd_efficiency_sep_2017/"
-    
-    categories = ["noise", "pedestal", "peak_value", "rise_time", "timing_normal", "timing_system", "timing_normal_cfd05", "timing_system_cfd05"]
-    
-#    sensorNames = ["W4-S215"]
-#    categories = ["timing_normal", "timing_system", "timing_normal_cfd05", "timing_system_cfd05"]
+    categories = ["noise", "pedestal", "peak_value", "charge", "rise_time", "timing_normal", "timing_system", "timing_normal_cfd05", "timing_system_cfd05"]
+
 
     resultsDict = dict()
 
@@ -107,8 +101,12 @@ def produceResults():
                     
                     i = 0
                     for data in sensor_data[temperature][DUT_pos]:
+                        
+                        constant = 1
+                        if category == "charge":
+                            constant = 1./(0.46) # Divide by MIP charge = Gain
                     
-                        graph[sensor][temperature][DUT_pos].SetPoint(i, data[0], data[1])
+                        graph[sensor][temperature][DUT_pos].SetPoint(i, data[0], data[1]*constant)
                         graph[sensor][temperature][DUT_pos].SetPointError(i, 0, data[2])
                         
                         i += 1
@@ -139,7 +137,7 @@ def produceResults():
         legend_text.DrawLatex(.7, .45, "#color[4]{Blue}   = -30\circC")
         legend_text.DrawLatex(.7, .4, "#color[3]{Green} = -40\circC")
         
-        fileName = fileDirectoryResults + "/" + category + "_results.pdf"
+        fileName = dm.getSourceFolderPath() + "results_hgtd_efficiency_sep_2017/" + "/" + category + "_results.pdf"
         canvas.Print(fileName)
 
 
@@ -215,6 +213,13 @@ def setGraphAttributes(category_graph, category, sensor):
         xTitle = "Bias voltage [V]"
         yTitle = "Pulse amplitude [mV]"
         y_lim = [0, 300]
+
+    elif category == "charge":
+    
+        titleGraph = "Gain values per voltage"
+        xTitle = "Bias voltage [V]"
+        yTitle = "Gain"
+        y_lim = [0, 200]
 
     elif category == "rise_time":
         

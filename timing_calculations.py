@@ -97,8 +97,6 @@ def getSigmasFromFit(th1d_list, chan):
     sigma_window = th1d_list.GetStdDev()
     xMin = mean_window - N * sigma_window
     xMax = mean_window + N * sigma_window
-    
-    print ""
 
     # Within the same oscilloscope
     if md.checkIfSameOscAsSiPM(chan):

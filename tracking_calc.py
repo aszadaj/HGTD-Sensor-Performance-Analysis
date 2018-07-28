@@ -36,7 +36,7 @@ def changeCenterPositionSensor(tracking, position, chan):
             tracking["X"] = np.multiply(tracking["X"], cos_theta) - np.multiply(tracking["Y"], sin_theta)
             tracking["Y"] = np.multiply(tracking["X"], sin_theta) + np.multiply(tracking["Y"], cos_theta)
 
-         # Rotation for W4-S215
+        # Rotation for W4-S215
         elif md.getNameOfSensor(chan) == "W4-S215":
 
             tan_theta = 4./300
@@ -54,6 +54,7 @@ def changeCenterPositionSensor(tracking, position, chan):
         # Center the pad or array
         tracking["X"] = tracking["X"] - center[0]
         tracking["Y"] = tracking["Y"] - center[1]
+
 
     return tracking
 
@@ -197,7 +198,11 @@ def getTitleAndFileName(objectName, chan):
 
     if objectName.find("Pulse") != -1:
         headTitle = "Mean pulse amplitude value - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"+"; X [mm] ; Y [mm] ; V [mV]"
-        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/mean_value/tracking_mean_value_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/pulse_amplitude_mean/tracking_mean_value_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+    
+    elif objectName.find("Gain") != -1:
+        headTitle = "Gain mean value - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"+"; X [mm] ; Y [mm] ; Gain"
+        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/gain_mean/tracking_gain_mean_value_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
     
     elif objectName.find("Rise") != -1:
         headTitle = "Mean pulse rise time value - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"+"; X [mm] ; Y [mm] ; t [ps]"

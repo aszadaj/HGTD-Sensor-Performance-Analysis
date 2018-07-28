@@ -25,8 +25,7 @@ def main():
     # Choose batch numbers to run
     metadata.setEntriesForQuickAnalysis(0)
     metadata.setLimitRunNumbers(0)
-    #metadata.setBatchNumbers([102, 202, 302, 402, 501, 602, 702])
-    metadata.setBatchNumbers([203])
+    metadata.setBatchNumbers("all")
 
     ############## METHODS ###############
     
@@ -40,7 +39,7 @@ def main():
     
     ######## PULSE ##########
     
-    #pulse.pulseAnalysis()
+    pulse.pulseAnalysis()
     
     #########################
 
@@ -68,7 +67,7 @@ def main():
 
     ### RESULTS ###
     
-    results.produceResults()
+    #results.produceResults()
 
    
     #######################################

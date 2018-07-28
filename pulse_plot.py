@@ -13,6 +13,7 @@ canvas = ROOT.TCanvas("Pulse", "pulse")
 # Amplitude limit for the oscilloscope
 osc_limit = 345
 
+
 def pulsePlots():
 
     print "\nStart producing PULSE plots, batches:", md.batchNumbers
@@ -27,6 +28,7 @@ def pulsePlots():
         max_sample = np.empty(0)
         cfd05 = np.empty(0)
         peak_time = np.empty(0)
+        charge = np.empty(0)
 
         runNumbers = md.getAllRunNumbers(batchNumber)
         
@@ -45,6 +47,7 @@ def pulsePlots():
                 max_sample = dm.importPulseFile("max_sample")
                 cfd05 = dm.importPulseFile("cfd05")
                 peak_time = dm.importPulseFile("peak_time")
+                charge = dm.importPulseFile("charge")
 
             else:
 
@@ -54,21 +57,23 @@ def pulsePlots():
                 max_sample = np.concatenate((max_sample, dm.importPulseFile("max_sample")), axis = 0)
                 cfd05 = np.concatenate((cfd05, dm.importPulseFile("cfd05")), axis = 0)
                 peak_time = np.concatenate((peak_time, dm.importPulseFile("peak_time")), axis = 0)
+                charge = np.concatenate((charge, dm.importPulseFile("charge")), axis = 0)
                 
 
         if len(peak_values) != 0:
         
-            producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_time)
+            producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_time, charge)
 
     print "Done with producing PULSE plots.\n"
 
 
 # Fill TH1 objects
-def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_time):
+def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_time, charge):
 
     peak_values = dm.convertPulseData(peak_values)
     max_sample = dm.convertPulseData(max_sample)
     rise_times = dm.convertRiseTimeData(rise_times)
+    charge = dm.convertChargeData(charge)
     
     channels = peak_values.dtype.names
     
@@ -87,6 +92,7 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_t
         max_sample_th1d    = ROOT.TH1F("Max sample", "max_sample", 100, 0, 360)
         cfd05_th1d         = ROOT.TH1F("CFD05", "CFD05_plot", 100, 0, 100)
         peak_time_th1d     = ROOT.TH1F("Peak time", "peak_time", 100, 0, 100)
+        charge_th1d        = ROOT.TH1F("Charge", "charge", 92, 0, 100)
         max_sample_vs_points_threshold_th2d = ROOT.TH2D("Max sample vs no of points", "amp_vs_points", 80, 0, 80, 100, 0, 200)
         
         for entry in range(0, len(peak_values[chan])):
@@ -108,6 +114,9 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_t
 
             if peak_time[chan][entry] != 0:
                 peak_time_th1d.Fill(peak_time[chan][entry])
+            
+            if charge[chan][entry] != 0:
+                charge_th1d.Fill(charge[chan][entry])
 
             if max_sample[chan][entry] != 0 and points[chan][entry] != 0:
                 max_sample_vs_points_threshold_th2d.Fill(points[entry][chan], max_sample[entry][chan])
@@ -126,19 +135,19 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_t
         xMin = max_value_rise_time - rise_times_th1d.GetStdDev()
         xMax = max_value_rise_time + rise_times_th1d.GetStdDev()
         rise_times_th1d.Fit("gaus", "Q", "", xMin, xMax)
-
-
-        # Create parameters for landau (*) gaus fit
-        peak_values_th1d.SetAxisRange(0, osc_limit)
-        std_dev = peak_values_th1d.GetStdDev()
-        integral = peak_values_th1d.Integral()
-        MPV_bin = peak_values_th1d.GetMaximumBin()
-        MPV_value = peak_values_th1d.GetBinCenter(MPV_bin)
         
+        
+        # CHARGE #
+        
+        # Create parameters for landau (*) gaus fit for CHARGE distribution
+        std_dev = charge_th1d.GetStdDev()
+        integral = charge_th1d.Integral()
+        MPV_bin = charge_th1d.GetMaximumBin()
+        MPV = charge_th1d.GetBinCenter(MPV_bin)
         
         # Set range for fit
-        xMin = max((MPV_value - std_dev), 5.0)
-        xMax = osc_limit
+        xMin = max((MPV - std_dev), 5.0)
+        xMax = 100
         
         # Define range of fit, limits for parameters
         # Parameters for gaus(*)landau - fit
@@ -148,34 +157,70 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_t
         # 4. Width of the gaus fit
         
         fit_range = np.array([xMin, xMax])
-        start_values = np.array([std_dev, MPV_value, integral, std_dev])
-        param_limits_low = np.array([std_dev*0.1, MPV_value*0.1, integral*0.1, std_dev*0.1])
-        param_limits_high = np.array([std_dev*10, MPV_value*10, integral*10, std_dev*10])
+        start_values = np.array([std_dev, MPV, integral, std_dev])
+        param_limits_low = np.multiply(np.array([std_dev, MPV, integral, std_dev]), 0.1)
+        param_limits_high = np.multiply(param_limits_low, 100)
         
-        landau_gaus_fit_function = ROOT.langaufit(peak_values_th1d, fit_range, start_values, param_limits_low, param_limits_high)
+        langaufit_charge = ROOT.langaufit(charge_th1d, fit_range, start_values, param_limits_low, param_limits_high)
+      
+      
+        # PULSE AMPLITUDE #
+
+        # Create parameters for landau (*) gaus fit for pulse amplitude distribution
+        peak_values_th1d.SetAxisRange(0, osc_limit)
+        std_dev = peak_values_th1d.GetStdDev()
+        integral = peak_values_th1d.Integral()
+        MPV_bin = peak_values_th1d.GetMaximumBin()
+        MPV = peak_values_th1d.GetBinCenter(MPV_bin)
         
+        # Set range for fit
+        xMin = max((MPV - std_dev), 5.0)
+        xMax = osc_limit
+        
+        # Define range of fit, limits for parameters
+        # Parameters for gaus(*)landau - fit
+        # 1. Width/constant of the landau fit
+        # 2. Most proble value
+        # 3. Area, normalization constant
+        # 4. Width of the gaus fit
+    
+        fit_range = np.array([xMin, xMax])
+        start_values = np.array([std_dev, MPV, integral, std_dev])
+        param_limits_low = np.multiply(np.array([std_dev, MPV, integral, std_dev]), 0.1)
+        param_limits_high = np.multiply(param_limits_low, 100)
+        
+        langaufit_pulse_amplitude = ROOT.langaufit(peak_values_th1d, fit_range, start_values, param_limits_low, param_limits_high)
+    
+        # Redefine the axis back to the normal state
         peak_values_th1d.SetAxisRange(0, 500)
+
 
         # Define and print plot titles for all types of TH objects
         yAxisTitle = "Entries"
 
+
+        # Print charge distribution plots
+        headTitle = "Charge distribution - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
+        xAxisTitle = "Charge [fC]"
+        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/charge/charge_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
+        fit_range_charge = [langaufit_charge.GetMaximumX(), langaufit_charge.GetParError(1)]
+        exportHistogram(charge_th1d, titles, fit_range_charge, langaufit_charge)
+        
+        
         # Print maximum amplitude plots
         headTitle = "Pulse amplitude - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
         xAxisTitle = "Pulse amplitude [mV]"
         fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/peak_value/pulse_amplitude_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
-        # Debug
-        #fileName = "/Users/aszadaj/Desktop/debug/pulse_amplitude_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
-        values_peak_distribution = [landau_gaus_fit_function.GetMaximumX(), landau_gaus_fit_function.GetParError(1)]
-        exportHistogram(peak_values_th1d, titles, values_peak_distribution, landau_gaus_fit_function)
+        fit_range_pulse_amplitude = [langaufit_pulse_amplitude.GetMaximumX(), langaufit_pulse_amplitude.GetParError(1)]
+        exportHistogram(peak_values_th1d, titles, fit_range_pulse_amplitude, langaufit_pulse_amplitude)
 
 
         # Print rise time plots
         headTitle = "Rise time - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
         xAxisTitle = "Rise time [ps]"
         fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/rise_time/rise_time_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
-        # Debug
-        #fileName = "/Users/aszadaj/Desktop/debug/rise_time_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistogram(rise_times_th1d, titles)
 
@@ -218,36 +263,30 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_t
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistogram2D(max_sample_vs_points_threshold_th2d, titles)
         
-        getAndExportResults(landau_gaus_fit_function, rise_times_th1d, chan)
+        # Remember to include charge distribution results
+        getAndExportResults(langaufit_pulse_amplitude, langaufit_charge, rise_times_th1d, chan)
 
 
 
-def getAndExportResults(fit_function, rise_times_th1d, chan):
+def getAndExportResults(pulse_fit, charge_fit, rise_times_th1d, chan):
 
 
         # Export results to root file
         peak_value_result   = np.empty(2, dtype=[('peak_value', '<f8')])
+        charge_result       = np.empty(2, dtype=[('charge', '<f8')])
         rise_time_result    = np.empty(2, dtype=[('rise_time', '<f8')])
 
-        # Here assume that the error is the same as with calculating the MPV in the fit
-        peak_value_max   = fit_function.GetMaximumX()
-        peak_value_error = fit_function.GetParError(1)
-
-        rise_time_mean = rise_times_th1d.GetFunction("gaus").GetParameter(1)
-        rise_time_error = rise_times_th1d.GetFunction("gaus").GetParError(1)
-
-        peak_value_result["peak_value"][0] = peak_value_max
-        peak_value_result["peak_value"][1] = peak_value_error
-
-        rise_time_result["rise_time"][0] = rise_time_mean
-        rise_time_result["rise_time"][1] = rise_time_error
+        # Assign value with its error to each of the numpy arrays
+        peak_value_result["peak_value"]     = [pulse_fit.GetMaximumX(), pulse_fit.GetParError(1)]
+        charge_result["charge"]             = [charge_fit.GetMaximumX(), charge_fit.GetParError(1)]
+        rise_time_result["rise_time"]       = [rise_times_th1d.GetFunction("gaus").GetParameter(1), rise_times_th1d.GetFunction("gaus").GetParError(1)]
 
         sensor_info = [md.getNameOfSensor(chan), chan]
-        dm.exportPulseResults(peak_value_result, rise_time_result, sensor_info)
+        dm.exportPulseResults(peak_value_result, charge_result, rise_time_result, sensor_info)
 
 
 # Produce histograms
-def exportHistogram(graphList, titles, values_peak_distribution = 0,  landau_gaus_fit = False):
+def exportHistogram(graphList, titles, MPV_with_error = 0,  landau_gaus_fit = False):
 
     canvas.Clear()
     
@@ -264,13 +303,13 @@ def exportHistogram(graphList, titles, values_peak_distribution = 0,  landau_gau
     
     if landau_gaus_fit:
 
-        landau_gaus_fit.Draw("lsame")
+        landau_gaus_fit.Draw("same")
     
         # Add Peak value to the stats box
         statsBox = canvas.GetPrimitive("stats")
         statsBox.SetName("Mystats")
         graphList.SetStats(0)
-        statsBox.AddText("Peak = "+str(values_peak_distribution[0])[0:5] + " \pm "+str(values_peak_distribution[1])[0:5])
+        statsBox.AddText("Peak = "+str(MPV_with_error[0])[0:5] + " \pm "+str(MPV_with_error[1])[0:5])
 
     canvas.Print(titles[3])
     dm.exportROOTHistogram(graphList, titles[3])

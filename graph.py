@@ -8,8 +8,8 @@ import pulse_calculations as p_calc
 
 ROOT.gROOT.SetBatch(True)
 
-batch = 102
-sensor = "50D-GBGR2"
+batch = 108
+sensor = ""
 event = 0
 
 # Start analysis of selected run numbers

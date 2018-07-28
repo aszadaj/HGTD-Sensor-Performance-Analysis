@@ -23,7 +23,7 @@ def exportNoiseDataPlot(noise, pedestal):
 # Export pulse data
 def exportPulseData(variable_array):
 
-    [peak_times, peak_values, rise_times, cfd05, points, max_sample] = [i for i in variable_array]
+    [peak_times, peak_values, rise_times, cfd05, points, max_sample, charge] = [i for i in variable_array]
 
     exportROOTFile(peak_times, "pulse", "peak_time")
     exportROOTFile(peak_values, "pulse", "peak_value")
@@ -31,6 +31,7 @@ def exportPulseData(variable_array):
     exportROOTFile(cfd05, "pulse", "cfd05")
     exportROOTFile(points, "pulse", "points")
     exportROOTFile(max_sample, "pulse", "max_sample")
+    exportROOTFile(charge, "pulse", "charge")
 
 
 # Export timing data
@@ -69,9 +70,10 @@ def exportNoiseResults(pedestal_result, noise_result, sensor_info):
     exportROOTFile(noise_result, "results", "noise", sensor_info)
 
 
-def exportPulseResults(peak_value_result, rise_time_result, sensor_info):
+def exportPulseResults(peak_value_result, charge_result, rise_time_result, sensor_info):
 
     exportROOTFile(peak_value_result, "results", "peak_value", sensor_info)
+    exportROOTFile(charge_result, "results", "charge", sensor_info)
     exportROOTFile(rise_time_result, "results", "rise_time", sensor_info)
 
 
@@ -293,6 +295,28 @@ def convertRiseTimeData(rise_times):
         rise_times[chan] =  np.multiply(rise_times[chan], 1000)
 
     return rise_times
+
+
+def convertChargeData(charge):
+    
+    for chan in charge.dtype.names:
+        charge[chan] =  np.multiply(charge[chan], 10**15)
+
+    return charge
+
+
+# Conversion of charge to gain, following a charge from a MIP, which is for a pion
+# 0.46 fC -> Gain = charge/MIP and convert to fC
+def convertChargeToGainData(charge):
+
+    # The charge from a MIP for a pion
+    MIP_charge = 0.46*10**-15
+
+    for chan in charge.dtype.names:
+        charge[chan] = np.divide(charge[chan], MIP_charge)
+
+    return charge
+
 
 def convertPositionData(position):
 

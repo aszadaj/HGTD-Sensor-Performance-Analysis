@@ -68,7 +68,7 @@ def timingPlots():
         if len(peak_value) != 0:
             
             # Differences between two sensors, wrt peak time and cfd05 reference
-            produceTimingDistributionPlots(time_difference_linear, peak_value)
+            #produceTimingDistributionPlots(time_difference_linear, peak_value)
             produceTimingDistributionPlots(time_difference_linear_cfd05, peak_value, True)
 
 #            # System of linear equations between sensors, wrt peak time and cfd05 reference
@@ -88,7 +88,7 @@ def produceTimingDistributionPlots(time_difference, peak_value, cfd05=False):
     
     for chan in time_difference.dtype.names:
     
-        if SiPM_chan == chan:
+        if SiPM_chan == chan or md.getNameOfSensor(chan) != "W9-LGA35":
             continue
     
         print "\nTIMING NORMAL PLOTS: Batch", md.getBatchNumber(),"sensor", md.getNameOfSensor(chan), chan, "\n"
@@ -128,7 +128,7 @@ def produceTimingDistributionPlots(time_difference, peak_value, cfd05=False):
         timing_results[type][0] = sigma_DUT
         timing_results[type][1] = sigma_fit_error
         sensor_info = [md.getNameOfSensor(chan), chan]
-        dm.exportTimingResults(timing_results, sensor_info, md.checkIfSameOscAsSiPM(chan), cfd05)
+        #dm.exportTimingResults(timing_results, sensor_info, md.checkIfSameOscAsSiPM(chan), cfd05)
 
 
 # Use this method to calculate the linear system of equations solution
