@@ -107,7 +107,7 @@ TF1 *langaufit(TH1F *his, Double_t *fitrange, Double_t *startvalues, Double_t *p
       ffit->SetParLimits(i, parlimitslo[i], parlimitshi[i]);
    }
 
-   his->Fit(FunName,"QRB0");   // fit within specified range, use ParLimits, do not plot
+   his->Fit(FunName,"QRB");   // fit within specified range, use ParLimits, do not plot
 
 
    return (ffit);              // return fit function

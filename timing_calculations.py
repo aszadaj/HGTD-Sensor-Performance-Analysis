@@ -1,6 +1,8 @@
-import numpy as np
-import metadata as md
 import ROOT
+import numpy as np
+
+import run_log_metadata as md
+
 
 def getTimeDifferencePerRun(time_location):
     
@@ -36,7 +38,6 @@ def getTimeDifferencePerRunSysEq(time_location):
     
         chan2_list = list(osc1)
         chan2_list.remove(chan)
-        
         for event in range(0, len(time_location[chan])):
             
             time_difference[chan][event] = np.zeros(3)
@@ -44,12 +45,11 @@ def getTimeDifferencePerRunSysEq(time_location):
             for index in range(0, len(chan2_list)):
                 chan2 = chan2_list[index]
                 if time_location[chan][event] != 0 and time_location[chan2][event] != 0:
-                   
                     value = (time_location[chan][event] - time_location[chan2][event])*1000
                     time_difference[chan][event][index] = value
-
-
+    
     return time_difference
+    
 
 # The input is of the convoluted form, that is \sigma_{ij} (here the DUT and the SiPM) and the
 # corresponding errors, that is \Delta\sigma_{ij}
@@ -60,13 +60,15 @@ def solveLinearEq(sigmas, sigmas_error):
 
     # Non-singular matrix selected
     matrix = np.matrix([[1, 0, 0, 1], [0, 1, 1, 0], [0, 0, 1, 1], [0, 1, 0, 1]])
-    inverse = np.linalg.inv(matrix)
+    matrix_inverse = np.linalg.inv(matrix)
     
     sigma_vector = np.power(np.array([sigmas[0][3], sigmas[1][2], sigmas[2][3], sigmas[1][3]]), 2)
     sigma_vector_error = np.power(np.array([sigmas_error[0][3], sigmas_error[1][2], sigmas_error[2][3], sigmas_error[1][3]]), 2)
     
-    sigma_chan = np.sqrt(inverse.dot(sigma_vector))
-    sigma_chan_error = np.sqrt((inverse.dot(sigma_vector)).dot(sigma_vector_error)*np.power(inverse.dot(sigma_vector), -1))
+    
+    sigma_chan_squared = matrix_inverse.dot(sigma_vector)
+    sigma_chan = np.sqrt(sigma_chan_squared)
+    sigma_chan_error = np.sqrt(np.divide(sigma_chan_squared.dot(sigma_vector_error), sigma_chan_squared))
     
     
     # Given that width can be expressed as \sigma_{i}^2 = C_1\sigma_{A}^2 + C_2\sigma_{B}^2 and
@@ -97,7 +99,8 @@ def getSigmasFromFit(th1d_list, chan):
     sigma_window = th1d_list.GetStdDev()
     xMin = mean_window - N * sigma_window
     xMax = mean_window + N * sigma_window
-
+    
+    
     # Within the same oscilloscope
     if md.checkIfSameOscAsSiPM(chan):
         
@@ -105,17 +108,20 @@ def getSigmasFromFit(th1d_list, chan):
 
     # Else in different oscilloscopes
     else:
-
-        fit_function = ROOT.TF1("gaus_fit", "[0]*exp(-0.5*((x-[3])/[2])^2) + [1]*exp(-0.5*((x-([3]+100))/[2])^2)", xMin, xMax)
-        fit_function.SetParameters(MPV_entries, MPV_entries, sigma_window, mean_window)
-        fit_function.SetParNames("Constant 1", "Constant 2", "\sigma_{tot}", "Mean 1")
+        fit_function = ROOT.TF1("gaus_fit", "[0]*exp(-0.5*((x-[2])/[3])^2) + [1]*exp(-0.5*((x-([2]+100))/[3])^2)", xMin, xMax)
+        fit_function.SetParameters(MPV_entries, MPV_entries, mean_window, sigma_window)
+        fit_function.SetParNames("Constant 1", "Constant 2", "Mean 1", "Sigma tot")
 
     try:
         # Create fit and calculate the width
         th1d_list.Fit("gaus_fit", "Q", "", xMin, xMax)
         sigma_SiPM = md.getSigmaSiPM()
-        sigma_fit = abs(th1d_list.GetFunction("gaus_fit").GetParameter(2))
-        sigma_fit_error = th1d_list.GetFunction("gaus_fit").GetParError(2)
+        if md.checkIfSameOscAsSiPM(chan):
+            par_number = 2
+        else:
+            par_number = 3
+        sigma_fit = abs(th1d_list.GetFunction("gaus_fit").GetParameter(par_number))
+        sigma_fit_error = th1d_list.GetFunction("gaus_fit").GetParError(par_number)
     
         if sigma_fit > sigma_SiPM:
             sigma_DUT = np.sqrt(np.power(sigma_fit, 2) - np.power(sigma_SiPM, 2))

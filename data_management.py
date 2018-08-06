@@ -4,7 +4,7 @@ import root_numpy as rnm
 import os
 import datetime as dt
 
-import metadata as md
+import run_log_metadata as md
 
 
 # Export noise data
@@ -35,26 +35,15 @@ def exportPulseData(variable_array):
 
 
 # Export timing data
-def exportTimingLinearData(time_difference):
+def exportTimeDifferenceData(time_difference_peak, time_difference_cfd05):
 
-    exportROOTFile(time_difference, "timing", "linear")
+    exportROOTFile(time_difference_peak, "timing", "linear")
+    exportROOTFile(time_difference_cfd05, "timing", "linear_cfd05")
 
+def exportTimeDifferenceDataSysEq(time_difference_peak_sys_eq, time_difference_cfd05_sys_eq ):
 
-def exportTimingLinearRiseTimeRefData(time_difference):
-
-    exportROOTFile(time_difference, "timing", "linear_cfd05")
-
-
-def exportTimingSysEqData(time_difference):
-
-    exportROOTFile(time_difference, "timing", "sys_eq")
-
-
-def exportTimingSysEqCFD05RefData(time_difference):
-
-    exportROOTFile(time_difference, "timing", "sys_eq_cfd05")
-
-
+    exportROOTFile(time_difference_peak_sys_eq, "timing", "sys_eq")
+    exportROOTFile(time_difference_cfd05_sys_eq, "timing", "sys_eq_cfd05")
 
 def exportTrackingData(sensor_position):
 
@@ -101,20 +90,22 @@ def exportROOTFile(data, group, category="", sensor_info=[], same_osc=False, cfd
 
     elif group == "results":
 
+        fileName = getSourceFolderPath()+"results_data_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category
+
         if category.find("timing") != -1:
         
-            fileName = getSourceFolderPath()+"results_data_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category+"_cfd05"+"/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_diff_osc_cfd05_results.root"
+            fileName += "_peak"+"/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_diff_osc_peak.root"
         
             if same_osc:
                 fileName = fileName.replace("diff_osc", "same_osc")
         
-            if not cfd05:
-                fileName = fileName.replace("_cfd05", "")
+            if cfd05:
+                fileName = fileName.replace("peak", "cfd05")
 
 
         else:
         
-            fileName = getSourceFolderPath()+"results_data_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category+"/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_results.root"
+            fileName += "/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+".root"
             
     elif group == "noise_plot":
 
@@ -144,6 +135,7 @@ def exportROOTHistogram(graphList, fileName):
     graphList.Write()
     fileObject.Close()
 
+
 def importROOTHistogram(fileName):
 
     rootDestination = fileName.replace("plots_hgtd_efficiency_sep_2017", "plots_data_hgtd_efficiency_sep_2017")
@@ -151,6 +143,50 @@ def importROOTHistogram(fileName):
     fileObject = ROOT.TFile(rootDestination)
 
     return fileObject
+
+
+# Read file names which are enlisted in the folder
+def readFileNames(fileType):
+
+    folderPath = ""
+    
+    if fileType == "tracking": #tracking1504949898.root
+        folderPath = "tracking_data_sep_2017/"
+        first_index = 8
+        last_index = 18
+
+    elif fileType == "peak_value": #pulse_peak_value_3656.root
+        folderPath = "data_hgtd_efficiency_sep_2017/pulse/pulse_peak_value/"
+        first_index = 17
+        last_index = 21
+
+
+    mainFolderPath = getSourceFolderPath() + folderPath
+    
+    availableFiles = [int(f[first_index:last_index]) for f in os.listdir(mainFolderPath) if os.path.isfile(os.path.join(mainFolderPath, f)) and f != '.DS_Store']
+    availableFiles.sort()
+
+    return availableFiles
+
+
+# Check if the tracking file is available
+def isTrackingFileAvailableAndOK():
+
+    availableFilesPulse         = readFileNames("peak_value")
+    availableFilesTracking     = readFileNames("tracking")
+
+    found = False
+    
+    for pulse_file in availableFilesPulse:
+        if pulse_file == int(md.getRunNumber()):
+            for tracking_file in availableFilesTracking:
+                if tracking_file == int(md.getTimeStamp()):
+                    if md.getRunNumber() in md.corruptedRuns():
+                        found = False
+                    else:
+                        found = True
+
+    return found
 
 
 # Import noise data file
@@ -220,29 +256,23 @@ def importROOTFile(group, category="", sensor_info=[], same_osc=False, cfd05=Fal
 
 
     elif group == "results":
-    
-        if category == "timing":
+
+        fileName = getSourceFolderPath()+"results_data_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category
+
+        if category.find("timing") != -1:
         
-            fileName = getSourceFolderPath()+"results_data_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category+"/diff_osc/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_diff_osc_cfd05_results.root"
+            fileName += "_peak"+"/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_diff_osc_peak.root"
         
             if same_osc:
                 fileName = fileName.replace("diff_osc", "same_osc")
         
-            if not cfd05:
-                fileName = fileName.replace("cfd05_", "")
-    
-        elif category == "timing_sys_eq":
-            
-            category = category.replace("timing_sys_eq", "timing")
+            if cfd05:
+                fileName = fileName.replace("peak", "cfd05")
 
-            fileName = getSourceFolderPath()+"results_data_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category+"/system/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_sys_eq_cfd05_results.root"
-            
-            if not cfd05:
-                fileName = fileName.replace("cfd05_", "")
-        
+
         else:
         
-            fileName = getSourceFolderPath()+"results_data_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category+"/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_results.root"
+            fileName += "/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+".root"
     
     elif group == "noise_plot":
     
@@ -262,24 +292,13 @@ def importROOTFile(group, category="", sensor_info=[], same_osc=False, cfd05=Fal
         
     return rnm.root2array(fileName)
 
+
 def convertNoiseData(noise_average, noise_std):
     
     for chan in noise_std.dtype.names:
         noise_average[chan] =  np.multiply(noise_average[chan], -1000)
         noise_std[chan] = np.multiply(noise_std[chan], 1000)
 
-    return noise_average, noise_std
-
-    
-def convertTrackingData(tracking, peak_values):
-
-    for dimension in tracking.dtype.names:
-        tracking[dimension] = np.multiply(tracking[dimension], 0.001)
-
-    for chan in peak_values.dtype.names:
-        peak_values[chan] = np.multiply(peak_values[chan], -1000)
-
-    return tracking, peak_values
 
 
 def convertPulseData(peak_values):
@@ -287,14 +306,12 @@ def convertPulseData(peak_values):
     for chan in peak_values.dtype.names:
         peak_values[chan] =  np.multiply(peak_values[chan], -1000)
 
-    return peak_values
 
 def convertRiseTimeData(rise_times):
     
     for chan in rise_times.dtype.names:
         rise_times[chan] =  np.multiply(rise_times[chan], 1000)
 
-    return rise_times
 
 
 def convertChargeData(charge):
@@ -302,7 +319,6 @@ def convertChargeData(charge):
     for chan in charge.dtype.names:
         charge[chan] =  np.multiply(charge[chan], 10**15)
 
-    return charge
 
 
 # Conversion of charge to gain, following a charge from a MIP, which is for a pion
@@ -314,16 +330,6 @@ def convertChargeToGainData(charge):
 
     for chan in charge.dtype.names:
         charge[chan] = np.divide(charge[chan], MIP_charge)
-
-    return charge
-
-
-def convertPositionData(position):
-
-    for dimension in position.dtype.names:
-        position[dimension] = np.multiply(position[dimension], 0.001)
-
-    return position
 
 
 
@@ -369,6 +375,10 @@ def defineDataFolderPath():
     source  = "/Users/aszadaj/cernbox/SH203X/HGTD_material/"
     global sourceFolderPath
     sourceFolderPath = source
+
+def getSourceResultsDataPath():
+
+    return sourceFolderPath + "results_data_hgtd_efficiency_sep_2017/"
 
 
 # Return path of data files

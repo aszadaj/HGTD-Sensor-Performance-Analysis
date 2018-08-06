@@ -1,9 +1,9 @@
 import ROOT
-import root_numpy as rnm
 import numpy as np
+import root_numpy as rnm
 
 import pulse_calculations as p_calc
-import metadata as md
+import run_log_metadata as md
 import data_management as dm
 
 from pathos.multiprocessing import ProcessingPool as Pool
@@ -53,11 +53,6 @@ def pulseAnalysisPerRun():
     max = md.getNumberOfEvents()
     step = 10000
     threads = 4
-
-    # Quick Analysis
-    if md.maxEntries != 0:
-        max = step = md.maxEntries
-        threads = 1
 
     p = Pool(threads)
     ranges = range(0, max, step)

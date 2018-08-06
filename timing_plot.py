@@ -1,8 +1,8 @@
 import ROOT
-import metadata as md
 import numpy as np
 
 import data_management as dm
+import run_log_metadata as md
 import timing_calculations as t_calc
 
 ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
@@ -11,7 +11,7 @@ ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
 canvas = ROOT.TCanvas("Timing", "timing")
 
 # Range and bins for the window for TH1 objects
-xbins = 1700
+xbins = 1000
 bin_range = 15000
 
 def timingPlots():
@@ -39,7 +39,9 @@ def timingPlots():
         
             md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
             
-
+            if runNumber not in md.getRunsWithSensor(md.sensor):
+                continue
+            
             if time_difference_linear.size == 0:
       
                 time_difference_linear  = dm.importTimingFile("linear")
@@ -68,18 +70,30 @@ def timingPlots():
         if len(peak_value) != 0:
             
             # Differences between two sensors, wrt peak time and cfd05 reference
-            #produceTimingDistributionPlots(time_difference_linear, peak_value)
+            
+            print "Batch", md.getBatchNumber()
+            
+            print "\nTIMING NORMAL PEAK PLOTS"
+            produceTimingDistributionPlots(time_difference_linear, peak_value)
+            
+            print "\nTIMING NORMAL CFD05 PLOTS"
             produceTimingDistributionPlots(time_difference_linear_cfd05, peak_value, True)
 
-#            # System of linear equations between sensors, wrt peak time and cfd05 reference
-#            # Batch 6 is omitted the calculation of system of equations
-#            if md.getBatchNumber()/100 != 6:
-#                produceTimingDistributionPlotsSysEq(time_difference_sys_eq, peak_value)
-#                produceTimingDistributionPlotsSysEq(time_difference_sys_eq_cfd05, peak_value, True)
+            # System of linear equations between sensors, wrt peak time and cfd05 reference
+            # Batch 6 is omitted the calculation of system of equations
+            if md.getBatchNumber()/100 != 6:
+            
+                print "\nTIMING SYSTEM PEAK PLOTS"
+                produceTimingDistributionPlotsSysEq(time_difference_sys_eq, peak_value)
+                
+                print "\nTIMING SYSTEM CFD05 PLOTS"
+                produceTimingDistributionPlotsSysEq(time_difference_sys_eq_cfd05, peak_value, True)
 
 
     print "\nDone with producing TIMING plots.\n"
 
+
+############## LINEAR TIME DIFFERENCE ###############
 
 def produceTimingDistributionPlots(time_difference, peak_value, cfd05=False):
     
@@ -88,10 +102,13 @@ def produceTimingDistributionPlots(time_difference, peak_value, cfd05=False):
     
     for chan in time_difference.dtype.names:
     
-        if SiPM_chan == chan or md.getNameOfSensor(chan) != "W9-LGA35":
+        if md.getNameOfSensor(chan) == "SiPM-AFP":
+            continue
+        
+        if md.getNameOfSensor(chan) != md.sensor and md.sensor != "":
             continue
     
-        print "\nTIMING NORMAL PLOTS: Batch", md.getBatchNumber(),"sensor", md.getNameOfSensor(chan), chan, "\n"
+        print md.getNameOfSensor(chan), "\n"
 
         time_diff_th1d[chan] = ROOT.TH1D("Time difference "+md.getNameOfSensor(chan), "time_difference" + chan, xbins, -bin_range, bin_range)
      
@@ -104,16 +121,17 @@ def produceTimingDistributionPlots(time_difference, peak_value, cfd05=False):
         sigma_DUT, sigma_fit_error = t_calc.getSigmasFromFit(time_diff_th1d[chan], chan)
 
         # Set titles and export file
-        headTitle = "Time difference SiPM and "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
+        headTitle = "Time difference SiPM and "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"
         xAxisTitle = "\Deltat [ps]"
         yAxisTitle = "Entries"
-        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/normal/cfd05/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_diff_osc_cfd05.pdf"
+        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/normal/peak/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_diff_osc_peak.pdf"
 
         if md.checkIfSameOscAsSiPM(chan):
             fileName = fileName.replace("diff_osc", "same_osc")
 
         if cfd05:
-                fileName = fileName.replace("cfd05", "peak")
+            fileName = fileName.replace("peak", "cfd05")
+
 
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportTHPlot(time_diff_th1d[chan], titles, chan, [sigma_DUT, sigma_fit_error] )
@@ -128,7 +146,10 @@ def produceTimingDistributionPlots(time_difference, peak_value, cfd05=False):
         timing_results[type][0] = sigma_DUT
         timing_results[type][1] = sigma_fit_error
         sensor_info = [md.getNameOfSensor(chan), chan]
-        #dm.exportTimingResults(timing_results, sensor_info, md.checkIfSameOscAsSiPM(chan), cfd05)
+        dm.exportTimingResults(timing_results, sensor_info, md.checkIfSameOscAsSiPM(chan), cfd05)
+
+
+############## SYSTEM OF EQUATIONS TIME DIFFERENCE ###############
 
 
 # Use this method to calculate the linear system of equations solution
@@ -144,7 +165,7 @@ def produceTimingDistributionPlotsSysEq(time_difference, peak_value, cfd05=False
     # First loop, calculate the sigmas for each combination of time differences
     for chan in osc1:
     
-        print "\nTIMING SYSTEM PLOTS: Batch", md.getBatchNumber(),"sensor", md.getNameOfSensor(chan), chan, "\n"
+        print md.getNameOfSensor(chan), "\n"
         
         # Do not consider the same channel when comparing two
         chan2_list = list(osc1)
@@ -170,10 +191,10 @@ def produceTimingDistributionPlotsSysEq(time_difference, peak_value, cfd05=False
             # Find the maximal value
             MPV_bin = time_diff_th1d[chan][chan2].GetMaximumBin()
             MPV_time_diff = int(time_diff_th1d[chan][chan2].GetXaxis().GetBinCenter(MPV_bin))
-            MPV_entries = time_diff_th1d[chan][chan2].GetMaximum()
 
             # Change the window
-            window_range = 1000
+            window_range = 2000
+            
             xMin = MPV_time_diff - window_range
             xMax = MPV_time_diff + window_range
             time_diff_th1d[chan][chan2].SetAxisRange(xMin, xMax)
@@ -197,7 +218,7 @@ def produceTimingDistributionPlotsSysEq(time_difference, peak_value, cfd05=False
                 # Get sigma between two channels
                 sigma_convoluted[i][j] = sigma_convoluted[j][i] = fit_function.GetParameter(2)
                 sigma_error[i][j] = sigma_error[j][i] = fit_function.GetParError(2)
-                
+            
             except:
             
                 sigma_convoluted[i][j] = sigma_convoluted[j][i] = 0
@@ -213,8 +234,10 @@ def produceTimingDistributionPlotsSysEq(time_difference, peak_value, cfd05=False
         
         # Create numpy array to export the results
         type = "timing_system"
+        
         if cfd05:
             type += "_cfd05"
+        
         dt = ([(type, '<f8')])
         timing_results_sys_eq = np.empty(2, dtype = dt)
         
@@ -222,28 +245,31 @@ def produceTimingDistributionPlotsSysEq(time_difference, peak_value, cfd05=False
         for chan2 in chan2_list:
 
             # Create titles and print the graph
-            headTitle = "Time difference "+md.getNameOfSensor(chan)+" and "+md.getNameOfSensor(chan2)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
+            headTitle = "Time difference "+md.getNameOfSensor(chan)+" and "+md.getNameOfSensor(chan2)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"
             xAxisTitle = "\Deltat [ps]"
             yAxisTitle = "Entries"
-            fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/system/cfd05/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_and_"+str(md.getNameOfSensor(chan2))+"_cfd05.pdf"
+            fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/system/peak/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_and_"+str(md.getNameOfSensor(chan2))+"_peak.pdf"
 
             if cfd05:
-                fileName = fileName.replace("cfd05", "peak")
+                fileName = fileName.replace("peak", "cfd05")
         
-            titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
 
+            index = int(chan[-1]) % 4
             sigma_DUT = sigmas_chan.item((0, index))
             sigma_DUT_error = sigmas_error.item((0, index))
-            index = int(chan[-1]) % 4
-            exportTHPlot(time_diff_th1d[chan][chan2], titles, chan,[sigma_DUT, sigma_DUT_error])
+
+            titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
+            exportTHPlot(time_diff_th1d[chan][chan2], titles, chan, [sigma_DUT, sigma_DUT_error])
 
             timing_results_sys_eq[type][0] = sigma_DUT
             timing_results_sys_eq[type][1] = sigma_DUT_error
-
-        # Export results
+            
+        # Export the results
         sensor_info = [md.getNameOfSensor(chan), chan]
         dm.exportTimingResultsSysEq(timing_results_sys_eq, sensor_info, cfd05)
 
+
+############## EXPORT PLOT ###############
 
 def exportTHPlot(graphList, titles, chan, sigma):
 

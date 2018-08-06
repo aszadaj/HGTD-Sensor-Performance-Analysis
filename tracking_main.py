@@ -3,12 +3,10 @@ import numpy as np
 import root_numpy as rnm
 from datetime import datetime
 
-import metadata as md
+import run_log_metadata as md
 import tracking_plot as tplot
-import tracking_calc as t_calc
+import tracking_calculations as t_calc
 import data_management as dm
-
-#md.setupATLAS()
 
 ROOT.gROOT.SetBatch(True)
 
@@ -35,7 +33,7 @@ def trackingAnalysis():
             
             md.defineGlobalVariableRun(runLog[index])
 
-            if (md.isTrackingFileAvailableAndOK()):
+            if (dm.isTrackingFileAvailableAndOK()):
                 
                 peak_values_run = dm.importPulseFile("peak_value")
                 charge_run = dm.importPulseFile("charge")
@@ -81,7 +79,6 @@ def trackingAnalysis():
         
             # This function calculates the center position and exports the file as position_XXX.root.
             # One time only.
-            
             #t_calc.calculateCenterOfSensorPerBatch(peak_values, tracking)
             
             tplot.produceTrackingGraphs(peak_values, charge, rise_times, time_difference_peak, time_difference_cfd05, tracking)

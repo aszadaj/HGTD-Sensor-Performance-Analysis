@@ -1,9 +1,9 @@
 import ROOT
-import root_numpy as rnm
 import numpy as np
+import root_numpy as rnm
 
 import noise_calculations as n_calc
-import metadata as md
+import run_log_metadata as md
 import data_management as dm
 
 from pathos.multiprocessing import ProcessingPool as Pool
@@ -50,14 +50,11 @@ def noiseAnalysisPerRun():
     # Configure inputs for multiprocessing
     max = md.getNumberOfEvents()
     step = 10000
-
-    # Quick Analysis
-    if md.maxEntries != 0:
-        max = step = md.maxEntries
-        dm.setNumberOfThreads(1)
+    threads = 4
     
-    p = Pool(dm.threads)
+    p = Pool(threads)
     ranges = range(0, max, step)
+    
     dataPath = dm.getDataPath()
     results = p.map(lambda chunk: multiProcess(dataPath, chunk, chunk+step), ranges)
 

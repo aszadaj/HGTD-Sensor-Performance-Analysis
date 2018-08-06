@@ -6,47 +6,53 @@
 #                                           #
 #############################################
 
-import noise
+import noise_main
 import noise_plot
-import pulse
+import pulse_main
 import pulse_plot
-import tracking
-import timing
+import tracking_main
+import timing_main
 import timing_plot
-import metadata
+import results_main
+
+import run_log_metadata
 import data_management
-import results
 
 
 def main():
+
+    # Select how many runs, which batches and which sensors to be run
+    number_of_runs = 0
+    batches = 102
+    sensor = ""
     
     data_management.printTime()
 
-    # Choose batch numbers to run
-    metadata.setEntriesForQuickAnalysis(0)
-    metadata.setLimitRunNumbers(0)
-    metadata.setBatchNumbers("all")
+
+    run_log_metadata.setLimitRunNumbers(number_of_runs)
+    run_log_metadata.setBatchNumbers(batches)
+    run_log_metadata.setSensor(sensor)
 
     ############## METHODS ###############
     
     
     ######## NOISE ##########
     
-    #noise.noiseAnalysis()
+    #noise_main.noiseAnalysis()
     
     #########################
 
     
     ######## PULSE ##########
     
-    pulse.pulseAnalysis()
+    #pulse_main.pulseAnalysis()
     
     #########################
 
     
     ### TIMING RESOLUTION ###
     
-    #timing.timingAnalysis()
+    #timing_main.timingAnalysis()
     
     #########################
     
@@ -54,7 +60,7 @@ def main():
     
     ###### TRACKING #########
     
-    #tracking.trackingAnalysis()
+    #tracking_main.trackingAnalysis()
     
     #########################
     
@@ -67,7 +73,7 @@ def main():
 
     ### RESULTS ###
     
-    #results.produceResults()
+    results_main.produceResults()
 
    
     #######################################

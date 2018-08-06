@@ -1,7 +1,8 @@
 import ROOT
-import metadata as md
 import numpy as np
 import root_numpy as rnm
+
+import run_log_metadata as md
 import data_management as dm
 
 
@@ -54,12 +55,11 @@ def produceNoisePlots(noise_average, noise_std):
     
     global canvas, chan
     
-    noise_average, noise_std = dm.convertNoiseData(noise_average, noise_std)
+    dm.convertNoiseData(noise_average, noise_std)
     
     canvas = ROOT.TCanvas("Noise", "noise")
     
     channels = noise_average.dtype.names
-    #channels = ["chan0"]
  
     # This is used to export data for pulse analysis. Takes the value from the
     # fitted function
@@ -113,14 +113,14 @@ def produceNoisePlots(noise_average, noise_std):
         yAxisTitle = "Entries"
 
 
-        headTitle = "Noise - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
+        headTitle = "Noise - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"
         xAxisTitle = "Standard deviation [mV]"
         fileName = str(dm.getSourceFolderPath()) + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/noise/noise_plots/noise_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistograms(noise_graph, titles)
         
         
-        headTitle = "Pedestal - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan))) + " V"
+        headTitle = "Pedestal - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"
         xAxisTitle = "Average value [mV]"
         fileName = str(dm.getSourceFolderPath()) + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/noise/pedestal_plots/pedestal_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
@@ -161,6 +161,8 @@ def produceNoisePlots(noise_average, noise_std):
 
 # Produce histograms
 def exportHistograms(graphList, titles):
+
+    canvas.Clear()
 
     ROOT.gStyle.SetOptStat("ne")
     ROOT.gStyle.SetOptFit(0012)

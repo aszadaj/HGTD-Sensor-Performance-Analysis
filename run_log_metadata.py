@@ -21,6 +21,13 @@ def getRunLog():
     return metaData
 
 
+# Set run info for selected run
+def defineGlobalVariableRun(row):
+    
+    global runInfo
+    runInfo = row
+
+
 # Check inside folder which runs should be considered
 def restrictToBatch(metaData, batchNumber):
    
@@ -36,8 +43,6 @@ def restrictToBatch(metaData, batchNumber):
 def getAllSensorNames():
 
     return ["50D-GBGR2", "W4-LG12", "W4-RD01", "W4-S203", "W4-S204_6e14", "W4-S215", "W4-S1022", "W4-S1061", "W9-LGA35"]
-
-
 
 # Structure of results: [runLogBatch1, runLogBatch1, ...,] and runLogBatch1 = [run1, run2, run3, ]... run1 = row from the run log for selected run
 def getRunLogBatches(batchNumbers):
@@ -62,78 +67,6 @@ def getRunLogBatches(batchNumbers):
     return runLog
 
 
-# Check if the pulse file for timing is available
-def isTimingDataFilesAvailable():
-
-    availableFilesPulse         = readFileNames("peak_value")
-    found = False
-    
-    for pulse_file in availableFilesPulse:
-        if pulse_file == int(getRunNumber()):
-            return True
-
-    return False
-
-# Check if the tracking file is available
-def isTrackingFileAvailableAndOK():
-
-
-    availableFilesPulse         = readFileNames("peak_value")
-    availableFilesTracking     = readFileNames("tracking")
-
-    found = False
-    
-    for pulse_file in availableFilesPulse:
-        if pulse_file == int(getRunNumber()):
-            for tracking_file in availableFilesTracking:
-                if tracking_file == int(getTimeStamp()):
-                    if getRunNumber() in corruptedRuns():
-                        found = False
-                    else:
-                        found = True
-
-    return found
-
-
-# Check if the noise file (noise = standard deviation) file is made
-def isNoiseFileDone(runNumber):
-
-    available = False
-
-    availableFiles = readFileNames("noise_noise")
-    
-    if int(runNumber) in availableFiles:
-        available = True
-    
-    return available
-
-
-# Check if the pulse file (peak value) file is made
-def isPulseFileDone(runNumber):
-
-    available = False
-
-    availableFiles = readFileNames("peak_value")
-
-    if int(runNumber) in availableFiles:
-        available = True
-        
-    return available
-
-
-# Check if the timing resolution file is made
-def isTimingFileDone(runNumber):
-
-    available = False
-
-    availableFiles = readFileNames("timing")
-
-    if int(runNumber) in availableFiles:
-        available = True
-    
-    return available
-
-
 def checkIfSameOscAsSiPM(chan):
 
     SiPM_chan = getChannelNameForSensor("SiPM-AFP")
@@ -150,65 +83,6 @@ def checkIfSameOscAsSiPM(chan):
     else:
         return False
 
-
-
-# Read file names which are enlisted in the folder
-def readFileNames(fileType):
-
-    folderPath = ""
-    
-    if fileType == "tracking": #tracking1504949898.root
-        folderPath = "tracking_data_sep_2017/"
-        first_index = 8
-        last_index = 18
-
-    elif fileType == "peak_value": #pulse_peak_value_3656.root
-        folderPath = "data_hgtd_efficiency_sep_2017/pulse/pulse_peak_value/"
-        first_index = 17
-        last_index = 21
-
-    elif fileType == "oscilloscope": #data_1504949898.tree.root
-        folderPath = "oscilloscope_data_sep_2017/"
-        first_index = 5
-        last_index = 15
-
-    elif fileType == "noise_noise": #noise_noise_3791.root
-        folderPath = "data_hgtd_efficiency_sep_2017/noise/noise_noise/"
-        first_index = 12
-        last_index = 16
-
-    elif fileType == "noise_pedestal": #noise_pedestal_3791.root
-        folderPath = "data_hgtd_efficiency_sep_2017/noise/noise_pedestal/"
-        first_index = 15
-        last_index = 19
-
-    elif fileType == "pulse_peak_time": #pulse_peak_time_3791.root
-        folderPath = "data_hgtd_efficiency_sep_2017/pulse/pulse_peak_time/"
-        first_index = 16
-        last_index = 20
-
-    elif fileType == "pulse_peak_value": #pulse_peak_value_3791.root
-        folderPath = "data_hgtd_efficiency_sep_2017/pulse/pulse_peak_value/"
-        first_index = 17
-        last_index = 21
-
-    elif fileType == "pulse_rise_time": #pulse_rise_time_3791.root
-        folderPath = "data_hgtd_efficiency_sep_2017/pulse/pulse_rise_time/"
-        first_index = 16
-        last_index = 20
-
-    elif fileType == "timing": #timing_3656.root
-        folderPath = "data_hgtd_efficiency_sep_2017/timing/"
-        first_index = 7
-        last_index = 11
-
-
-    mainFolderPath = dm.getSourceFolderPath() + folderPath
-    
-    availableFiles = [int(f[first_index:last_index]) for f in os.listdir(mainFolderPath) if os.path.isfile(os.path.join(mainFolderPath, f)) and f != '.DS_Store']
-    availableFiles.sort()
-
-    return availableFiles
 
 
 def getRunNumberForBatch(batchNumber):
@@ -231,14 +105,32 @@ def getRunNumber(timeStamp=""):
 
 # Return all run numbers for given batch
 
-def getAllRunNumbers(batchNumber):
-
+def getAllRunNumbers(batchNumber=0):
+    
     runLog = getRunLog()
     
     runNumbers = []
     
     for row in runLog:
         if int(row[5]) == batchNumber:
+            runNumbers.append(int(row[3]))
+        elif batchNumber == 0:
+            runNumbers.append(int(row[3]))
+
+    return runNumbers
+
+
+def getRunsWithSensor(sensor):
+    
+    if sensor == "":
+        return getAllRunNumbers()
+    
+    runLog = getRunLog()
+    
+    runNumbers = []
+    
+    for row in runLog:
+        if sensor in getAvailableSensors(int(row[3])):
             runNumbers.append(int(row[3]))
 
     return runNumbers
@@ -267,11 +159,31 @@ def getTimeStampsForBatch(batchNumber):
     
     return timeStamps
 
-def getNumberOfRunsPerBatch():
 
-    return len(getTimeStampsForBatch(int(runInfo[5])))
+def getNumberOfRunsPerBatch(batchNumber = ""):
+    
+    if batchNumber == "":
+
+        return len(getTimeStampsForBatch(int(runInfo[5])))
+
+    else:
+        return len(getTimeStampsForBatch(batchNumber))
 
 
+def checkIfBatchIsLargest(sensor):
+
+    voltage = getBiasVoltage(sensor, getBatchNumber())
+    numberOfRuns = getNumberOfRunsPerBatch(getBatchNumber())
+    batchNumbersSensor = getAllBatchNumberForSensor(sensor)
+    
+    check = True
+
+    for batch in batchNumbersSensor:
+        if voltage == getBiasVoltage(sensor, batch) and numberOfRuns < getNumberOfRunsPerBatch(batch):
+            check = False
+
+    return check
+    
 # Get number of events inside the current ROOT file
 def getNumberOfEvents(timeStamp=""):
     
@@ -284,43 +196,6 @@ def getNumberOfEvents(timeStamp=""):
         for row in runLog:
             if int(row[4]) == timeStamp:
                 return int(row[6])
-
-
-# Get total numer of events within batch
-def getNumberOfEventsBatch():
-
-    if getNumberOfRunsPerBatch() > 2:
-
-
-        runLog = getRunLog()
-
-        for row in runLog:
-            if int(row[4]) == timeStamp:
-                return int(row[7])
-    else:
-        return getNumberOfEvents()
-
-# Get the voltage value which cuts the amplitude (to restrict from noise furthermore).
-# Value in negative voltage [-V].
-def getPulseAmplitudeCut(chan):
-    
-    amplitudeCuts = {}
-    
-    amplitudeCuts["50D-GBGR2"] = -20 * 0.001
-    amplitudeCuts["SiPM-AFP"] = -200 * 0.001
-    amplitudeCuts["W4-LG12"] = -15 * 0.001
-    amplitudeCuts["W4-RD01"] = -20 * 0.001
-    amplitudeCuts["W4-S203"] = -15 * 0.001
-    amplitudeCuts["W4-S204_6e14"] = -15 * 0.001 # Radiated sensor
-    amplitudeCuts["W4-S215"] = -20 * 0.001
-    amplitudeCuts["W4-S1022"] = -20 * 0.001
-    amplitudeCuts["W4-S1030"] = -20 * 0.001 # Batch 8
-    amplitudeCuts["W4-S1061"] = -15 * 0.001
-    amplitudeCuts["W9-LGA35"] = -20 * 0.001
-    amplitudeCuts["W9-LGA44"] = -20 * 0.001 # Batch 8
-
-
-    return amplitudeCuts[getNameOfSensor(chan)]
 
 
 
@@ -339,6 +214,14 @@ def getNameOfSensor(chan):
     index = int(chan[-1:])
     return runInfo[13+index*5]
 
+def getAvailableSensors(runNumber):
+
+    sensors = []
+
+    for i in range(0,8):
+        sensors.append(runInfo[13+i*5])
+
+    return sensors
 
 # Return batch number
 def getBatchNumber(runNumber=""):
@@ -390,6 +273,20 @@ def getFirstBatchNumberForSensor(sensor):
         if sensor in row:
             return int(row[5])
 
+def getAllBatchNumberForSensor(sensor):
+
+    runLog = getRunLog()
+    batchNumbers = []
+
+    for row in runLog:
+        if sensor in row:
+            batch = int(row[5])
+            if batch not in batchNumbers:
+                batchNumbers.append(batch)
+
+    return batchNumbers
+
+
 def getTemperature():
 
     return int(runInfo[10])
@@ -398,6 +295,7 @@ def getTemperature():
 def availableTemperatures():
 
     return ["22", "-30", "-40"]
+
 
 # This is a reference to Vagelis conference about SiPM-s RD50 Workshop in Krakow
 def getSigmaSiPM():
@@ -408,15 +306,16 @@ def getSigmaSiPM():
         return 15
 
 
-def getBiasVoltage(sensor):
+def getBiasVoltage(sensor, batchNumber):
 
     if sensor == "SiPM-AFP":
-        return "26.5"
-
-    index = runInfo.index(sensor)
-    bias_voltage = runInfo[index+1]
-
-    return int(runInfo[index+1])
+        return 26.5
+        
+    runLogBatch = getRowForBatchNumber(batchNumber)
+    index = runLogBatch.index(sensor)
+    bias_voltage = int(runLogBatch[index+1])
+    
+    return bias_voltage
 
 
 def checkIfArrayPad(chan):
@@ -435,7 +334,6 @@ def checkIfArrayPad(chan):
         array_pad = True
 
     return array_pad
-
 
 
 
@@ -475,12 +373,6 @@ def corruptedRuns():
     return runs
 
 
-# Set run info for selected run
-def defineGlobalVariableRun(row):
-    
-    global runInfo
-    runInfo = row
-
 
 def setBatchNumbers(numbers, exclude=[]):
 
@@ -488,7 +380,8 @@ def setBatchNumbers(numbers, exclude=[]):
     
     if numbers == "all" and len(exclude) == 0:
         numbers = getAllBatchNumbers()
-
+        batchNumbers = numbers
+    
     elif numbers == "all":
         numbers = getAllBatchNumbers()
         number_excluded = []
@@ -498,9 +391,18 @@ def setBatchNumbers(numbers, exclude=[]):
                 number_excluded.append(numbers[index])
 
         numbers = number_excluded
-
-                
-    batchNumbers = numbers
+        batchNumbers = numbers
+    
+    
+    else:
+        
+        if int(numbers)/100 >= 1:
+            batchNumbers = [numbers]
+            
+        else:
+        
+            batchNumbers = getAllBatchNumbers()
+            batchNumbers = [i for i in batchNumbers if i/100 == numbers]
 
 
 def setLimitRunNumbers(number):
@@ -508,6 +410,6 @@ def setLimitRunNumbers(number):
     limitRunNumbers = number
 
 
-def setEntriesForQuickAnalysis(value):
-    global maxEntries
-    maxEntries = value
+def setSensor(sensor_list):
+    global sensor
+    sensor = sensor_list

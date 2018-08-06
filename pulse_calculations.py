@@ -1,7 +1,8 @@
 import numpy as np
-import data_management as dm
 import sys
-import metadata as md
+
+import data_management as dm
+import run_log_metadata as md
 
 def pulseAnalysis(data, pedestal, noise):
 

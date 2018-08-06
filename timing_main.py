@@ -3,7 +3,7 @@ import numpy as np
 import root_numpy as rnm
 from datetime import datetime
 
-import metadata as md
+import run_log_metadata as md
 import data_management as dm
 import timing_plot as t_plot
 import timing_calculations as t_calc
@@ -43,8 +43,7 @@ def timingAnalysis():
             time_diff_cfd05 = t_calc.getTimeDifferencePerRun(cfd05)
             
             # Export per run number linear
-            dm.exportTimingLinearData(time_diff_peak)
-            dm.exportTimingLinearRiseTimeRefData(time_diff_cfd05)
+            dm.exportTimeDifferenceData(time_diff_peak, time_diff_cfd05 )
         
             if md.getBatchNumber()/100 != 6:
                 # Perform calculations sys eq
@@ -52,8 +51,7 @@ def timingAnalysis():
                 time_diff_cfd05_sys_eq = t_calc.getTimeDifferencePerRunSysEq(cfd05)
 
                 # Export per run number sys eq
-                dm.exportTimingSysEqData(time_diff_peak_sys_eq)
-                dm.exportTimingSysEqCFD05RefData(time_diff_cfd05_sys_eq)
+                dm.exportTimeDifferenceDataSysEq(time_diff_peak_sys_eq, time_diff_cfd05_sys_eq)
             
             print "Done with run", md.getRunNumber(), "\n"
 
