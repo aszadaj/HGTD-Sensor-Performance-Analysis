@@ -1,10 +1,10 @@
-#############################################
-#                                           #
-#                                           #
-#         HGTD EFFICIENCY ANALYSIS          #
-#                                           #
-#                                           #
-#############################################
+#####################################################
+#                                                   #
+#                                                   #
+#         HGTD SENSOR PERFOMANCE ANALYSIS           #
+#                                                   #
+#                                                   #
+#####################################################
 
 import noise_main
 import noise_plot
@@ -23,7 +23,7 @@ def main():
 
     # Select how many runs, which batches and which sensors to be run
     number_of_runs = 0
-    batches = 102
+    batches = 401
     sensor = ""
     
     data_management.printTime()

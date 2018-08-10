@@ -93,17 +93,19 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_t
         else:
             charge_max_value_th1d = 500
 
+        if md.sensor != "" and md.getNameOfSensor(chan) != md.sensor:
+            continue
 
         print "\nPULSE PLOTS: Batch", md.getBatchNumber(),"sensor", md.getNameOfSensor(chan), chan, "\n"
         
         # Create and fill objects with values
-        peak_values_th1d   = ROOT.TH1F("Pulse amplitude", "peak_value", 93, 0, 500)
+        peak_values_th1d   = ROOT.TH1F("Pulse amplitude", "peak_value", 92, 0, 500)
         rise_times_th1d    = ROOT.TH1F("Rise time", "rise_time", 300, 0, 4000)
         point_count_th1d   = ROOT.TH1F("Point count", "point_count", 100, 0, 100)
         max_sample_th1d    = ROOT.TH1F("Max sample", "max_sample", 100, 0, 360)
         cfd05_th1d         = ROOT.TH1F("CFD05", "CFD05_plot", 100, 0, 100)
         peak_time_th1d     = ROOT.TH1F("Peak time", "peak_time", 100, 0, 100)
-        charge_th1d        = ROOT.TH1F("Charge", "charge", 93, 0, charge_max_value_th1d)
+        charge_th1d        = ROOT.TH1F("Charge", "charge", 92, 0, charge_max_value_th1d)
         max_sample_vs_points_threshold_th2d = ROOT.TH2D("Max sample vs no of points", "amp_vs_points", 80, 0, 80, 100, 0, 200)
         
         for entry in range(0, len(peak_values[chan])):
