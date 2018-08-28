@@ -374,7 +374,7 @@ def corruptedRuns():
 
 
 
-def setBatchNumbers(numbers, exclude=[]):
+def setBatchNumbers(numbers, first_number, exclude=[]):
 
     global batchNumbers
     
@@ -394,10 +394,12 @@ def setBatchNumbers(numbers, exclude=[]):
         batchNumbers = numbers
     
     
+
     else:
         
-        if int(numbers)/100 >= 1:
-            batchNumbers = [numbers]
+        
+        if not first_number:
+            batchNumbers = numbers
             
         else:
         

@@ -1,11 +1,9 @@
 import ROOT
 import numpy as np
 import root_numpy as rnm
-from datetime import datetime
 
 import run_log_metadata as md
 import tracking_plot as tplot
-import tracking_calculations as t_calc
 import data_management as dm
 
 ROOT.gROOT.SetBatch(True)
