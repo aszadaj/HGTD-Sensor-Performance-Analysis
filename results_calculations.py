@@ -17,7 +17,6 @@ def importResultsValues(sensor_data, category):
         batchNumber = getBatchNumberFromFile(filePath)
         md.defineGlobalVariableRun(md.getRowForBatchNumber(batchNumber))
 
-        # Will this work?
         if batchNumber in omitBadDataBatches():
             continue
 

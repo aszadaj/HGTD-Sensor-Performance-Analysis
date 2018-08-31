@@ -17,60 +17,72 @@ import results_main
 
 import run_log_metadata
 import data_management
+import time
 
 
 def main():
 
-    # Select how many runs, which batches and which sensors to be run, var batches must be a list
+#    count = 0
+#    time_tot = 2*60
+#    remaining = time_tot
+#    bool = True
+#    while bool:
+#        print time_tot-count, "minutes left"
+#        time.sleep(60)
+#        count += 1
+#        if count == time_tot:
+#            bool = False
+#    print "Start"
+
+    # Select how many runs, which batches and which sensors to be run
     number_of_runs = 0
     
-    # batches must be list, of "all". One can add another
-    batches = [102]
-    batches_exclude = []
+    # batches must be list, or "all". Exclusion of batches also possible
+    batches = "all"
+    batches_exclude = [101, 102, 103, 104, 105, 106, 107, 108, 201, 202, 203, 204, 205, 206, 207, 301, 302, 303, 304, 305]
     
     # consider the group of batches (example 10X or 70X)
     first_number = False
     
-    # The senso which is supposed to be analyzed, "" == all sensors
-    sensor = "W9-LGA35"
+    # The sensor which is supposed to be analyzed, "" == all sensors
+    sensor = ""
     
-    data_management.printTime()
-
 
     run_log_metadata.setLimitRunNumbers(number_of_runs)
     run_log_metadata.setBatchNumbers(batches, first_number, batches_exclude)
     run_log_metadata.setSensor(sensor)
+    data_management.printTime()
 
     ############## METHODS ###############
     
     
-    ######## NOISE ##########
+    ############# NOISE ##############
     
     #noise_main.noiseAnalysis()
     
-    #########################
+    ##################################
 
     
-    ######## PULSE ##########
+    ########### PULSE ################
+
+    pulse_main.pulseAnalysis()
     
-    #pulse_main.pulseAnalysis()
-    
-    #########################
+    ##################################
 
     
-    ### TIMING RESOLUTION ###
+    ####### TIMING RESOLUTION ########
     
     #timing_main.timingAnalysis()
     
-    #########################
+    ##################################
+
     
     
+    ######## TRACKING AND PLOTS ######
     
-    ###### TRACKING #########
+    #tracking_main.trackingAnalysis()
     
-    tracking_main.trackingAnalysis()
-    
-    #########################
+    ##################################
     
     
     ### PLOTS ###
@@ -79,12 +91,12 @@ def main():
     #pulse_plot.pulsePlots()
     #timing_plot.timingPlots()
 
-    ### RESULTS ###
+    ########### RESULTS ##############
     
     #results_main.produceResults()
 
    
-    #######################################
+    ######################################
    
     data_management.printTime()
     exit()

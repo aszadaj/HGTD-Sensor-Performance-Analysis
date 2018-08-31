@@ -110,7 +110,7 @@ def getSigmasFromFit(th1d_list, chan):
     else:
         fit_function = ROOT.TF1("gaus_fit", "[0]*exp(-0.5*((x-[2])/[3])^2) + [1]*exp(-0.5*((x-([2]+100))/[3])^2)", xMin, xMax)
         fit_function.SetParameters(MPV_entries, MPV_entries, mean_window, sigma_window)
-        fit_function.SetParNames("Constant 1", "Constant 2", "Mean 1", "Sigma tot")
+        fit_function.SetParNames("Constant 1", "Constant 2", "Mean 1", "\sigma_{tot}")
 
     try:
         # Create fit and calculate the width

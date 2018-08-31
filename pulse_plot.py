@@ -105,7 +105,7 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_t
         max_sample_th1d    = ROOT.TH1F("Max sample", "max_sample", 100, 0, 360)
         cfd05_th1d         = ROOT.TH1F("CFD05", "CFD05_plot", 100, 0, 100)
         peak_time_th1d     = ROOT.TH1F("Peak time", "peak_time", 100, 0, 100)
-        charge_th1d        = ROOT.TH1F("Charge", "charge", 92, 0, charge_max_value_th1d)
+        charge_th1d        = ROOT.TH1F("Charge", "charge", 60, 0, charge_max_value_th1d)
         max_sample_vs_points_threshold_th2d = ROOT.TH2D("Max sample vs no of points", "amp_vs_points", 80, 0, 80, 100, 0, 200)
         
         for entry in range(0, len(peak_values[chan])):
@@ -127,7 +127,7 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_t
 
             if peak_time[chan][entry] != 0:
                 peak_time_th1d.Fill(peak_time[chan][entry])
-            
+
             if charge[chan][entry] != 0:
                 charge_th1d.Fill(charge[chan][entry])
 
@@ -148,7 +148,7 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_t
         xMin = max_value_rise_time - rise_times_th1d.GetStdDev()
         xMax = max_value_rise_time + rise_times_th1d.GetStdDev()
         rise_times_th1d.Fit("gaus", "Q", "", xMin, xMax)
-        rise_time_mpv_error = [rise_times_th1d.GetFunction("gaus").GetParameter(2), rise_times_th1d.GetFunction("gaus").GetParError(2)]
+        rise_time_mpv_error = [rise_times_th1d.GetFunction("gaus").GetParameter(1), rise_times_th1d.GetFunction("gaus").GetParError(1)]
         
         
         # CHARGE #
@@ -255,7 +255,7 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_t
         exportHistogram(max_sample_th1d, titles)
 
         # Print cfd05 plots
-        headTitle = "CFD05 time locaiton - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"
+        headTitle = "CFD05 time location - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"
         xAxisTitle = "Time location [ns]"
         fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/cfd05/cfd05_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
@@ -263,7 +263,7 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_t
 
 
         # Print peak time plots
-        headTitle = "Peak time locaiton - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"
+        headTitle = "Peak time location - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"
         xAxisTitle = "Time location [ns]"
         fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/peak_time/peak_time_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]

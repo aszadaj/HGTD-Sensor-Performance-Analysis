@@ -67,30 +67,30 @@ def timingPlots():
                 peak_value = np.concatenate((peak_value, dm.importPulseFile("peak_value")), axis = 0)
 
         
-        if len(peak_value) != 0:
-            
-            # Differences between two sensors, wrt peak time and cfd05 reference
-            
-            print "Batch", md.getBatchNumber()
-            
-            print "\nTIMING NORMAL PEAK PLOTS"
-            produceTimingDistributionPlots(time_difference_linear, peak_value)
-            
-            print "\nTIMING NORMAL CFD05 PLOTS"
-            produceTimingDistributionPlots(time_difference_linear_cfd05, peak_value, True)
-
-            # System of linear equations between sensors, wrt peak time and cfd05 reference
-            # Batch 6 is omitted the calculation of system of equations
-            if md.getBatchNumber()/100 != 6:
-            
-                print "\nTIMING SYSTEM PEAK PLOTS"
-                produceTimingDistributionPlotsSysEq(time_difference_sys_eq, peak_value)
-                
-                print "\nTIMING SYSTEM CFD05 PLOTS"
-                produceTimingDistributionPlotsSysEq(time_difference_sys_eq_cfd05, peak_value, True)
 
 
-    print "\nDone with producing TIMING plots.\n"
+        # Differences between two sensors, wrt peak time and cfd05 reference
+        
+        print "Batch", md.getBatchNumber()
+        
+        print "\nTIMING RESOLUTION NORMAL PEAK PLOTS"
+        produceTimingDistributionPlots(time_difference_linear, peak_value)
+        
+        print "\nTIMING RESOLUTION NORMAL CFD05 PLOTS"
+        produceTimingDistributionPlots(time_difference_linear_cfd05, peak_value, True)
+
+        # System of linear equations between sensors, wrt peak time and cfd05 reference
+        # Batch 6 is omitted the calculation of system of equations
+        if md.getBatchNumber()/100 != 6:
+        
+            print "\nTIMING RESOLUTION SYSTEM PEAK PLOTS"
+            produceTimingDistributionPlotsSysEq(time_difference_sys_eq, peak_value)
+            
+            print "\nTIMING RESOLUTION SYSTEM CFD05 PLOTS"
+            produceTimingDistributionPlotsSysEq(time_difference_sys_eq_cfd05, peak_value, True)
+
+
+    print "\nDone with producing TIMING RESOLUTION plots.\n"
 
 
 ############## LINEAR TIME DIFFERENCE ###############
@@ -286,7 +286,7 @@ def exportTHPlot(graphList, titles, chan, sigma):
     graphList.Draw()
     canvas.Update()
     
-    ## Remove text from stats box
+    # Remove text from stats box
     statsBox = canvas.GetPrimitive("stats")
     statsBox.SetName("Mystats")
     graphList.SetStats(0)

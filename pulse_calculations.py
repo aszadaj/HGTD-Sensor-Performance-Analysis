@@ -69,8 +69,9 @@ def getPulseInfo(variables):
     
     # Define threhsold and sigma level
     N = 4
+    
     # This number has been argumented as a combined plot between max sample
-    # point and number of points above the threhsold. See report.
+    # point and number of points above the threshold. See report.
     threshold_points = 5
     threshold = N * noise + pedestal
     
@@ -78,14 +79,15 @@ def getPulseInfo(variables):
         
         points = calculatePoints(data, threshold)
         max_sample = np.amax(data)
-        peak_value, peak_time  = calculatePeakValue(data, pedestal, noise, osc_limit)
+        peak_value, peak_time = calculatePeakValue(data, pedestal, noise, osc_limit)
         rise_time, cfd05  = calculateRiseTime(data, pedestal, noise)
         charge = calculateCharge(data, threshold)
 
-        # Condition: if rise time or peak value cannot be found, disregard the pulse
-        if peak_value == 0 or rise_time == 0:
+        # Condition: if any of the parameters are zero, disregard the pulse
+        if not np.all([peak_value, peak_time, rise_time, cfd05]):
             
             peak_value = peak_time = rise_time = cfd05 = charge = 0
+
         
     # Invert again to maintain the same shape
     return peak_time, -peak_value, rise_time, cfd05, points, -max_sample, charge
@@ -143,7 +145,7 @@ def calculatePeakValue(data, pedestal, noise, osc_limit=350, graph=False):
     poly_fit_indices = np.arange(first_index, last_index+1)
     
     
-    # This is to ensure that the obtained value is the entry window
+    # This is to ensure that the obtained value is in the entry window
     if 2 < np.argmax(data) < 999:
     
         poly_fit_data = data[poly_fit_indices]

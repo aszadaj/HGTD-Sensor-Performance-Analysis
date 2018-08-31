@@ -17,7 +17,7 @@ def timingAnalysis():
     dm.defineDataFolderPath()
     
     runLog_batch = md.getRunLogBatches(md.batchNumbers)
-    print "\nStart TIMING analysis, batches:", md.batchNumbers
+    print "\nStart TIMING RESOLUTION analysis, batches:", md.batchNumbers
 
     for runLog in runLog_batch:
  
@@ -38,12 +38,12 @@ def timingAnalysis():
             peak_time = dm.importPulseFile("peak_time")
             cfd05 = dm.importPulseFile("cfd05")
             
-            # Perform calculations linear
+            # Perform linear calculations
             time_diff_peak = t_calc.getTimeDifferencePerRun(peak_time)
             time_diff_cfd05 = t_calc.getTimeDifferencePerRun(cfd05)
             
             # Export per run number linear
-            dm.exportTimeDifferenceData(time_diff_peak, time_diff_cfd05 )
+            dm.exportTimeDifferenceData(time_diff_peak, time_diff_cfd05)
         
             if md.getBatchNumber()/100 != 6:
                 # Perform calculations sys eq
@@ -57,6 +57,6 @@ def timingAnalysis():
 
         print "Done with batch", runLog[0][5], "\n"
 
-    print "Done with TIMING analysis\n"
+    print "Done with TIMING RESOLUTION analysis\n"
 
 

@@ -136,6 +136,113 @@ def exportROOTHistogram(graphList, fileName):
     fileObject.Close()
 
 
+
+
+
+# Import noise data file
+def importNoiseFile(category):
+    
+    return importROOTFile("noise", category)
+
+
+def importNoiseFilePlot(category):
+    
+    return importROOTFile("noise_plot", category)
+
+
+# Import pulse data file
+def importPulseFile(category):
+
+    return importROOTFile("pulse", category)
+
+def importTrackingFile(category=""):
+
+    return importROOTFile("tracking", category)
+
+def importTimingFile(category):
+
+    return importROOTFile("timing", category)
+
+
+# import results
+
+def importNoiseResults(sensor_info):
+
+    return importROOTFile("results", "noise", sensor_info)
+
+
+def importPulseResults(category, sensor_info):
+
+    return importROOTFile("results", category, sensor_info)
+
+
+def importTimingResults(sensor_info, same_osc, cfd05):
+    
+    return importROOTFile("results", "timing", sensor_info, same_osc, cfd05)
+
+
+def importTimingResultsSysEq(sensor_info, same_osc, cfd05):
+    
+    return importROOTFile("results", "timing_sys_eq", sensor_info, same_osc, cfd05)
+
+
+
+# Import selected ROOT file, sensor_info is consisted of name of the sensor and channel name
+def importROOTFile(group, category="", sensor_info=[], same_osc=False, cfd05=False):
+
+    if group == "tracking":
+        
+        if category == "":
+        
+            fileName = getSourceFolderPath()+"tracking_data_sep_2017/tracking"+md.getTimeStamp()+".root"
+        
+        else:
+            fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+group+"/"+category+"_"+str(md.getBatchNumber())+".root"
+
+
+    elif group == "timing":
+
+        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+group+"_"+category+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
+
+
+    elif group == "results":
+
+        fileName = getSourceFolderPath()+"results_data_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category
+
+        if category.find("timing") != -1:
+        
+            fileName += "_peak"+"/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_diff_osc_peak.root"
+        
+            if same_osc:
+                fileName = fileName.replace("diff_osc", "same_osc")
+        
+            if cfd05:
+                fileName = fileName.replace("peak", "cfd05")
+
+
+        else:
+        
+            fileName += "/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+".root"
+
+    elif group == "noise_plot":
+    
+        group = group.replace("noise_plot", "noise")
+    
+        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"_plot/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
+
+    elif group == "noise":
+    
+        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())+".root"
+
+
+    else:
+    
+        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
+
+
+    return rnm.root2array(fileName)
+
+
 def importROOTHistogram(fileName):
 
     rootDestination = fileName.replace("plots_hgtd_efficiency_sep_2017", "plots_data_hgtd_efficiency_sep_2017")
@@ -189,109 +296,6 @@ def isTrackingFileAvailableAndOK():
     return found
 
 
-# Import noise data file
-def importNoiseFile(category):
-    
-    return importROOTFile("noise", category)
-
-
-def importNoiseFilePlot(category):
-    
-    return importROOTFile("noise_plot", category)
-
-
-# Import pulse data file
-def importPulseFile(category):
-
-    return importROOTFile("pulse", category)
-
-def importTrackingFile(category=""):
-
-    return importROOTFile("tracking", category)
-
-def importTimingFile(category):
-
-    return importROOTFile("timing", category)
-
-
-# import results
-
-def importNoiseResults(sensor_info):
-
-    return importROOTFile("results", "noise", sensor_info)
-
-
-def importPulseResults(sensor_info):
-
-    return importROOTFile("results", "pulse", sensor_info)
-
-
-def importTimingResults(sensor_info, same_osc, cfd05):
-    
-    return importROOTFile("results", "timing", sensor_info, same_osc, cfd05)
-
-
-def importTimingResultsSysEq(sensor_info, same_osc, cfd05):
-    
-    return importROOTFile("results", "timing_sys_eq", sensor_info, same_osc, cfd05)
-
-
-
-# Import selected ROOT file
-def importROOTFile(group, category="", sensor_info=[], same_osc=False, cfd05=False):
-
-    if group == "tracking":
-        
-        if category == "":
-        
-            fileName = getSourceFolderPath()+"tracking_data_sep_2017/tracking"+md.getTimeStamp()+".root"
-        
-        else:
-            fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+group+"/"+category+"_"+str(md.getBatchNumber())+".root"
-
-    
-    elif group == "timing":
-
-        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+group+"_"+category+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
-
-
-    elif group == "results":
-
-        fileName = getSourceFolderPath()+"results_data_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category
-
-        if category.find("timing") != -1:
-        
-            fileName += "_peak"+"/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_diff_osc_peak.root"
-        
-            if same_osc:
-                fileName = fileName.replace("diff_osc", "same_osc")
-        
-            if cfd05:
-                fileName = fileName.replace("peak", "cfd05")
-
-
-        else:
-        
-            fileName += "/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+".root"
-    
-    elif group == "noise_plot":
-    
-        group = group.replace("noise_plot", "noise")
-    
-        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"_plot/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
-
-    elif group == "noise":
-    
-        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())+".root"
-
-    
-    else:
-    
-        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
-        
-        
-    return rnm.root2array(fileName)
-
 
 def convertNoiseData(noise_average, noise_std):
     
@@ -325,7 +329,7 @@ def convertChargeData(charge):
 # 0.46 fC -> Gain = charge/MIP and convert to fC
 def convertChargeToGainData(charge):
 
-    # The charge from a MIP for a pion
+    # The deposited charge from a MIP (here pion)
     MIP_charge = 0.46*10**-15
 
     for chan in charge.dtype.names:
@@ -394,10 +398,6 @@ def getDataPath():
     if "HDD500" in os.listdir("/Volumes"):
     
         dataPath = "/Volumes/HDD500/" + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
-
-    elif "HITACHI" in os.listdir("/Volumes"):
-    
-        dataPath = "/Volumes/HITACHI/" + "oscilloscope_data_sep_2017/data_"+str(md.getTimeStamp())+".tree.root"
 
 
     return dataPath

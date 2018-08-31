@@ -110,7 +110,7 @@ def setGraphAttributes(category_graph, category):
         titleGraph = "Rise time values per voltage"
         xTitle = "Bias voltage [V]"
         yTitle = "Rise time [ps]"
-        y_lim = [0, 1000]
+        y_lim = [0, 2000]
 
     elif category == "timing_normal_peak":
     
