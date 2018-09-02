@@ -14,6 +14,7 @@ ROOT.gROOT.SetBatch(True)
 # Start analysis of selected run numbers
 def pulseAnalysis():
 
+    dm.setFunctionAnalysis("pulse_analysis")
     dm.defineDataFolderPath()
     startTime = dm.getTime()
     runLog_batch = md.getRunLogBatches(md.batchNumbers)
@@ -34,10 +35,13 @@ def pulseAnalysis():
         
             md.defineGlobalVariableRun(runLog[index])
             
+            if not dm.checkIfFileAvailable():
+                continue
+                
             print "Run", md.getRunNumber()
             
-            variable_array = pulseAnalysisPerRun()
-            dm.exportPulseData(variable_array)
+            pulseAnalysisPerRun()
+            
                         
             print "Done with run", md.getRunNumber(), "\n"
 
@@ -58,16 +62,15 @@ def pulseAnalysisPerRun():
     ranges = range(0, max, step)
     
     dataPath = dm.getDataPath()
-    pedestal = dm.importNoiseFile("pedestal")
-    noise    = dm.importNoiseFile("noise")
+    pedestal = dm.exportImportROOTData("noise", "pedestal", False)
+    noise    = dm.exportImportROOTData("noise", "noise", False)
     
     # Form of results
     results = p.map(lambda chunk: multiProcess(dataPath, pedestal, noise, chunk, chunk+step), ranges)
     
     # results change form, now each element is a variable
     results_variables = p_calc.concatenateResults(results)
-
-    return results_variables
+    dm.exportPulseData(results_variables)
 
 
 # Multiprocessing

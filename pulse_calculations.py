@@ -23,7 +23,7 @@ def pulseAnalysis(data, pedestal, noise):
     rise_time       =   np.zeros(len(data), dtype = data.dtype)
     
     # Time at 50% of the rising edge
-    cfd05           =   np.zeros(len(data), dtype = data.dtype)
+    cfd           =   np.zeros(len(data), dtype = data.dtype)
     
     # Points above the threshold
     points           =   np.zeros(len(data), dtype = data.dtype)
@@ -34,7 +34,7 @@ def pulseAnalysis(data, pedestal, noise):
     # Charge collected from the MIP
     charge          =   np.zeros(len(data), dtype = data.dtype)
     
-    properties = [peak_time, peak_value, rise_time, cfd05, points, max_sample, charge]
+    properties = [peak_time, peak_value, rise_time, cfd, points, max_sample, charge]
 
     for chan in channels:
         for event in range(0, len(data)):
@@ -57,7 +57,7 @@ def getPulseInfo(variables):
     peak_value = 0
     peak_time = 0
     rise_time = 0
-    cfd05 = 0
+    cfd = 0
     max_sample = 0
     points = 0
     charge = 0
@@ -80,17 +80,17 @@ def getPulseInfo(variables):
         points = calculatePoints(data, threshold)
         max_sample = np.amax(data)
         peak_value, peak_time = calculatePeakValue(data, pedestal, noise, osc_limit)
-        rise_time, cfd05  = calculateRiseTime(data, pedestal, noise)
+        rise_time, cfd  = calculateRiseTime(data, pedestal, noise)
         charge = calculateCharge(data, threshold)
 
         # Condition: if any of the parameters are zero, disregard the pulse
-        if not np.all([peak_value, peak_time, rise_time, cfd05]):
+        if not np.all([peak_value, peak_time, rise_time, cfd]):
             
-            peak_value = peak_time = rise_time = cfd05 = charge = 0
+            peak_value = peak_time = rise_time = cfd = charge = 0
 
         
     # Invert again to maintain the same shape
-    return peak_time, -peak_value, rise_time, cfd05, points, -max_sample, charge
+    return peak_time, -peak_value, rise_time, cfd, points, -max_sample, charge
 
 
 # Get Rise time
@@ -98,7 +98,7 @@ def calculateRiseTime(data, pedestal, noise, graph=False):
     
     # Default values
     rise_time = 0
-    cfd05 = 0
+    cfd = 0
     linear_fit = [0, 0]
     linear_fit_indices = [0]
     
@@ -122,13 +122,13 @@ def calculateRiseTime(data, pedestal, noise, graph=False):
                 
                 # Get rise time and CFD Z = 0.5 of the rising edge, pedestal corrected
                 rise_time = 0.8 * (np.amax(data) - pedestal) / linear_fit[0]
-                cfd05 = (0.5 * (np.amax(data) - pedestal) - linear_fit[1]) / linear_fit[0]
+                cfd = (0.5 * (np.amax(data) - pedestal) - linear_fit[1]) / linear_fit[0]
 
     if graph:
-        return rise_time, cfd05, linear_fit, linear_fit_indices
+        return rise_time, cfd, linear_fit, linear_fit_indices
     
     else:
-        return rise_time, cfd05
+        return rise_time, cfd
 
 
 def calculatePeakValue(data, pedestal, noise, osc_limit=350, graph=False):

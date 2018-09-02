@@ -10,10 +10,10 @@ import noise_main
 import noise_plot
 import pulse_main
 import pulse_plot
-import tracking_main
-import timing_main
+import tracking_main as tracking
+import timing_main as timing
 import timing_plot
-import results_main
+import results_main as results
 
 import run_log_metadata
 import data_management
@@ -22,24 +22,12 @@ import time
 
 def main():
 
-#    count = 0
-#    time_tot = 2*60
-#    remaining = time_tot
-#    bool = True
-#    while bool:
-#        print time_tot-count, "minutes left"
-#        time.sleep(60)
-#        count += 1
-#        if count == time_tot:
-#            bool = False
-#    print "Start"
-
     # Select how many runs, which batches and which sensors to be run
     number_of_runs = 0
     
     # batches must be list, or "all". Exclusion of batches also possible
     batches = "all"
-    batches_exclude = [101, 102, 103, 104, 105, 106, 107, 108, 201, 202, 203, 204, 205, 206, 207, 301, 302, 303, 304, 305]
+    batches_exclude = []
     
     # consider the group of batches (example 10X or 70X)
     first_number = False
@@ -65,14 +53,14 @@ def main():
     
     ########### PULSE ################
 
-    pulse_main.pulseAnalysis()
+    #pulse_main.pulseAnalysis()
     
     ##################################
 
     
     ####### TIMING RESOLUTION ########
     
-    #timing_main.timingAnalysis()
+    #timing.timingAnalysis()
     
     ##################################
 
@@ -80,7 +68,7 @@ def main():
     
     ######## TRACKING AND PLOTS ######
     
-    #tracking_main.trackingAnalysis()
+    #tracking.trackingAnalysis()
     
     ##################################
     
@@ -93,7 +81,7 @@ def main():
 
     ########### RESULTS ##############
     
-    #results_main.produceResults()
+    results.produceResults()
 
    
     ######################################

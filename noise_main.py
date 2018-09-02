@@ -12,7 +12,8 @@ ROOT.gROOT.SetBatch(True)
 
 
 def noiseAnalysis():
-    
+
+    dm.setFunctionAnalysis("noise_analysis")
     dm.defineDataFolderPath()
     startTime = md.dm.getTime()
     runLog_batch = md.getRunLogBatches(md.batchNumbers)
@@ -32,12 +33,14 @@ def noiseAnalysis():
         for index in range(0, len(runLog)):
      
             md.defineGlobalVariableRun(runLog[index])
+            
+            if not dm.checkIfFileAvailable():
+                continue
 
             print "Run", md.getRunNumber()
             
-            noise_average, noise_std = noiseAnalysisPerRun()
-            dm.exportNoiseDataPlot(noise_std, noise_average)
-            
+            noiseAnalysisPerRun()
+
             print "Done with run", md.getRunNumber(),"\n"
 
 
@@ -59,12 +62,14 @@ def noiseAnalysisPerRun():
     results = p.map(lambda chunk: multiProcess(dataPath, chunk, chunk+step), ranges)
 
     # results change form, now each element is a variable
-    results_variables = n_calc.concatenateResults(results)
+    noise_average, noise_std = n_calc.concatenateResults(results)
     
-    return results_variables
+    dm.exportImportROOTData("noise_plot", "noise", noise_std, True)
+    dm.exportImportROOTData("noise_plot", "pedestal", noise_average, True)
 
 
-# Start multiprocessing analysis of noises and pulses in ROOT considerOnlyRunsfile
+
+# Start multiprocessing
 def multiProcess(dataPath, begin, end):
 
     data = rnm.root2array(dataPath, start=begin, stop=end)

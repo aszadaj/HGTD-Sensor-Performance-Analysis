@@ -25,10 +25,8 @@ def timingPlots():
         time_difference_linear = np.empty(0)
         time_difference_sys_eq = np.empty(0)
         
-        time_difference_linear_cfd05 = np.empty(0)
-        time_difference_sys_eq_cfd05 = np.empty(0)
-        
-        peak_value = np.empty(0)
+        time_difference_linear_cfd = np.empty(0)
+        time_difference_sys_eq_cfd = np.empty(0)
 
         runNumbers = md.getAllRunNumbers(batchNumber)
         
@@ -44,50 +42,41 @@ def timingPlots():
             
             if time_difference_linear.size == 0:
       
-                time_difference_linear  = dm.importTimingFile("linear")
-                time_difference_linear_cfd05  = dm.importTimingFile("linear_cfd05")
+                time_difference_linear  = dm.exportImportROOTData("timing", "linear", False)
+                time_difference_linear_cfd  = dm.exportImportROOTData("timing", "linear_cfd", False)
                 
                 if md.getBatchNumber()/100 != 6:
-                    time_difference_sys_eq  = dm.importTimingFile("sys_eq")
-                    time_difference_sys_eq_cfd05  = dm.importTimingFile("sys_eq_cfd05")
-                
-                peak_value = dm.importPulseFile("peak_value")
+                    time_difference_sys_eq  = dm.exportImportROOTData("timing", "sys_eq", False)
+                    time_difference_sys_eq_cfd  = dm.exportImportROOTData("timing", "sys_eq_cfd", False)
+
             
             else:
 
-                time_difference_linear = np.concatenate((time_difference_linear, dm.importTimingFile("linear")), axis = 0)
-                time_difference_linear_cfd05 = np.concatenate((time_difference_linear_cfd05, dm.importTimingFile("linear_cfd05")), axis = 0)
+                time_difference_linear = np.concatenate((time_difference_linear, dm.exportImportROOTData("timing", "linear", False)), axis = 0)
+                time_difference_linear_cfd = np.concatenate((time_difference_linear_cfd, dm.exportImportROOTData("timing", "linear_cfd", False)), axis = 0)
                 
                 if md.getBatchNumber()/100 != 6:
                 
-                    time_difference_sys_eq = np.concatenate((time_difference_sys_eq, dm.importTimingFile("sys_eq")), axis = 0)
-                    time_difference_sys_eq_cfd05 = np.concatenate((time_difference_sys_eq_cfd05, dm.importTimingFile("sys_eq_cfd05")), axis = 0)
+                    time_difference_sys_eq = np.concatenate((time_difference_sys_eq, dm.exportImportROOTData("timing", "sys_eq", False)), axis = 0)
+                    time_difference_sys_eq_cfd = np.concatenate((time_difference_sys_eq_cfd, dm.exportImportROOTData("timing", "sys_eq_cfd", False)), axis = 0)
 
+        # Differences between two sensors, wrt peak time and cfd reference
 
-                peak_value = np.concatenate((peak_value, dm.importPulseFile("peak_value")), axis = 0)
+#        print "\nTIMING RESOLUTION NORMAL PEAK PLOTS", "Batch", md.getBatchNumber()
+#        produceTimingDistributionPlots(time_difference_linear)
+#        
+#        print "\nTIMING RESOLUTION NORMAL CFD PLOTS", "Batch", md.getBatchNumber()
+#        produceTimingDistributionPlots(time_difference_linear_cfd, True)
 
-        
-
-
-        # Differences between two sensors, wrt peak time and cfd05 reference
-        
-        print "Batch", md.getBatchNumber()
-        
-        print "\nTIMING RESOLUTION NORMAL PEAK PLOTS"
-        produceTimingDistributionPlots(time_difference_linear, peak_value)
-        
-        print "\nTIMING RESOLUTION NORMAL CFD05 PLOTS"
-        produceTimingDistributionPlots(time_difference_linear_cfd05, peak_value, True)
-
-        # System of linear equations between sensors, wrt peak time and cfd05 reference
+        # System of linear equations between sensors, wrt peak time and cfd reference
         # Batch 6 is omitted the calculation of system of equations
         if md.getBatchNumber()/100 != 6:
         
-            print "\nTIMING RESOLUTION SYSTEM PEAK PLOTS"
-            produceTimingDistributionPlotsSysEq(time_difference_sys_eq, peak_value)
+            print "\nTIMING RESOLUTION SYSTEM PEAK PLOTS", "Batch", md.getBatchNumber()
+            produceTimingDistributionPlotsSysEq(time_difference_sys_eq)
             
-            print "\nTIMING RESOLUTION SYSTEM CFD05 PLOTS"
-            produceTimingDistributionPlotsSysEq(time_difference_sys_eq_cfd05, peak_value, True)
+            print "\nTIMING RESOLUTION SYSTEM CFD PLOTS", "Batch", md.getBatchNumber()
+            produceTimingDistributionPlotsSysEq(time_difference_sys_eq_cfd, True)
 
 
     print "\nDone with producing TIMING RESOLUTION plots.\n"
@@ -95,10 +84,9 @@ def timingPlots():
 
 ############## LINEAR TIME DIFFERENCE ###############
 
-def produceTimingDistributionPlots(time_difference, peak_value, cfd05=False):
+def produceTimingDistributionPlots(time_difference, cfd=False):
     
     time_diff_th1d = dict()
-    SiPM_chan = md.getChannelNameForSensor("SiPM-AFP")
     
     for chan in time_difference.dtype.names:
     
@@ -129,8 +117,8 @@ def produceTimingDistributionPlots(time_difference, peak_value, cfd05=False):
         if md.checkIfSameOscAsSiPM(chan):
             fileName = fileName.replace("diff_osc", "same_osc")
 
-        if cfd05:
-            fileName = fileName.replace("peak", "cfd05")
+        if cfd:
+            fileName = fileName.replace("peak", "cfd")
 
 
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
@@ -139,21 +127,21 @@ def produceTimingDistributionPlots(time_difference, peak_value, cfd05=False):
 
         # Export the result together with its error
         type = "timing_normal"
-        if cfd05:
-            type += "_cfd05"
+        if cfd:
+            type += "_cfd"
         dt = (  [(type, '<f8') ])
         timing_results = np.empty(2, dtype = dt)
         timing_results[type][0] = sigma_DUT
         timing_results[type][1] = sigma_fit_error
         sensor_info = [md.getNameOfSensor(chan), chan]
-        dm.exportTimingResults(timing_results, sensor_info, md.checkIfSameOscAsSiPM(chan), cfd05)
+        dm.exportImportROOTData("results", "timing_normal", True, timing_results, sensor_info, md.checkIfSameOscAsSiPM(chan), cfd)
 
 
 ############## SYSTEM OF EQUATIONS TIME DIFFERENCE ###############
 
 
 # Use this method to calculate the linear system of equations solution
-def produceTimingDistributionPlotsSysEq(time_difference, peak_value, cfd05=False):
+def produceTimingDistributionPlotsSysEq(time_difference, cfd=False):
     
     # TH1 objects
     time_diff_th1d = dict()
@@ -235,8 +223,8 @@ def produceTimingDistributionPlotsSysEq(time_difference, peak_value, cfd05=False
         # Create numpy array to export the results
         type = "timing_system"
         
-        if cfd05:
-            type += "_cfd05"
+        if cfd:
+            type += "_cfd"
         
         dt = ([(type, '<f8')])
         timing_results_sys_eq = np.empty(2, dtype = dt)
@@ -250,8 +238,8 @@ def produceTimingDistributionPlotsSysEq(time_difference, peak_value, cfd05=False
             yAxisTitle = "Entries"
             fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/system/peak/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_and_"+str(md.getNameOfSensor(chan2))+"_peak.pdf"
 
-            if cfd05:
-                fileName = fileName.replace("peak", "cfd05")
+            if cfd:
+                fileName = fileName.replace("peak", "cfd")
         
 
             index = int(chan[-1]) % 4
@@ -266,7 +254,8 @@ def produceTimingDistributionPlotsSysEq(time_difference, peak_value, cfd05=False
             
         # Export the results
         sensor_info = [md.getNameOfSensor(chan), chan]
-        dm.exportTimingResultsSysEq(timing_results_sys_eq, sensor_info, cfd05)
+
+        dm.exportImportROOTData("results", "timing_system", True, timing_results_sys_eq, sensor_info, False, cfd)
 
 
 ############## EXPORT PLOT ###############
@@ -296,6 +285,6 @@ def exportTHPlot(graphList, titles, chan, sigma):
     
 
     canvas.Print(titles[3])
-    dm.exportROOTHistogram(graphList, titles[3])
+    dm.exportImportROOTHistogram(titles[3], True, graphList)
 
 

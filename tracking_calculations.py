@@ -10,7 +10,7 @@ import tracking_plot as t_plot
 # Change tracking information
 def changeCenterPositionSensor(tracking):
 
-    position = dm.importTrackingFile("position")
+    position = dm.exportImportROOTData("tracking", "position", False)
 
     center = np.array([position[t_plot.chan][0][0], position[t_plot.chan][0][1]])
 
@@ -124,7 +124,7 @@ def calculateCenterOfSensorPerBatch(peak_values, tracking):
         
             position_temp[chan][0] = getCenterOfSensor(peak_values[chan], tracking, values)
 
-    dm.exportTrackingData(position_temp)
+    dm.exportImportROOTData("tracking", "position", True, position_temp)
 
     print "Done exporting batch", md.getBatchNumber()
 
@@ -194,7 +194,7 @@ def importAndAddHistogram(TH2D_object, index, export=False):
 
     fileName, headTitle = getTitleAndFileName(objectName, chan)
     
-    TH2D_file = dm.importROOTHistogram(fileName)
+    TH2D_file = dm.exportImportROOTHistogram(fileName, False)
     TH2D_object_import = TH2D_file.Get(objectName)
     TH2D_object.Add(TH2D_object_import)
 
@@ -221,9 +221,9 @@ def getTitleAndFileName(objectName, chan):
         headTitle = "Time resolution (peak ref.) - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"+"; X [\mum] ; Y [\mum] ; \sigma_{t} [ps]"
         fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/time_resolution/peak/tracking_time_resolution_peak_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
 
-    elif objectName.find("cfd05") != -1:
+    elif objectName.find("cfd") != -1:
         headTitle = "Time resolution (CFD ref) - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"+"; X [\mum] ; Y [\mum] ; \sigma_{t} [ps]"
-        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/time_resolution/cfd05/tracking_time_resolution_cfd05_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/time_resolution/cfd/tracking_time_resolution_cfd_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
     
     elif objectName.find("Efficiency") != -1:
         headTitle = "Efficiency - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"+ "; X [\mum] ; Y [\mum] ; Efficiency (%)"
@@ -268,7 +268,7 @@ def drawLines():
 
 def findSelectionRange():
     
-    position = dm.importTrackingFile("position")
+    position = dm.exportImportROOTData("tracking", "position", False)
     
     # In case of array pads, refer to the center of the pad
     if md.checkIfArrayPad(t_plot.chan):

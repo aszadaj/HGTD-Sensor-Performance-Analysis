@@ -14,6 +14,7 @@ ROOT.gROOT.SetBatch(True)
 # Start analysis of selected run numbers
 def timingAnalysis():
 
+    dm.setFunctionAnalysis("timing_analysis")
     dm.defineDataFolderPath()
     
     runLog_batch = md.getRunLogBatches(md.batchNumbers)
@@ -29,29 +30,34 @@ def timingAnalysis():
         print "Batch:", runLog[0][5], len(runLog), "run files.\n"
       
         for index in range(0, len(runLog)):
-            
+        
             md.defineGlobalVariableRun(runLog[index])
-                
+            
+            if not dm.checkIfFileAvailable():
+                continue
+            
             print "Run", md.getRunNumber()
             
             # Import files per run
-            peak_time = dm.importPulseFile("peak_time")
-            cfd05 = dm.importPulseFile("cfd05")
+            peak_time = dm.exportImportROOTData("pulse", "peak_time", False)
+            cfd = dm.exportImportROOTData("pulse", "cfd", False)
             
             # Perform linear calculations
             time_diff_peak = t_calc.getTimeDifferencePerRun(peak_time)
-            time_diff_cfd05 = t_calc.getTimeDifferencePerRun(cfd05)
+            time_diff_cfd = t_calc.getTimeDifferencePerRun(cfd)
             
             # Export per run number linear
-            dm.exportTimeDifferenceData(time_diff_peak, time_diff_cfd05)
+            dm.exportImportROOTData("timing", "linear", True, time_diff_peak)
+            dm.exportImportROOTData("timing", "linear_cfd",True, time_diff_cfd)
         
             if md.getBatchNumber()/100 != 6:
                 # Perform calculations sys eq
                 time_diff_peak_sys_eq = t_calc.getTimeDifferencePerRunSysEq(peak_time)
-                time_diff_cfd05_sys_eq = t_calc.getTimeDifferencePerRunSysEq(cfd05)
+                time_diff_cfd_sys_eq = t_calc.getTimeDifferencePerRunSysEq(cfd)
 
                 # Export per run number sys eq
-                dm.exportTimeDifferenceDataSysEq(time_diff_peak_sys_eq, time_diff_cfd05_sys_eq)
+                dm.exportImportROOTData("timing", "sys_eq", True, time_diff_peak_sys_eq)
+                dm.exportImportROOTData("timing", "sys_eq_cfd", True, time_diff_cfd_sys_eq)
             
             print "Done with run", md.getRunNumber(), "\n"
 

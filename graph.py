@@ -29,12 +29,12 @@ def printWaveform(batchNumber, sensor, event=0):
     dataPath = dm.getDataPath()
     
     # Import properties to be studied
-    rise_time_import = dm.importPulseFile("rise_time")
-    peak_value_import = dm.importPulseFile("peak_value")
-    peak_time_import = dm.importPulseFile("peak_time")
-    pedestal = dm.importNoiseFile("pedestal")
-    noise = dm.importNoiseFile("noise")
-    points_import = dm.importPulseFile("points")
+    rise_time_import = dm.exportImportROOTData("pulse", "rise_time", False)
+    peak_value_import = dm.exportImportROOTData("pulse", "peak_value", False)
+    peak_time_import = dm.exportImportROOTData("pulse", "peak_time", False)
+    pedestal = dm.exportImportROOTData("noise_plot", "pedestal", False)
+    noise = dm.exportImportROOTData("noise_plot", "noise", False)
+    points_import = dm.exportImportROOTData("pulse", "points", False)
     
 
     # Randomly select event based on a property and import it
@@ -61,11 +61,11 @@ def printWaveform(batchNumber, sensor, event=0):
     # Define point difference for 2nd degree fit
     point_difference = 2
     
-    rise_time, cfd05, linear_fit, linear_fit_indices = p_calc.calculateRiseTime(data, pedestal, noise, True)
+    rise_time, cfd, linear_fit, linear_fit_indices = p_calc.calculateRiseTime(data, pedestal, noise, True)
     peak_value, peak_time, poly_fit = p_calc.calculatePeakValue(data, pedestal, noise, 350, True)
     point_count = p_calc.calculatePoints(data, threshold)
     
-    noise_event = np.std(data[0:int(cfd05)*10-10])
+    noise_event = np.std(data[0:int(cfd)*10-10])
 
     # Create TMultigraph and define underlying graphs
 
@@ -77,7 +77,7 @@ def printWaveform(batchNumber, sensor, event=0):
     graph_waveform = ROOT.TGraph(1002)
     graph_threshold = ROOT.TGraph(2)
     graph_peak_value = ROOT.TGraph(2)
-    graph_cfd05 = ROOT.TGraph(2)
+    graph_cfd = ROOT.TGraph(2)
     graph_10 = ROOT.TGraph(2)
     graph_90 = ROOT.TGraph(2)
     graph_pedestal = ROOT.TGraph(2)
@@ -122,8 +122,8 @@ def printWaveform(batchNumber, sensor, event=0):
     graph_peak_value.SetPoint(0,0, peak_value*1000)
     graph_peak_value.SetPoint(1,1002, peak_value*1000)
     
-    graph_cfd05.SetPoint(0,cfd05, -30)
-    graph_cfd05.SetPoint(1,cfd05, 500)
+    graph_cfd.SetPoint(0,cfd, -30)
+    graph_cfd.SetPoint(1,cfd, 500)
     
     graph_pedestal.SetPoint(0,0, pedestal)
     graph_pedestal.SetPoint(1,1002, pedestal)
@@ -158,7 +158,7 @@ def printWaveform(batchNumber, sensor, event=0):
     #multi_graph.Add(graph_peak_value)
     #multi_graph.Add(graph_10)
     #multi_graph.Add(graph_90)
-    #multi_graph.Add(graph_cfd05)
+    #multi_graph.Add(graph_cfd)
     multi_graph.Add(graph_pedestal)
 
     
@@ -171,9 +171,9 @@ def printWaveform(batchNumber, sensor, event=0):
     legend.AddEntry(graph_linear_fit, "Rise time: "+str(rise_time[0]*1000)[:5]+" ps", "l")
     #legend.AddEntry(graph_peak_value, "Peak value: "+str(peak_value_import[chan][event]*-1000)[:5]+" mV", "l")
     #legend.AddEntry(graph_90, "10% and 90% limit", "l")
-    #legend.AddEntry(graph_cfd05, "cfd05 " + str(cfd05[0])[0:4] + " ns", "l")
+    #legend.AddEntry(graph_cfd, "cfd " + str(cfd[0])[0:4] + " ns", "l")
 
-    #legend.AddEntry(graph_cfd05, "Point count above 10% " + str(point_count), "l")
+    #legend.AddEntry(graph_cfd, "Point count above 10% " + str(point_count), "l")
 
     # Define the titles and draw the graph
 
@@ -188,7 +188,7 @@ def printWaveform(batchNumber, sensor, event=0):
 
     # Set ranges on axis
     multi_graph.GetYaxis().SetRangeUser(-30,300)
-    multi_graph.GetXaxis().SetRangeUser(cfd05-3,cfd05+5)
+    multi_graph.GetXaxis().SetRangeUser(cfd-3,cfd+5)
     #multi_graph.GetXaxis().SetRangeUser(0,100)
 
     # Export the PDF file

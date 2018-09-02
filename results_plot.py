@@ -120,9 +120,9 @@ def setGraphAttributes(category_graph, category):
         y_lim = [0, 300]
 
 
-    elif category == "timing_normal_cfd05":
+    elif category == "timing_normal_cfd":
     
-        titleGraph = "Time resolution values per voltage (cfd05)"
+        titleGraph = "Time resolution values per voltage (cfd)"
         xTitle = "Bias voltage [V]"
         yTitle = "Time resolution [ps]"
         y_lim = [0, 300]
@@ -134,13 +134,12 @@ def setGraphAttributes(category_graph, category):
         yTitle = "Time resolution [ps]"
         y_lim = [0, 300]
 
-    elif category == "timing_system_cfd05":
+    elif category == "timing_system_cfd":
     
-        titleGraph = "Time resolution values per voltage (system, cfd05)"
+        titleGraph = "Time resolution values per voltage (system, cfd)"
         xTitle = "Bias voltage [V]"
         yTitle = "Time resolution [ps]"
         y_lim = [0, 300]
-
 
     category_graph.SetTitle(titleGraph)
     category_graph.GetXaxis().SetTitle(xTitle)

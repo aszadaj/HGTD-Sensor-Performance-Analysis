@@ -28,7 +28,7 @@ def pulsePlots():
         rise_times = np.empty(0)
         points = np.empty(0)
         max_sample = np.empty(0)
-        cfd05 = np.empty(0)
+        cfd = np.empty(0)
         peak_time = np.empty(0)
         charge = np.empty(0)
 
@@ -46,39 +46,39 @@ def pulsePlots():
 
             if peak_values.size == 0:
       
-                peak_values = dm.importPulseFile("peak_value")
-                rise_times  = dm.importPulseFile("rise_time")
-                points  = dm.importPulseFile("points")
-                max_sample = dm.importPulseFile("max_sample")
-                cfd05 = dm.importPulseFile("cfd05")
-                peak_time = dm.importPulseFile("peak_time")
-                charge = dm.importPulseFile("charge")
+                peak_values = dm.exportImportROOTData("pulse", "peak_value", False)
+                rise_times  = dm.exportImportROOTData("pulse", "rise_time", False)
+                points  = dm.exportImportROOTData("pulse", "points", False)
+                max_sample = dm.exportImportROOTData("pulse", "max_sample", False)
+                cfd = dm.exportImportROOTData("pulse", "cfd", False)
+                peak_time = dm.exportImportROOTData("pulse", "peak_time", False)
+                charge = dm.exportImportROOTData("pulse", "charge", False)
 
             else:
 
-                peak_values = np.concatenate((peak_values, dm.importPulseFile("peak_value")), axis = 0)
-                rise_times = np.concatenate((rise_times, dm.importPulseFile("rise_time")), axis = 0)
-                points = np.concatenate((points, dm.importPulseFile("points")), axis = 0)
-                max_sample = np.concatenate((max_sample, dm.importPulseFile("max_sample")), axis = 0)
-                cfd05 = np.concatenate((cfd05, dm.importPulseFile("cfd05")), axis = 0)
-                peak_time = np.concatenate((peak_time, dm.importPulseFile("peak_time")), axis = 0)
-                charge = np.concatenate((charge, dm.importPulseFile("charge")), axis = 0)
+                peak_values = np.concatenate((peak_values, dm.exportImportROOTData("pulse", "peak_value", False)), axis = 0)
+                rise_times = np.concatenate((rise_times, dm.exportImportROOTData("pulse", "rise_time", False)), axis = 0)
+                points = np.concatenate((points, dm.exportImportROOTData("pulse", "points", False)), axis = 0)
+                max_sample = np.concatenate((max_sample, dm.exportImportROOTData("pulse", "max_sample", False)), axis = 0)
+                cfd = np.concatenate((cfd, dm.exportImportROOTData("pulse", "cfd", False)), axis = 0)
+                peak_time = np.concatenate((peak_time, dm.exportImportROOTData("pulse", "peak_time", False)), axis = 0)
+                charge = np.concatenate((charge, dm.exportImportROOTData("pulse", "charge", False)), axis = 0)
                 
 
         if len(peak_values) != 0:
         
-            producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_time, charge)
+            producePulsePlots(peak_values, rise_times, points, max_sample, cfd, peak_time, charge)
 
     print "Done with producing PULSE plots.\n"
 
 
 # Fill TH1 objects
-def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_time, charge):
+def producePulsePlots(peak_values, rise_times, points, max_sample, cfd, peak_time, charge):
 
-    dm.convertPulseData(peak_values)
-    dm.convertPulseData(max_sample)
-    dm.convertRiseTimeData(rise_times)
-    dm.convertChargeData(charge)
+    dm.changeIndexNumpyArray(peak_values, -1000)
+    dm.changeIndexNumpyArray(max_sample, -1000)
+    dm.changeIndexNumpyArray(rise_times, 1000)
+    dm.changeIndexNumpyArray(charge, 10**15)
     
     channels = peak_values.dtype.names
     
@@ -103,7 +103,7 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_t
         rise_times_th1d    = ROOT.TH1F("Rise time", "rise_time", 300, 0, 4000)
         point_count_th1d   = ROOT.TH1F("Point count", "point_count", 100, 0, 100)
         max_sample_th1d    = ROOT.TH1F("Max sample", "max_sample", 100, 0, 360)
-        cfd05_th1d         = ROOT.TH1F("CFD05", "CFD05_plot", 100, 0, 100)
+        cfd_th1d         = ROOT.TH1F("CFD", "CFD_plot", 100, 0, 100)
         peak_time_th1d     = ROOT.TH1F("Peak time", "peak_time", 100, 0, 100)
         charge_th1d        = ROOT.TH1F("Charge", "charge", 60, 0, charge_max_value_th1d)
         max_sample_vs_points_threshold_th2d = ROOT.TH2D("Max sample vs no of points", "amp_vs_points", 80, 0, 80, 100, 0, 200)
@@ -122,8 +122,8 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_t
             if max_sample[chan][entry] != 0:
                 max_sample_th1d.Fill(max_sample[chan][entry])
 
-            if cfd05[chan][entry] != 0:
-                cfd05_th1d.Fill(cfd05[chan][entry])
+            if cfd[chan][entry] != 0:
+                cfd_th1d.Fill(cfd[chan][entry])
 
             if peak_time[chan][entry] != 0:
                 peak_time_th1d.Fill(peak_time[chan][entry])
@@ -254,12 +254,12 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd05, peak_t
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistogram(max_sample_th1d, titles)
 
-        # Print cfd05 plots
-        headTitle = "CFD05 time location - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"
+        # Print cfd plots
+        headTitle = "CFD time location - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"
         xAxisTitle = "Time location [ns]"
-        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/cfd05/cfd05_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/cfd/cfd_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
-        exportHistogram(cfd05_th1d, titles)
+        exportHistogram(cfd_th1d, titles)
 
 
         # Print peak time plots
@@ -324,7 +324,7 @@ def exportHistogram(graphList, titles, MPV_with_error = 0):
 
 
     canvas.Print(titles[3])
-    dm.exportROOTHistogram(graphList, titles[3])
+    dm.exportImportROOTHistogram(titles[3], True, graphList)
 
 
 

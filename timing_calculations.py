@@ -7,14 +7,14 @@ import run_log_metadata as md
 def getTimeDifferencePerRun(time_location):
     
     time_difference = np.zeros(len(time_location), dtype = time_location.dtype)
-    
+
     SiPM_chan = md.getChannelNameForSensor("SiPM-AFP")
 
     for chan in time_location.dtype.names:
-        
-        if SiPM_chan == chan:
+
+        if md.getNameOfSensor(chan) == "SiPM-AFP":
             continue
-            
+
         for event in range (0, len(time_location)):
             if time_location[SiPM_chan][event] != 0 and time_location[chan][event] != 0:
                 time_difference[chan][event] = (time_location[chan][event] - time_location[SiPM_chan][event])*1000

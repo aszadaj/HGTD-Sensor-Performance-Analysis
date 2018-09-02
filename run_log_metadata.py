@@ -28,18 +28,6 @@ def defineGlobalVariableRun(row):
     runInfo = row
 
 
-# Check inside folder which runs should be considered
-def restrictToBatch(metaData, batchNumber):
-   
-    runLog = []
-    
-    for index in range(0, len(metaData)):
-        if int(metaData[index][5]) == batchNumber:
-            runLog.append(metaData[index])
-    
-    return runLog
-
-
 def getAllSensorNames():
 
     return ["50D-GBGR2", "W4-LG12", "W4-RD01", "W4-S203", "W4-S204_6e14", "W4-S215", "W4-S1022", "W4-S1061", "W9-LGA35"]
@@ -130,7 +118,7 @@ def getRunsWithSensor(sensor):
     runNumbers = []
     
     for row in runLog:
-        if sensor in getAvailableSensors(int(row[3])):
+        if sensor in getAvailableSensorsForRun(int(row[3])):
             runNumbers.append(int(row[3]))
 
     return runNumbers
@@ -159,44 +147,11 @@ def getTimeStampsForBatch(batchNumber):
     
     return timeStamps
 
-
-def getNumberOfRunsPerBatch(batchNumber = ""):
-    
-    if batchNumber == "":
-
-        return len(getTimeStampsForBatch(int(runInfo[5])))
-
-    else:
-        return len(getTimeStampsForBatch(batchNumber))
-
-
-def checkIfBatchIsLargest(sensor):
-
-    voltage = getBiasVoltage(sensor, getBatchNumber())
-    numberOfRuns = getNumberOfRunsPerBatch(getBatchNumber())
-    batchNumbersSensor = getAllBatchNumberForSensor(sensor)
-    
-    check = True
-
-    for batch in batchNumbersSensor:
-        if voltage == getBiasVoltage(sensor, batch) and numberOfRuns < getNumberOfRunsPerBatch(batch):
-            check = False
-
-    return check
     
 # Get number of events inside the current ROOT file
-def getNumberOfEvents(timeStamp=""):
-    
-    if timeStamp == "":
-        return int(runInfo[6])
-    
-    else:
-        runLog = getRunLog()
+def getNumberOfEvents():
 
-        for row in runLog:
-            if int(row[4]) == timeStamp:
-                return int(row[6])
-
+    return int(runInfo[6])
 
 
 # Get index for the name of the sensor in run log
@@ -214,7 +169,7 @@ def getNameOfSensor(chan):
     index = int(chan[-1:])
     return runInfo[13+index*5]
 
-def getAvailableSensors(runNumber):
+def getAvailableSensorsForRun(runNumber):
 
     sensors = []
 
@@ -363,7 +318,7 @@ def availableDUTPositions(sensor):
         chan = getChannelNameForSensor(sensor)
         return getDUTPos(chan)
 
-# Runs which are marked with yellow color, probably
+# Selected runs which are marked with yellow color, probably
 # have unsynchronized telescope numbers
 def corruptedRuns():
 
@@ -393,8 +348,6 @@ def setBatchNumbers(numbers, first_number, exclude=[]):
         numbers = number_excluded
         batchNumbers = numbers
     
-    
-
     else:
         
         
