@@ -99,11 +99,11 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd, peak_tim
         print "\nPULSE PLOTS: Batch", md.getBatchNumber(),"sensor", md.getNameOfSensor(chan), chan, "\n"
         
         # Create and fill objects with values
-        peak_values_th1d   = ROOT.TH1F("Pulse amplitude", "peak_value", 92, 0, 500)
+        peak_values_th1d   = ROOT.TH1F("Pulse amplitude", "peak_value", 100, 0, 500)
         rise_times_th1d    = ROOT.TH1F("Rise time", "rise_time", 300, 0, 4000)
         point_count_th1d   = ROOT.TH1F("Point count", "point_count", 100, 0, 100)
         max_sample_th1d    = ROOT.TH1F("Max sample", "max_sample", 100, 0, 360)
-        cfd_th1d         = ROOT.TH1F("CFD", "CFD_plot", 100, 0, 100)
+        cfd_th1d           = ROOT.TH1F("CFD", "CFD_plot", 100, 0, 100)
         peak_time_th1d     = ROOT.TH1F("Peak time", "peak_time", 100, 0, 100)
         charge_th1d        = ROOT.TH1F("Charge", "charge", 60, 0, charge_max_value_th1d)
         max_sample_vs_points_threshold_th2d = ROOT.TH2D("Max sample vs no of points", "amp_vs_points", 80, 0, 80, 100, 0, 200)
@@ -160,7 +160,7 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd, peak_tim
         MPV = charge_th1d.GetBinCenter(MPV_bin)
         
         # Set range for fit
-        xMin = max((MPV - std_dev), 5.0)
+        xMin = max((MPV - std_dev), 4.0)
         xMax = charge_th1d.GetXaxis().GetXmax()
         
         # Define range of fit, limits for parameters
@@ -253,6 +253,7 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd, peak_tim
         fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/max_sample/max_sample_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistogram(max_sample_th1d, titles)
+        
 
         # Print cfd plots
         headTitle = "CFD time location - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"
@@ -277,7 +278,7 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd, peak_tim
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         exportHistogram2D(max_sample_vs_points_threshold_th2d, titles)
         
-        # Remember to include charge distribution results
+        # Export results
         getAndExportResults(peak_mpv_error, charge_mpv_error, rise_time_mpv_error, chan)
 
 

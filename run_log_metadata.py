@@ -162,7 +162,6 @@ def getChannelNameForSensor(sensor):
         if runInfo[13+index*5] == sensor:
             return "chan"+str(index)
 
-
 # Return name of sensor for chosen run and channel
 def getNameOfSensor(chan):
 
@@ -174,7 +173,8 @@ def getAvailableSensorsForRun(runNumber):
     sensors = []
 
     for i in range(0,8):
-        sensors.append(runInfo[13+i*5])
+        
+        sensors.append(getRowForRunNumber(runNumber)[13+i*5])
 
     return sensors
 

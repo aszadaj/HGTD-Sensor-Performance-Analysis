@@ -186,7 +186,7 @@ def produceTProfilePlots(peak_values, gain, rise_times, tracking, time_differenc
 #                                         #
 #           EFFICIENCY GRAPHS             #
 #                                         #
-###########################################
+###########################################
 
 
 # Produce efficiency graphs (for array and single pads) and projection histograms (single pad arrays only)
@@ -373,7 +373,13 @@ def createArrayPadGraphs():
 
     # Change the file names of the exported files (array)
     t_calc.setArrayPadExportBool(True)
-    chan = "chan5" # This is specifically chosen for the sep17 tb runlog
+    
+    if md.getNameOfSensor(chan) == "W4-RD01":
+        chan = "chan0"
+    else:
+        chan = "chan5" # This is specifically chosen for the sep17 tb runlog
+    
+    
 
     limits = [peak_value_max, rise_time_max, timing_res_max, gain_max,0,0]
 

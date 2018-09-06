@@ -39,7 +39,6 @@ def addValuesToGraph(variables):
                 rm.oneSensorInLegend = False
 
 
-
 def drawAndExportResults(category, category_graph, legend_graph):
 
     category_graph.Draw("APL")
@@ -69,7 +68,6 @@ def drawAndExportResults(category, category_graph, legend_graph):
     legend_text.DrawLatex(.7, .5, "#color[2]{Red}    = 22\circC")
     legend_text.DrawLatex(.7, .45, "#color[4]{Blue}   = -30\circC")
     legend_text.DrawLatex(.7, .4, "#color[3]{Green} = -40\circC")
-    
 
     
     fileName = dm.getSourceFolderPath() + "results_hgtd_efficiency_sep_2017/" + "/" + category + "_results.pdf"

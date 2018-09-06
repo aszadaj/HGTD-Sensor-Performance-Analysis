@@ -94,7 +94,7 @@ def getSigmasFromFit(th1d_list, chan):
     th1d_list.SetAxisRange(xMin, xMax)
     
     # Fit using normal gaussian
-    N = 2
+    N = 1 # was 2 before
     mean_window = th1d_list.GetMean()
     sigma_window = th1d_list.GetStdDev()
     xMin = mean_window - N * sigma_window

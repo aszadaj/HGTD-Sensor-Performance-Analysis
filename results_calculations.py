@@ -7,6 +7,7 @@ import data_management as dm
 
 
 def importResultsValues(sensor_data, category):
+
     # Import results for the sensor and category
     files = readFileNames(category)
 
@@ -20,6 +21,7 @@ def importResultsValues(sensor_data, category):
         if batchNumber in omitBadDataBatches():
             continue
 
+        # omit files for batches 30X and with system of equations (timing)
         if category.find("system") != -1 and batchNumber/100 == 3:
             continue
 
@@ -34,39 +36,22 @@ def importResultsValues(sensor_data, category):
 
         # Among the all batches, choose one with most data = best data.
         for index in range(0, len(sensor_data[temperature][DUT_pos])):
+        
             sensor_results = sensor_data[temperature][DUT_pos][index]
-            
+
             # Check if there is an earlier filled bias voltage, otherwise fill
             if voltage == sensor_results[0]:
+            
+                omitRun = True
+                
+                # For the same voltage, choose the one with smallest error.
+                if value_error[1] < sensor_results[1][1]:
+                    sensor_data[temperature][DUT_pos][index] = [voltage, value_error]
 
-                # Choose low values as favorable for timing and rise time
-                if category.find("timing") != -1 or category == "charge" or category == "rise_time":
+        # Omit run does not append to the list as extra value.
+        if not omitRun:
+            sensor_data[temperature][DUT_pos].append([voltage, value_error])
 
-                    if value_error[0] > sensor_results[1][0]:
-                        omitRun = True
-                        break
-
-                    else:
-                        sensor_data[temperature][DUT_pos][index] = [voltage, value_error]
-                        omitRun = True
-                        break
-
-                # For other categories, highest value is selected
-                else:
-
-                    if value_error[0] < sensor_results[1][0]:
-                        omitRun = True
-                        break
-
-                    else:
-                        sensor_data[temperature][DUT_pos][index] = [voltage, value_error]
-                        omitRun = True
-                        break
-
-        if omitRun:
-            continue
-
-        sensor_data[temperature][DUT_pos].append([voltage, value_error])
 
 
     rm.oneSensorInLegend = True
@@ -120,6 +105,7 @@ def omitBadDataBatches():
         list.append(406)
         list.append(705)
         list.append(706)
+
 
 
     return list

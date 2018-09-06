@@ -12,20 +12,20 @@ def exportPulseData(variable_array):
 
     [peak_times, peak_values, rise_times, cfd, points, max_sample, charge] = [i for i in variable_array]
 
-    exportImportROOTData("pulse", "peak_time", peak_times, True)
-    exportImportROOTData("pulse", "peak_value", peak_values, True)
-    exportImportROOTData("pulse", "rise_time", rise_times, True)
-    exportImportROOTData("pulse", "cfd", cfd, True)
-    exportImportROOTData("pulse", "points", points, True)
-    exportImportROOTData("pulse", "max_sample", max_sample, True)
-    exportImportROOTData("pulse", "charge",charge, True)
+    exportImportROOTData("pulse", "peak_time", True, peak_times)
+    exportImportROOTData("pulse", "peak_value", True, peak_values)
+    exportImportROOTData("pulse", "rise_time", True, rise_times)
+    exportImportROOTData("pulse", "cfd", True, cfd)
+    exportImportROOTData("pulse", "points", True, points)
+    exportImportROOTData("pulse", "max_sample", True, max_sample)
+    exportImportROOTData("pulse", "charge", True, charge)
 
 
 def exportPulseResults(peak_value_result, charge_result, rise_time_result, sensor_info):
 
-    exportImportROOTData("results", "peak_value", peak_value_result, True, sensor_info)
-    exportImportROOTData("results", "charge", charge_result, True, sensor_info)
-    exportImportROOTData("results", "rise_time", rise_time_result, True, sensor_info)
+    exportImportROOTData("results", "peak_value", True, peak_value_result, sensor_info)
+    exportImportROOTData("results", "charge", True, charge_result, sensor_info)
+    exportImportROOTData("results", "rise_time", True, rise_time_result, sensor_info)
 
 
 # Export ROOT file with selected information

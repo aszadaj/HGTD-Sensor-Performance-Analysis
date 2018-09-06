@@ -11,13 +11,14 @@ ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
 canvas = ROOT.TCanvas("Timing", "timing")
 
 # Range and bins for the window for TH1 objects
-xbins = 1000
+xbins = 2000
 bin_range = 15000
 
 def timingPlots():
 
     print "\nStart producing TIMING plots, batches:", md.batchNumbers
     
+
     for batchNumber in md.batchNumbers:
     
         dm.defineDataFolderPath()
@@ -32,14 +33,14 @@ def timingPlots():
         
         if md.limitRunNumbers != 0:
             runNumbers = runNumbers[0:md.limitRunNumbers] # Restrict to some run numbers
-        
+    
         for runNumber in runNumbers:
         
             md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
             
             if runNumber not in md.getRunsWithSensor(md.sensor):
                 continue
-            
+                    
             if time_difference_linear.size == 0:
       
                 time_difference_linear  = dm.exportImportROOTData("timing", "linear", False)
@@ -60,23 +61,26 @@ def timingPlots():
                     time_difference_sys_eq = np.concatenate((time_difference_sys_eq, dm.exportImportROOTData("timing", "sys_eq", False)), axis = 0)
                     time_difference_sys_eq_cfd = np.concatenate((time_difference_sys_eq_cfd, dm.exportImportROOTData("timing", "sys_eq_cfd", False)), axis = 0)
 
-        # Differences between two sensors, wrt peak time and cfd reference
 
-#        print "\nTIMING RESOLUTION NORMAL PEAK PLOTS", "Batch", md.getBatchNumber()
-#        produceTimingDistributionPlots(time_difference_linear)
-#        
-#        print "\nTIMING RESOLUTION NORMAL CFD PLOTS", "Batch", md.getBatchNumber()
-#        produceTimingDistributionPlots(time_difference_linear_cfd, True)
+        if time_difference_linear.size != 0:
 
-        # System of linear equations between sensors, wrt peak time and cfd reference
-        # Batch 6 is omitted the calculation of system of equations
-        if md.getBatchNumber()/100 != 6:
-        
-            print "\nTIMING RESOLUTION SYSTEM PEAK PLOTS", "Batch", md.getBatchNumber()
-            produceTimingDistributionPlotsSysEq(time_difference_sys_eq)
-            
-            print "\nTIMING RESOLUTION SYSTEM CFD PLOTS", "Batch", md.getBatchNumber()
-            produceTimingDistributionPlotsSysEq(time_difference_sys_eq_cfd, True)
+            # Differences between two sensors, wrt peak time and cfd reference
+
+            print "\nTIMING RESOLUTION NORMAL PEAK PLOTS", "Batch", md.getBatchNumber()
+            produceTimingDistributionPlots(time_difference_linear)
+
+            print "\nTIMING RESOLUTION NORMAL CFD PLOTS", "Batch", md.getBatchNumber()
+            produceTimingDistributionPlots(time_difference_linear_cfd, True)
+
+            # System of linear equations between sensors, wrt peak time and cfd reference
+            # Batch 6 is omitted the calculation of system of equations
+            if md.getBatchNumber()/100 != 6:
+
+                print "\nTIMING RESOLUTION SYSTEM PEAK PLOTS", "Batch", md.getBatchNumber()
+                produceTimingDistributionPlotsSysEq(time_difference_sys_eq)
+
+                print "\nTIMING RESOLUTION SYSTEM CFD PLOTS", "Batch", md.getBatchNumber()
+                produceTimingDistributionPlotsSysEq(time_difference_sys_eq_cfd, True)
 
 
     print "\nDone with producing TIMING RESOLUTION plots.\n"
@@ -87,6 +91,7 @@ def timingPlots():
 def produceTimingDistributionPlots(time_difference, cfd=False):
     
     time_diff_th1d = dict()
+
     
     for chan in time_difference.dtype.names:
     
@@ -96,7 +101,7 @@ def produceTimingDistributionPlots(time_difference, cfd=False):
         if md.getNameOfSensor(chan) != md.sensor and md.sensor != "":
             continue
     
-        print md.getNameOfSensor(chan), "\n"
+        print "\n", md.getNameOfSensor(chan), "\n"
 
         time_diff_th1d[chan] = ROOT.TH1D("Time difference "+md.getNameOfSensor(chan), "time_difference" + chan, xbins, -bin_range, bin_range)
      

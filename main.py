@@ -68,7 +68,7 @@ def main():
     
     ######## TRACKING AND PLOTS ######
     
-    #tracking.trackingAnalysis()
+    tracking.trackingAnalysis()
     
     ##################################
     
@@ -81,7 +81,7 @@ def main():
 
     ########### RESULTS ##############
     
-    results.produceResults()
+    #results.produceResults()
 
    
     ######################################
