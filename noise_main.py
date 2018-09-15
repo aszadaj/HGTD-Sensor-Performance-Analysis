@@ -64,8 +64,8 @@ def noiseAnalysisPerRun():
     # results change form, now each element is a variable
     noise_average, noise_std = n_calc.concatenateResults(results)
     
-    dm.exportImportROOTData("noise_plot", "noise", noise_std, True)
-    dm.exportImportROOTData("noise_plot", "pedestal", noise_average, True)
+    dm.exportImportROOTData("noise_plot", "noise", True, noise_std)
+    dm.exportImportROOTData("noise_plot", "pedestal", True, noise_average)
 
 
 

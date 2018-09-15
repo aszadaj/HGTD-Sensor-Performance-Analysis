@@ -55,7 +55,7 @@ def pulseAnalysisPerRun():
     
     # Configure inputs for multiprocessing
     max = md.getNumberOfEvents()
-    step = 10000
+    step = 15000
     threads = 4
 
     p = Pool(threads)

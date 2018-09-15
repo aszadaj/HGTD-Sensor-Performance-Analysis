@@ -39,6 +39,8 @@ def trackingAnalysis():
             if not dm.checkIfFileAvailable():
                 continue
             
+            # note, here take the max sample instead, since peak_values can be limited, can affect the efficiency plots!
+            #peak_values_run = dm.exportImportROOTData("pulse", "max_sample", False)
             peak_values_run = dm.exportImportROOTData("pulse", "peak_value", False)
             charge_run = dm.exportImportROOTData("pulse", "charge", False)
             rise_times_run = dm.exportImportROOTData("pulse", "rise_time", False)

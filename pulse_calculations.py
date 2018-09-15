@@ -1,13 +1,8 @@
 import numpy as np
-import sys
-
-import data_management as dm
 import run_log_metadata as md
 
 def pulseAnalysis(data, pedestal, noise):
 
-    channels = data.dtype.names
-    
     osc_limit = findOscilloscopeLimit(data)
 
     # Set the time scope to 0.1 ns
@@ -31,14 +26,14 @@ def pulseAnalysis(data, pedestal, noise):
     # Max sample of event given that there are points above the threshold
     max_sample      =   np.zeros(len(data), dtype = data.dtype)
     
-    # Charge collected from the MIP
+    # Charge deposited fron the particle to the sensor
     charge          =   np.zeros(len(data), dtype = data.dtype)
     
     properties = [peak_time, peak_value, rise_time, cfd, points, max_sample, charge]
 
-    for chan in channels:
+    for chan in data.dtype.names:
         for event in range(0, len(data)):
-        
+            
             variables = [data[chan][event], pedestal[chan], noise[chan], osc_limit[chan]]
             
             results = getPulseInfo(variables)
@@ -53,21 +48,12 @@ def getPulseInfo(variables):
 
     [data, pedestal, noise, osc_limit] = [i for i in variables]
     
-    # Set start values
-    peak_value = 0
-    peak_time = 0
-    rise_time = 0
-    cfd = 0
-    max_sample = 0
-    points = 0
-    charge = 0
-    
     # Invert waveform data
     data = -data
     pedestal = -pedestal
     osc_limit = -osc_limit
     
-    # Define threhsold and sigma level
+    # Define threshold and sigma level
     N = 4
     
     # This number has been argumented as a combined plot between max sample
@@ -79,41 +65,43 @@ def getPulseInfo(variables):
         
         points = calculatePoints(data, threshold)
         max_sample = np.amax(data)
-        peak_value, peak_time = calculatePeakValue(data, pedestal, noise, osc_limit)
-        rise_time, cfd  = calculateRiseTime(data, pedestal, noise)
-        charge = calculateCharge(data, threshold)
+        peak_value, peak_time = calculatePeakValue(data, pedestal, osc_limit)
+        rise_time, cfd  = calculateRiseTime(data, pedestal)
+        charge = calculateCharge(data, threshold, osc_limit)
 
-        # Condition: if any of the parameters are zero, disregard the pulse
-        if not np.all([peak_value, peak_time, rise_time, cfd]):
+        # Condition: if the time locations are not in synch, disregard those
+        if peak_time == 0 or cfd == 0:
             
-            peak_value = peak_time = rise_time = cfd = charge = 0
+             peak_time = cfd = 0
 
-        
-    # Invert again to maintain the same shape
-    return peak_time, -peak_value, rise_time, cfd, points, -max_sample, charge
+        # Invert again to maintain the same shape
+        return peak_time, -peak_value, rise_time, cfd, points, -max_sample, charge
+
+    else:
+        return np.zeros(7)
 
 
 # Get Rise time
-def calculateRiseTime(data, pedestal, noise, graph=False):
+def calculateRiseTime(data, pedestal, graph=False):
     
     # Default values
-    rise_time = 0
-    cfd = 0
-    linear_fit = [0, 0]
-    linear_fit_indices = [0]
+    rise_time = np.zeros(1)
+    cfd = np.zeros(1)
+    linear_fit = np.zeros(2)
+    linear_fit_indices = np.zeros(1)
     
-    # Select points betweem 10 and 90 procent, before the max point
+    # Select points between 10 and 90 procent, before the max point
     linear_fit_bool = (data < np.amax(data)*0.9) & (data > np.amax(data)*0.1) & (np.nonzero(data) < np.argmax(data))[0]
     
     if np.sum(linear_fit_bool) > 0:
     
         linear_fit_indices = np.argwhere(linear_fit_bool).flatten()
-        linear_fit_indices = getConsecutiveSeriesLinearFit(linear_fit_indices)
+        linear_fit_indices = getConsecutiveSeries(linear_fit_indices)
   
         # Require three points above threshold
         if len(linear_fit_indices) >= 3:
 
-            x_values = linear_fit_indices * timeScope
+            x_values = linear_fit_indices * dt
             y_values = data[linear_fit_indices]
            
             linear_fit = np.polyfit(x_values, y_values, 1)
@@ -131,37 +119,38 @@ def calculateRiseTime(data, pedestal, noise, graph=False):
         return rise_time, cfd
 
 
-def calculatePeakValue(data, pedestal, noise, osc_limit=350, graph=False):
+def calculatePeakValue(data, pedestal, osc_limit, graph=False):
 
     # Default values
-    peak_value = 0
-    peak_time = 0
-    poly_fit = [0, 0, 0]
+    peak_value = np.zeros(1)
+    peak_time = np.zeros(1)
+    poly_fit = np.zeros(3)
 
     # Select indices
-    point_difference = 2
-    first_index = np.argmax(data) - point_difference
-    last_index = np.argmax(data) + point_difference
-    poly_fit_indices = np.arange(first_index, last_index+1)
-    
+    point_sep = 2
+    arg_max = np.argmax(data)
+    poly_fit_indices = np.arange(arg_max - point_sep, arg_max + point_sep + 1)
     
     # This is to ensure that the obtained value is in the entry window
-    if 2 < np.argmax(data) < 999:
+    if 2 < arg_max < 999:
     
         poly_fit_data = data[poly_fit_indices]
-        poly_fit = np.polyfit((poly_fit_indices * timeScope), poly_fit_data, 2)
+        poly_fit = np.polyfit((poly_fit_indices * dt), poly_fit_data, 2)
 
         if poly_fit[0] < 0:
             
-            peak_time = -poly_fit[1]/(2 * poly_fit[0])
+            peak_time = np.array([-poly_fit[1] / (2 * poly_fit[0])])
             peak_value = poly_fit[0] * np.power(peak_time, 2) + poly_fit[1] * peak_time + poly_fit[2] - pedestal
+
     
 
-    # This is an extra check to prevent the second degree fit to fail and assign the maximum value instead
-    if np.abs(np.amax(data) - osc_limit) < 0.01:
+    # If the signal reaches the oscilloscope limit, take the maximum value instead and ignore the
+    # time location, since it cannot be extracted with great precision
 
-        peak_time = 0
-        peak_value = np.amax(data)
+    if np.abs(np.amax(data) - osc_limit) < 0.005:
+
+        peak_time = np.zeros(1)
+        peak_value = np.amax(data) - pedestal
 
 
     if graph:
@@ -171,34 +160,25 @@ def calculatePeakValue(data, pedestal, noise, osc_limit=350, graph=False):
         return peak_value, peak_time
 
 
-def calculateCharge(data, threshold):
-    
+def calculateCharge(data, threshold, osc_limit):
+
     # transimpendence is the same for all sensors, except for W4-RD01, which is unknown
     transimpendence = 4700
-    voltage_integral = np.trapz(data[data > threshold], dx = timeScope)*10**(-9)
+    voltage_integral = np.trapz(data[data > threshold], dx = dt)*10**(-9)
     charge = voltage_integral / transimpendence
-
+    
     return charge
+
 
 def calculatePoints(data, threshold):
 
-    point_bool = data > threshold
-    if np.any(point_bool):
-        points_condition = np.argwhere(point_bool).flatten()
-        points_condition = getConsecutiveSeriesPointCalc(data, points_condition)
-        return len(points_condition)
-    else:
-        return 0
+    points_threshold = np.argwhere(data > threshold).flatten()
+    points_consecutive = getConsecutiveSeries(points_threshold)
+    
+    return len(points_consecutive)
 
 
-
-# Group each consequential numbers in each separate list
-def group_consecutives(data, stepsize=1):
-    return np.split(data, np.where(np.diff(data) != stepsize)[0]+1)
-
-
-
-def getConsecutiveSeriesLinearFit(data):
+def getConsecutiveSeries(data):
 
     group_points = group_consecutives(data)
     group_points_max = [np.amax(group) for group in group_points]
@@ -207,15 +187,9 @@ def getConsecutiveSeriesLinearFit(data):
     return max_arg_series
 
 
-def getConsecutiveSeriesPointCalc(data, points_condition):
-
-    group_points = group_consecutives(points_condition)
-    group_points_max = [np.amax(data[group]) for group in group_points]
-    max_arg_series = group_points[group_points_max.index(max(group_points_max))]
-    
-    return max_arg_series
-
-
+# Group each consequential numbers in each separate list
+def group_consecutives(data, stepsize=1):
+    return np.split(data, np.where(np.diff(data) != stepsize)[0]+1)
 
 # Get maximum values for given channel and oscilloscope
 def findOscilloscopeLimit(data):
@@ -250,8 +224,6 @@ def concatenateResults(results):
 
 
 def defTimeScope():
-    global timeScope
-    timeScope = 0.1
-    return timeScope
-
+    global dt
+    dt = 0.1
 

@@ -28,8 +28,9 @@ def produceTrackingGraphs(peak_values, gain, rise_times, time_difference_peak, t
     timing_res_max = 100 # Z-axis limit for timing resolution graph
     gain_max = 100 # Z-axis limit for mean gain graph
     max_factor_filling = 20 # Increment of the limits to fill in the TH2/TProfile2D objects
+    percentage_efficiency = 80 # Limit the lower percentage
     
-    glob_variables = [sep_x, sep_y, entries_per_bin, bin_size, minEntries, bin_timing_decrease, peak_value_max, rise_time_max, timing_res_max, gain_max, n_div, max_factor_filling, width_time_diff]
+    glob_variables = [sep_x, sep_y, entries_per_bin, bin_size, minEntries, bin_timing_decrease, peak_value_max, rise_time_max, timing_res_max, gain_max, n_div, max_factor_filling, width_time_diff, percentage_efficiency]
     
     t_calc.setArrayPadExportBool(False)
     
@@ -47,7 +48,7 @@ def produceTrackingGraphs(peak_values, gain, rise_times, time_difference_peak, t
     createSinglePadGraphs(peak_values, gain, rise_times, time_difference_peak, time_difference_cfd, tracking)
 
     # Create array pad graphs for all batches, except batch 80X
-    if md.getBatchNumber()/100 != 8 and md.sensor == "":
+    if md.getBatchNumber()/100 != 8 and md.sensor != "":
         createArrayPadGraphs()
 
 
@@ -93,7 +94,7 @@ def createSinglePadGraphs(peak_values, gain, rise_times, time_difference_peak, t
 # Produce mean value and time resolution plots
 def produceTProfilePlots(peak_values, gain, rise_times, tracking, time_difference_peak, time_difference_cfd):
     
-    [sep_x, sep_y, entries_per_bin, bin_size, minEntries, bin_timing_decrease, peak_value_max, rise_time_max, timing_res_max, gain_max, n_div, max_factor_filling, width_time_diff] = [i for i in glob_variables]
+    [sep_x, sep_y, entries_per_bin, bin_size, minEntries, bin_timing_decrease, peak_value_max, rise_time_max, timing_res_max, gain_max, n_div, max_factor_filling, width_time_diff, percentage_efficiency] = [i for i in glob_variables]
 
     
     # Specially for W4-RD01, increase the limit to include large gain values
@@ -178,7 +179,7 @@ def produceTProfilePlots(peak_values, gain, rise_times, tracking, time_differenc
 
     # Print pulse amplitude mean value 2D plot
     TH2D_objects = [peak_value_mean_th2d, gain_mean_th2d, rise_time_mean_th2d, timing_peak_th2d, timing_cfd_th2d, 0, 0]
-    limits = [peak_value_max, rise_time_max, timing_res_max, gain_max, time_difference_peak_th2d.GetEntries(), time_difference_cfd_th2d.GetEntries()]
+    limits = [peak_value_max, rise_time_max, timing_res_max, gain_max, time_difference_peak_th2d.GetEntries(), time_difference_cfd_th2d.GetEntries(), percentage_efficiency]
     setPlotLimitsAndPrint(TH2D_objects, limits)
 
 
@@ -193,7 +194,7 @@ def produceTProfilePlots(peak_values, gain, rise_times, tracking, time_differenc
 def produceEfficiencyPlot(peak_values, tracking):
 
     [sep_x, sep_y, entries_per_bin, bin_size, minEntries, bin_timing_decrease, peak_value_max, rise_time_max,
-    timing_res_max, gain_max, n_div, max_factor_filling, width_time_diff] = [i for i in glob_variables]
+    timing_res_max, gain_max, n_div, max_factor_filling, width_time_diff, percentage_efficiency] = [i for i in glob_variables]
     
     if md.checkIfArrayPad(chan):
     
@@ -245,9 +246,6 @@ def produceEfficiencyPlot(peak_values, tracking):
     # Total entries refer to pass events, that is number of recorded pixels on the sensor given a hit
     # in the MIMOSA. This number is used for both efficiency and inefficiency plots.
     totalEntries = efficiency_TEff.GetPassedHistogram().GetEntries()
-
-    # Limit the lower percentage
-    percentage_efficiency = 80
 
     # Draw the TEfficiency object, and rescale it
     efficiency_TEff.Draw("COLZ0")
@@ -331,7 +329,7 @@ def createArrayPadGraphs():
 
     global chan
     
-    [sep_x, sep_y, entries_per_bin, bin_size, minEntries, bin_timing_decrease, peak_value_max, rise_time_max, timing_res_max, gain_max, n_div, max_factor_filling, width_time_diff] = [i for i in glob_variables]
+    [sep_x, sep_y, entries_per_bin, bin_size, minEntries, bin_timing_decrease, peak_value_max, rise_time_max, timing_res_max, gain_max, n_div, max_factor_filling, width_time_diff, percentage_efficiency] = [i for i in glob_variables]
  
     sep_x *= 2
     sep_y *= 2
@@ -381,7 +379,7 @@ def createArrayPadGraphs():
     
     
 
-    limits = [peak_value_max, rise_time_max, timing_res_max, gain_max,0,0]
+    limits = [peak_value_max, rise_time_max, timing_res_max, gain_max,0,0, percentage_efficiency]
 
     setPlotLimitsAndPrint(TH2D_objects_list, limits)
 
@@ -464,7 +462,7 @@ def setPlotLimitsAndPrint(TH2D_objects, limits):
 
     [peak_value_mean_th2d, gain_mean_th2d, rise_time_mean_th2d, timing_peak_th2d, timing_cfd_th2d, efficiency_TH2D, inefficiency_TH2D] = [i for i in TH2D_objects]
     
-    [peak_value_max, rise_time_max, timing_res_max, gain_max, time_diff_peak_entries, time_diff_cfd_entries] = [i for i in limits]
+    [peak_value_max, rise_time_max, timing_res_max, gain_max, time_diff_peak_entries, time_diff_cfd_entries, percentage_efficiency] = [i for i in limits]
 
     # Print pulse amplitude mean value 2D plot
 
@@ -489,6 +487,7 @@ def setPlotLimitsAndPrint(TH2D_objects, limits):
 
 
     # Print rise time mean value 2D plot
+    
     # Import rise time mean result.
     # Here import the result from the earlier analysis and center the Z-axis with +-50 ps
     rise_time_mean_result = (dm.exportImportROOTData("results", "rise_time", False, "", [md.getNameOfSensor(chan), chan]))[0][0]
@@ -512,7 +511,6 @@ def setPlotLimitsAndPrint(TH2D_objects, limits):
     if t_calc.array_pad_export:
     
         # Print efficiency plot
-        percentage_efficiency = 80
         efficiency_TH2D.SetAxisRange(percentage_efficiency, 100, "Z")
         printTHPlot(efficiency_TH2D)
 

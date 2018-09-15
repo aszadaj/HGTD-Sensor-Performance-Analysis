@@ -148,7 +148,10 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd, peak_tim
         xMin = max_value_rise_time - rise_times_th1d.GetStdDev()
         xMax = max_value_rise_time + rise_times_th1d.GetStdDev()
         rise_times_th1d.Fit("gaus", "Q", "", xMin, xMax)
-        rise_time_mpv_error = [rise_times_th1d.GetFunction("gaus").GetParameter(1), rise_times_th1d.GetFunction("gaus").GetParError(1)]
+        try:
+            rise_time_mpv_error = [rise_times_th1d.GetFunction("gaus").GetParameter(1), rise_times_th1d.GetFunction("gaus").GetParError(1)]
+        except:
+            rise_time_mpv_error = 0
         
         
         # CHARGE #

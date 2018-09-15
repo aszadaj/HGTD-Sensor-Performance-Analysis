@@ -151,8 +151,8 @@ def produceNoisePlots(noise_average, noise_std):
         del pedestal_graph, noise_graph
 
     # Here export the data for pulse analysis
-    dm.exportImportROOTData("noise", "noise", False, noise_data)
-    dm.exportImportROOTData("noise", "pedestal", False, pedestal_data)
+    dm.exportImportROOTData("noise", "noise", True, noise_data)
+    dm.exportImportROOTData("noise", "pedestal", True, pedestal_data)
 
 
 # Produce histograms

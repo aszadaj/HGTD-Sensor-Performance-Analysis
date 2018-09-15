@@ -26,7 +26,7 @@ def main():
     number_of_runs = 0
     
     # batches must be list, or "all". Exclusion of batches also possible
-    batches = "all"
+    batches = [101]
     batches_exclude = []
     
     # consider the group of batches (example 10X or 70X)
@@ -47,13 +47,15 @@ def main():
     ############# NOISE ##############
     
     #noise_main.noiseAnalysis()
+    #noise_plot.noisePlots()
     
     ##################################
 
     
     ########### PULSE ################
 
-    #pulse_main.pulseAnalysis()
+    pulse_main.pulseAnalysis()
+    pulse_plot.pulsePlots()
     
     ##################################
 
@@ -61,23 +63,17 @@ def main():
     ####### TIMING RESOLUTION ########
     
     #timing.timingAnalysis()
+    #timing_plot.timingPlots()
     
     ##################################
 
     
-    
     ######## TRACKING AND PLOTS ######
     
-    tracking.trackingAnalysis()
+    #tracking.trackingAnalysis()
     
     ##################################
-    
-    
-    ### PLOTS ###
-    
-    #noise_plot.noisePlots()
-    #pulse_plot.pulsePlots()
-    #timing_plot.timingPlots()
+
 
     ########### RESULTS ##############
     
