@@ -19,7 +19,7 @@ def produceTrackingGraphs(peak_values, gain, rise_times, time_difference_peak, t
     sep_x = 800 # Width from the center of the canvas in x
     sep_y = 600 # Width from the center of the canvas in y
     entries_per_bin = 50 # Required entries for timing resolution graphs
-    bin_size = 18.5 # Pixel size from the MIMOSA/tracking
+    bin_size = 18.5 # Pixel size from the MIMOSA
     minEntries = 5 # Minimum entries per bin
     bin_timing_decrease = 3 # Increment of the bin size for the timing resolution
     width_time_diff = 300 # Width from the mean value of filling time difference values
@@ -48,7 +48,7 @@ def produceTrackingGraphs(peak_values, gain, rise_times, time_difference_peak, t
     createSinglePadGraphs(peak_values, gain, rise_times, time_difference_peak, time_difference_cfd, tracking)
 
     # Create array pad graphs for all batches, except batch 80X
-    if md.getBatchNumber()/100 != 8 and md.sensor != "":
+    if md.getBatchNumber()/100 != 8 and t_calc.sensorIsAnArrayPad():
         createArrayPadGraphs()
 
 
@@ -77,6 +77,7 @@ def createSinglePadGraphs(peak_values, gain, rise_times, time_difference_peak, t
     
         print "\nSingle pad", md.getNameOfSensor(chan), "\n"
 
+        # This function requires a ROOT file which have the center positions for each pad
         tracking_chan = t_calc.changeCenterPositionSensor(np.copy(tracking))
 
         produceTProfilePlots(peak_values[chan], gain[chan], rise_times[chan], tracking_chan, time_difference_peak[chan], time_difference_cfd[chan])
@@ -371,12 +372,7 @@ def createArrayPadGraphs():
 
     # Change the file names of the exported files (array)
     t_calc.setArrayPadExportBool(True)
-    
-    if md.getNameOfSensor(chan) == "W4-RD01":
-        chan = "chan0"
-    else:
-        chan = "chan5" # This is specifically chosen for the sep17 tb runlog
-    
+    chan = t_calc.getArrayPadChannels()[0]
     
 
     limits = [peak_value_max, rise_time_max, timing_res_max, gain_max,0,0, percentage_efficiency]
@@ -507,7 +503,8 @@ def setPlotLimitsAndPrint(TH2D_objects, limits):
     timing_cfd_th2d.SetAxisRange(0, timing_res_max, "Z")
     timing_cfd_th2d.SetNdivisions(n_div, "Z")
     printTHPlot(timing_cfd_th2d, time_diff_cfd_entries)
-
+    
+    # In case of array pads, the efficiency plots have already been produced
     if t_calc.array_pad_export:
     
         # Print efficiency plot

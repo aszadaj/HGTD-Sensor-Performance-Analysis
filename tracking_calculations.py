@@ -186,6 +186,22 @@ def getArrayPadChannels():
     return channels
 
 
+def sensorIsAnArrayPad():
+
+    # If all sensors are considered, progress with the function
+    if md.sensor == "":
+        return True
+    
+    # Otherwise check if the sensor processed is an array pad
+    else:
+        chan = getArrayPadChannels()[0]
+
+        if md.sensor == md.getNameOfSensor(chan):
+            return True
+        else:
+            return False
+
+
 def importAndAddHistogram(TH2D_object, index, export=False):
 
     arrayPadChannels = getArrayPadChannels()

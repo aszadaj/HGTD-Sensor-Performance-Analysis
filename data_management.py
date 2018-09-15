@@ -223,7 +223,7 @@ def printTime():
     print  "\nTime: " + str(time[:-7])
 
 
-# Define the original folder of produced ROOT files, plots and miscallenous
+# Define the original folder of produced ROOT files, plots and miscellaneous data
 def defineDataFolderPath():
 
     global oscilloscopePath

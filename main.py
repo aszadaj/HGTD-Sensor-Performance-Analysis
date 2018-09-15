@@ -26,8 +26,8 @@ def main():
     number_of_runs = 0
     
     # batches must be list, or "all". Exclusion of batches also possible
-    batches = [101]
-    batches_exclude = []
+    batches = "all"
+    batches_exclude = [101, 102]
     
     # consider the group of batches (example 10X or 70X)
     first_number = False
@@ -68,9 +68,9 @@ def main():
     ##################################
 
     
-    ######## TRACKING AND PLOTS ######
+    ######### TRACKING  ##############
     
-    #tracking.trackingAnalysis()
+    tracking.trackingAnalysis()
     
     ##################################
 
