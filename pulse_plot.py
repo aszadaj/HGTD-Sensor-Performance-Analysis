@@ -84,6 +84,8 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd, peak_tim
     
     for chan in channels:
         
+        charge_bins = 80
+        
         if md.getNameOfSensor(chan) == "SiPM-AFP":
             continue
         
@@ -95,17 +97,20 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd, peak_tim
 
         if md.sensor != "" and md.getNameOfSensor(chan) != md.sensor:
             continue
+            
+        if md.getNameOfSensor(chan) == "W4-RD01":
+            charge_bins = 25
 
         print "\nPULSE PLOTS: Batch", md.getBatchNumber(),"sensor", md.getNameOfSensor(chan), chan, "\n"
         
         # Create and fill objects with values
-        peak_values_th1d   = ROOT.TH1F("Pulse amplitude", "peak_value", 100, 0, 500)
+        peak_values_th1d   = ROOT.TH1F("Pulse amplitude", "peak_value", 80, 0, 500)
         rise_times_th1d    = ROOT.TH1F("Rise time", "rise_time", 300, 0, 4000)
         point_count_th1d   = ROOT.TH1F("Point count", "point_count", 100, 0, 100)
         max_sample_th1d    = ROOT.TH1F("Max sample", "max_sample", 100, 0, 360)
         cfd_th1d           = ROOT.TH1F("CFD", "CFD_plot", 100, 0, 100)
         peak_time_th1d     = ROOT.TH1F("Peak time", "peak_time", 100, 0, 100)
-        charge_th1d        = ROOT.TH1F("Charge", "charge", 60, 0, charge_max_value_th1d)
+        charge_th1d        = ROOT.TH1F("Charge", "charge", charge_bins, 0, charge_max_value_th1d)
         max_sample_vs_points_threshold_th2d = ROOT.TH2D("Max sample vs no of points", "amp_vs_points", 80, 0, 80, 100, 0, 200)
         
         for entry in range(0, len(peak_values[chan])):
@@ -222,7 +227,7 @@ def producePulsePlots(peak_values, rise_times, points, max_sample, cfd, peak_tim
         fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/charge/charge_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
         charge_mpv_error = [charge_langaufit.GetParameter(1), charge_langaufit.GetParError(1)]
-        exportHistogram(charge_th1d, titles, charge_mpv_error)
+        #exportHistogram(charge_th1d, titles, charge_mpv_error)
         
         
         # Print maximum amplitude plots

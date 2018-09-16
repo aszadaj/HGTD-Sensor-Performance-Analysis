@@ -27,7 +27,7 @@ def main():
     
     # batches must be list, or "all". Exclusion of batches also possible
     batches = "all"
-    batches_exclude = [101, 102]
+    batches_exclude = []
     
     # consider the group of batches (example 10X or 70X)
     first_number = False
@@ -54,8 +54,8 @@ def main():
     
     ########### PULSE ################
 
-    pulse_main.pulseAnalysis()
-    pulse_plot.pulsePlots()
+    #pulse_main.pulseAnalysis()
+    #pulse_plot.pulsePlots()
     
     ##################################
 
@@ -70,7 +70,7 @@ def main():
     
     ######### TRACKING  ##############
     
-    tracking.trackingAnalysis()
+    #tracking.trackingAnalysis()
     
     ##################################
 
