@@ -92,7 +92,6 @@ def produceTimingDistributionPlots(time_difference, cfd=False):
     
     time_diff_th1d = dict()
 
-    
     for chan in time_difference.dtype.names:
     
         if md.getNameOfSensor(chan) == "SiPM-AFP":
@@ -111,6 +110,20 @@ def produceTimingDistributionPlots(time_difference, cfd=False):
                 time_diff_th1d[chan].Fill(time_difference[chan][entry])
 
         # Get fit function with width of the distributions
+        # Check if the filled object have at least 1000 entries
+        
+        if time_diff_th1d[chan].GetEntries() < 1000:
+            
+            if cfd:
+                type = "cfd reference"
+            
+            else:
+                type = "peak reference"
+                
+            print "Omitting sensor", md.getNameOfSensor(chan), "for", type, "due to low statistics. \n"
+            
+            continue
+            
         sigma_DUT, sigma_fit_error = t_calc.getSigmasFromFit(time_diff_th1d[chan], chan)
 
         # Set titles and export file
@@ -124,6 +137,7 @@ def produceTimingDistributionPlots(time_difference, cfd=False):
 
         if cfd:
             fileName = fileName.replace("peak", "cfd")
+
 
 
         titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
@@ -146,10 +160,13 @@ def produceTimingDistributionPlots(time_difference, cfd=False):
 
 
 # Use this method to calculate the linear system of equations solution
+# If one of the functions have less than 1000 entries, remove it from the calculation!
 def produceTimingDistributionPlotsSysEq(time_difference, cfd=False):
     
     # TH1 objects
     time_diff_th1d = dict()
+    
+    omit_batch = False
     
     osc1 = ["chan0", "chan1", "chan2", "chan3"]
     sigma_convoluted = np.zeros((4,4))
@@ -169,14 +186,15 @@ def produceTimingDistributionPlotsSysEq(time_difference, cfd=False):
         for chan2 in chan2_list:
             time_diff_th1d[chan][chan2] = ROOT.TH1D("System of equations \sigma_{"+chan[-1]+chan2[-1]+"}", "time_difference" + chan, xbins, -bin_range, bin_range)
         
-        # Fill TH1 object between channels in oscilloscope
+        # Fill TH1 object between channels in first oscilloscope
         for entry in range(0, len(time_difference[chan])):
             for index in range(0, len(chan2_list)):
                 chan2 = chan2_list[index]
                 
-                # No amplitude cuts here!
                 if time_difference[chan][entry][index] != 0:
                     time_diff_th1d[chan][chan2].Fill(time_difference[chan][entry][index])
+    
+    
 
         # Get sigma and adapt distribution curve
         for chan2 in chan2_list:
@@ -203,6 +221,8 @@ def produceTimingDistributionPlotsSysEq(time_difference, cfd=False):
             time_diff_th1d[chan][chan2].Fit("gaus", "Q", "", xMin, xMax)
             fit_function = time_diff_th1d[chan][chan2].GetFunction("gaus")
             
+            # set a condition to set less than 1500 entries, since the function will not work, check will not work
+            
             i = int(chan[-1]) % 4
             j = int(chan2[-1]) % 4
             
@@ -217,11 +237,40 @@ def produceTimingDistributionPlotsSysEq(time_difference, cfd=False):
                 sigma_convoluted[i][j] = sigma_convoluted[j][i] = 0
                 sigma_error[i][j] = sigma_error[j][i] = 0
 
-    # Solve the system
-    sigmas_chan, sigmas_error = t_calc.solveLinearEq(sigma_convoluted, sigma_error)
-
-    # Second loop, print the graphs together with the solutions
+    # Second loop, check if all combined plots have at least 1000 entries
+    
     for chan in osc1:
+        if omit_batch:
+            break
+        
+        # Do not consider the same channel when comparing two
+        chan2_list = list(osc1)
+        chan2_list.remove(chan)
+        
+        for chan2 in chan2_list:
+            if time_diff_th1d[chan][chan2].GetEntries() < 1000:
+            
+                if cfd:
+                    type = "cfd reference"
+                else:
+                    type = "peak reference"
+                
+                print "Omitting batch", md.getBatchNumber(), "for", type, "time difference plot for", md.getNameOfSensor(chan), "and", md.getNameOfSensor(chan2), "have less than 1000 entries! \n"
+                omit_batch = True
+                break
+                
+
+    # Solve the system
+    if not omit_batch:
+        sigmas_chan, sigmas_error = t_calc.solveLinearEq(sigma_convoluted, sigma_error)
+
+    # Third loop, print the graphs together with the solutions
+    for chan in osc1:
+        
+        # This is in case the condition of requiring at least 1000 entries for each plots is not fulfilled
+        if omit_batch:
+            break
+    
         chan2_list = list(osc1)
         chan2_list.remove(chan)
         

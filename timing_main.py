@@ -48,7 +48,7 @@ def timingAnalysis():
             
             # Export per run number linear
             dm.exportImportROOTData("timing", "linear", True, time_diff_peak)
-            dm.exportImportROOTData("timing", "linear_cfd",True, time_diff_cfd)
+            dm.exportImportROOTData("timing", "linear_cfd", True, time_diff_cfd)
         
             if md.getBatchNumber()/100 != 6:
                 # Perform calculations sys eq

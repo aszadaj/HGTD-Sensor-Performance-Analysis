@@ -15,8 +15,8 @@ import timing_main as timing
 import timing_plot
 import results_main as results
 
-import run_log_metadata
-import data_management
+import run_log_metadata as md
+import data_management as dm
 import time
 
 
@@ -36,10 +36,10 @@ def main():
     sensor = ""
     
 
-    run_log_metadata.setLimitRunNumbers(number_of_runs)
-    run_log_metadata.setBatchNumbers(batches, first_number, batches_exclude)
-    run_log_metadata.setSensor(sensor)
-    data_management.printTime()
+    md.setLimitRunNumbers(number_of_runs)
+    md.setBatchNumbers(batches, first_number, batches_exclude)
+    md.setSensor(sensor)
+    dm.printTime()
 
     ############## METHODS ###############
     
@@ -63,7 +63,7 @@ def main():
     ####### TIMING RESOLUTION ########
     
     #timing.timingAnalysis()
-    #timing_plot.timingPlots()
+    timing_plot.timingPlots()
     
     ##################################
 
@@ -77,12 +77,12 @@ def main():
 
     ########### RESULTS ##############
     
-    #results.produceResults()
+    results.produceResults()
 
    
     ######################################
    
-    data_management.printTime()
+    dm.printTime()
     exit()
 
 

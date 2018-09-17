@@ -76,6 +76,9 @@ def drawAndExportResults(category, category_graph, legend_graph):
 
 def setGraphAttributes(category_graph, category):
 
+    timing_res_max = 1000
+
+
     # Define titles, head and axes
     if category == "noise":
         titleGraph = "Noise values per bias voltage"
@@ -115,7 +118,7 @@ def setGraphAttributes(category_graph, category):
         titleGraph = "Time resolution values per voltage (peak)"
         xTitle = "Bias voltage [V]"
         yTitle = "Time resolution [ps]"
-        y_lim = [0, 400]
+        y_lim = [0, timing_res_max]
 
 
     elif category == "timing_normal_cfd":
@@ -123,21 +126,21 @@ def setGraphAttributes(category_graph, category):
         titleGraph = "Time resolution values per voltage (cfd)"
         xTitle = "Bias voltage [V]"
         yTitle = "Time resolution [ps]"
-        y_lim = [0, 400]
+        y_lim = [0, timing_res_max]
 
     elif category == "timing_system_peak":
     
         titleGraph = "Time resolution values per voltage (system, peak)"
         xTitle = "Bias voltage [V]"
         yTitle = "Time resolution [ps]"
-        y_lim = [0, 400]
+        y_lim = [0, timing_res_max]
 
     elif category == "timing_system_cfd":
     
         titleGraph = "Time resolution values per voltage (system, cfd)"
         xTitle = "Bias voltage [V]"
         yTitle = "Time resolution [ps]"
-        y_lim = [0, 400]
+        y_lim = [0, timing_res_max]
 
     category_graph.SetTitle(titleGraph)
     category_graph.GetXaxis().SetTitle(xTitle)
