@@ -14,7 +14,7 @@ def addValuesToGraph(variables):
         if DUT_pos in ["3_0", "3_1", "3_3", "8_1", "7_2", "7_3"]:
             continue
 
-        for temperature in md.availableTemperatures():
+        for temperature in md.getAvailableTemperatures():
 
             sensor_data[temperature][DUT_pos].sort()
             
@@ -76,8 +76,7 @@ def drawAndExportResults(category, category_graph, legend_graph):
 
 def setGraphAttributes(category_graph, category):
 
-    timing_res_max = 1000
-
+    timing_res_max = 700
 
     # Define titles, head and axes
     if category == "noise":

@@ -27,7 +27,6 @@ def pulseAnalysis():
             runLog = runLog[0:md.limitRunNumbers] # Restrict to some run numbers
     
         startTimeBatch = dm.getTime()
-        dm.getTime()
     
         print "Batch:", runLog[0][5], len(runLog), "run files.\n"
       

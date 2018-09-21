@@ -17,13 +17,7 @@ def importResultsValues(sensor_data, category):
         results = rnm.root2array(filePath)
         batchNumber = getBatchNumberFromFile(filePath)
         md.defineGlobalVariableRun(md.getRowForBatchNumber(batchNumber))
-
-        if batchNumber in omitBadDataBatches():
-            continue
-
-        # omit files for batches 30X and with system of equations (timing)
-        if category.find("system") != -1 and batchNumber/100 == 3:
-            continue
+        
 
         chan = "chan" + filePath[filePath.find("chan")+4]
 
@@ -33,11 +27,12 @@ def importResultsValues(sensor_data, category):
         DUT_pos = md.getDUTPos(chan)
 
         omitRun = False
+    
 
         # Among the all batches, choose one with most data = best data.
         for index in range(0, len(sensor_data[temperature][DUT_pos])):
-        
             sensor_results = sensor_data[temperature][DUT_pos][index]
+       
 
             # Check if there is an earlier filled bias voltage, otherwise fill
             if voltage == sensor_results[0]:
@@ -46,12 +41,12 @@ def importResultsValues(sensor_data, category):
                 
                 # For the same voltage, choose the one with smallest error.
                 if value_error[1] < sensor_results[1][1]:
+                    
                     sensor_data[temperature][DUT_pos][index] = [voltage, value_error]
 
         # Omit run does not append to the list as extra value.
         if not omitRun:
             sensor_data[temperature][DUT_pos].append([voltage, value_error])
-
 
 
     rm.oneSensorInLegend = True
@@ -73,40 +68,4 @@ def readFileNames(category):
 def getBatchNumberFromFile(file):
     return int(file[file.find("chan")-4:file.find("chan")-1])
 
-
-def omitBadDataBatches():
-
-    list = [801, 802, 803, 804, 805, 806]
-
-    if rm.processed_sensor == "W4-RD01":
-
-        list.append(606)
-    
-    elif rm.processed_sensor == "W4-S203":
-
-        list.append(704)
-        list.append(705)
-        list.append(706)
-
-    elif rm.processed_sensor == "W4-S215":
-    
-        list.append(405)
-        list.append(406)
-        list.append(706)
-    
-    elif rm.processed_sensor == "W4-S1022":
-        
-        list.append(405)
-        list.append(705)
-        list.append(706)
-
-    elif rm.processed_sensor == "W4-S1061":
-        
-        list.append(406)
-        list.append(705)
-        list.append(706)
-
-
-
-    return list
 

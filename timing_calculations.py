@@ -28,7 +28,7 @@ def getTimeDifferencePerRun(time_location):
 # Reason: the first oscilloscope contains different sensors.
 def getTimeDifferencePerRunSysEq(time_location):
     
-    dt = (  [('chan0',  '<f8', 3), ('chan1',  '<f8', 3) ,('chan2',  '<f8', 3) ,('chan3',  '<f8', 3)] )
+    dt = getDTYPESysEq()
     
     time_difference = np.zeros(len(time_location), dtype = dt)
 
@@ -49,7 +49,7 @@ def getTimeDifferencePerRunSysEq(time_location):
                     time_difference[chan][event][index] = value
     
     return time_difference
-    
+
 
 # The input is of the convoluted form, that is \sigma_{ij} (here the DUT and the SiPM) and the
 # corresponding errors, that is \Delta\sigma_{ij}
@@ -88,18 +88,17 @@ def getSigmasFromFit(th1d_list, chan):
     MPV_entries = th1d_list.GetMaximum()
     
     # Change the window
-    window_range = 1000
+    window_range = 3000
     xMin = MPV_time_diff - window_range
     xMax = MPV_time_diff + window_range
     th1d_list.SetAxisRange(xMin, xMax)
     
     # Fit using normal gaussian
-    N = 2
+    N = 3
     mean_window = th1d_list.GetMean()
     sigma_window = th1d_list.GetStdDev()
     xMin = mean_window - N * sigma_window
     xMax = mean_window + N * sigma_window
-    
     
     # Within the same oscilloscope
     if md.checkIfSameOscAsSiPM(chan):
@@ -117,23 +116,33 @@ def getSigmasFromFit(th1d_list, chan):
         th1d_list.Fit("gaus_fit", "Q", "", xMin, xMax)
         sigma_SiPM = md.getSigmaSiPM()
         if md.checkIfSameOscAsSiPM(chan):
-            par_number = 2
+            sigma_number = 2
+            mean_number = 1
         else:
-            par_number = 3
-        sigma_fit = abs(th1d_list.GetFunction("gaus_fit").GetParameter(par_number))
-        sigma_fit_error = th1d_list.GetFunction("gaus_fit").GetParError(par_number)
+            sigma_number = 3
+            mean_number = 2
+
+        sigma_fit = abs(th1d_list.GetFunction("gaus_fit").GetParameter(sigma_number))
+        sigma_fit_error = th1d_list.GetFunction("gaus_fit").GetParError(sigma_number)
+        time_diff_mean = th1d_list.GetFunction("gaus_fit").GetParameter(mean_number)
     
         if sigma_fit > sigma_SiPM:
             sigma_DUT = np.sqrt(np.power(sigma_fit, 2) - np.power(sigma_SiPM, 2))
 
         else:
             sigma_DUT = 0
+            time_diff_mean = 0
 
     # In case that the fit fails, due to no data, ignore the result.
     except:
 
         sigma_DUT = 0
         sigma_fit_error = 0
+        time_diff_mean = 0
 
 
-    return sigma_DUT, sigma_fit_error
+    return sigma_DUT, sigma_fit_error, time_diff_mean
+
+def getDTYPESysEq():
+
+    return (  [('chan0',  '<f8', 3), ('chan1',  '<f8', 3) ,('chan2',  '<f8', 3) ,('chan3',  '<f8', 3)] )

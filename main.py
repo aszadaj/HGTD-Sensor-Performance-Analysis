@@ -26,18 +26,14 @@ def main():
     number_of_runs = 0
     
     # batches must be list, or "all". Exclusion of batches also possible
-    batches = "all"
+    batches = [101] # locally there are batch 102, 301 and 506
     batches_exclude = []
-    
-    # consider the group of batches (example 10X or 70X)
-    first_number = False
     
     # The sensor which is supposed to be analyzed, "" == all sensors
     sensor = ""
     
-
     md.setLimitRunNumbers(number_of_runs)
-    md.setBatchNumbers(batches, first_number, batches_exclude)
+    md.setBatchNumbers(batches, batches_exclude)
     md.setSensor(sensor)
     dm.printTime()
 
@@ -46,7 +42,7 @@ def main():
     
     ############# NOISE ##############
     
-    #noise_main.noiseAnalysis()
+    #noise_main.noiseAnalysis() # This is a long procedure function
     #noise_plot.noisePlots()
     
     ##################################
@@ -54,7 +50,7 @@ def main():
     
     ########### PULSE ################
 
-    #pulse_main.pulseAnalysis()
+    #pulse_main.pulseAnalysis() # This is a long procedure function
     #pulse_plot.pulsePlots()
     
     ##################################
@@ -77,15 +73,13 @@ def main():
 
     ########### RESULTS ##############
     
-    results.produceResults()
+    #results.produceResults()
 
    
     ######################################
    
     dm.printTime()
     exit()
-
-
 
 
 main()

@@ -6,6 +6,8 @@ import data_management as dm
 
 
 # Return run log imported from a .csv file
+# For future .csv files, it is crucial that the run log have the same
+# shape as the sep2017 one!
 def getRunLog():
     
     tb_2017_run_log_file_name = "resources/run_list_tb_sep_2017.csv"
@@ -21,7 +23,7 @@ def getRunLog():
     return metaData
 
 
-# Set run info for selected run
+# Set run information for selected run
 def defineGlobalVariableRun(row):
     
     global runInfo
@@ -30,9 +32,11 @@ def defineGlobalVariableRun(row):
 
 def getAllSensorNames():
 
-    return ["50D-GBGR2", "W4-LG12", "W4-RD01", "W4-S203", "W4-S204_6e14", "W4-S215", "W4-S1022", "W4-S1061", "W9-LGA35"]
+    return ["50D-GBGR2", "W4-LG12", "W4-RD01", "W4-S203", "W4-S204_6e14",
+    "W4-S215", "W4-S1022", "W4-S1061", "W9-LGA35"]
 
-# Structure of results: [runLogBatch1, runLogBatch1, ...,] and runLogBatch1 = [run1, run2, run3, ]... run1 = row from the run log for selected run
+# Structure of runLog: [runLogBatch1, runLogBatch1, ...,] and
+# runLogBatch1 = [run1, run2, run3, ]... run1 = row from the run log for selected run
 def getRunLogBatches(batchNumbers):
 
     if batchNumbers == "all":
@@ -154,6 +158,7 @@ def getNumberOfEvents():
     return int(runInfo[6])
 
 
+
 # Get index for the name of the sensor in run log
 def getChannelNameForSensor(sensor):
 
@@ -247,7 +252,7 @@ def getTemperature():
     return int(runInfo[10])
 
 
-def availableTemperatures():
+def getAvailableTemperatures():
 
     return ["22", "-30", "-40"]
 
@@ -323,41 +328,34 @@ def availableDUTPositions(sensor):
 def corruptedRuns():
 
     # Runs which are out of sync
-    runs = [3691, 3693, 3697, 3701, 3982]
+    runs = [3691, 3693, 3697, 3701]
 
     return runs
 
 
+def setBatchNumbers(numbers, exclude=[]):
 
-def setBatchNumbers(numbers, first_number, exclude=[]):
+    
 
     global batchNumbers
     
-    if numbers == "all" and len(exclude) == 0:
-        numbers = getAllBatchNumbers()
-        batchNumbers = numbers
-    
-    elif numbers == "all":
+    if numbers == "all":
         numbers = getAllBatchNumbers()
         number_excluded = []
 
-        for index in range(0, len(numbers)):
-            if numbers[index] not in exclude:
-                number_excluded.append(numbers[index])
+        if len(exclude) != 0:
+            for index in range(0, len(numbers)):
+                if numbers[index] not in exclude:
+                    number_excluded.append(numbers[index])
 
-        numbers = number_excluded
+            numbers = number_excluded
+
         batchNumbers = numbers
     
     else:
-        
-        
-        if not first_number:
-            batchNumbers = numbers
-            
-        else:
-        
-            batchNumbers = getAllBatchNumbers()
-            batchNumbers = [i for i in batchNumbers if i/100 == numbers]
+ 
+        batchNumbers = numbers
+
 
 
 def setLimitRunNumbers(number):

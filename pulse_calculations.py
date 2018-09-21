@@ -36,7 +36,7 @@ def pulseAnalysis(data, pedestal, noise):
             
             variables = [data[chan][event], pedestal[chan], noise[chan], osc_limit[chan]]
             
-            results = getPulseInfo(variables)
+            results = getPulseCharacteristics(variables)
             
             for type in range(0, len(results)):
                 properties[type][event][chan] = results[type]
@@ -44,7 +44,7 @@ def pulseAnalysis(data, pedestal, noise):
     return properties
 
 
-def getPulseInfo(variables):
+def getPulseCharacteristics(variables):
 
     [data, pedestal, noise, osc_limit] = [i for i in variables]
     
@@ -53,35 +53,40 @@ def getPulseInfo(variables):
     pedestal = -pedestal
     osc_limit = -osc_limit
     
-    # Define threshold and sigma level
-    N = 4
+    # Define threshold and sigma level, this gives a 1% prob for a noise data sample to exceed the
+    # noise level, see report
+    N = 4.27
+    threshold = N * noise + pedestal
+    
+    # points and max_sample are calculated without the threshold point condition
+    # to analyze how many points are required
+    points = calculatePoints(data, threshold)
+    max_sample = np.amax(data[data > threshold]) if np.sum(data > threshold) != 0 else np.zeros(1)
     
     # This number has been argumented as a combined plot between max sample
     # point and number of points above the threshold. See report.
     threshold_points = 5
-    threshold = N * noise + pedestal
+    condition = getConsecutiveSeries(np.argwhere((data > threshold)).flatten())
     
-    if np.sum(data > threshold) >= threshold_points:
-        
-        points = calculatePoints(data, threshold)
-        max_sample = np.amax(data)
+    if len(condition) >= threshold_points:
+    
         peak_value, peak_time = calculatePeakValue(data, pedestal, osc_limit)
         rise_time, cfd  = calculateRiseTime(data, pedestal)
         charge = calculateCharge(data, threshold, osc_limit)
 
         # Condition: if the time locations are not in synch, disregard those
         if peak_time == 0 or cfd == 0:
-            
+
              peak_time = cfd = 0
 
         # Invert again to maintain the same shape
-        return peak_time, -peak_value, rise_time, cfd, points, -max_sample, charge
+        return peak_time, -peak_value, rise_time, cfd, charge, points, -max_sample
 
     else:
-        return np.zeros(7)
+        return np.zeros(1), np.zeros(1), np.zeros(1), np.zeros(1), np.zeros(1), points, -max_sample
 
 
-# Get Rise time
+# Get rise time
 def calculateRiseTime(data, pedestal, graph=False):
     
     # Default values
@@ -118,7 +123,7 @@ def calculateRiseTime(data, pedestal, graph=False):
     else:
         return rise_time, cfd
 
-
+# Calculate the pulse amplitude value
 def calculatePeakValue(data, pedestal, osc_limit, graph=False):
 
     # Default values
@@ -178,7 +183,11 @@ def calculatePoints(data, threshold):
     return len(points_consecutive)
 
 
+# Select consecutive samples which have the maximum height
 def getConsecutiveSeries(data):
+    
+    if len(data) == 0:
+        return []
 
     group_points = group_consecutives(data)
     group_points_max = [np.amax(group) for group in group_points]

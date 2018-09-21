@@ -15,7 +15,7 @@ def noiseAnalysis():
 
     dm.setFunctionAnalysis("noise_analysis")
     dm.defineDataFolderPath()
-    startTime = md.dm.getTime()
+    startTime = dm.getTime()
     runLog_batch = md.getRunLogBatches(md.batchNumbers)
     
     print "\nStart NOISE analysis, batches:", md.batchNumbers
@@ -44,9 +44,9 @@ def noiseAnalysis():
             print "Done with run", md.getRunNumber(),"\n"
 
 
-        print "Done with batch",runLog[0][5],"Time analysing: "+str(md.dm.getTime()-startTimeBatch)+"\n"
+        print "Done with batch",runLog[0][5],"Time analysing: "+str(dm.getTime()-startTimeBatch)+"\n"
 
-    print "Done with NOISE analysis. Time analysing: "+str(md.dm.getTime()-startTime)+"\n"
+    print "Done with NOISE analysis. Time analysing: "+str(dm.getTime()-startTime)+"\n"
 
 def noiseAnalysisPerRun():
     

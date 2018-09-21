@@ -5,31 +5,36 @@ import data_management as dm
 import run_log_metadata as md
 import timing_calculations as t_calc
 
+ROOT.gROOT.SetBatch(True)
 ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
 
 # TCanvas object for all TH1 objects
 canvas = ROOT.TCanvas("Timing", "timing")
 
 # Range and bins for the window for TH1 objects
-xbins = 2000
+xbins = 500
 bin_range = 15000
+
+# Between each combination of LGADs, require to have at least 200 entries
+min_entries_per_run = 200
 
 def timingPlots():
 
     print "\nStart producing TIMING plots, batches:", md.batchNumbers
-    
 
     for batchNumber in md.batchNumbers:
     
         dm.defineDataFolderPath()
         
-        time_difference_linear = np.empty(0)
-        time_difference_sys_eq = np.empty(0)
-        
-        time_difference_linear_cfd = np.empty(0)
-        time_difference_sys_eq_cfd = np.empty(0)
-
         runNumbers = md.getAllRunNumbers(batchNumber)
+        numpy_arrays = [np.empty(0, dtype = dm.getDTYPE(batchNumber)) for _ in range(4)]
+        
+        # have to redefine two of the numpy arrays, since they are three-dim!
+        # A futurewarning is set here, which is not taken care of!
+        numpy_arrays[2] = numpy_arrays[2].astype(t_calc.getDTYPESysEq())
+        numpy_arrays[3] = numpy_arrays[3].astype(t_calc.getDTYPESysEq())
+        
+        var_names = ["linear", "linear_cfd", "sys_eq", "sys_eq_cfd"]
         
         if md.limitRunNumbers != 0:
             runNumbers = runNumbers[0:md.limitRunNumbers] # Restrict to some run numbers
@@ -40,47 +45,24 @@ def timingPlots():
             
             if runNumber not in md.getRunsWithSensor(md.sensor):
                 continue
-                    
-            if time_difference_linear.size == 0:
-      
-                time_difference_linear  = dm.exportImportROOTData("timing", "linear", False)
-                time_difference_linear_cfd  = dm.exportImportROOTData("timing", "linear_cfd", False)
-                
-                if md.getBatchNumber()/100 != 6:
-                    time_difference_sys_eq  = dm.exportImportROOTData("timing", "sys_eq", False)
-                    time_difference_sys_eq_cfd  = dm.exportImportROOTData("timing", "sys_eq_cfd", False)
+        
+            for index in range(0, len(var_names)):
+                if var_names[index].find("sys") != -1 and md.getBatchNumber()/100 == 6:
+                    continue
+                else:
+                    numpy_arrays[index] = np.concatenate((numpy_arrays[index], dm.exportImportROOTData("timing", var_names[index], False)), axis = 0)
 
-            
-            else:
+        if numpy_arrays[0].size != 0:
+        
+            for index in range(0, len(var_names)):
+                if var_names[index].find("sys") != -1 and md.getBatchNumber()/100 == 6:
+                    continue
+                else:
+                    cfd = True if var_names[index].find("cfd") != -1 else False
+                    sys = True if var_names[index].find("sys") != -1 else False
 
-                time_difference_linear = np.concatenate((time_difference_linear, dm.exportImportROOTData("timing", "linear", False)), axis = 0)
-                time_difference_linear_cfd = np.concatenate((time_difference_linear_cfd, dm.exportImportROOTData("timing", "linear_cfd", False)), axis = 0)
-                
-                if md.getBatchNumber()/100 != 6:
-                
-                    time_difference_sys_eq = np.concatenate((time_difference_sys_eq, dm.exportImportROOTData("timing", "sys_eq", False)), axis = 0)
-                    time_difference_sys_eq_cfd = np.concatenate((time_difference_sys_eq_cfd, dm.exportImportROOTData("timing", "sys_eq_cfd", False)), axis = 0)
+                    produceTimingDistributionPlots(numpy_arrays[index], cfd, sys)
 
-
-        if time_difference_linear.size != 0:
-
-            # Differences between two sensors, wrt peak time and cfd reference
-
-            print "\nTIMING RESOLUTION NORMAL PEAK PLOTS", "Batch", md.getBatchNumber()
-            produceTimingDistributionPlots(time_difference_linear)
-
-            print "\nTIMING RESOLUTION NORMAL CFD PLOTS", "Batch", md.getBatchNumber()
-            produceTimingDistributionPlots(time_difference_linear_cfd, True)
-
-            # System of linear equations between sensors, wrt peak time and cfd reference
-            # Batch 6 is omitted the calculation of system of equations
-            if md.getBatchNumber()/100 != 6:
-
-                print "\nTIMING RESOLUTION SYSTEM PEAK PLOTS", "Batch", md.getBatchNumber()
-                produceTimingDistributionPlotsSysEq(time_difference_sys_eq)
-
-                print "\nTIMING RESOLUTION SYSTEM CFD PLOTS", "Batch", md.getBatchNumber()
-                produceTimingDistributionPlotsSysEq(time_difference_sys_eq_cfd, True)
 
 
     print "\nDone with producing TIMING RESOLUTION plots.\n"
@@ -88,18 +70,30 @@ def timingPlots():
 
 ############## LINEAR TIME DIFFERENCE ###############
 
-def produceTimingDistributionPlots(time_difference, cfd=False):
+def produceTimingDistributionPlots(time_difference, cfd=False, sys=False):
+    
+    if sys:
+        produceTimingDistributionPlotsSysEq(time_difference, cfd)
+        return 0
+    
+    text = "\nTIMING RESOLUTION NORMAL PEAK PLOTS Batch " + str(md.getBatchNumber())
+    if cfd:
+        text.replace("PEAK", "CFD")
+
+    print text
     
     time_diff_th1d = dict()
 
     for chan in time_difference.dtype.names:
     
+        # Omit SiPM, since the time difference is between the SiPM and DUT
         if md.getNameOfSensor(chan) == "SiPM-AFP":
             continue
         
+        # Omit sensors which are not analyzed (defined in main.py)
         if md.getNameOfSensor(chan) != md.sensor and md.sensor != "":
             continue
-    
+        
         print "\n", md.getNameOfSensor(chan), "\n"
 
         time_diff_th1d[chan] = ROOT.TH1D("Time difference "+md.getNameOfSensor(chan), "time_difference" + chan, xbins, -bin_range, bin_range)
@@ -110,9 +104,9 @@ def produceTimingDistributionPlots(time_difference, cfd=False):
                 time_diff_th1d[chan].Fill(time_difference[chan][entry])
 
         # Get fit function with width of the distributions
-        # Check if the filled object have at least 1000 entries
+        # Check if the filled object have at least 200 entries per run
         
-        if time_diff_th1d[chan].GetEntries() < 1000:
+        if time_diff_th1d[chan].GetEntries() < min_entries_per_run * len(md.getAllRunNumbers(md.getBatchNumber())):
             
             if cfd:
                 type = "cfd reference"
@@ -124,7 +118,7 @@ def produceTimingDistributionPlots(time_difference, cfd=False):
             
             continue
             
-        sigma_DUT, sigma_fit_error = t_calc.getSigmasFromFit(time_diff_th1d[chan], chan)
+        sigma_DUT, sigma_fit_error, time_diff_mean = t_calc.getSigmasFromFit(time_diff_th1d[chan], chan)
 
         # Set titles and export file
         headTitle = "Time difference SiPM and "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"
@@ -149,19 +143,28 @@ def produceTimingDistributionPlots(time_difference, cfd=False):
         if cfd:
             type += "_cfd"
         dt = (  [(type, '<f8') ])
-        timing_results = np.empty(2, dtype = dt)
+        timing_results = np.empty(3, dtype = dt)
         timing_results[type][0] = sigma_DUT
         timing_results[type][1] = sigma_fit_error
-        sensor_info = [md.getNameOfSensor(chan), chan]
-        dm.exportImportROOTData("results", "timing_normal", True, timing_results, sensor_info, md.checkIfSameOscAsSiPM(chan), cfd)
+        timing_results[type][2] = time_diff_mean
+        
+        dm.exportImportROOTData("results", "timing_normal", True, timing_results, chan, md.checkIfSameOscAsSiPM(chan), cfd)
+
+        del time_diff_th1d[chan]
 
 
-############## SYSTEM OF EQUATIONS TIME DIFFERENCE ###############
+############## SYSTEM OF EQUATIONS ###############
 
 
 # Use this method to calculate the linear system of equations solution
 # If one of the functions have less than 1000 entries, remove it from the calculation!
 def produceTimingDistributionPlotsSysEq(time_difference, cfd=False):
+    
+    text = "\nTIMING RESOLUTION SYSTEM PEAK PLOTS Batch " + str(md.getBatchNumber())
+    if cfd:
+        text.replace("PEAK", "CFD")
+    
+    print text
     
     # TH1 objects
     time_diff_th1d = dict()
@@ -204,7 +207,7 @@ def produceTimingDistributionPlotsSysEq(time_difference, cfd=False):
             MPV_time_diff = int(time_diff_th1d[chan][chan2].GetXaxis().GetBinCenter(MPV_bin))
 
             # Change the window
-            window_range = 2000
+            window_range = 3000
             
             xMin = MPV_time_diff - window_range
             xMax = MPV_time_diff + window_range
@@ -248,14 +251,15 @@ def produceTimingDistributionPlotsSysEq(time_difference, cfd=False):
         chan2_list.remove(chan)
         
         for chan2 in chan2_list:
-            if time_diff_th1d[chan][chan2].GetEntries() < 1000:
+
+            if time_diff_th1d[chan][chan2].GetEntries() < min_entries_per_run * len(md.getAllRunNumbers(md.getBatchNumber())):
             
                 if cfd:
                     type = "cfd reference"
                 else:
                     type = "peak reference"
                 
-                print "Omitting batch", md.getBatchNumber(), "for", type, "time difference plot for", md.getNameOfSensor(chan), "and", md.getNameOfSensor(chan2), "have less than 1000 entries! \n"
+                print "Omitting batch", md.getBatchNumber(), "for", type, "time difference system plot for", md.getNameOfSensor(chan), "and", md.getNameOfSensor(chan2), "due to low statistics \n"
                 omit_batch = True
                 break
                 
@@ -305,11 +309,12 @@ def produceTimingDistributionPlotsSysEq(time_difference, cfd=False):
 
             timing_results_sys_eq[type][0] = sigma_DUT
             timing_results_sys_eq[type][1] = sigma_DUT_error
+
+            del time_diff_th1d[chan][chan2]
             
         # Export the results
-        sensor_info = [md.getNameOfSensor(chan), chan]
 
-        dm.exportImportROOTData("results", "timing_system", True, timing_results_sys_eq, sensor_info, False, cfd)
+        dm.exportImportROOTData("results", "timing_system", True, timing_results_sys_eq, chan, False, cfd)
 
 
 ############## EXPORT PLOT ###############

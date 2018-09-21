@@ -6,7 +6,6 @@ import data_management as dm
 import tracking_plot as t_plot
 
 
-
 # Change tracking information
 def changeCenterPositionSensor(tracking):
 
@@ -28,7 +27,7 @@ def changeCenterPositionSensor(tracking):
         # Rotation for W4-S204_6e14
         if md.getNameOfSensor(t_plot.chan) == "W4-S204_6e14":
 
-            theta = 4.8 * np.pi/180
+            theta = 4.3 * np.pi/180
 
             # Use the rotation matrix around z
             tracking["X"] = np.multiply(tracking["X"], np.cos(theta)) - np.multiply(tracking["Y"], np.sin(theta))
@@ -37,7 +36,7 @@ def changeCenterPositionSensor(tracking):
         # Rotation for W4-S215
         elif md.getNameOfSensor(t_plot.chan) == "W4-S215":
 
-            theta = 1.3 * np.pi/180
+            theta = 0.6 * np.pi/180
             
               # Use the rotation matrix around z
             tracking["X"] = np.multiply(tracking["X"], np.cos(theta)) - np.multiply(tracking["Y"], np.sin(theta))
@@ -255,31 +254,34 @@ def getTitleAndFileName(objectName, chan):
     return fileName, headTitle
 
 
-def drawLines():
-
+def drawLines(efficiency):
 
     # Draw lines for which the projection limis is chosen
-    if t_plot.singlePadGraphs:
-
+    if t_plot.singlePadGraphs and efficiency:
+  
         ranges, center_positions = findSelectionRange()
 
         x1 = ranges[0][0]
         x2 = ranges[0][1]
         y1 = ranges[1][0]
         y2 = ranges[1][1]
+        
+        line_length_from_center = 300
 
         # Lines which selects the area in y for projection in x
-        line_y1 = ROOT.TLine(x1-0.3, y1, x2+0.3, y1)
-        line_y2 = ROOT.TLine(x1-0.3, y2, x2+0.3, y2)
+        line_y1 = ROOT.TLine(x1-line_length_from_center, y1, x2+line_length_from_center, y1)
+        line_y2 = ROOT.TLine(x1-line_length_from_center, y2, x2+line_length_from_center, y2)
 
         # Lines which selects the area in x for projection in y
-        line_x1 = ROOT.TLine(x1, y1-0.3, x1, y2+0.3)
-        line_x2 = ROOT.TLine(x2, y1-0.3, x2, y2+0.3)
-
-        line_y1.Draw()
-        line_y2.Draw()
-        line_x1.Draw()
-        line_x2.Draw()
+        line_x1 = ROOT.TLine(x1, y1-line_length_from_center, x1, y2+line_length_from_center)
+        line_x2 = ROOT.TLine(x2, y1-line_length_from_center, x2, y2+line_length_from_center)
+        
+        line_y1.SetLineWidth(2)
+        line_y2.SetLineWidth(2)
+        line_x1.SetLineWidth(2)
+        line_x2.SetLineWidth(2)
+        
+        return [line_y1, line_y2, line_x1, line_x2]
 
 
 def findSelectionRange():

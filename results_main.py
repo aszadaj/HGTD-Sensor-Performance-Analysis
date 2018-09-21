@@ -17,7 +17,7 @@ def produceResults():
     bias_voltage_max = 500
     
     categories = ["noise", "pedestal", "peak_value", "charge", "rise_time", "timing_normal_peak", "timing_system_peak", "timing_normal_cfd", "timing_system_cfd"]
-    #categories = ["timing_normal_peak", "timing_system_peak", "timing_normal_cfd", "timing_system_cfd"]
+    #categories = ["timing_normal_peak"]
     
     canvas = ROOT.TCanvas("Results", "Results")
     dm.defineDataFolderPath()
@@ -51,7 +51,7 @@ def produceResults():
             sensor_data = dict()
             
             # Create TGraphErrors for each sensor, temperature and position (in the case of array pads)
-            for temperature in md.availableTemperatures():
+            for temperature in md.getAvailableTemperatures():
                 
                 graph[processed_sensor][temperature] = dict()
                 sensor_data[temperature] = dict()
@@ -64,8 +64,10 @@ def produceResults():
                     
                     # Change each marker type and color
                     r_plot.setMarkerType(graph[processed_sensor][temperature][DUT_pos], DUT_pos, temperature)
-            
+        
+        
             r_calc.importResultsValues(sensor_data, category)
+            
             
             r_plot.addValuesToGraph([sensor_data, category, legend_graph, graph, category_graph])
           

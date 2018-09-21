@@ -10,27 +10,27 @@ import run_log_metadata as md
 # Export pulse data
 def exportPulseData(variable_array):
 
-    [peak_times, peak_values, rise_times, cfd, points, max_sample, charge] = [i for i in variable_array]
+    [peak_times, peak_values, rise_times, cfd, charge, points, max_sample] = [i for i in variable_array]
 
     exportImportROOTData("pulse", "peak_time", True, peak_times)
     exportImportROOTData("pulse", "peak_value", True, peak_values)
     exportImportROOTData("pulse", "rise_time", True, rise_times)
     exportImportROOTData("pulse", "cfd", True, cfd)
+    exportImportROOTData("pulse", "charge", True, charge)
     exportImportROOTData("pulse", "points", True, points)
     exportImportROOTData("pulse", "max_sample", True, max_sample)
-    exportImportROOTData("pulse", "charge", True, charge)
 
 
-def exportPulseResults(peak_value_result, charge_result, rise_time_result, sensor_info):
+def exportPulseResults(peak_value_result, charge_result, rise_time_result, chan):
 
-    exportImportROOTData("results", "peak_value", True, peak_value_result, sensor_info)
-    exportImportROOTData("results", "charge", True, charge_result, sensor_info)
-    exportImportROOTData("results", "rise_time", True, rise_time_result, sensor_info)
+    exportImportROOTData("results", "peak_value", True, peak_value_result, chan)
+    exportImportROOTData("results", "charge", True, charge_result, chan)
+    exportImportROOTData("results", "rise_time", True, rise_time_result, chan)
 
 
 # Export ROOT file with selected information
 
-def exportImportROOTData(group, category, export, data=0, sensor_info=[], same_osc=False, cfd=False):
+def exportImportROOTData(group, category, export, data=0, chan="", same_osc=False, cfd=False):
 
     if group == "tracking":
         
@@ -52,11 +52,11 @@ def exportImportROOTData(group, category, export, data=0, sensor_info=[], same_o
 
     elif group == "results":
 
-        fileName = getSourceFolderPath()+"results_data_hgtd_efficiency_sep_2017/"+sensor_info[0]+"/"+category
+        fileName = getSourceFolderPath()+"results_data_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/"+category
 
         if category.find("timing") != -1:
         
-            fileName += "_peak"+"/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+"_peak.root"
+            fileName += "_peak"+"/"+category+"_"+str(md.getBatchNumber())+"_"+chan+"_peak.root"
         
             if category.find("system") == -1:
         
@@ -72,7 +72,7 @@ def exportImportROOTData(group, category, export, data=0, sensor_info=[], same_o
 
         else:
         
-            fileName += "/"+category+"_"+str(md.getBatchNumber())+"_"+sensor_info[1]+".root"
+            fileName += "/"+category+"_"+str(md.getBatchNumber())+"_"+chan+".root"
             
     elif group == "noise_plot":
 
@@ -90,7 +90,8 @@ def exportImportROOTData(group, category, export, data=0, sensor_info=[], same_o
 
     if group != "timing" and group != "results" and category != "position" and export:
         
-        data = changeDTYPEOfData(data)
+        dt = getDTYPE()
+        data = data.astype(data, dtype=dt)
 
 
     if export:
@@ -129,7 +130,7 @@ def readFileNames(category, subcategory=0):
     else:
         folderPath = getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/" + category + "/" + category + "_" + subcategory + "/"
 
-    # Yes, one of the craziest lines I have written. This line reads in a list of sorted files
+    # This line reads in a list of sorted files
     # from a provided folder above, strips down non-integer characters and converts to integers.
     # The file is also checked if the file is readable and avoids .DS_Store-files typical for macOS.
 
@@ -138,7 +139,7 @@ def readFileNames(category, subcategory=0):
     return availableFiles
 
 
-def areFilesAvailable():
+def checkIfFileAvailable():
 
     found = False
 
@@ -156,7 +157,7 @@ def areFilesAvailable():
     
         if int(md.getRunNumber()) in files_cfd and int(md.getRunNumber()) in files_peak_time:
             found = True
-            
+    
 
     elif functionAnalysis == "tracking_analysis":
 
@@ -167,18 +168,10 @@ def areFilesAvailable():
 
             found = True
 
+    if not found:
+        print "Files required for run number", md.getRunNumber(), "are missing. Skipping run.\n"
 
     return found
-
-
-def checkIfFileAvailable():
-    bool = True
-    
-    if not areFilesAvailable():
-        print "Files required for run number", md.getRunNumber(), "are missing. Skipping run.\n"
-        bool = False
-    
-    return bool
 
 
 
@@ -189,25 +182,27 @@ def changeIndexNumpyArray(numpy, factor):
 
 
 
-def changeDTYPEOfData(data):
-
-
-    if len(data.dtype.names) == 7:
+def getDTYPE(batchNumber = 0):
     
-        data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ,('chan4', '<f8') ,('chan5', '<f8') ,('chan6', '<f8') ] )
-
-    elif len(data.dtype.names) == 3:
+    if batchNumber == 0:
+        batchNumber = md.getBatchNumber()
     
-        data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ] )
-    
-    elif len(data.dtype.names) == 4:
-    
-        data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ])
+    batchMainNumber = batchNumber/100
 
-    else:
-        data = data.astype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ,('chan4', '<f8') ,('chan5', '<f8') ,('chan6', '<f8') ,('chan7', '<f8')] )
+    if batchMainNumber == 6: # Batch 6 have 3 channels
+    
+        dtype = np.dtype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ] )
 
-    return data
+    elif batchMainNumber == 3: # Batch 3 have 7 channels
+    
+        dtype = np.dtype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ,('chan4', '<f8') ,('chan5', '<f8') ,('chan6', '<f8') ] )
+
+    else: # rest have 8 channels
+    
+        dtype = np.dtype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ,('chan4', '<f8') ,('chan5', '<f8') ,('chan6', '<f8') ,('chan7', '<f8')] )
+
+    return dtype
+    # np.dtype([('id', 'i8'), ('mat', 'f8', (3, 3))])
 
 
 # Get actual time
@@ -264,4 +259,3 @@ def getDataPath():
     dataPath = oscilloscopePath + "data_"+str(md.getTimeStamp())+".tree.root"
 
     return dataPath
-
