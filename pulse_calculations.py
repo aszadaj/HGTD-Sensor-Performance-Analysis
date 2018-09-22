@@ -1,15 +1,13 @@
 import numpy as np
 import run_log_metadata as md
+import data_management as dm
 
-def pulseAnalysis(data, pedestal, noise):
+def pulseAnalysis(data, noise, pedestal):
 
-    osc_limit = findOscilloscopeLimit(data)
+    osc_limit = findOscilloscopeLimit(data.dtype.names, data.dtype)
 
     # Set the time scope to 0.1 ns
     defTimeScope()
-    
-    # Time in event when the pulse reaches maximum
-    peak_time       =   np.zeros(len(data), dtype = data.dtype)
     
     # Pulse amplitude
     peak_value      =   np.zeros(len(data), dtype = data.dtype)
@@ -17,8 +15,14 @@ def pulseAnalysis(data, pedestal, noise):
     # Rise time
     rise_time       =   np.zeros(len(data), dtype = data.dtype)
     
+    # Charge deposited fron the particle to the sensor
+    charge          =   np.zeros(len(data), dtype = data.dtype)
+    
     # Time at 50% of the rising edge
     cfd           =   np.zeros(len(data), dtype = data.dtype)
+    
+    # Time in event when the pulse reaches maximum
+    peak_time       =   np.zeros(len(data), dtype = data.dtype)
     
     # Points above the threshold
     points           =   np.zeros(len(data), dtype = data.dtype)
@@ -26,15 +30,13 @@ def pulseAnalysis(data, pedestal, noise):
     # Max sample of event given that there are points above the threshold
     max_sample      =   np.zeros(len(data), dtype = data.dtype)
     
-    # Charge deposited fron the particle to the sensor
-    charge          =   np.zeros(len(data), dtype = data.dtype)
-    
-    properties = [peak_time, peak_value, rise_time, cfd, points, max_sample, charge]
+    properties = [peak_value, rise_time, charge, cfd, peak_time, points, max_sample]
 
     for chan in data.dtype.names:
+        
         for event in range(0, len(data)):
             
-            variables = [data[chan][event], pedestal[chan], noise[chan], osc_limit[chan]]
+            variables = [data[chan][event], noise[chan], pedestal[chan], osc_limit[chan], md.getThresholdSamples(chan)]
             
             results = getPulseCharacteristics(variables)
             
@@ -43,10 +45,11 @@ def pulseAnalysis(data, pedestal, noise):
 
     return properties
 
-
+# Input is in negative values, but the calculation is in positive values!
+# Dimensions used are U = [V], t = [ns], q = [C]
 def getPulseCharacteristics(variables):
 
-    [data, pedestal, noise, osc_limit] = [i for i in variables]
+    [data, noise, pedestal, osc_limit, threshold_points] = [i for i in variables]
     
     # Invert waveform data
     data = -data
@@ -61,15 +64,10 @@ def getPulseCharacteristics(variables):
     # points and max_sample are calculated without the threshold point condition
     # to analyze how many points are required
     points = calculatePoints(data, threshold)
-    max_sample = np.amax(data[data > threshold]) if np.sum(data > threshold) != 0 else np.zeros(1)
+    max_sample = np.amax(data[data > threshold]) if np.sum(data > threshold) != 0 else 0
     
-    # This number has been argumented as a combined plot between max sample
-    # point and number of points above the threshold. See report.
-    threshold_points = 5
-    condition = getConsecutiveSeries(np.argwhere((data > threshold)).flatten())
-    
-    if len(condition) >= threshold_points:
-    
+    if points >= threshold_points:
+
         peak_value, peak_time = calculatePeakValue(data, pedestal, osc_limit)
         rise_time, cfd  = calculateRiseTime(data, pedestal)
         charge = calculateCharge(data, threshold, osc_limit)
@@ -80,20 +78,20 @@ def getPulseCharacteristics(variables):
              peak_time = cfd = 0
 
         # Invert again to maintain the same shape
-        return peak_time, -peak_value, rise_time, cfd, charge, points, -max_sample
+        return -peak_value, rise_time, charge, cfd, peak_time, points, -max_sample
 
     else:
-        return np.zeros(1), np.zeros(1), np.zeros(1), np.zeros(1), np.zeros(1), points, -max_sample
+        return 0, 0, 0, 0, 0, points, -max_sample
 
 
 # Get rise time
 def calculateRiseTime(data, pedestal, graph=False):
     
     # Default values
-    rise_time = np.zeros(1)
-    cfd = np.zeros(1)
-    linear_fit = np.zeros(2)
-    linear_fit_indices = np.zeros(1)
+    rise_time = 0
+    cfd = 0
+    linear_fit = [0,0]
+    linear_fit_indices = 0
     
     # Select points between 10 and 90 procent, before the max point
     linear_fit_bool = (data < np.amax(data)*0.9) & (data > np.amax(data)*0.1) & (np.nonzero(data) < np.argmax(data))[0]
@@ -127,9 +125,9 @@ def calculateRiseTime(data, pedestal, graph=False):
 def calculatePeakValue(data, pedestal, osc_limit, graph=False):
 
     # Default values
-    peak_value = np.zeros(1)
-    peak_time = np.zeros(1)
-    poly_fit = np.zeros(3)
+    peak_value = 0
+    peak_time = 0
+    poly_fit = [0,0,0]
 
     # Select indices
     point_sep = 2
@@ -178,9 +176,22 @@ def calculateCharge(data, threshold, osc_limit):
 def calculatePoints(data, threshold):
 
     points_threshold = np.argwhere(data > threshold).flatten()
-    points_consecutive = getConsecutiveSeries(points_threshold)
+    points_consecutive = getConsecutiveSeriesPoints(data, points_threshold)
     
     return len(points_consecutive)
+
+
+# Select consecutive samples which have the maximum height
+def getConsecutiveSeriesPoints(data, points_threshold):
+    
+    if len(points_threshold) == 0:
+        return []
+
+    group_points = group_consecutives(points_threshold)
+    group_points_max = [np.amax(data[group]) for group in group_points]
+    max_arg_series = group_points[group_points_max.index(max(group_points_max))]
+    
+    return max_arg_series
 
 
 # Select consecutive samples which have the maximum height
@@ -201,13 +212,15 @@ def group_consecutives(data, stepsize=1):
     return np.split(data, np.where(np.diff(data) != stepsize)[0]+1)
 
 # Get maximum values for given channel and oscilloscope
-def findOscilloscopeLimit(data):
+def findOscilloscopeLimit(channels, dt):
 
-    channels = data.dtype.names
-    osc_limit = np.empty(1, dtype=data.dtype)
+    osc_limit = np.empty(1, dtype=dt)
     
     for chan in channels:
-        osc_limit[chan] = np.amin(np.concatenate(data[chan]))
+        if md.getNameOfSensor(chan) == "SiPM-AFP":
+            osc_limit[chan] = -0.3547959327697754
+        else:
+            osc_limit[chan] = -0.39499592781066895
 
     return osc_limit
 

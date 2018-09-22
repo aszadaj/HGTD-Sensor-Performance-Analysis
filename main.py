@@ -26,7 +26,7 @@ def main():
     number_of_runs = 0
     
     # batches must be list, or "all". Exclusion of batches also possible
-    batches = [101] # locally there are batch 102, 301 and 506
+    batches = "all" # locally there are batch 102, 301 and 506
     batches_exclude = []
     
     # The sensor which is supposed to be analyzed, "" == all sensors
@@ -50,8 +50,8 @@ def main():
     
     ########### PULSE ################
 
-    #pulse_main.pulseAnalysis() # This is a long procedure function
-    #pulse_plot.pulsePlots()
+    pulse_main.pulseAnalysis() # This is a long procedure function
+    pulse_plot.pulsePlots()
     
     ##################################
 
@@ -59,7 +59,7 @@ def main():
     ####### TIMING RESOLUTION ########
     
     #timing.timingAnalysis()
-    timing_plot.timingPlots()
+    #timing_plot.timingPlots()
     
     ##################################
 

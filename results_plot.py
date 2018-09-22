@@ -70,7 +70,7 @@ def drawAndExportResults(category, category_graph, legend_graph):
     legend_text.DrawLatex(.7, .4, "#color[3]{Green} = -40\circC")
 
     
-    fileName = dm.getSourceFolderPath() + "results_hgtd_efficiency_sep_2017/" + "/" + category + "_results.pdf"
+    fileName = dm.getSourceFolderPath() + dm.getResultsPlotSourceDataPath() + "/" + category + "_results.pdf"
     rm.canvas.Print(fileName)
 
 

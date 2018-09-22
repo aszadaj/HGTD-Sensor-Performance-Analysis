@@ -400,7 +400,7 @@ def produceProjectionPlots(projectionX_th1d, projectionY_th1d, center_positions)
         projectionY_th1d.SetAxisRange(-glob_variables[0], glob_variables[0], "X")
 
     headTitle = "Projection of X-axis of efficiency 2D plot - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"+ "; X [\mum] ; Efficiency (%)"
-    fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/tracking/projection/tracking_projectionX_efficiency_" + str(md.getBatchNumber()) +"_" + chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+    fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getNameOfSensor(chan)+"/tracking/projection/tracking_projectionX_efficiency_" + str(md.getBatchNumber()) +"_" + chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
 
     sigmas = createProjectionFit(projectionX_th1d, center_positions[0])
     printProjectionPlot(projectionX_th1d, headTitle, fileName, sigmas)

@@ -1,31 +1,17 @@
 import numpy as np
 
+# Here the input is in negative values
 def findNoiseAverageAndStd(data):
    
-    channels = data.dtype.names
-    
     noise_average = np.zeros(len(data), dtype = data.dtype)
     noise_std = np.zeros(len(data), dtype = data.dtype)
     
-
     for event in range(0, len(data)):
     
-        for chan in channels:
+        for chan in data.dtype.names:
             
-            # Consider points until a pulse
-            pulse_limit = -20 * 0.001 # mV
-            
-            data_point_correction = 3
-            
-            # Take out points which are below the noise level
-            pulse_compatible_samples = data[event][chan] < pulse_limit
-            
-            # Select the "last index" which defines the range of the noise selection
-            max_index = np.where(pulse_compatible_samples)[0][0] - data_point_correction if len(np.where(pulse_compatible_samples)[0] ) else 1002
-            
-            noise_average[event][chan]  = np.average(data[event][chan][0:max_index])
-            noise_std[event][chan]      = np.std(data[event][chan][0:max_index])
-            
+            noise_average[event][chan], noise_std[event][chan] = calculateNoiseAndPedestal(data[event][chan])
+
             if np.isnan(noise_average[event][chan]) or np.isnan(noise_average[event][chan]):
             
                 noise_average[event][chan]  = 0
@@ -33,6 +19,23 @@ def findNoiseAverageAndStd(data):
 
 
     return noise_average, noise_std
+
+# Here the input is in negative values
+def calculateNoiseAndPedestal(data):
+
+    # Consider points until a pulse
+    threshold = -20 * 0.001 # mV
+    
+    data_point_correction = 3
+    
+    # Take out points which are below the noise level
+    pulse_samples_bool = data < threshold
+    
+    # Select the "last index" which defines the range of the noise selection
+    max_index = np.where(pulse_samples_bool)[0][0] - data_point_correction if len(np.where(pulse_samples_bool)[0] ) else 1002
+ 
+    return np.average(data[0:max_index]), np.std(data[0:max_index])
+
 
 
 def concatenateResults(results):

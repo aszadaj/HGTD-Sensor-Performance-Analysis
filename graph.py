@@ -8,14 +8,16 @@ import root_numpy as rnm
 import run_log_metadata as md
 import data_management as dm
 import pulse_calculations as p_calc
+import noise_calculations as n_calc
 
 ROOT.gROOT.SetBatch(True)
 
-batch = 102
-sensor = "W9-LGA35"
+batch = 606
+sensor = "W4-RD01"
 
 # If event = 0, then the event number will be randomly selected based on condition
-event = 151999
+event = 0
+number_of_plots = 3
 
 # Print selected event for sensor and batch
 def printWaveform(batchNumber, sensor, event = 0):
@@ -35,31 +37,27 @@ def printWaveform(batchNumber, sensor, event = 0):
     peak_value_import = dm.exportImportROOTData("pulse", "peak_value", False)
     max_sample = dm.exportImportROOTData("pulse", "max_sample", False)
     peak_time_import = dm.exportImportROOTData("pulse", "peak_time", False)
-    pedestal = dm.exportImportROOTData("noise", "pedestal", False)
-    noise = dm.exportImportROOTData("noise", "noise", False)
+    pedestal_import = dm.exportImportROOTData("results", "pedestal", False, 0, chan)
+    noise_import = dm.exportImportROOTData("results", "noise", False, 0, chan)
     points_import = dm.exportImportROOTData("pulse", "points", False)
     charge_import = dm.exportImportROOTData("pulse", "charge", False)
-
 
     # Randomly select event based on a property and import it
     if event == 0:
     
         # Here one can modify the condition which randomly selects an event. Event number must be 0
-        condition = (peak_value_import[chan] < -0.2) & (peak_value_import[chan] > -0.35)
+        condition = ((-peak_value_import[chan] < 0.05) & (-peak_value_import[chan] > 0.045) & (points_import[chan] < 150) & (points_import[chan] > 145))
         selected_event =  np.argwhere(condition).flatten()
         np.random.shuffle(selected_event)
         event = selected_event[0]
-    
         
     data_import = rnm.root2array(dataPath, start=event, stop=event+1)
     
     data = data_import[chan][0]
-    pedestal = pedestal[chan]
-    noise = noise[chan]
-
     data = -data
-    pedestal = -pedestal
-
+    
+    noise = np.array([noise_import["noise"][0] * 0.001])
+    pedestal = np.array([pedestal_import["pedestal"][0] * 0.001])
 
     # Set linear fit
     timeScope = 0.1
@@ -67,7 +65,7 @@ def printWaveform(batchNumber, sensor, event = 0):
 
     
     # Define point difference for 2nd degree fit
-    osc_limit_DUT = -0.3547959
+    osc_limit_DUT = 0.3547959
     point_difference = 2
     
     rise_time, cfd, linear_fit, linear_fit_indices = p_calc.calculateRiseTime(data, pedestal, True)
@@ -75,6 +73,7 @@ def printWaveform(batchNumber, sensor, event = 0):
     point_count = p_calc.calculatePoints(data, threshold)
     charge = p_calc.calculateCharge(data, threshold, osc_limit_DUT)
     max_sample = np.amax(data) - pedestal
+    
 
     # Create TMultigraph and define underlying graphs
 
@@ -202,7 +201,7 @@ def printWaveform(batchNumber, sensor, event = 0):
     multi_graph.Add(graph_cfd)
     multi_graph.Add(graph_peak_time)
     multi_graph.Add(graph_pedestal)
-    multi_graph.Add(charge_fill, "f")
+    #multi_graph.Add(charge_fill, "f")
 
     
     # Add the information to a legend box
@@ -211,12 +210,12 @@ def printWaveform(batchNumber, sensor, event = 0):
     legend.AddEntry(graph_linear_fit, "Rise time: "+str(rise_time[0]*1000)[:5]+" ps", "l")
     legend.AddEntry(graph_cfd, "CFD " + str(cfd[0])[0:4] + " ns", "l")
     legend.AddEntry(graph_peak_time, "Peak time " + str(peak_time[0])[0:4] + " ns", "l")
-    legend.AddEntry(graph_pedestal, "Pedestal: "+str(pedestal[0]*1000)[:3]+" mV", "l")
-    #legend.AddEntry(graph_threshold, "Noise: "+str(noise[0]*1000)[:3]+" mV", "l")
+    legend.AddEntry(graph_pedestal, "Pedestal: "+str(pedestal[0]*1000)[:4]+" mV", "l")
+    legend.AddEntry(graph_threshold, "Noise: "+str(noise[0]*1000)[:4]+" mV", "l")
     legend.AddEntry(graph_threshold, "Threshold: "+str(threshold[0]*1000)[:5]+" mV", "l")
-    legend.AddEntry(charge_fill, "Charge: "+str(charge*10**15)[:5]+" fC", "l")
+    #legend.AddEntry(charge_fill, "Charge: "+str(charge*10**15)[:5]+" fC", "l")
     #legend.AddEntry(graph_max_sample, "Max sample: "+str(max_sample[0]*1000)[:5]+" mV", "l")
-    #legend.AddEntry(graph_waveform, "Points above threshold: "+str(point_count), "l")
+    legend.AddEntry(graph_waveform, "Points above threshold: "+str(point_count), "l")
     #legend.AddEntry(graph_90, "10% and 90% limit", "l")
 
 
@@ -234,17 +233,18 @@ def printWaveform(batchNumber, sensor, event = 0):
     # Set ranges on axis
     multi_graph.GetYaxis().SetRangeUser(-30,450)
     #multi_graph.GetXaxis().SetRangeUser(cfd-3,cfd+5)
-    multi_graph.GetXaxis().SetRangeUser(42,47)
+    multi_graph.GetXaxis().SetRangeUser(0,100)
 
     # Export the PDF file
-    fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/waveforms/waveform"+"_"+str(md.getBatchNumber())+"_"+str(runNumber)+"_event_"+str(event)+"_"+str(sensor)+".pdf"
+    fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/waveforms/waveform"+"_"+str(md.getBatchNumber())+"_"+str(runNumber)+"_event_"+str(event)+"_"+str(sensor)+".pdf"
 
     canvas.Print(fileName)
 
 
+
+
 def mainPrint():
-    
-    number_of_plots = 3
+
     
     if event == 0:
         i = 0

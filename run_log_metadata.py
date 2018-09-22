@@ -296,6 +296,42 @@ def checkIfArrayPad(chan):
     return array_pad
 
 
+def getThresholdSamples(chan):
+
+    sensor = getNameOfSensor(chan)
+
+    if sensor == "50D-GBGR2":
+        number_samples = 5
+    
+    elif sensor == "SiPM-AFP":
+        number_samples = 50
+
+    elif sensor == "W4-LG12":
+        number_samples = 10
+
+    elif sensor == "W4-RD01":
+        number_samples = 40
+
+    elif sensor == "W4-S203":
+        number_samples = 10
+
+    elif sensor == "W4-S204_6e14":
+        number_samples = 3
+
+    elif sensor == "W4-S215":
+        number_samples = 10
+
+    elif sensor == "W4-S1022":
+        number_samples = 5
+
+    elif sensor == "W4-S1061":
+        number_samples = 10
+
+    elif sensor == "W9-LGA35":
+        number_samples = 5
+
+    return number_samples
+
 
 def getDUTPos(chan):
 
@@ -335,7 +371,6 @@ def corruptedRuns():
 
 def setBatchNumbers(numbers, exclude=[]):
 
-    
 
     global batchNumbers
     

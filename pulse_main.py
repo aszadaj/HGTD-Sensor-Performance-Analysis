@@ -61,23 +61,26 @@ def pulseAnalysisPerRun():
     ranges = range(0, max, step)
     
     dataPath = dm.getDataPath()
-    pedestal = dm.exportImportROOTData("noise", "pedestal", False)
-    noise    = dm.exportImportROOTData("noise", "noise", False)
+    
+    noise, pedestal = dm.importNoiseProperties()
     
     # Form of results
-    results = p.map(lambda chunk: multiProcess(dataPath, pedestal, noise, chunk, chunk+step), ranges)
+    results = p.map(lambda part: multiProcess(dataPath, noise, pedestal, part, part + step), ranges)
     
     # results change form, now each element is a variable
     results_variables = p_calc.concatenateResults(results)
+    
+    # Watch out, only exporting two arrays
     dm.exportPulseData(results_variables)
 
 
 # Multiprocessing
-def multiProcess(dataPath, pedestal, noise, begin, end):
+def multiProcess(dataPath, noise, pedestal, begin, end):
 
     data = rnm.root2array(dataPath, start=begin, stop=end)
-    
-    return p_calc.pulseAnalysis(data, pedestal, noise)
+    results = p_calc.pulseAnalysis(data, noise, pedestal)
+    del data
+    return results
 
 
 

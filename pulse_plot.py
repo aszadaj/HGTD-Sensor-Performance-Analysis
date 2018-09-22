@@ -12,7 +12,7 @@ ROOT.gROOT.SetBatch(True)
 
 canvas = ROOT.TCanvas("Pulse", "pulse")
 
-# Amplitude limit for the oscilloscope
+# Amplitude limit for the oscilloscope in mV
 osc_limit = 345
 
 
@@ -23,8 +23,6 @@ def pulsePlots():
     dm.defineDataFolderPath()
     
     for batchNumber in md.batchNumbers:
-        
-        firstRun = True
 
         runNumbers = md.getAllRunNumbers(batchNumber)
         
@@ -56,10 +54,8 @@ def producePulsePlots(numpy_variables):
 
     global chan
 
-    
     [peak_value, rise_time, charge, peak_time, cfd, points, max_sample] = [i for i in numpy_variables]
 
-    print np.size(peak_value)
 
     dm.changeIndexNumpyArray(peak_value, -1000)
     dm.changeIndexNumpyArray(max_sample, -1000)
@@ -73,44 +69,44 @@ def producePulsePlots(numpy_variables):
     
         print "\nPULSE PLOTS: Batch", md.getBatchNumber(),"sensor", md.getNameOfSensor(chan), chan, "\n"
         
-        # Create and fill objects with values
-        peak_value_th1d                    = ROOT.TH1F("Pulse amplitude", "peak_value", 80, 0, 500)
-        rise_time_th1d                     = ROOT.TH1F("Rise time", "rise_time", 300, 0, 4000)
-        charge_th1d                         = ROOT.TH1F("Charge", "charge", 25, 0, 500)
+        # Create TH objects
+        peak_value_th1d                     = ROOT.TH1F("Pulse amplitude", "peak_value", 80, 0, 500)
+        rise_time_th1d                      = ROOT.TH1F("Rise time", "rise_time", 300, 0, 4000)
+        charge_th1d                         = ROOT.TH1F("Charge", "charge", 80, 0, 500)
         peak_time_th1d                      = ROOT.TH1F("Peak time", "peak_time", 100, 0, 100)
         cfd_th1d                            = ROOT.TH1F("CFD", "cfd", 100, 0, 100)
-        max_sample_th1d                     = ROOT.TH1F("Max sample", "max_sample", 100, 0, 360)
+        
         point_count_th1d                    = ROOT.TH1F("Point count", "point_count", 100, 0, 100)
-        max_sample_vs_points_threshold_th2d = ROOT.TH2D("Max sample vs points", "max_sample_vs_point_count", 80, 0, 100, 100, 0, 350)
+        max_sample_th1d                     = ROOT.TH1F("Max sample", "max_sample", 100, 0, 400)
+        max_sample_vs_points_threshold_th2d = ROOT.TH2D("Max sample vs points", "max_sample_vs_point_count", 100, 0, 100, 100, 0, 400)
         
-        TH1_objects = [peak_value_th1d, rise_time_th1d, charge_th1d, peak_time_th1d, cfd_th1d, max_sample_th1d, point_count_th1d]
+        TH1_objects = [peak_value_th1d, rise_time_th1d, charge_th1d, peak_time_th1d, cfd_th1d, point_count_th1d, max_sample_th1d]
         
+        # Fill TH1 objects
         for index in range(0, len(TH1_objects)):
             for entry in range(0, len(numpy_variables[index][chan])):
                 if numpy_variables[index][chan][entry] != 0:
                     TH1_objects[index].Fill(numpy_variables[index][chan][entry])
 
-        
+        # Fill TH2D objects
         for entry in range(0, len(peak_value[chan])):
             if max_sample[chan][entry] != 0 and points[chan][entry] != 0:
                 max_sample_vs_points_threshold_th2d.Fill(points[entry][chan], max_sample[entry][chan])
 
-      
-        rise_time_fit = makeRiseTimeFit(rise_time_th1d)
+        # Create fits for pulse amplitude, rise time and charge
         pulse_amplitude_langaufit = makeLandauGausFit(peak_value_th1d, osc_limit)
+        rise_time_fit = makeRiseTimeFit(rise_time_th1d)
         charge_langaufit = makeLandauGausFit(charge_th1d)
-      
+
+        # Export plots
         for TH_obj in TH1_objects:
             exportHistogram(TH_obj)
 
-        # Export results
         
-        peak_mpv_error = [pulse_amplitude_langaufit.GetParameter(1), pulse_amplitude_langaufit.GetParError(1)]
-        rise_time_mpv_error = [rise_time_fit.GetParameter(1), rise_time_fit.GetParError(1)]
-        charge_mpv_error = [charge_langaufit.GetParameter(1), charge_langaufit.GetParError(1)]
-        
-        exportResults(peak_mpv_error, charge_mpv_error, rise_time_mpv_error)
+        exportHistogram(max_sample_vs_points_threshold_th2d)
 
+        # Export results
+        exportResults(pulse_amplitude_langaufit, rise_time_fit, charge_langaufit)
 
 def makeRiseTimeFit(graphList):
 
@@ -141,7 +137,7 @@ def makeLandauGausFit(graphList, osc_limit=0):
     # Set range for fit
     xMin = max((MPV - std_dev), 4.0)
     
-    if graphList.GetTitle == "charge":
+    if graphList.GetTitle() == "charge":
         xMax = graphList.GetXaxis().GetXmax()
     
     else:
@@ -163,17 +159,21 @@ def makeLandauGausFit(graphList, osc_limit=0):
     return ROOT.langaufit(graphList, fit_range, start_values, param_limits_low, param_limits_high)
 
 
-def exportResults(peak_mpv_error, charge_mpv_error, rise_time_mpv_error):
+def exportResults(pulse_amplitude_langaufit, rise_time_fit, charge_langaufit):
 
-        peak_value_result   = np.empty(2, dtype=[('peak_value', '<f8')])
-        charge_result       = np.empty(2, dtype=[('charge', '<f8')])
-        rise_time_result    = np.empty(2, dtype=[('rise_time', '<f8')])
-        
-        peak_value_result['peak_value'] = peak_mpv_error
-        charge_result['charge']         = charge_mpv_error
-        rise_time_result['rise_time']   = rise_time_mpv_error
-        
-        dm.exportPulseResults(peak_value_result, charge_result, rise_time_result, chan)
+    peak_mpv_error = [pulse_amplitude_langaufit.GetParameter(1), pulse_amplitude_langaufit.GetParError(1)]
+    rise_time_mpv_error = [rise_time_fit.GetParameter(1), rise_time_fit.GetParError(1)]
+    charge_mpv_error = [charge_langaufit.GetParameter(1), charge_langaufit.GetParError(1)]
+
+    peak_value_result   = np.empty(2, dtype=[('peak_value', '<f8')])
+    rise_time_result    = np.empty(2, dtype=[('rise_time', '<f8')])
+    charge_result       = np.empty(2, dtype=[('charge', '<f8')])
+    
+    peak_value_result['peak_value'] = peak_mpv_error
+    rise_time_result['rise_time']   = rise_time_mpv_error
+    charge_result['charge']         = charge_mpv_error
+    
+    dm.exportPulseResults(peak_value_result, rise_time_result, charge_result, chan)
 
 
 # Produce histograms
@@ -202,10 +202,6 @@ def exportHistogram(graphList):
     
     if name == "max_sample_vs_point_count":
     
-        graphList.SetAxisRange(0, 60, "X")
-        graphList.SetAxisRange(0, 350, "Y")
-        graphList.SetAxisRange(0, 500, "Z")
-        
         # Redefine the stats box
         stats_box = graphList.GetListOfFunctions().FindObject("stats")
         stats_box.SetX1NDC(0.65)
@@ -272,7 +268,7 @@ def getPlotAttributes(name):
 
 
     headTitle = head_title_type + " - " + md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"
-    fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/pulse/"+name+"/"+name+"_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+    fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getNameOfSensor(chan)+"/pulse/"+name+"/"+name+"_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
     
     return [headTitle, xAxisTitle, "Entries", fileName]
 

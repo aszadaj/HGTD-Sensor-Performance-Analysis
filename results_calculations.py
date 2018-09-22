@@ -56,7 +56,7 @@ def importResultsValues(sensor_data, category):
 # Read in results files for each category
 def readFileNames(category):
 
-    directory = dm.getSourceResultsDataPath() + rm.processed_sensor + "/" + category + "/"
+    directory = dm.getSourceFolderPath() + dm.getResultsSourceDataPath()+ "/" + rm.processed_sensor + "/" + category + "/"
     
     availableFiles = [directory + f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) and f != '.DS_Store']
     availableFiles.sort()

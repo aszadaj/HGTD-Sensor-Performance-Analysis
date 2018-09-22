@@ -59,7 +59,7 @@ def noiseAnalysisPerRun():
     ranges = range(0, max, step)
     
     dataPath = dm.getDataPath()
-    results = p.map(lambda chunk: multiProcess(dataPath, chunk, chunk+step), ranges)
+    results = p.map(lambda part: multiProcess(dataPath, part, part + step), ranges)
 
     # results change form, now each element is a variable
     noise_average, noise_std = n_calc.concatenateResults(results)

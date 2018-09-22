@@ -12,7 +12,7 @@ ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
 canvas = ROOT.TCanvas("Timing", "timing")
 
 # Range and bins for the window for TH1 objects
-xbins = 500
+xbins = 1000
 bin_range = 15000
 
 # Between each combination of LGADs, require to have at least 200 entries
@@ -85,13 +85,9 @@ def produceTimingDistributionPlots(time_difference, cfd=False, sys=False):
     time_diff_th1d = dict()
 
     for chan in time_difference.dtype.names:
-    
-        # Omit SiPM, since the time difference is between the SiPM and DUT
-        if md.getNameOfSensor(chan) == "SiPM-AFP":
-            continue
         
         # Omit sensors which are not analyzed (defined in main.py)
-        if md.getNameOfSensor(chan) != md.sensor and md.sensor != "":
+        if (md.getNameOfSensor(chan) != md.sensor and md.sensor != "") or md.getNameOfSensor(chan) == "SiPM-AFP":
             continue
         
         print "\n", md.getNameOfSensor(chan), "\n"
@@ -124,7 +120,7 @@ def produceTimingDistributionPlots(time_difference, cfd=False, sys=False):
         headTitle = "Time difference SiPM and "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"
         xAxisTitle = "\Deltat [ps]"
         yAxisTitle = "Entries"
-        fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/normal/peak/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_diff_osc_peak.pdf"
+        fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getNameOfSensor(chan)+"/timing/normal/peak/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_diff_osc_peak.pdf"
 
         if md.checkIfSameOscAsSiPM(chan):
             fileName = fileName.replace("diff_osc", "same_osc")
@@ -294,7 +290,7 @@ def produceTimingDistributionPlotsSysEq(time_difference, cfd=False):
             headTitle = "Time difference "+md.getNameOfSensor(chan)+" and "+md.getNameOfSensor(chan2)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"
             xAxisTitle = "\Deltat [ps]"
             yAxisTitle = "Entries"
-            fileName = dm.getSourceFolderPath() + "plots_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/timing/system/peak/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_and_"+str(md.getNameOfSensor(chan2))+"_peak.pdf"
+            fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getNameOfSensor(chan)+"/timing/system/peak/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_and_"+str(md.getNameOfSensor(chan2))+"_peak.pdf"
 
             if cfd:
                 fileName = fileName.replace("peak", "cfd")

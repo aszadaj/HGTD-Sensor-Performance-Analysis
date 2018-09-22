@@ -10,22 +10,22 @@ import run_log_metadata as md
 # Export pulse data
 def exportPulseData(variable_array):
 
-    [peak_times, peak_values, rise_times, cfd, charge, points, max_sample] = [i for i in variable_array]
+    [peak_values, rise_times, charge, cfd, peak_times, points, max_sample] = [i for i in variable_array]
 
-    exportImportROOTData("pulse", "peak_time", True, peak_times)
     exportImportROOTData("pulse", "peak_value", True, peak_values)
     exportImportROOTData("pulse", "rise_time", True, rise_times)
-    exportImportROOTData("pulse", "cfd", True, cfd)
     exportImportROOTData("pulse", "charge", True, charge)
+    exportImportROOTData("pulse", "cfd", True, cfd)
+    exportImportROOTData("pulse", "peak_time", True, peak_times)
     exportImportROOTData("pulse", "points", True, points)
     exportImportROOTData("pulse", "max_sample", True, max_sample)
 
 
-def exportPulseResults(peak_value_result, charge_result, rise_time_result, chan):
+def exportPulseResults(peak_value_result, rise_time_result, charge_result, chan):
 
     exportImportROOTData("results", "peak_value", True, peak_value_result, chan)
-    exportImportROOTData("results", "charge", True, charge_result, chan)
     exportImportROOTData("results", "rise_time", True, rise_time_result, chan)
+    exportImportROOTData("results", "charge", True, charge_result, chan)
 
 
 # Export ROOT file with selected information
@@ -36,23 +36,23 @@ def exportImportROOTData(group, category, export, data=0, chan="", same_osc=Fals
         
         if category == "":
         
-            fileName = getSourceFolderPath()+"tracking_data_sep_2017/tracking"+md.getTimeStamp()+".root"
+            fileName = getSourceFolderPath()+getTrackingSourceFolder()+"/"+group+md.getTimeStamp()+".root"
 
         else:
-            fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+group+"/"+category+"_"+str(md.getBatchNumber())+".root"
+            fileName = getSourceFolderPath()+getDataSourceFolder()+"/"+group+"/"+category+"_"+str(md.getBatchNumber())+".root"
 
 
     elif group == "timing":
     
-        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+group+"_"+category+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
+        fileName = getSourceFolderPath()+getDataSourceFolder()+"/"+str(group)+"/"+group+"_"+category+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
     
     elif category == "position":
     
-        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(category)+"_"+str(md.getBatchNumber())+".root"
+        fileName = getSourceFolderPath()+getDataSourceFolder()+"/"+str(group)+"/"+str(category)+"_"+str(md.getBatchNumber())+".root"
 
     elif group == "results":
 
-        fileName = getSourceFolderPath()+"results_data_hgtd_efficiency_sep_2017/"+md.getNameOfSensor(chan)+"/"+category
+        fileName = getSourceFolderPath()+getResultsSourceDataPath()+"/"+md.getNameOfSensor(chan)+"/"+category
 
         if category.find("timing") != -1:
         
@@ -78,20 +78,19 @@ def exportImportROOTData(group, category, export, data=0, chan="", same_osc=Fals
 
         group = group.replace("noise_plot", "noise")
 
-        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"_plot/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
+        fileName = getSourceFolderPath()+getDataSourceFolder()+"/"+str(group)+"/"+str(group)+"_"+str(category)+"_plot/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
     
     elif group == "noise":
     
-        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())+".root"
+        fileName = getSourceFolderPath()+getPlotsSourceFolder()+"/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())+".root"
     
     
     else:
-        fileName = getSourceFolderPath()+"data_hgtd_efficiency_sep_2017/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
+        fileName = getSourceFolderPath()+getDataSourceFolder()+"/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
 
     if group != "timing" and group != "results" and category != "position" and export:
-        
-        dt = getDTYPE()
-        data = data.astype(data, dtype=dt)
+        data = data.astype(getDTYPE())
+
 
 
     if export:
@@ -105,7 +104,7 @@ def exportImportROOTData(group, category, export, data=0, chan="", same_osc=Fals
 
 def exportImportROOTHistogram(fileName, export, graphList = 0):
     
-    rootDirectory = fileName.replace("plots_hgtd_efficiency_sep_2017", "plots_data_hgtd_efficiency_sep_2017")
+    rootDirectory = fileName.replace(getPlotsSourceFolder(), getHistogramsSourceFolder())
     rootDirectory = rootDirectory.replace(".pdf", ".root")
     
     if export:
@@ -118,21 +117,37 @@ def exportImportROOTHistogram(fileName, export, graphList = 0):
         return ROOT.TFile(rootDirectory)
 
 
+def importNoiseProperties():
+    
+    noise = np.zeros(1, dtype=getDTYPE())
+    pedestal = np.zeros(1, dtype=getDTYPE())
+    
+    
+    for chan in noise.dtype.names:
+        noise[chan] = (exportImportROOTData("results", "noise", False, 0, chan))["noise"][0] * 0.001
+        pedestal[chan] = (exportImportROOTData("results", "pedestal", False, 0, chan)) ["pedestal"][0] * -0.001
+    
+
+    return noise, pedestal
+
+
 # Read file names which are enlisted in the folder
 def readFileNames(category, subcategory=0):
-
+    
     if category == "tracking":
-        folderPath = getSourceFolderPath() + "tracking_data_sep_2017/"
+        folderPath = getSourceFolderPath() + getTrackingSourceFolder()+"/"
 
     elif category == "oscilloscope":
+        
         folderPath = oscilloscopePath
 
     else:
-        folderPath = getSourceFolderPath() + "data_hgtd_efficiency_sep_2017/" + category + "/" + category + "_" + subcategory + "/"
+        folderPath = getSourceFolderPath() + getDataSourceFolder()+"/" + category + "/" + category + "_" + subcategory + "/"
 
     # This line reads in a list of sorted files
     # from a provided folder above, strips down non-integer characters and converts to integers.
     # The file is also checked if the file is readable and avoids .DS_Store-files typical for macOS.
+
 
     availableFiles = sorted([int(filter(lambda x: x.isdigit(), f)) for f in os.listdir(folderPath) if os.path.isfile(os.path.join(folderPath, f)) and f != '.DS_Store'])
 
@@ -146,6 +161,7 @@ def checkIfFileAvailable():
     if functionAnalysis == "noise_analysis" or functionAnalysis == "pulse_analysis" :
     
         files = readFileNames("oscilloscope")
+
 
         if int(md.getTimeStamp()) in files:
             found = True
@@ -202,7 +218,6 @@ def getDTYPE(batchNumber = 0):
         dtype = np.dtype(  [('chan0', '<f8'), ('chan1', '<f8') ,('chan2', '<f8') ,('chan3', '<f8') ,('chan4', '<f8') ,('chan5', '<f8') ,('chan6', '<f8') ,('chan7', '<f8')] )
 
     return dtype
-    # np.dtype([('id', 'i8'), ('mat', 'f8', (3, 3))])
 
 
 # Get actual time
@@ -223,24 +238,50 @@ def defineDataFolderPath():
 
     global oscilloscopePath
     global sourceFolderPath
+    
     sourceFolderPath = "/Users/aszadaj/cernbox/SH203X/HGTD_material/"
     
     if "HDD500" in os.listdir("/Volumes"):
 
-        oscilloscopePath = "/Volumes/HDD500/oscilloscope_data_sep_2017/"
+        oscilloscopePath = "/Volumes/HDD500/"+getOscillscopeSourceFolder()+"/"
     
     elif "HITACHI" in os.listdir("/Volumes"):
     
-        oscilloscopePath = "/Volumes/HITACHI/oscilloscope_data_sep_2017/"
+        oscilloscopePath = "/Volumes/HITACHI/"+getOscillscopeSourceFolder()+"/"
     
     else:
     
-        oscilloscopePath = sourceFolderPath + "oscilloscope_data_sep_2017/"
+        oscilloscopePath = sourceFolderPath + ""+getOscillscopeSourceFolder()+"/"
 
 
-def getSourceResultsDataPath():
+def getResultsSourceDataPath():
 
-    return sourceFolderPath + "results_data_hgtd_efficiency_sep_2017/"
+    return "results_data_hgtd_tb_sep17"
+
+def getResultsPlotSourceDataPath():
+
+    return "results_plots_hgtd_tb_sep17"
+
+
+def getPlotsSourceFolder():
+
+    return "plots_hgtd_tb_sep17"
+
+def getDataSourceFolder():
+
+     return "data_hgtd_tb_sep17"
+
+def getTrackingSourceFolder():
+
+     return "tracking_hgtd_tb_sep17"
+
+def getHistogramsSourceFolder():
+
+    return "histograms_data_hgtd_tb_sep17"
+
+def getOscillscopeSourceFolder():
+
+    return "oscilloscope_data_hgtd_tb_sep17"
 
 
 # Return path of data files
