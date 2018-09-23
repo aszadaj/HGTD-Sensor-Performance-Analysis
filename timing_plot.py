@@ -12,8 +12,9 @@ ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
 canvas = ROOT.TCanvas("Timing", "timing")
 
 # Range and bins for the window for TH1 objects
-xbins = 1000
+xbins = 2000
 bin_range = 15000
+window_range = 1000
 
 # Between each combination of LGADs, require to have at least 200 entries
 min_entries_per_run = 200
@@ -114,7 +115,7 @@ def produceTimingDistributionPlots(time_difference, cfd=False, sys=False):
             
             continue
             
-        sigma_DUT, sigma_fit_error, time_diff_mean = t_calc.getSigmasFromFit(time_diff_th1d[chan], chan)
+        sigma_DUT, sigma_fit_error, time_diff_mean = t_calc.getSigmasFromFit(time_diff_th1d[chan], window_range, chan)
 
         # Set titles and export file
         headTitle = "Time difference SiPM and "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"
@@ -202,8 +203,6 @@ def produceTimingDistributionPlotsSysEq(time_difference, cfd=False):
             MPV_bin = time_diff_th1d[chan][chan2].GetMaximumBin()
             MPV_time_diff = int(time_diff_th1d[chan][chan2].GetXaxis().GetBinCenter(MPV_bin))
 
-            # Change the window
-            window_range = 3000
             
             xMin = MPV_time_diff - window_range
             xMax = MPV_time_diff + window_range

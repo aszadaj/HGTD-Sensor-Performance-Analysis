@@ -310,7 +310,7 @@ def getThresholdSamples(chan):
         number_samples = 10
 
     elif sensor == "W4-RD01":
-        number_samples = 40
+        number_samples = 50
 
     elif sensor == "W4-S203":
         number_samples = 10
@@ -322,7 +322,7 @@ def getThresholdSamples(chan):
         number_samples = 10
 
     elif sensor == "W4-S1022":
-        number_samples = 5
+        number_samples = 7
 
     elif sensor == "W4-S1061":
         number_samples = 10

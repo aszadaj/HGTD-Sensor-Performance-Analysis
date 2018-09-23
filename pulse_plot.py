@@ -13,7 +13,7 @@ ROOT.gROOT.SetBatch(True)
 canvas = ROOT.TCanvas("Pulse", "pulse")
 
 # Amplitude limit for the oscilloscope in mV
-osc_limit = 345
+signal_limit = 340
 
 
 def pulsePlots():
@@ -58,27 +58,35 @@ def producePulsePlots(numpy_variables):
 
 
     dm.changeIndexNumpyArray(peak_value, -1000)
-    dm.changeIndexNumpyArray(max_sample, -1000)
     dm.changeIndexNumpyArray(rise_time, 1000)
     dm.changeIndexNumpyArray(charge, 10**15)
+    dm.changeIndexNumpyArray(max_sample, -1000)
     
     for chan in peak_value.dtype.names:
+    
+        point_count_limit = 50
+        charge_pulse_bins = 100
+        rise_time_bins = 300
+        
+        if md.getNameOfSensor(chan) == "SiPM-AFP" or md.getNameOfSensor(chan) == "W4-RD01":
+            point_count_limit = 100
         
         if md.sensor != "" and md.getNameOfSensor(chan) != md.sensor:
             continue
     
         print "\nPULSE PLOTS: Batch", md.getBatchNumber(),"sensor", md.getNameOfSensor(chan), chan, "\n"
         
-        # Create TH objects
-        peak_value_th1d                     = ROOT.TH1F("Pulse amplitude", "peak_value", 80, 0, 500)
-        rise_time_th1d                      = ROOT.TH1F("Rise time", "rise_time", 300, 0, 4000)
-        charge_th1d                         = ROOT.TH1F("Charge", "charge", 80, 0, 500)
+        # Create TH objects with properties to be analyzed
+        peak_value_th1d                     = ROOT.TH1F("Pulse amplitude", "peak_value", charge_pulse_bins, 0, 500)
+        rise_time_th1d                      = ROOT.TH1F("Rise time", "rise_time", rise_time_bins, 0, 4000)
+        charge_th1d                         = ROOT.TH1F("Charge", "charge", charge_pulse_bins, 0, 500)
+        
+        # Additional TH objects for inspection of signals
         peak_time_th1d                      = ROOT.TH1F("Peak time", "peak_time", 100, 0, 100)
         cfd_th1d                            = ROOT.TH1F("CFD", "cfd", 100, 0, 100)
-        
-        point_count_th1d                    = ROOT.TH1F("Point count", "point_count", 100, 0, 100)
+        point_count_th1d                    = ROOT.TH1F("Point count", "point_count", point_count_limit, 0, point_count_limit)
         max_sample_th1d                     = ROOT.TH1F("Max sample", "max_sample", 100, 0, 400)
-        max_sample_vs_points_threshold_th2d = ROOT.TH2D("Max sample vs points", "max_sample_vs_point_count", 100, 0, 100, 100, 0, 400)
+        max_sample_vs_points_threshold_th2d = ROOT.TH2D("Max sample vs points", "max_sample_vs_point_count", point_count_limit, 0, point_count_limit, 100, 0, 400)
         
         TH1_objects = [peak_value_th1d, rise_time_th1d, charge_th1d, peak_time_th1d, cfd_th1d, point_count_th1d, max_sample_th1d]
         
@@ -94,7 +102,7 @@ def producePulsePlots(numpy_variables):
                 max_sample_vs_points_threshold_th2d.Fill(points[entry][chan], max_sample[entry][chan])
 
         # Create fits for pulse amplitude, rise time and charge
-        pulse_amplitude_langaufit = makeLandauGausFit(peak_value_th1d, osc_limit)
+        pulse_amplitude_langaufit = makeLandauGausFit(peak_value_th1d, signal_limit)
         rise_time_fit = makeRiseTimeFit(rise_time_th1d)
         charge_langaufit = makeLandauGausFit(charge_th1d)
 
@@ -126,7 +134,14 @@ def makeRiseTimeFit(graphList):
     return graphList.GetFunction("gaus")
 
 
-def makeLandauGausFit(graphList, osc_limit=0):
+def makeLandauGausFit(graphList, signal_limit=0):
+    
+    if graphList.GetTitle() == "charge":
+        xMax = graphList.GetXaxis().GetXmax()
+    
+    else:
+        xMax = signal_limit
+        graphList.SetAxisRange(0, signal_limit)
     
     # Create parameters for landau (*) gaus fit for CHARGE distribution
     std_dev = graphList.GetStdDev()
@@ -136,13 +151,7 @@ def makeLandauGausFit(graphList, osc_limit=0):
     
     # Set range for fit
     xMin = max((MPV - std_dev), 4.0)
-    
-    if graphList.GetTitle() == "charge":
-        xMax = graphList.GetXaxis().GetXmax()
-    
-    else:
-        xMax = osc_limit
-        graphList.SetAxisRange(0, osc_limit)
+
     
     # Define range of fit, limits for parameters
     # Parameters for gaus(*)landau - fit
@@ -156,7 +165,12 @@ def makeLandauGausFit(graphList, osc_limit=0):
     param_limits_low = np.multiply(np.array([std_dev, MPV, integral, std_dev]), 0.1)
     param_limits_high = np.multiply(param_limits_low, 100)
 
-    return ROOT.langaufit(graphList, fit_range, start_values, param_limits_low, param_limits_high)
+    langauFit = ROOT.langaufit(graphList, fit_range, start_values, param_limits_low, param_limits_high)
+
+    if graphList.GetTitle() == "peak_value":
+        graphList.SetAxisRange(0, 500)
+
+    return langauFit
 
 
 def exportResults(pulse_amplitude_langaufit, rise_time_fit, charge_langaufit):
@@ -202,6 +216,8 @@ def exportHistogram(graphList):
     
     if name == "max_sample_vs_point_count":
     
+        graphList.SetAxisRange(0, 500, "Z")
+    
         # Redefine the stats box
         stats_box = graphList.GetListOfFunctions().FindObject("stats")
         stats_box.SetX1NDC(0.65)
@@ -231,18 +247,6 @@ def getPlotAttributes(name):
         xAxisTitle = "Rise time [ps]"
 
 
-    elif name.find("point_count") != -1:
-
-        head_title_type = "Point count over threshold"
-        xAxisTitle = "Point count over threshold [N]"
-
-
-    elif name.find("max_sample") != -1:
-
-        head_title_type = "Max sample in event over threshold"
-        xAxisTitle = "Max sample in event [mV]"
-
-
     elif name.find("cfd") != -1:
 
         head_title_type = "CFD time location"
@@ -265,6 +269,18 @@ def getPlotAttributes(name):
 
         head_title_type = "Max sample point vs number of points over threshold"
         xAxisTitle = "Number points > threshold"
+
+    elif name.find("max_sample") != -1:
+
+        head_title_type = "Max sample in event over threshold"
+        xAxisTitle = "Max sample in event [mV]"
+
+
+    elif name.find("point_count") != -1:
+
+        head_title_type = "Point count over threshold"
+        xAxisTitle = "Point count over threshold [N]"
+
 
 
     headTitle = head_title_type + " - " + md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"

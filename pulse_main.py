@@ -41,7 +41,6 @@ def pulseAnalysis():
             
             pulseAnalysisPerRun()
             
-                        
             print "Done with run", md.getRunNumber(), "\n"
 
         print "Done with batch", runLog[0][5], "Time analysing: "+str(dm.getTime()-startTimeBatch)+"\n"
@@ -70,7 +69,7 @@ def pulseAnalysisPerRun():
     # results change form, now each element is a variable
     results_variables = p_calc.concatenateResults(results)
     
-    # Watch out, only exporting two arrays
+    # export results
     dm.exportPulseData(results_variables)
 
 

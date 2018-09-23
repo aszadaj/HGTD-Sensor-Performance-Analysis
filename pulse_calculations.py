@@ -3,8 +3,8 @@ import run_log_metadata as md
 import data_management as dm
 
 def pulseAnalysis(data, noise, pedestal):
-
-    osc_limit = findOscilloscopeLimit(data.dtype.names, data.dtype)
+    
+    signal_limit_DUT = getSignalLimit(data)
 
     # Set the time scope to 0.1 ns
     defTimeScope()
@@ -36,41 +36,44 @@ def pulseAnalysis(data, noise, pedestal):
         
         for event in range(0, len(data)):
             
-            variables = [data[chan][event], noise[chan], pedestal[chan], osc_limit[chan], md.getThresholdSamples(chan)]
+            variables = [data[chan][event], noise[chan], pedestal[chan], signal_limit_DUT[chan], md.getThresholdSamples(chan), chan]
             
             results = getPulseCharacteristics(variables)
             
             for type in range(0, len(results)):
                 properties[type][event][chan] = results[type]
 
+    
     return properties
 
 # Input is in negative values, but the calculation is in positive values!
 # Dimensions used are U = [V], t = [ns], q = [C]
 def getPulseCharacteristics(variables):
 
-    [data, noise, pedestal, osc_limit, threshold_points] = [i for i in variables]
+    [data, noise, pedestal, signal_limit_DUT, threshold_points, chan] = [i for i in variables]
     
     # Invert waveform data
     data = -data
     pedestal = -pedestal
-    osc_limit = -osc_limit
+    signal_limit_DUT = -signal_limit_DUT
     
     # Define threshold and sigma level, this gives a 1% prob for a noise data sample to exceed the
     # noise level, see report
     N = 4.27
     threshold = N * noise + pedestal
+
     
     # points and max_sample are calculated without the threshold point condition
     # to analyze how many points are required
     points = calculatePoints(data, threshold)
     max_sample = np.amax(data[data > threshold]) if np.sum(data > threshold) != 0 else 0
-    
+
+
     if points >= threshold_points:
 
-        peak_value, peak_time = calculatePeakValue(data, pedestal, osc_limit)
+        peak_value, peak_time = calculatePeakValue(data, pedestal, signal_limit_DUT)
         rise_time, cfd  = calculateRiseTime(data, pedestal)
-        charge = calculateCharge(data, threshold, osc_limit)
+        charge = calculateCharge(data, threshold)
 
         # Condition: if the time locations are not in synch, disregard those
         if peak_time == 0 or cfd == 0:
@@ -122,7 +125,7 @@ def calculateRiseTime(data, pedestal, graph=False):
         return rise_time, cfd
 
 # Calculate the pulse amplitude value
-def calculatePeakValue(data, pedestal, osc_limit, graph=False):
+def calculatePeakValue(data, pedestal, signal_limit_DUT, graph=False):
 
     # Default values
     peak_value = 0
@@ -150,7 +153,7 @@ def calculatePeakValue(data, pedestal, osc_limit, graph=False):
     # If the signal reaches the oscilloscope limit, take the maximum value instead and ignore the
     # time location, since it cannot be extracted with great precision
 
-    if np.abs(np.amax(data) - osc_limit) < 0.005:
+    if np.abs(np.amax(data) - signal_limit_DUT) < 0.005:
 
         peak_time = np.zeros(1)
         peak_value = np.amax(data) - pedestal
@@ -163,7 +166,7 @@ def calculatePeakValue(data, pedestal, osc_limit, graph=False):
         return peak_value, peak_time
 
 
-def calculateCharge(data, threshold, osc_limit):
+def calculateCharge(data, threshold):
 
     # transimpendence is the same for all sensors, except for W4-RD01, which is unknown
     transimpendence = 4700
@@ -211,18 +214,16 @@ def getConsecutiveSeries(data):
 def group_consecutives(data, stepsize=1):
     return np.split(data, np.where(np.diff(data) != stepsize)[0]+1)
 
+
 # Get maximum values for given channel and oscilloscope
-def findOscilloscopeLimit(channels, dt):
+def getSignalLimit(data):
 
-    osc_limit = np.empty(1, dtype=dt)
+    signal_limit_DUT = np.empty(1, dtype=dm.getDTYPE())
     
-    for chan in channels:
-        if md.getNameOfSensor(chan) == "SiPM-AFP":
-            osc_limit[chan] = -0.3547959327697754
-        else:
-            osc_limit[chan] = -0.39499592781066895
+    for chan in data.dtype.names:
+        signal_limit_DUT[chan] = np.amin(np.concatenate(data[chan]))
 
-    return osc_limit
+    return signal_limit_DUT
 
 
 # related to multiprocessing

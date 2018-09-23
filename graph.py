@@ -65,13 +65,13 @@ def printWaveform(batchNumber, sensor, event = 0):
 
     
     # Define point difference for 2nd degree fit
-    osc_limit_DUT = 0.3547959
+    signal_limit_DUT = 0.3547959327697754
     point_difference = 2
     
     rise_time, cfd, linear_fit, linear_fit_indices = p_calc.calculateRiseTime(data, pedestal, True)
-    peak_value, peak_time, poly_fit = p_calc.calculatePeakValue(data, pedestal, osc_limit_DUT, True)
+    peak_value, peak_time, poly_fit = p_calc.calculatePeakValue(data, pedestal, signal_limit_DUT, True)
     point_count = p_calc.calculatePoints(data, threshold)
-    charge = p_calc.calculateCharge(data, threshold, osc_limit_DUT)
+    charge = p_calc.calculateCharge(data, threshold, signal_limit_DUT)
     max_sample = np.amax(data) - pedestal
     
 

@@ -27,9 +27,9 @@ def trackingAnalysis():
         startTimeBatch = dm.getTime()
         
         # Set a condition of at least two run numbers to be analyzed
-        if len(runLog) < 2:
+        if len(runLog) < 3:
             continue
-
+    
         results_batch = []
 
         for index in range(0, len(runLog)):

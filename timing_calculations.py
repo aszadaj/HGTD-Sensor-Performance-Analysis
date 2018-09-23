@@ -80,7 +80,7 @@ def solveLinearEq(sigmas, sigmas_error):
     return sigma_chan, sigma_chan_error
 
 
-def getSigmasFromFit(th1d_list, chan):
+def getSigmasFromFit(th1d_list, window_range, chan):
 
     # Find the maximal value
     MPV_bin = th1d_list.GetMaximumBin()
@@ -88,7 +88,6 @@ def getSigmasFromFit(th1d_list, chan):
     MPV_entries = th1d_list.GetMaximum()
     
     # Change the window
-    window_range = 3000
     xMin = MPV_time_diff - window_range
     xMax = MPV_time_diff + window_range
     th1d_list.SetAxisRange(xMin, xMax)

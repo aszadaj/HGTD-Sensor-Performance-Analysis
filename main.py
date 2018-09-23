@@ -26,7 +26,7 @@ def main():
     number_of_runs = 0
     
     # batches must be list, or "all". Exclusion of batches also possible
-    batches = "all" # locally there are batch 102, 301 and 506
+    batches = [403] # locally there are batch 102, 301 and 506
     batches_exclude = []
     
     # The sensor which is supposed to be analyzed, "" == all sensors
