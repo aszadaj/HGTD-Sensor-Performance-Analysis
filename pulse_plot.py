@@ -65,7 +65,7 @@ def producePulsePlots(numpy_variables):
     for chan in peak_value.dtype.names:
     
         point_count_limit = 50
-        charge_pulse_bins = 100
+        charge_pulse_bins = 150
         rise_time_bins = 300
         
         if md.getNameOfSensor(chan) == "SiPM-AFP" or md.getNameOfSensor(chan) == "W4-RD01":

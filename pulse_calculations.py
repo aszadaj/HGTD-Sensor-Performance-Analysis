@@ -35,8 +35,7 @@ def pulseAnalysis(data, noise, pedestal):
     for chan in data.dtype.names:
         
         for event in range(0, len(data)):
-            
-            variables = [data[chan][event], noise[chan], pedestal[chan], signal_limit_DUT[chan], md.getThresholdSamples(chan), chan]
+            variables = [data[chan][event], noise[chan], pedestal[chan], signal_limit_DUT[chan], md.getThresholdSamples(chan)]
             
             results = getPulseCharacteristics(variables)
             
@@ -50,7 +49,7 @@ def pulseAnalysis(data, noise, pedestal):
 # Dimensions used are U = [V], t = [ns], q = [C]
 def getPulseCharacteristics(variables):
 
-    [data, noise, pedestal, signal_limit_DUT, threshold_points, chan] = [i for i in variables]
+    [data, noise, pedestal, signal_limit_DUT, threshold_points] = [i for i in variables]
     
     # Invert waveform data
     data = -data
@@ -67,7 +66,6 @@ def getPulseCharacteristics(variables):
     # to analyze how many points are required
     points = calculatePoints(data, threshold)
     max_sample = np.amax(data[data > threshold]) if np.sum(data > threshold) != 0 else 0
-
 
     if points >= threshold_points:
 

@@ -26,7 +26,7 @@ def main():
     number_of_runs = 0
     
     # batches must be list, or "all". Exclusion of batches also possible
-    batches = [403] # locally there are batch 102, 301 and 506
+    batches = [207, 301] #missing last
     batches_exclude = []
     
     # The sensor which is supposed to be analyzed, "" == all sensors
@@ -58,8 +58,8 @@ def main():
     
     ####### TIMING RESOLUTION ########
     
-    #timing.timingAnalysis()
-    #timing_plot.timingPlots()
+    timing.timingAnalysis()
+    timing_plot.timingPlots()
     
     ##################################
 

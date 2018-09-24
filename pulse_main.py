@@ -23,8 +23,9 @@ def pulseAnalysis():
     
     for runLog in runLog_batch:
     
+         # Restrict to some run numbers
         if md.limitRunNumbers != 0:
-            runLog = runLog[0:md.limitRunNumbers] # Restrict to some run numbers
+            runLog = runLog[0:md.limitRunNumbers]
     
         startTimeBatch = dm.getTime()
     
@@ -54,20 +55,26 @@ def pulseAnalysisPerRun():
     # Configure inputs for multiprocessing
     max = md.getNumberOfEvents()
     step = 10000
+    
+    # Adapt number of threads depending on the computer and number of cores of the processor
     threads = 4
 
+    # Start the pool
     p = Pool(threads)
     ranges = range(0, max, step)
     
     dataPath = dm.getDataPath()
     
     noise, pedestal = dm.importNoiseProperties()
-    
-    # Form of results
+
+    # Start processing pool
     results = p.map(lambda part: multiProcess(dataPath, noise, pedestal, part, part + step), ranges)
     
     # results change form, now each element is a variable
     results_variables = p_calc.concatenateResults(results)
+    
+    # Clear the pool
+    p.clear()
     
     # export results
     dm.exportPulseData(results_variables)
@@ -78,7 +85,7 @@ def multiProcess(dataPath, noise, pedestal, begin, end):
 
     data = rnm.root2array(dataPath, start=begin, stop=end)
     results = p_calc.pulseAnalysis(data, noise, pedestal)
-    del data
+    
     return results
 
 

@@ -22,8 +22,9 @@ def noiseAnalysis():
  
     for runLog in runLog_batch:
         
+        # Restrict to some run numbers
         if md.limitRunNumbers != 0:
-            runLog = runLog[0:md.limitRunNumbers] # Restrict to some run numbers
+            runLog = runLog[0:md.limitRunNumbers]
     
         startTimeBatch = dm.getTime()
         dm.printTime()
@@ -53,8 +54,11 @@ def noiseAnalysisPerRun():
     # Configure inputs for multiprocessing
     max = md.getNumberOfEvents()
     step = 10000
+    
+    # Adapt number of threads depending on the computer and number of cores of the processor
     threads = 4
     
+    # Start the pool
     p = Pool(threads)
     ranges = range(0, max, step)
     
@@ -63,6 +67,9 @@ def noiseAnalysisPerRun():
 
     # results change form, now each element is a variable
     noise_average, noise_std = n_calc.concatenateResults(results)
+    
+    # Clear the pool
+    p.clear()
     
     dm.exportImportROOTData("noise_plot", "noise", True, noise_std)
     dm.exportImportROOTData("noise_plot", "pedestal", True, noise_average)
@@ -73,6 +80,8 @@ def noiseAnalysisPerRun():
 def multiProcess(dataPath, begin, end):
 
     data = rnm.root2array(dataPath, start=begin, stop=end)
+    
+    results = n_calc.findNoiseAverageAndStd(data)
 
     return n_calc.findNoiseAverageAndStd(data)
 
