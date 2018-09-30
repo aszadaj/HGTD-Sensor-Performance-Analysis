@@ -9,7 +9,7 @@ import tracking_plot as t_plot
 # Change tracking information
 def changeCenterPositionSensor(tracking):
 
-    position = dm.exportImportROOTData("tracking", "position", False)
+    position = dm.exportImportROOTData("tracking", "position")
 
     center = np.array([position[t_plot.chan][0][0], position[t_plot.chan][0][1]])
 
@@ -101,6 +101,8 @@ def createCenterPositionArray():
 
 def calculateCenterOfSensorPerBatch(peak_values, tracking):
 
+    print "Producing center positions for batch", md.getBatchNumber(), "\n"
+
     # Choose ranges for the tracking info
     xmin = -7000
     xmax = 7000
@@ -111,7 +113,7 @@ def calculateCenterOfSensorPerBatch(peak_values, tracking):
     xbin = int((xmax-xmin)/bin_size)
     ybin = int((ymax-ymin)/bin_size)
 
-    minEntries = 5
+    minEntries = 7
     
     values = [minEntries, xmin, xmax, ymin, ymax, xbin, ybin]
 
@@ -123,9 +125,9 @@ def calculateCenterOfSensorPerBatch(peak_values, tracking):
         
             position_temp[chan][0] = getCenterOfSensor(peak_values[chan], tracking, values)
 
-    dm.exportImportROOTData("tracking", "position", True, position_temp)
+    dm.exportImportROOTData("tracking", "position", position_temp)
 
-    print "Done exporting batch", md.getBatchNumber()
+    print "Done producing center position for batch", md.getBatchNumber()
 
 
 def getCenterOfSensor(peak_values, tracking, values):
@@ -209,7 +211,7 @@ def importAndAddHistogram(TH2D_object, index, export=False):
 
     fileName, headTitle = getTitleAndFileName(objectName, chan)
     
-    TH2D_file = dm.exportImportROOTHistogram(fileName, False)
+    TH2D_file = dm.exportImportROOTHistogram(fileName)
     TH2D_object_import = TH2D_file.Get(objectName)
     TH2D_object.Add(TH2D_object_import)
 
@@ -254,52 +256,46 @@ def getTitleAndFileName(objectName, chan):
     return fileName, headTitle
 
 
-def drawLines(efficiency):
+def drawLines(line_extension=0):
 
-    # Draw lines for which the projection limis is chosen
-    if t_plot.singlePadGraphs and efficiency:
-  
-        ranges, center_positions = findSelectionRange()
+    ranges, center_positions = findSelectionRange()
 
-        x1 = ranges[0][0]
-        x2 = ranges[0][1]
-        y1 = ranges[1][0]
-        y2 = ranges[1][1]
-        
-        line_length_from_center = 300
+    x1 = ranges[0][0]
+    x2 = ranges[0][1]
+    y1 = ranges[1][0]
+    y2 = ranges[1][1]
 
-        # Lines which selects the area in y for projection in x
-        line_y1 = ROOT.TLine(x1-line_length_from_center, y1, x2+line_length_from_center, y1)
-        line_y2 = ROOT.TLine(x1-line_length_from_center, y2, x2+line_length_from_center, y2)
+    # Lines which selects the area in y for projection in x
+    line_y1 = ROOT.TLine(x1-line_extension, y1, x2+line_extension, y1)
+    line_y2 = ROOT.TLine(x1-line_extension, y2, x2+line_extension, y2)
 
-        # Lines which selects the area in x for projection in y
-        line_x1 = ROOT.TLine(x1, y1-line_length_from_center, x1, y2+line_length_from_center)
-        line_x2 = ROOT.TLine(x2, y1-line_length_from_center, x2, y2+line_length_from_center)
-        
-        line_y1.SetLineWidth(2)
-        line_y2.SetLineWidth(2)
-        line_x1.SetLineWidth(2)
-        line_x2.SetLineWidth(2)
-        
-        return [line_y1, line_y2, line_x1, line_x2]
+    # Lines which selects the area in x for projection in y
+    line_x1 = ROOT.TLine(x1, y1-line_extension, x1, y2+line_extension)
+    line_x2 = ROOT.TLine(x2, y1-line_extension, x2, y2+line_extension)
+    
+    line_y1.SetLineWidth(2)
+    line_y2.SetLineWidth(2)
+    line_x1.SetLineWidth(2)
+    line_x2.SetLineWidth(2)
+    
+    return [line_y1, line_y2, line_x1, line_x2]
 
 
 def findSelectionRange():
     
-    position = dm.exportImportROOTData("tracking", "position", False)
+    position = dm.exportImportROOTData("tracking", "position")
     
     # In case of array pads, refer to the center of the pad
-    if md.checkIfArrayPad(t_plot.chan):
+    if md.checkIfArrayPad(md.chan_name):
     
-        center_position  = (getDistanceFromCenterArrayPad(position)[t_plot.chan])[0]
+        center_position  = (getDistanceFromCenterArrayPad(position)[md.chan_name])[0]
     
     # otherwise, refer from origo with predefined structured array
     else:
-        center_position = (createCenterPositionArray()[t_plot.chan])[0]
-
+        center_position = (createCenterPositionArray()[md.chan_name])[0]
 
     # Distance from the center of the pad and 300 um from the center
-    projection_cut = 300
+    projection_cut = 350
 
     x1 = center_position[0] - projection_cut
     x2 = center_position[0] + projection_cut

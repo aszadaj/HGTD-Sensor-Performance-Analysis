@@ -1,4 +1,5 @@
 ### This is a debugging function aimed to analyze waveforms ###
+# It can be run when the files for the given run/batch are produced!
 
 
 import ROOT
@@ -8,12 +9,11 @@ import root_numpy as rnm
 import run_log_metadata as md
 import data_management as dm
 import pulse_calculations as p_calc
-import noise_calculations as n_calc
 
 ROOT.gROOT.SetBatch(True)
 
-batch = 606
-sensor = "W4-RD01"
+batch = 102
+sensor = "W9-LGA35"
 
 # If event = 0, then the event number will be randomly selected based on condition
 event = 0
@@ -25,28 +25,29 @@ def printWaveform(batchNumber, sensor, event = 0):
     # Factor N used in pulse_calculations.py
     N = 4.27
     
-    runNumber = md.getRunNumberForBatch(batchNumber)
+    runNumber = md.getAllRunNumbers(batchNumber)[0]
     md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
     dm.defineDataFolderPath()
-    p_calc.defTimeScope()
+    md.defTimeScope()
     chan = md.getChannelNameForSensor(sensor)
-    dataPath = dm.getDataPath()
+    md.setChannelName(chan)
+    dataPath = dm.getOscilloscopeFilePath()
     
     # Import properties to be studied
-    rise_time_import = dm.exportImportROOTData("pulse", "rise_time", False)
-    peak_value_import = dm.exportImportROOTData("pulse", "peak_value", False)
-    max_sample = dm.exportImportROOTData("pulse", "max_sample", False)
-    peak_time_import = dm.exportImportROOTData("pulse", "peak_time", False)
-    pedestal_import = dm.exportImportROOTData("results", "pedestal", False, 0, chan)
-    noise_import = dm.exportImportROOTData("results", "noise", False, 0, chan)
-    points_import = dm.exportImportROOTData("pulse", "points", False)
-    charge_import = dm.exportImportROOTData("pulse", "charge", False)
+    rise_time_import = dm.exportImportROOTData("pulse", "rise_time")
+    peak_value_import = dm.exportImportROOTData("pulse", "peak_value")
+    max_sample = dm.exportImportROOTData("pulse", "max_sample")
+    peak_time_import = dm.exportImportROOTData("pulse", "peak_time")
+    pedestal_import = dm.exportImportROOTData("results", "pedestal")
+    noise_import = dm.exportImportROOTData("results", "noise")
+    points_import = dm.exportImportROOTData("pulse", "points")
+    charge_import = dm.exportImportROOTData("pulse", "charge")
 
     # Randomly select event based on a property and import it
     if event == 0:
     
         # Here one can modify the condition which randomly selects an event. Event number must be 0
-        condition = ((-peak_value_import[chan] < 0.05) & (-peak_value_import[chan] > 0.045) & (points_import[chan] < 150) & (points_import[chan] > 145))
+        condition = peak_value_import[chan] < -0.05
         selected_event =  np.argwhere(condition).flatten()
         np.random.shuffle(selected_event)
         event = selected_event[0]
@@ -56,11 +57,12 @@ def printWaveform(batchNumber, sensor, event = 0):
     data = data_import[chan][0]
     data = -data
     
-    noise = np.array([noise_import["noise"][0] * 0.001])
-    pedestal = np.array([pedestal_import["pedestal"][0] * 0.001])
+    
+    
 
     # Set linear fit
-    timeScope = 0.1
+    timeScope = md.getTimeScope()
+    noise, pedestal = p_calc.calculateNoiseAndPedestal(data)
     threshold = N * noise + pedestal
 
     
@@ -71,9 +73,8 @@ def printWaveform(batchNumber, sensor, event = 0):
     rise_time, cfd, linear_fit, linear_fit_indices = p_calc.calculateRiseTime(data, pedestal, True)
     peak_value, peak_time, poly_fit = p_calc.calculatePeakValue(data, pedestal, signal_limit_DUT, True)
     point_count = p_calc.calculatePoints(data, threshold)
-    charge = p_calc.calculateCharge(data, threshold, signal_limit_DUT)
+    charge = p_calc.calculateCharge(data, threshold)
     max_sample = np.amax(data) - pedestal
-    
 
     # Create TMultigraph and define underlying graphs
 
@@ -106,11 +107,11 @@ def printWaveform(batchNumber, sensor, event = 0):
     for index in range(0, len(data)):
         graph_waveform.SetPoint(i,index*0.1, data[index]*1000)
         
-        # This is done once
-        if data[index] > threshold and (400 < index < 450):
-            charge_fill.SetPoint(j, index*0.1, data[index]*1000)
-            charge_fill.SetPoint(n+j, (index+n-j)*0.1, data[index+n-j]*1000)
-            j+=1
+#        # This is done once
+#        if data[index] > threshold and (400 < index < 450):
+#            charge_fill.SetPoint(j, index*0.1, data[index]*1000)
+#            charge_fill.SetPoint(n+j, (index+n-j)*0.1, data[index+n-j]*1000)
+#            j+=1
 
         i+=1
         
@@ -206,15 +207,15 @@ def printWaveform(batchNumber, sensor, event = 0):
     
     # Add the information to a legend box
     legend.AddEntry(graph_waveform, "Waveform " + md.getNameOfSensor(chan), "l")
-    legend.AddEntry(graph_peak_value, "Peak value: "+str(peak_value[0]*1000)[:5]+" mV", "l")
-    legend.AddEntry(graph_linear_fit, "Rise time: "+str(rise_time[0]*1000)[:5]+" ps", "l")
-    legend.AddEntry(graph_cfd, "CFD " + str(cfd[0])[0:4] + " ns", "l")
+    legend.AddEntry(graph_peak_value, "Peak value: "+str(peak_value*1000)[:5]+" mV", "l")
+    legend.AddEntry(graph_linear_fit, "Rise time: "+str(rise_time*1000)[:5]+" ps", "l")
+    legend.AddEntry(graph_cfd, "CFD " + str(cfd)[0:4] + " ns", "l")
     legend.AddEntry(graph_peak_time, "Peak time " + str(peak_time[0])[0:4] + " ns", "l")
-    legend.AddEntry(graph_pedestal, "Pedestal: "+str(pedestal[0]*1000)[:4]+" mV", "l")
-    legend.AddEntry(graph_threshold, "Noise: "+str(noise[0]*1000)[:4]+" mV", "l")
-    legend.AddEntry(graph_threshold, "Threshold: "+str(threshold[0]*1000)[:5]+" mV", "l")
-    #legend.AddEntry(charge_fill, "Charge: "+str(charge*10**15)[:5]+" fC", "l")
-    #legend.AddEntry(graph_max_sample, "Max sample: "+str(max_sample[0]*1000)[:5]+" mV", "l")
+    legend.AddEntry(graph_pedestal, "Pedestal: "+str(pedestal*1000)[:4]+" mV", "l")
+    legend.AddEntry(graph_threshold, "Noise: "+str(noise*1000)[:4]+" mV", "l")
+    legend.AddEntry(graph_threshold, "Threshold: "+str(threshold*1000)[:5]+" mV", "l")
+    legend.AddEntry(charge_fill, "Charge: "+str(charge*10**15)[:5]+" fC", "l")
+    legend.AddEntry(graph_max_sample, "Max sample: "+str(max_sample*1000)[:5]+" mV", "l")
     legend.AddEntry(graph_waveform, "Points above threshold: "+str(point_count), "l")
     #legend.AddEntry(graph_90, "10% and 90% limit", "l")
 

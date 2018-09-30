@@ -28,14 +28,15 @@ def timingPlots():
         dm.defineDataFolderPath()
         
         runNumbers = md.getAllRunNumbers(batchNumber)
-        numpy_arrays = [np.empty(0, dtype = dm.getDTYPE(batchNumber)) for _ in range(4)]
+        # Create numpy arrays for linear time difference (one element per "channel")
+        numpy_arrays = [np.empty(0, dtype = dm.getDTYPE(batchNumber)) for _ in range(2)]
         
-        # have to redefine two of the numpy arrays, since they are three-dim!
-        # A futurewarning is set here, which is not taken care of!
-        numpy_arrays[2] = numpy_arrays[2].astype(t_calc.getDTYPESysEq())
-        numpy_arrays[3] = numpy_arrays[3].astype(t_calc.getDTYPESysEq())
-        
-        var_names = ["linear", "linear_cfd", "sys_eq", "sys_eq_cfd"]
+        # Create numpy arrays for system of equations (three elements per "channel")
+        numpy_arrays.append(np.empty(0, dtype = t_calc.getDTYPESysEq()))
+        numpy_arrays.append(np.empty(0, dtype = t_calc.getDTYPESysEq()))
+
+    
+        var_names = ["linear", "linear_cfd", "system", "system_cfd"]
         
         if md.limitRunNumbers != 0:
             runNumbers = runNumbers[0:md.limitRunNumbers] # Restrict to some run numbers
@@ -44,26 +45,28 @@ def timingPlots():
         
             md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
             
-            if runNumber not in md.getRunsWithSensor(md.sensor):
+            if runNumber not in md.getRunsWithSensor(md.sensor) or runNumber in [3697, 3698, 3701]:
                 continue
         
             for index in range(0, len(var_names)):
-                if var_names[index].find("sys") != -1 and md.getBatchNumber()/100 == 6:
+            
+                # omit batch 60X for solving system of equations
+                if var_names[index].find("system") != -1 and md.getBatchNumber()/100 == 6:
                     continue
+                
                 else:
-                    numpy_arrays[index] = np.concatenate((numpy_arrays[index], dm.exportImportROOTData("timing", var_names[index], False)), axis = 0)
+                    numpy_arrays[index] = np.concatenate((numpy_arrays[index], dm.exportImportROOTData("timing", var_names[index])), axis = 0)
 
         if numpy_arrays[0].size != 0:
-        
+            
             for index in range(0, len(var_names)):
-                if var_names[index].find("sys") != -1 and md.getBatchNumber()/100 == 6:
+            
+                # omit batch 60X for solving system of equations
+                if var_names[index].find("system") != -1 and md.getBatchNumber()/100 == 6:
                     continue
+                
                 else:
-                    cfd = True if var_names[index].find("cfd") != -1 else False
-                    sys = True if var_names[index].find("sys") != -1 else False
-
-                    produceTimingDistributionPlots(numpy_arrays[index], cfd, sys)
-
+                    produceTimingDistributionPlots(numpy_arrays[index], var_names[index])
 
 
     print "\nDone with producing TIMING RESOLUTION plots.\n"
@@ -71,22 +74,26 @@ def timingPlots():
 
 ############## LINEAR TIME DIFFERENCE ###############
 
-def produceTimingDistributionPlots(time_difference, cfd=False, sys=False):
+def produceTimingDistributionPlots(time_difference, category):
+
+    if category.find("system") != -1:
     
-    if sys:
-        produceTimingDistributionPlotsSysEq(time_difference, cfd)
+        # Comment this function if you want to omit producing plots for system of equations
+        produceTimingDistributionPlotsSysEq(time_difference, category)
         return 0
-    
-    text = "\nTIMING RESOLUTION NORMAL PEAK PLOTS Batch " + str(md.getBatchNumber())
-    if cfd:
-        text.replace("PEAK", "CFD")
+
+    text = "\nTIMING RESOLUTION NORMAL PEAK PLOTS Batch " + str(md.getBatchNumber()) + "\n"
+
+    if category.find("cfd") != -1:
+        text = text.replace("PEAK", "CFD")
 
     print text
     
     time_diff_th1d = dict()
 
     for chan in time_difference.dtype.names:
-        
+        md.setChannelName(chan)
+
         # Omit sensors which are not analyzed (defined in main.py)
         if (md.getNameOfSensor(chan) != md.sensor and md.sensor != "") or md.getNameOfSensor(chan) == "SiPM-AFP":
             continue
@@ -97,6 +104,7 @@ def produceTimingDistributionPlots(time_difference, cfd=False, sys=False):
      
         # Fill the objects, without cuts on the SiPM
         for entry in range(0, len(time_difference[chan])):
+            
             if time_difference[chan][entry] != 0:
                 time_diff_th1d[chan].Fill(time_difference[chan][entry])
 
@@ -105,7 +113,7 @@ def produceTimingDistributionPlots(time_difference, cfd=False, sys=False):
         
         if time_diff_th1d[chan].GetEntries() < min_entries_per_run * len(md.getAllRunNumbers(md.getBatchNumber())):
             
-            if cfd:
+            if category.find("cfd") != -1:
                 type = "cfd reference"
             
             else:
@@ -126,7 +134,7 @@ def produceTimingDistributionPlots(time_difference, cfd=False, sys=False):
         if md.checkIfSameOscAsSiPM(chan):
             fileName = fileName.replace("diff_osc", "same_osc")
 
-        if cfd:
+        if category.find("cfd") != -1:
             fileName = fileName.replace("peak", "cfd")
 
 
@@ -136,18 +144,14 @@ def produceTimingDistributionPlots(time_difference, cfd=False, sys=False):
 
 
         # Export the result together with its error
-        type = "timing_normal"
-        if cfd:
-            type += "_cfd"
-        dt = (  [(type, '<f8') ])
+        dt = (  [(category, '<f8') ])
         timing_results = np.empty(3, dtype = dt)
-        timing_results[type][0] = sigma_DUT
-        timing_results[type][1] = sigma_fit_error
-        timing_results[type][2] = time_diff_mean
+        timing_results[category][0] = sigma_DUT
+        timing_results[category][1] = sigma_fit_error
+        timing_results[category][2] = time_diff_mean
         
-        dm.exportImportROOTData("results", "timing_normal", True, timing_results, chan, md.checkIfSameOscAsSiPM(chan), cfd)
+        dm.exportImportROOTData("results", category, timing_results)
 
-        del time_diff_th1d[chan]
 
 
 ############## SYSTEM OF EQUATIONS ###############
@@ -155,13 +159,15 @@ def produceTimingDistributionPlots(time_difference, cfd=False, sys=False):
 
 # Use this method to calculate the linear system of equations solution
 # If one of the functions have less than 1000 entries, remove it from the calculation!
-def produceTimingDistributionPlotsSysEq(time_difference, cfd=False):
+def produceTimingDistributionPlotsSysEq(time_difference, category):
     
-    text = "\nTIMING RESOLUTION SYSTEM PEAK PLOTS Batch " + str(md.getBatchNumber())
-    if cfd:
-        text.replace("PEAK", "CFD")
+    text = "\nTIMING RESOLUTION SYSTEM PEAK PLOTS Batch " + str(md.getBatchNumber()) + "\n"
+  
+    if category.find("cfd") != -1:
+        text = text.replace("PEAK", "CFD")
     
     print text
+    
     
     # TH1 objects
     time_diff_th1d = dict()
@@ -174,6 +180,7 @@ def produceTimingDistributionPlotsSysEq(time_difference, cfd=False):
     
     # First loop, calculate the sigmas for each combination of time differences
     for chan in osc1:
+        md.setChannelName(chan)
     
         print md.getNameOfSensor(chan), "\n"
         
@@ -190,9 +197,9 @@ def produceTimingDistributionPlotsSysEq(time_difference, cfd=False):
         for entry in range(0, len(time_difference[chan])):
             for index in range(0, len(chan2_list)):
                 chan2 = chan2_list[index]
-                
-                if time_difference[chan][entry][index] != 0:
-                    time_diff_th1d[chan][chan2].Fill(time_difference[chan][entry][index])
+
+                if time_difference[chan][entry][0][index] != 0:
+                    time_diff_th1d[chan][chan2].Fill(time_difference[chan][entry][0][index])
     
     
 
@@ -238,6 +245,9 @@ def produceTimingDistributionPlotsSysEq(time_difference, cfd=False):
     # Second loop, check if all combined plots have at least 1000 entries
     
     for chan in osc1:
+    
+        md.setChannelName(chan)
+        
         if omit_batch:
             break
         
@@ -249,7 +259,7 @@ def produceTimingDistributionPlotsSysEq(time_difference, cfd=False):
 
             if time_diff_th1d[chan][chan2].GetEntries() < min_entries_per_run * len(md.getAllRunNumbers(md.getBatchNumber())):
             
-                if cfd:
+                if category.find("cfd") != -1:
                     type = "cfd reference"
                 else:
                     type = "peak reference"
@@ -265,6 +275,8 @@ def produceTimingDistributionPlotsSysEq(time_difference, cfd=False):
 
     # Third loop, print the graphs together with the solutions
     for chan in osc1:
+    
+        md.setChannelName(chan)
         
         # This is in case the condition of requiring at least 1000 entries for each plots is not fulfilled
         if omit_batch:
@@ -273,13 +285,7 @@ def produceTimingDistributionPlotsSysEq(time_difference, cfd=False):
         chan2_list = list(osc1)
         chan2_list.remove(chan)
         
-        # Create numpy array to export the results
-        type = "timing_system"
-        
-        if cfd:
-            type += "_cfd"
-        
-        dt = ([(type, '<f8')])
+        dt = ([(category, '<f8')])
         timing_results_sys_eq = np.empty(2, dtype = dt)
         
         # Loop through the combinations
@@ -291,7 +297,7 @@ def produceTimingDistributionPlotsSysEq(time_difference, cfd=False):
             yAxisTitle = "Entries"
             fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getNameOfSensor(chan)+"/timing/system/peak/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_and_"+str(md.getNameOfSensor(chan2))+"_peak.pdf"
 
-            if cfd:
+            if category.find("cfd") != -1:
                 fileName = fileName.replace("peak", "cfd")
         
 
@@ -302,14 +308,11 @@ def produceTimingDistributionPlotsSysEq(time_difference, cfd=False):
             titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
             exportTHPlot(time_diff_th1d[chan][chan2], titles, chan, [sigma_DUT, sigma_DUT_error])
 
-            timing_results_sys_eq[type][0] = sigma_DUT
-            timing_results_sys_eq[type][1] = sigma_DUT_error
+            timing_results_sys_eq[category][0] = sigma_DUT
+            timing_results_sys_eq[category][1] = sigma_DUT_error
 
-            del time_diff_th1d[chan][chan2]
-            
         # Export the results
-
-        dm.exportImportROOTData("results", "timing_system", True, timing_results_sys_eq, chan, False, cfd)
+        dm.exportImportROOTData("results", category, timing_results_sys_eq)
 
 
 ############## EXPORT PLOT ###############
@@ -339,6 +342,6 @@ def exportTHPlot(graphList, titles, chan, sigma):
     
 
     canvas.Print(titles[3])
-    dm.exportImportROOTHistogram(titles[3], True, graphList)
+    dm.exportImportROOTHistogram(titles[3], graphList)
 
 

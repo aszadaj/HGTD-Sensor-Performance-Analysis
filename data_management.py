@@ -7,107 +7,73 @@ import datetime as dt
 import run_log_metadata as md
 
 
+# Define the original folder of produced ROOT files, plots and miscellaneous data
+def defineDataFolderPath():
+
+    global oscilloscopePath
+    global sourceFolderPath
+    
+    # This is the source to the folder containing all material related to the code.
+    sourceFolderPath = "/Users/aszadaj/cernbox/SH203X/folder_sensor_perfomance_tb_sep17/"
+
+
+    oscilloscopePath = sourceFolderPath + getOscillscopeSourceFolder() + "/"
+    #oscilloscopePath = "/Volumes/HITACHI/oscilloscope_data_hgtd_tb_sep17/" # my local HDD
+
+
 # Export pulse data
 def exportPulseData(variable_array):
 
-    [peak_values, rise_times, charge, cfd, peak_times, points, max_sample] = [i for i in variable_array]
-
-    exportImportROOTData("pulse", "peak_value", True, peak_values)
-    exportImportROOTData("pulse", "rise_time", True, rise_times)
-    exportImportROOTData("pulse", "charge", True, charge)
-    exportImportROOTData("pulse", "cfd", True, cfd)
-    exportImportROOTData("pulse", "peak_time", True, peak_times)
-    exportImportROOTData("pulse", "points", True, points)
-    exportImportROOTData("pulse", "max_sample", True, max_sample)
-
-
-def exportPulseResults(peak_value_result, rise_time_result, charge_result, chan):
-
-    exportImportROOTData("results", "peak_value", True, peak_value_result, chan)
-    exportImportROOTData("results", "rise_time", True, rise_time_result, chan)
-    exportImportROOTData("results", "charge", True, charge_result, chan)
+    [noise, pedestal, peak_values, rise_times, charge, cfd, peak_times, points, max_sample] = [i for i in variable_array]
+    
+    for index in range(0, len(var_names)):
+        exportImportROOTData("pulse", var_names[index], variable_array[index])
 
 
 # Export ROOT file with selected information
 
-def exportImportROOTData(group, category, export, data=0, chan="", same_osc=False, cfd=False):
+def exportImportROOTData(group, category, data=np.empty(0)):
 
-    if group == "tracking":
-        
-        if category == "":
-        
-            fileName = getSourceFolderPath()+getTrackingSourceFolder()+"/"+group+md.getTimeStamp()+".root"
-
-        else:
-            fileName = getSourceFolderPath()+getDataSourceFolder()+"/"+group+"/"+category+"_"+str(md.getBatchNumber())+".root"
-
-
-    elif group == "timing":
-    
-        fileName = getSourceFolderPath()+getDataSourceFolder()+"/"+str(group)+"/"+group+"_"+category+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
-    
-    elif category == "position":
-    
-        fileName = getSourceFolderPath()+getDataSourceFolder()+"/"+str(group)+"/"+str(category)+"_"+str(md.getBatchNumber())+".root"
-
-    elif group == "results":
-
-        fileName = getSourceFolderPath()+getResultsSourceDataPath()+"/"+md.getNameOfSensor(chan)+"/"+category
-
-        if category.find("timing") != -1:
-        
-            fileName += "_peak"+"/"+category+"_"+str(md.getBatchNumber())+"_"+chan+"_peak.root"
-        
-            if category.find("system") == -1:
-        
-                if same_osc:
-                    fileName = fileName.replace("_peak.root", "_same_osc_peak.root")
-                
-                else:
-                     fileName = fileName.replace("_peak.root", "_diff_osc_peak.root")
-
-            if cfd:
-                fileName = fileName.replace("peak", "cfd")
-            
-
-        else:
-        
-            fileName += "/"+category+"_"+str(md.getBatchNumber())+"_"+chan+".root"
-            
-    elif group == "noise_plot":
-
-        group = group.replace("noise_plot", "noise")
-
-        fileName = getSourceFolderPath()+getDataSourceFolder()+"/"+str(group)+"/"+str(group)+"_"+str(category)+"_plot/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
-    
-    elif group == "noise":
-    
-        fileName = getSourceFolderPath()+getPlotsSourceFolder()+"/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getBatchNumber())+".root"
-    
-    
-    else:
-        fileName = getSourceFolderPath()+getDataSourceFolder()+"/"+str(group)+"/"+str(group)+"_"+str(category)+"/"+str(group)+"_"+str(category)+"_"+str(md.getRunNumber())+".root"
-
-    if group != "timing" and group != "results" and category != "position" and export:
+    if group != "timing" and group != "results" and category != "position" and data.size != 0:
         data = data.astype(getDTYPE())
 
 
+    if group == "tracking":
+        if category == "tracking":
+            fileName = category+md.getTimeStamp()
+        elif category == "efficiency":
+            fileName = category + "_" + str(md.getBatchNumber()) + "_" + md.getNameOfSensor(md.chan_name) + "_" + md.chan_name
+        else:
+            fileName = category+"_"+str(md.getBatchNumber())
+    else:
 
-    if export:
-    
-        rnm.array2root(data, fileName, mode="recreate")
+        fileName = group+"_"+category+"_"+str(md.getRunNumber())
+
+
+    dataPath = getSourceFolderPath() + getDataSourceFolder() + "/" + group + "/"
+
+    if group == "results":
+        dataPath += md.getNameOfSensor(md.chan_name) + "/" + category + "/" + group+"_"+category+"_"+str(md.getBatchNumber()) + "_" + md.chan_name + ".root"
 
     else:
-    
-        return rnm.root2array(fileName)
+        dataPath += category + "/" + fileName + ".root"
 
 
-def exportImportROOTHistogram(fileName, export, graphList = 0):
-    
+    # read the file
+    if data.size == 0:
+        return rnm.root2array(dataPath)
+
+    # export the file
+    else:
+        rnm.array2root(data, dataPath, mode="recreate")
+
+
+def exportImportROOTHistogram(fileName, graphList = 0):
+
     rootDirectory = fileName.replace(getPlotsSourceFolder(), getHistogramsSourceFolder())
     rootDirectory = rootDirectory.replace(".pdf", ".root")
     
-    if export:
+    if graphList != 0:
         
         fileObject = ROOT.TFile(rootDirectory, "RECREATE")
         graphList.Write()
@@ -117,39 +83,22 @@ def exportImportROOTHistogram(fileName, export, graphList = 0):
         return ROOT.TFile(rootDirectory)
 
 
-def importNoiseProperties():
-    
-    noise = np.zeros(1, dtype=getDTYPE())
-    pedestal = np.zeros(1, dtype=getDTYPE())
-    
-    
-    for chan in noise.dtype.names:
-        noise[chan] = (exportImportROOTData("results", "noise", False, 0, chan))["noise"][0] * 0.001
-        pedestal[chan] = (exportImportROOTData("results", "pedestal", False, 0, chan)) ["pedestal"][0] * -0.001
-    
-
-    return noise, pedestal
-
-
 # Read file names which are enlisted in the folder
-def readFileNames(category, subcategory=0):
+def readFileNames(group, category=""):
     
-    if category == "tracking":
-        folderPath = getSourceFolderPath() + getTrackingSourceFolder()+"/"
-
-    elif category == "oscilloscope":
+    if group == "oscilloscope":
         
-        folderPath = oscilloscopePath
+        dataPath = oscilloscopePath
 
     else:
-        folderPath = getSourceFolderPath() + getDataSourceFolder()+"/" + category + "/" + category + "_" + subcategory + "/"
+        dataPath = getSourceFolderPath() + getDataSourceFolder() + "/" + group + "/" + category + "/"
 
     # This line reads in a list of sorted files
     # from a provided folder above, strips down non-integer characters and converts to integers.
-    # The file is also checked if the file is readable and avoids .DS_Store-files typical for macOS.
+    # The file is also checks if the file is readable and avoids .DS_Store-files typical for macOS.
 
 
-    availableFiles = sorted([int(filter(lambda x: x.isdigit(), f)) for f in os.listdir(folderPath) if os.path.isfile(os.path.join(folderPath, f)) and f != '.DS_Store'])
+    availableFiles = sorted([int(filter(lambda x: x.isdigit(), f)) for f in os.listdir(dataPath) if os.path.isfile(os.path.join(dataPath, f)) and f != '.DS_Store'])
 
     return availableFiles
 
@@ -178,7 +127,7 @@ def checkIfFileAvailable():
     elif functionAnalysis == "tracking_analysis":
 
         files_peak_value    = readFileNames("pulse", "peak_value")
-        files_tracking = readFileNames("tracking")
+        files_tracking = readFileNames("tracking", "tracking")
 
         if int(md.getTimeStamp()) in files_tracking and int(md.getRunNumber()) in files_peak_value:
 
@@ -190,14 +139,33 @@ def checkIfFileAvailable():
     return found
 
 
+# Concatenate variables from multiprocessing
+def concatenateResults(results):
 
-def changeIndexNumpyArray(numpy, factor):
+    variable_array = []
 
-    for chan in numpy.dtype.names:
-        numpy[chan] = np.multiply(numpy[chan], factor)
+    for variable_index in range(0, len(results[0])):
+        
+        variable = np.empty(0, dtype=results[0][variable_index].dtype)
+        
+        for clutch in range(0, len(results)):
+        
+            variable  = np.concatenate((variable, results[clutch][variable_index]), axis = 0)
+        
+        variable_array.append(variable)
+    
+        del variable
+
+    return variable_array
 
 
+def changeIndexNumpyArray(numpy_array, factor):
 
+    for chan in numpy_array.dtype.names:
+        numpy_array[chan] = np.multiply(numpy_array[chan], factor)
+
+
+# This function changes the numpy data type to match the number of channels depending on batch.
 def getDTYPE(batchNumber = 0):
     
     if batchNumber == 0:
@@ -233,30 +201,6 @@ def printTime():
     print  "\nTime: " + str(time[:-7])
 
 
-# Define the original folder of produced ROOT files, plots and miscellaneous data
-def defineDataFolderPath():
-
-    global oscilloscopePath
-    global sourceFolderPath
-    
-    sourceFolderPath = "/Users/aszadaj/cernbox/SH203X/HGTD_material/"
-    
-    if "HDD500" in os.listdir("/Volumes"):
-
-        oscilloscopePath = "/Volumes/HDD500/"+getOscillscopeSourceFolder()+"/"
-    
-    elif "HITACHI" in os.listdir("/Volumes"):
-    
-        oscilloscopePath = "/Volumes/HITACHI/"+getOscillscopeSourceFolder()+"/"
-    
-    else:
-    
-        oscilloscopePath = sourceFolderPath + ""+getOscillscopeSourceFolder()+"/"
-
-
-def getResultsSourceDataPath():
-
-    return "results_data_hgtd_tb_sep17"
 
 def getResultsPlotSourceDataPath():
 
@@ -271,13 +215,9 @@ def getDataSourceFolder():
 
      return "data_hgtd_tb_sep17"
 
-def getTrackingSourceFolder():
-
-     return "tracking_hgtd_tb_sep17"
-
 def getHistogramsSourceFolder():
 
-    return "histograms_data_hgtd_tb_sep17"
+    return getDataSourceFolder()+"/histograms_root_data"
 
 def getOscillscopeSourceFolder():
 
@@ -295,7 +235,7 @@ def setFunctionAnalysis(function):
     functionAnalysis = function
 
 
-def getDataPath():
+def getOscilloscopeFilePath():
 
     dataPath = oscilloscopePath + "data_"+str(md.getTimeStamp())+".tree.root"
 

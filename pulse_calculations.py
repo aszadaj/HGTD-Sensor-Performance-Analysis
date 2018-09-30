@@ -2,76 +2,39 @@ import numpy as np
 import run_log_metadata as md
 import data_management as dm
 
-def pulseAnalysis(data, noise, pedestal):
-    
-    signal_limit_DUT = getSignalLimit(data)
+threshold_noise = 20 * 0.001
+data_point_correction = 3
 
-    # Set the time scope to 0.1 ns
-    defTimeScope()
-    
-    # Pulse amplitude
-    peak_value      =   np.zeros(len(data), dtype = data.dtype)
-    
-    # Rise time
-    rise_time       =   np.zeros(len(data), dtype = data.dtype)
-    
-    # Charge deposited fron the particle to the sensor
-    charge          =   np.zeros(len(data), dtype = data.dtype)
-    
-    # Time at 50% of the rising edge
-    cfd           =   np.zeros(len(data), dtype = data.dtype)
-    
-    # Time in event when the pulse reaches maximum
-    peak_time       =   np.zeros(len(data), dtype = data.dtype)
-    
-    # Points above the threshold
-    points           =   np.zeros(len(data), dtype = data.dtype)
-    
-    # Max sample of event given that there are points above the threshold
-    max_sample      =   np.zeros(len(data), dtype = data.dtype)
-    
-    properties = [peak_value, rise_time, charge, cfd, peak_time, points, max_sample]
-
-    for chan in data.dtype.names:
-        
-        for event in range(0, len(data)):
-            variables = [data[chan][event], noise[chan], pedestal[chan], signal_limit_DUT[chan], md.getThresholdSamples(chan)]
-            
-            results = getPulseCharacteristics(variables)
-            
-            for type in range(0, len(results)):
-                properties[type][event][chan] = results[type]
-
-    
-    return properties
 
 # Input is in negative values, but the calculation is in positive values!
 # Dimensions used are U = [V], t = [ns], q = [C]
 def getPulseCharacteristics(variables):
 
-    [data, noise, pedestal, signal_limit_DUT, threshold_points] = [i for i in variables]
+
+    [data, signal_limit_DUT, threshold_points] = [i for i in variables]
     
     # Invert waveform data
     data = -data
-    pedestal = -pedestal
     signal_limit_DUT = -signal_limit_DUT
     
     # Define threshold and sigma level, this gives a 1% prob for a noise data sample to exceed the
     # noise level, see report
     N = 4.27
+    noise, pedestal = calculateNoiseAndPedestal(data)
     threshold = N * noise + pedestal
-
     
     # points and max_sample are calculated without the threshold point condition
     # to analyze how many points are required
     points = calculatePoints(data, threshold)
     max_sample = np.amax(data[data > threshold]) if np.sum(data > threshold) != 0 else 0
+    
 
     if points >= threshold_points:
 
         peak_value, peak_time = calculatePeakValue(data, pedestal, signal_limit_DUT)
         rise_time, cfd  = calculateRiseTime(data, pedestal)
         charge = calculateCharge(data, threshold)
+        
 
         # Condition: if the time locations are not in synch, disregard those
         if peak_time == 0 or cfd == 0:
@@ -79,10 +42,39 @@ def getPulseCharacteristics(variables):
              peak_time = cfd = 0
 
         # Invert again to maintain the same shape
-        return -peak_value, rise_time, charge, cfd, peak_time, points, -max_sample
+        return noise, -pedestal, -peak_value, rise_time, charge, cfd, peak_time, points, -max_sample
 
     else:
-        return 0, 0, 0, 0, 0, points, -max_sample
+        return noise, -pedestal, 0, 0, 0, 0, 0, points, -max_sample
+
+
+def calculateNoiseAndPedestal(data):
+
+    # Select samples above threshold
+    samples_bool = data > threshold_noise
+    
+    # If that is low, ignore the event (this is checked, happens for ~0.03 % of all events)
+    if np.sum(samples_bool) > 0 and np.where(samples_bool)[0][0] <= data_point_correction:
+    
+        std = 0
+        avg = 0
+    
+    # Select the first index exceeding the threshold.
+    elif np.any(samples_bool):
+    
+        std = np.std(data[0:np.where(samples_bool)[0][0] - data_point_correction])
+        avg = np.average(data[0:np.where(samples_bool)[0][0] - data_point_correction])
+    
+
+    # Otherwise, select the whole event
+    else:
+    
+        std = np.std(data)
+        avg = np.average(data)
+    
+
+    return std, avg
+
 
 
 # Get rise time
@@ -105,7 +97,7 @@ def calculateRiseTime(data, pedestal, graph=False):
         # Require three points above threshold
         if len(linear_fit_indices) >= 3:
 
-            x_values = linear_fit_indices * dt
+            x_values = linear_fit_indices * md.getTimeScope()
             y_values = data[linear_fit_indices]
            
             linear_fit = np.polyfit(x_values, y_values, 1)
@@ -139,7 +131,7 @@ def calculatePeakValue(data, pedestal, signal_limit_DUT, graph=False):
     if 2 < arg_max < 999:
     
         poly_fit_data = data[poly_fit_indices]
-        poly_fit = np.polyfit((poly_fit_indices * dt), poly_fit_data, 2)
+        poly_fit = np.polyfit((poly_fit_indices * md.getTimeScope()), poly_fit_data, 2)
 
         if poly_fit[0] < 0:
             
@@ -164,16 +156,18 @@ def calculatePeakValue(data, pedestal, signal_limit_DUT, graph=False):
         return peak_value, peak_time
 
 
+# Calculate the charge over the threshold
 def calculateCharge(data, threshold):
 
     # transimpendence is the same for all sensors, except for W4-RD01, which is unknown
     transimpendence = 4700
-    voltage_integral = np.trapz(data[data > threshold], dx = dt)*10**(-9)
+    voltage_integral = np.trapz(data[data > threshold], dx = md.getTimeScope())*10**(-9)
     charge = voltage_integral / transimpendence
     
     return charge
 
 
+# Calculate points above the threshold
 def calculatePoints(data, threshold):
 
     points_threshold = np.argwhere(data > threshold).flatten()
@@ -182,7 +176,7 @@ def calculatePoints(data, threshold):
     return len(points_consecutive)
 
 
-# Select consecutive samples which have the maximum height
+# Select consecutive samples for a range of data set
 def getConsecutiveSeriesPoints(data, points_threshold):
     
     if len(points_threshold) == 0:
@@ -208,7 +202,7 @@ def getConsecutiveSeries(data):
     return max_arg_series
 
 
-# Group each consequential numbers in each separate list
+# Group data which are consecutive
 def group_consecutives(data, stepsize=1):
     return np.split(data, np.where(np.diff(data) != stepsize)[0]+1)
 
@@ -247,4 +241,3 @@ def concatenateResults(results):
 def defTimeScope():
     global dt
     dt = 0.1
-

@@ -16,8 +16,8 @@ def produceResults():
 
     bias_voltage_max = 500
     
-    categories = ["noise", "pedestal", "peak_value", "charge", "rise_time", "timing_normal_peak", "timing_system_peak", "timing_normal_cfd", "timing_system_cfd"]
-    #categories = ["timing_normal_peak"]
+    categories = ["noise", "pedestal", "peak_value", "charge", "rise_time", "linear", "system", "linear_cfd", "system_cfd"]
+    #categories = ["gain_vs_time_res"]
     
     canvas = ROOT.TCanvas("Results", "Results")
     dm.defineDataFolderPath()

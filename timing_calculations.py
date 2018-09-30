@@ -31,7 +31,7 @@ def getTimeDifferencePerRunSysEq(time_location):
     dt = getDTYPESysEq()
     
     time_difference = np.zeros(len(time_location), dtype = dt)
-
+    
     osc1 = ["chan0", "chan1", "chan2", "chan3"]
 
     for chan in osc1:
@@ -40,15 +40,20 @@ def getTimeDifferencePerRunSysEq(time_location):
         chan2_list.remove(chan)
         for event in range(0, len(time_location[chan])):
             
-            time_difference[chan][event] = np.zeros(3)
+            value = np.zeros(3)
             
             for index in range(0, len(chan2_list)):
                 chan2 = chan2_list[index]
+                
                 if time_location[chan][event] != 0 and time_location[chan2][event] != 0:
-                    value = (time_location[chan][event] - time_location[chan2][event])*1000
-                    time_difference[chan][event][index] = value
+                    value[index] = (time_location[chan][event] - time_location[chan2][event])*1000
+        
+            time_difference[chan][event] = value
     
     return time_difference
+
+
+
 
 
 # The input is of the convoluted form, that is \sigma_{ij} (here the DUT and the SiPM) and the
@@ -144,4 +149,4 @@ def getSigmasFromFit(th1d_list, window_range, chan):
 
 def getDTYPESysEq():
 
-    return (  [('chan0',  '<f8', 3), ('chan1',  '<f8', 3) ,('chan2',  '<f8', 3) ,('chan3',  '<f8', 3)] )
+    return (  [('chan0',  '<f8', (1,3)), ('chan1',  '<f8', (1,3)) ,('chan2',  '<f8', (1,3)) ,('chan3',  '<f8', (1,3))] )

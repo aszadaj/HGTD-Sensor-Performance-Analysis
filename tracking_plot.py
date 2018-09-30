@@ -8,7 +8,7 @@ import tracking_calculations as t_calc
 n_div = 10 # Number of ticks on Z-axis
 
 ROOT.gStyle.SetPalette(1)
-ROOT.gStyle.SetNumberContours(2*n_div)
+ROOT.gStyle.SetNumberContours(3*n_div)
 
 def produceTrackingGraphs(peak_values, gain, rise_times, time_difference_peak, time_difference_cfd, tracking):
    
@@ -25,8 +25,8 @@ def produceTrackingGraphs(peak_values, gain, rise_times, time_difference_peak, t
     width_time_diff = 300 # Width from the mean value of filling time difference values
     peak_value_max = 300 # Z-axis limit for mean pulse amplitude graph
     rise_time_max = 300 # Z-axis limit for rise time graph
-    timing_res_max = 100 # Z-axis limit for timing resolution graph
-    gain_max = 100 # Z-axis limit for mean gain graph
+    timing_res_max = 150 # Z-axis limit for timing resolution graph
+    gain_max = 100 # Z-axis limit for filling TH objects
     max_factor_filling = 20 # Increment of the limits to fill in the TH2/TProfile2D objects
     percentage_efficiency = 80 # Limit the lower percentage
     
@@ -68,6 +68,8 @@ def createSinglePadGraphs(peak_values, gain, rise_times, time_difference_peak, t
     
     # Produce single pad plots
     for chan in peak_values.dtype.names:
+    
+        md.setChannelName(chan)
         
         if (md.getNameOfSensor(chan) != md.sensor and md.sensor != "") or md.getNameOfSensor(chan) == "SiPM-AFP":
             continue
@@ -113,9 +115,9 @@ def produceTProfilePlots(peak_values, gain, rise_times, tracking, time_differenc
     xbin_timing = int(xbin/bin_timing_decrease)
     ybin_timing = int(ybin/bin_timing_decrease)
 
-    # Import values mean values of the time difference
-    mpv_time_diff_peak =  dm.exportImportROOTData("results", "timing_normal", False,0, chan, md.checkIfSameOscAsSiPM(chan))["timing_normal"][2]
-    mpv_time_diff_cfd  =  dm.exportImportROOTData("results", "timing_normal", False,0, chan, md.checkIfSameOscAsSiPM(chan), True)["timing_normal_cfd"][2]
+    # Import values mean values of the time difference.
+    mpv_time_diff_peak =  dm.exportImportROOTData("results", "linear")["linear"][2]
+    mpv_time_diff_cfd  =  dm.exportImportROOTData("results", "linear_cfd")["linear_cfd"][2]
 
     # Declare ROOT objects
     peak_value_mean_th2d = ROOT.TProfile2D("Pulse amplitude mean value","Pulse amplitude mean value", xbin, -sep_x, sep_x, ybin, -sep_y, sep_y)
@@ -267,6 +269,8 @@ def produceEfficiencyPlot(peak_values, tracking):
     projectionY_th1d.SetAxisRange(-sep_y, sep_y, "X")
 
     distance_projection, center_positions = t_calc.findSelectionRange()
+    
+    # For fun, introduce a circular area
 
     # Define lower and upper limits bins
     bin_x_low = LGAD_th2d.GetXaxis().FindBin(distance_projection[0][0])
@@ -275,8 +279,9 @@ def produceEfficiencyPlot(peak_values, tracking):
     bin_y_high = LGAD_th2d.GetYaxis().FindBin(distance_projection[1][1])
 
     bin_limits = np.array([bin_x_low, bin_x_high, bin_y_low, bin_y_high])
-
-
+    
+    efficiency_bulk_data = np.array([])
+    
     # Loop through each bin, to obtain inefficiency, and fill projection objects
     for i in range(1, xbin+1): # Avoid underflow and overflow bins!
         for j in range(1, ybin+1): # Avoid underflow and overflow bins!
@@ -287,9 +292,14 @@ def produceEfficiencyPlot(peak_values, tracking):
             if eff > 0:
                 inefficiency_TH2D.SetBinContent(bin, 100-eff)
             
+                if (bin_limits[0] <= i <= bin_limits[1]) and (bin_limits[2] <= j <= bin_limits[3]):
+  
+                    efficiency_bulk_data = np.concatenate((efficiency_bulk_data, np.array([eff])))
+            
             if eff == 100:
                 inefficiency_TH2D.SetBinContent(bin, 0.001)
-    
+            
+            
             # Fill projection Y efficiency values within x-limits
             if bin_limits[0] <= i <= bin_limits[1]:
                 y = LGAD_th2d.GetYaxis().GetBinCenter(j)
@@ -299,6 +309,9 @@ def produceEfficiencyPlot(peak_values, tracking):
             if bin_limits[2] <= j <= bin_limits[3]:
                 x = LGAD_th2d.GetXaxis().GetBinCenter(i)
                 projectionX_th1d.Fill(x, eff)
+
+    efficiency_bulk = [np.mean(efficiency_bulk_data), np.std(efficiency_bulk_data)]
+    dm.exportImportROOTData("tracking", "efficiency", np.array(efficiency_bulk))
 
     # Additional comment: bin_limits marks the lines for which the selection of the
     # projection for each dimension. Vertical limits are for the Y-projection, where
@@ -329,7 +342,7 @@ def produceEfficiencyPlot(peak_values, tracking):
 
 
 def createArrayPadGraphs():
-
+    
     global chan
     
     [sep_x, sep_y, entries_per_bin, bin_size, minEntries, bin_timing_decrease, peak_value_max, rise_time_max, timing_res_max, gain_max, n_div, max_factor_filling, width_time_diff, percentage_efficiency] = [i for i in glob_variables]
@@ -346,6 +359,7 @@ def createArrayPadGraphs():
 
     arrayPadChannels = t_calc.getArrayPadChannels()
     chan = arrayPadChannels[0]
+    md.setChannelName(chan)
     
     # Specially for W4-RD01, increase the limit to include large gain values
     if md.getNameOfSensor(chan) == "W4-RD01":
@@ -374,16 +388,10 @@ def createArrayPadGraphs():
 
     # Change the file names of the exported files (array)
     t_calc.setArrayPadExportBool(True)
-    chan = t_calc.getArrayPadChannels()[0]
     
-
     limits = [peak_value_max, rise_time_max, timing_res_max, gain_max,0,0, percentage_efficiency]
 
     setPlotLimitsAndPrint(TH2D_objects_list, limits)
-
-    for TH2D_object in TH2D_objects_list:
-        del TH2D_object
-
 
 
 ###########################################
@@ -468,8 +476,8 @@ def setPlotLimitsAndPrint(TH2D_objects, limits):
     # Print pulse amplitude mean value 2D plot
 
     # Here import the result from the earlier analysis and center the Z-axis with +-50 mV
-    peak_value_mpv = (dm.exportImportROOTData("results", "peak_value", False, "", chan))[0][0]
-    peak_value_separation = 50
+    peak_value_mpv = (dm.exportImportROOTData("results", "peak_value"))[0][0]
+    peak_value_separation = 60
 
     peak_value_mean_th2d.SetAxisRange(peak_value_mpv-peak_value_separation, peak_value_mpv+peak_value_separation, "Z")
     peak_value_mean_th2d.SetNdivisions(n_div, "Z")
@@ -479,8 +487,8 @@ def setPlotLimitsAndPrint(TH2D_objects, limits):
 
     # Here import the result from the earlier analysis and center the Z-axis with +-10
     MIP_charge = 0.46 # note that charge is in fC
-    gain_mpv = (dm.exportImportROOTData("results", "charge", False, "", chan))[0][0]/MIP_charge
-    gain_separation = 20
+    gain_mpv = (dm.exportImportROOTData("results", "charge"))[0][0]/MIP_charge
+    gain_separation = 60
 
     gain_mean_th2d.SetAxisRange(gain_mpv-gain_separation, gain_mpv+gain_separation, "Z")
     gain_mean_th2d.SetNdivisions(n_div, "Z")
@@ -491,8 +499,8 @@ def setPlotLimitsAndPrint(TH2D_objects, limits):
     
     # Import rise time mean result.
     # Here import the result from the earlier analysis and center the Z-axis with +-50 ps
-    rise_time_mean_result = (dm.exportImportROOTData("results", "rise_time", False, "", chan))[0][0]
-    rise_time_separation = 50
+    rise_time_mean_result = (dm.exportImportROOTData("results", "rise_time"))[0][0]
+    rise_time_separation = 60
 
     rise_time_mean_th2d.SetAxisRange(rise_time_mean_result-rise_time_separation, rise_time_mean_result+rise_time_separation, "Z")
     rise_time_mean_th2d.SetNdivisions(n_div, "Z")
@@ -509,8 +517,9 @@ def setPlotLimitsAndPrint(TH2D_objects, limits):
     timing_cfd_th2d.SetNdivisions(n_div, "Z")
     printTHPlot(timing_cfd_th2d, time_diff_cfd_entries)
     
-    # In case of array pads, the efficiency plots have already been produced
+    # Export efficiency graphs for array pads (the single ones have been exported)
     if t_calc.array_pad_export:
+
     
         # Print efficiency plot
         efficiency_TH2D.SetAxisRange(percentage_efficiency, 100, "Z")
@@ -523,7 +532,7 @@ def setPlotLimitsAndPrint(TH2D_objects, limits):
 
 # Print TH2 Object plot
 def printTHPlot(graphList, entries=0):
-    
+
     canvas.cd()
     
     if entries == 0:
@@ -543,32 +552,64 @@ def printTHPlot(graphList, entries=0):
     stats_box = graphList.GetListOfFunctions().FindObject("stats")
     stats_box.SetX1NDC(.1)
     stats_box.SetX2NDC(.25)
-    stats_box.SetY1NDC(.9)
+    stats_box.SetY1NDC(.93)
     stats_box.SetY2NDC(.83)
     stats_box.SetOptStat(1000000010)
     graphList.SetEntries(entries)
-    
+
+
     # Draw again to update the canvas
     graphList.SetTitle(headTitle)
     graphList.Draw("COLZ0")
 
     # Draw lines which selects the projection limits
-    efficiency = False if objectName.find("Efficiency") == -1 else True
-    lines = t_calc.drawLines(efficiency)
+    efficiency_bool = False if objectName.find("Efficiency") == -1 else True
+
+    if efficiency_bool:
     
-#    # Select which lines to draw
-#    if efficiency:
-#        lines[0].Draw()
-#        lines[1].Draw()
-#        lines[2].Draw()
-#        lines[3].Draw()
+        # This prints the selections for the efficiency bulk calculations
+        if md.checkIfArrayPad(md.chan_name):
+            channels = t_calc.getArrayPadChannels()
+        else:
+            channels = [md.chan_name]
+    
+        lines = dict()
+        efficiency_text = dict()
+    
+        for chan_2 in channels:
         
+            md.setChannelName(chan_2)
+            
+            lines[chan_2] = t_calc.drawLines(0) # the argument extends the lines
+            limits, center_position = t_calc.findSelectionRange()
+            
+            efficiency_bulk = dm.exportImportROOTData("tracking", "efficiency")
+            
+            efficiency_text[chan_2] = ROOT.TLatex(center_position[0]-250,center_position[1],  "Eff = " + str(efficiency_bulk[chan_2][0])[0:5] + " \pm " + str(efficiency_bulk[chan_2][1])[0:4] + " %")
+
+            efficiency_text[chan_2].SetNDC(False)
+            if md.checkIfArrayPad(md.chan_name):
+                efficiency_text[chan_2].SetTextSize(0.02)
+            else:
+                efficiency_text[chan_2].SetTextSize(0.04)
+            efficiency_text[chan_2].Draw()
+
+            # Draw lines which marks the bulk
+            # Comment to draw selected lines
+            lines[chan_2][0].Draw()
+            lines[chan_2][1].Draw()
+            lines[chan_2][2].Draw()
+            lines[chan_2][3].Draw()
+            
+            canvas.Update()
+
+
 
     # Export PDF and Histogram
+    canvas.Update()
     canvas.Print(fileName)
-    dm.exportImportROOTHistogram(fileName, True, graphList)
+    dm.exportImportROOTHistogram(fileName, graphList)
     canvas.Clear()
-
 
 # Print projection plot
 def printProjectionPlot(th1_projection, headTitle, fileName, sigmas):
@@ -600,6 +641,6 @@ def printProjectionPlot(th1_projection, headTitle, fileName, sigmas):
     canvas_projection.Print(fileName)
     
     # Export histogram as ROOT file
-    dm.exportImportROOTHistogram(fileName, True, th1_projection)
+    dm.exportImportROOTHistogram(fileName, th1_projection)
     canvas_projection.Clear()
     

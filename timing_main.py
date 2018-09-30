@@ -39,16 +39,16 @@ def timingAnalysis():
             print "Run", md.getRunNumber()
             
             # Import files per run
-            peak_time = dm.exportImportROOTData("pulse", "peak_time", False)
-            cfd = dm.exportImportROOTData("pulse", "cfd", False)
+            peak_time = dm.exportImportROOTData("pulse", "peak_time")
+            cfd = dm.exportImportROOTData("pulse", "cfd")
             
             # Perform linear calculations
             time_diff_peak = t_calc.getTimeDifferencePerRun(peak_time)
             time_diff_cfd = t_calc.getTimeDifferencePerRun(cfd)
             
             # Export per run number linear
-            dm.exportImportROOTData("timing", "linear", True, time_diff_peak)
-            dm.exportImportROOTData("timing", "linear_cfd", True, time_diff_cfd)
+            dm.exportImportROOTData("timing", "linear", time_diff_peak)
+            dm.exportImportROOTData("timing", "linear_cfd", time_diff_cfd)
         
             if md.getBatchNumber()/100 != 6:
                 # Perform calculations sys eq
@@ -56,8 +56,8 @@ def timingAnalysis():
                 time_diff_cfd_sys_eq = t_calc.getTimeDifferencePerRunSysEq(cfd)
 
                 # Export per run number sys eq
-                dm.exportImportROOTData("timing", "sys_eq", True, time_diff_peak_sys_eq)
-                dm.exportImportROOTData("timing", "sys_eq_cfd", True, time_diff_cfd_sys_eq)
+                dm.exportImportROOTData("timing", "system", time_diff_peak_sys_eq)
+                dm.exportImportROOTData("timing", "system_cfd", time_diff_cfd_sys_eq)
             
             print "Done with run", md.getRunNumber(), "\n"
 

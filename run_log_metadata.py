@@ -10,7 +10,7 @@ import data_management as dm
 # shape as the sep2017 one!
 def getRunLog():
     
-    tb_2017_run_log_file_name = "resources/run_list_tb_sep_2017.csv"
+    tb_2017_run_log_file_name = "run_list_tb_sep_2017.csv"
     metaData = []
     
     with open(tb_2017_run_log_file_name, "rb") as csvFile:
@@ -23,7 +23,8 @@ def getRunLog():
     return metaData
 
 
-# Set run information for selected run
+# Set run information from the run log (gets the row with information).
+# Plays a key role for all methods in the code.
 def defineGlobalVariableRun(row):
     
     global runInfo
@@ -76,11 +77,6 @@ def checkIfSameOscAsSiPM(chan):
         return False
 
 
-
-def getRunNumberForBatch(batchNumber):
-    return getRunNumber(getTimeStampsForBatch(batchNumber)[0])
-
-
 # Get current run number
 def getRunNumber(timeStamp=""):
     
@@ -96,7 +92,6 @@ def getRunNumber(timeStamp=""):
 
 
 # Return all run numbers for given batch
-
 def getAllRunNumbers(batchNumber=0):
     
     runLog = getRunLog()
@@ -111,7 +106,7 @@ def getAllRunNumbers(batchNumber=0):
 
     return runNumbers
 
-
+# Return run numbers for given sensor
 def getRunsWithSensor(sensor):
     
     if sensor == "":
@@ -173,6 +168,7 @@ def getNameOfSensor(chan):
     index = int(chan[-1:])
     return runInfo[13+index*5]
 
+# Return sensors available for given run
 def getAvailableSensorsForRun(runNumber):
 
     sensors = []
@@ -216,7 +212,7 @@ def getRowForRunNumber(runNumber):
         if int(row[3]) == runNumber:
             return row
 
-# Return row in run log for given run number
+# Return row in run log for given batch number
 def getRowForBatchNumber(batchNumber):
 
     runLog = getRunLog()
@@ -258,6 +254,7 @@ def getAvailableTemperatures():
 
 
 # This is a reference to Vagelis conference about SiPM-s RD50 Workshop in Krakow
+# value in [ps]
 def getSigmaSiPM():
 
     if getTemperature() < 0:
@@ -268,6 +265,7 @@ def getSigmaSiPM():
 
 def getBiasVoltage(sensor, batchNumber):
 
+    # This value is constant for the SiPMs across all batches
     if sensor == "SiPM-AFP":
         return 26.5
         
@@ -296,46 +294,41 @@ def checkIfArrayPad(chan):
     return array_pad
 
 
+# These are set values for each sensor. These values are determined between a plot for:
+# Combined plot between maximum sample value and point above the threshold. In this way
+# one can cut away pulses which are treated as noise
+
 def getThresholdSamples(chan):
 
     sensor = getNameOfSensor(chan)
 
-    if sensor == "50D-GBGR2":
+    if sensor == "50D-GBGR2" or sensor == "W9-LGA35":
         number_samples = 5
     
-    elif sensor == "SiPM-AFP":
+    elif sensor == "SiPM-AFP" or sensor == "W4-RD01":
         number_samples = 50
 
-    elif sensor == "W4-LG12":
-        number_samples = 10
-
-    elif sensor == "W4-RD01":
-        number_samples = 50
-
-    elif sensor == "W4-S203":
+    elif sensor == "W4-LG12" or sensor == "W4-S203" or sensor == "W4-S215" or sensor == "W4-S1061":
         number_samples = 10
 
     elif sensor == "W4-S204_6e14":
         number_samples = 3
 
-    elif sensor == "W4-S215":
-        number_samples = 10
-
     elif sensor == "W4-S1022":
         number_samples = 7
 
-    elif sensor == "W4-S1061":
-        number_samples = 10
-
-    elif sensor == "W9-LGA35":
-        number_samples = 5
 
     return number_samples
 
 
-def getDUTPos(chan):
+def getDUTPos(sensor, chan):
+    
+    if chan == "":
+        return str(runInfo[runInfo.index(sensor)-1])
+    
+    else:
+        return str(runInfo[12+int(chan[-1])*5])
 
-    return str(runInfo[12+int(chan[-1])*5])
 
 
 def availableDUTPositions(sensor):
@@ -356,8 +349,8 @@ def availableDUTPositions(sensor):
         
         batch = getFirstBatchNumberForSensor(sensor)
         defineGlobalVariableRun(getRowForBatchNumber(batch))
-        chan = getChannelNameForSensor(sensor)
-        return getDUTPos(chan)
+   
+        return getDUTPos(sensor, "")
 
 # Selected runs which are marked with yellow color, probably
 # have unsynchronized telescope numbers
@@ -368,9 +361,8 @@ def corruptedRuns():
 
     return runs
 
-
+# For main.py
 def setBatchNumbers(numbers, exclude=[]):
-
 
     global batchNumbers
     
@@ -401,3 +393,18 @@ def setLimitRunNumbers(number):
 def setSensor(sensor_list):
     global sensor
     sensor = sensor_list
+
+
+def defTimeScope():
+    global dt
+    dt = 0.1
+
+def getTimeScope():
+    return dt
+
+def setChannelName(chan):
+
+    global chan_name
+    chan_name = chan
+
+

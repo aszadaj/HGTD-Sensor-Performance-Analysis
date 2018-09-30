@@ -14,7 +14,13 @@ ROOT.gROOT.SetBatch(True)
 # Start analysis of selected run numbers
 def pulseAnalysis():
 
+    # Set the time scope to 0.1 ns.
+    md.defTimeScope()
+
     dm.setFunctionAnalysis("pulse_analysis")
+    
+    defineNameOfProperties()
+    
     dm.defineDataFolderPath()
     startTime = dm.getTime()
     runLog_batch = md.getRunLogBatches(md.batchNumbers)
@@ -49,45 +55,79 @@ def pulseAnalysis():
     print "Done with PULSE analysis. Time analysing: "+str(dm.getTime()-startTime)+"\n"
 
 
-# Analyze pulse analysis for each run
+# Subdivide the file (has 4GB) to analyze by parts. Start pool.
 def pulseAnalysisPerRun():
     
-    # Configure inputs for multiprocessing
+    # Set how many events should be run
     max = md.getNumberOfEvents()
+    
+    # Set steps for multiprocessing
     step = 10000
     
     # Adapt number of threads depending on the computer and number of cores of the processor
     threads = 4
-
+    
     # Start the pool
     p = Pool(threads)
     ranges = range(0, max, step)
     
-    dataPath = dm.getDataPath()
-    
-    noise, pedestal = dm.importNoiseProperties()
-
+    # Get path import noise and start the pool
+    dataPath = dm.getOscilloscopeFilePath()
     # Start processing pool
-    results = p.map(lambda part: multiProcess(dataPath, noise, pedestal, part, part + step), ranges)
     
-    # results change form, now each element is a variable
+    results = p.map(lambda part: signalAnalysis(dataPath, [part, part + step]), ranges)
+    
+    
+    # Concatenate the results (which have different form from multiprocessing)
     results_variables = p_calc.concatenateResults(results)
     
     # Clear the pool
     p.clear()
     
-    # export results
-    dm.exportPulseData(results_variables)
+    # Export data
+    for index in range(0, len(var_names)):
+        dm.exportImportROOTData("pulse", var_names[index], results_variables[index])
 
 
-# Multiprocessing
-def multiProcess(dataPath, noise, pedestal, begin, end):
 
-    data = rnm.root2array(dataPath, start=begin, stop=end)
-    results = p_calc.pulseAnalysis(data, noise, pedestal)
+
+# Data input is in negative voltage values, but the methods handles them in "positive manner"
+# The output is the listed characteristics below
+def signalAnalysis(dataPath, ranges):
+
+    data = rnm.root2array(dataPath, start=ranges[0], stop=ranges[1])
+
+    properties = [np.zeros(len(data), dtype = data.dtype) for _ in range(len(var_names))]
+
+    # Maximum signal output
+    signal_limit_DUT = p_calc.getSignalLimit(data)
+
+    for chan in data.dtype.names:
+        
+        for event in range(0, len(data)):
+        
+            variables = [data[chan][event], signal_limit_DUT[chan], md.getThresholdSamples(chan)]
+            
+            results = p_calc.getPulseCharacteristics(variables)
+
+            for type in range(0, len(results)):
+                
+                properties[type][event][chan] = results[type]
+
     
-    return results
+    return properties
 
+def defineNameOfProperties(results=False):
+
+    global var_names
+    
+    # This is for export of data and plotting those
+    if not results:
+        var_names = ["noise", "pedestal", "peak_value", "rise_time", "charge", "cfd", "peak_time", "points", "max_sample"]
+    
+    # This is export of results from plots
+    else:
+        var_names = ["noise", "pedestal", "peak_value", "rise_time", "charge"]
 
 
 

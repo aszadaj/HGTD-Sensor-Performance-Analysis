@@ -10,10 +10,11 @@ def addValuesToGraph(variables):
     [sensor_data, category, legend_graph, graph, category_graph] = [i for i in variables]
     
     for DUT_pos in md.availableDUTPositions(rm.processed_sensor):
-
+        
         if DUT_pos in ["3_0", "3_1", "3_3", "8_1", "7_2", "7_3"]:
             continue
-
+    
+        
         for temperature in md.getAvailableTemperatures():
 
             sensor_data[temperature][DUT_pos].sort()
@@ -66,8 +67,8 @@ def drawAndExportResults(category, category_graph, legend_graph):
     legend_text.SetNDC(True)
     legend_text.DrawLatex(.7, .55, "Marker color")
     legend_text.DrawLatex(.7, .5, "#color[2]{Red}    = 22\circC")
-    legend_text.DrawLatex(.7, .45, "#color[4]{Blue}   = -30\circC")
-    legend_text.DrawLatex(.7, .4, "#color[3]{Green} = -40\circC")
+    legend_text.DrawLatex(.7, .45, "#color[4]{Blue}  = -30\circC")
+    legend_text.DrawLatex(.7, .4, "#color[6]{Purple} = -40\circC")
 
     
     fileName = dm.getSourceFolderPath() + dm.getResultsPlotSourceDataPath() + "/" + category + "_results.pdf"
@@ -83,13 +84,13 @@ def setGraphAttributes(category_graph, category):
         titleGraph = "Noise values per bias voltage"
         xTitle = "Bias voltage [V]"
         yTitle = "Noise [mV]"
-        y_lim = [0, 10]
+        y_lim = [0, 6]
     
     elif category == "pedestal":
         titleGraph = "Pedestal values per bias voltage"
         xTitle = "Bias voltage [V]"
         yTitle = "Pedestal [mV]"
-        y_lim = [-10, 10]
+        y_lim = [-2, 10]
 
     elif category == "peak_value":
     
@@ -112,7 +113,7 @@ def setGraphAttributes(category_graph, category):
         yTitle = "Rise time [ps]"
         y_lim = [0, 2000]
 
-    elif category == "timing_normal_peak":
+    elif category == "linear":
     
         titleGraph = "Time resolution values per voltage (peak)"
         xTitle = "Bias voltage [V]"
@@ -120,21 +121,21 @@ def setGraphAttributes(category_graph, category):
         y_lim = [0, timing_res_max]
 
 
-    elif category == "timing_normal_cfd":
+    elif category == "linear_cfd":
     
         titleGraph = "Time resolution values per voltage (cfd)"
         xTitle = "Bias voltage [V]"
         yTitle = "Time resolution [ps]"
         y_lim = [0, timing_res_max]
 
-    elif category == "timing_system_peak":
+    elif category == "system":
     
         titleGraph = "Time resolution values per voltage (system, peak)"
         xTitle = "Bias voltage [V]"
         yTitle = "Time resolution [ps]"
         y_lim = [0, timing_res_max]
 
-    elif category == "timing_system_cfd":
+    elif category == "system_cfd":
     
         titleGraph = "Time resolution values per voltage (system, cfd)"
         xTitle = "Bias voltage [V]"
@@ -164,65 +165,39 @@ def setMarkerType(graph, pos, temperature):
     elif temperature == "-30":
         color = 4
 
-    # Green -40 deg C
+    # Purple -40 deg C
     else:
-        color = 8
+        color = 6
 
-    if sensor == "W9-LGA35":
-        marker = 20
 
-    elif sensor == "W4-S203":
-        marker = 21
-
-    elif sensor == "W4-S215":
-        marker = 22
-        
-        if pos == "3_0":
-            size = 1.2
-        
-        elif pos == "3_1":
-             size = 1.4
-        
-        elif pos == "3_2":
-             size = 1.6
-
-        elif pos == "3_3":
-             size = 1.8
-
-    elif sensor == "50D-GBGR2":
-        marker = 23
-
-    elif sensor == "W4-LG07":
+    if sensor == "50D-GBGR2":
         marker = 24
 
     elif sensor == "W4-LG12":
+        marker = 27
+
+    elif sensor == "W4-RD01":
+        marker = 46
+
+    elif sensor == "W4-S203":
         marker = 25
 
-    elif sensor == "W4-S1061":
+    elif sensor == "W4-S215":
         marker = 26
 
     elif sensor == "W4-S1022":
-        marker = 27
-
-    elif sensor == "W4-S204_6e14":
         marker = 28
-        if pos == "7_0":
-            size = 1.2
-        
-        elif pos == "7_2":
-            size = 1.4
-        
-        elif pos == "7_3":
-            size = 1.8
 
+    elif sensor == "W4-S1061":
+        marker = 30
 
-    elif sensor == "W4-RD01":
-        marker = 29
-        if pos == "7_0":
-            size = 1.2
-        
-        elif pos == "7_2":
-            size = 1.4
+    elif sensor == "W9-LGA35":
+        marker = 32
+
+    # the omitted sensor
+    elif sensor == "W4-S204_6e14":
+        marker = 20
+
 
 
     graph.SetMarkerColor(color)

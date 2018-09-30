@@ -1,6 +1,7 @@
 import ROOT
 import numpy as np
 
+import pulse_main as p_main
 import run_log_metadata as md
 import data_management as dm
 
@@ -23,11 +24,12 @@ def pulsePlots():
     dm.defineDataFolderPath()
     
     for batchNumber in md.batchNumbers:
-
+    
+        p_main.defineNameOfProperties()
+        
         runNumbers = md.getAllRunNumbers(batchNumber)
         
-        numpy_arrays = [np.empty(0, dtype = dm.getDTYPE(batchNumber)) for _ in range(7)]
-        var_names = ["peak_value", "rise_time", "charge", "peak_time", "cfd", "points", "max_sample"]
+        numpy_arrays = [np.empty(0, dtype = dm.getDTYPE(batchNumber)) for _ in range(len(p_main.var_names))]
         
         if md.limitRunNumbers != 0:
             runNumbers = runNumbers[0:md.limitRunNumbers] # Restrict to some run numbers
@@ -35,12 +37,13 @@ def pulsePlots():
         for runNumber in runNumbers:
             
             md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
+            p_main.defineNameOfProperties()
             
             if runNumber not in md.getRunsWithSensor(md.sensor):
                 continue
-
-            for index in range(0, len(var_names)):
-                numpy_arrays[index] = np.concatenate((numpy_arrays[index], dm.exportImportROOTData("pulse", var_names[index], False)), axis = 0)
+        
+            for index in range(0, len(p_main.var_names)):
+                numpy_arrays[index] = np.concatenate((numpy_arrays[index], dm.exportImportROOTData("pulse", p_main.var_names[index])), axis = 0)
 
 
         if len(numpy_arrays[0]) != 0:
@@ -53,30 +56,41 @@ def pulsePlots():
 def producePulsePlots(numpy_variables):
 
     global chan
-
-    [peak_value, rise_time, charge, peak_time, cfd, points, max_sample] = [i for i in numpy_variables]
-
-
+    
+    [noise, pedestal, peak_value, rise_time, charge, cfd, peak_time, points, max_sample] = [i for i in numpy_variables]
+    
+    dm.changeIndexNumpyArray(noise, 1000)
+    dm.changeIndexNumpyArray(pedestal, -1000)
     dm.changeIndexNumpyArray(peak_value, -1000)
     dm.changeIndexNumpyArray(rise_time, 1000)
     dm.changeIndexNumpyArray(charge, 10**15)
     dm.changeIndexNumpyArray(max_sample, -1000)
+   
     
     for chan in peak_value.dtype.names:
     
+        if md.sensor != "" and md.getNameOfSensor(chan) != md.sensor:
+            continue
+    
+        md.setChannelName(chan)
+        
         point_count_limit = 50
         charge_pulse_bins = 150
         rise_time_bins = 300
         
+        # This is a limit for the point count, to increase it
         if md.getNameOfSensor(chan) == "SiPM-AFP" or md.getNameOfSensor(chan) == "W4-RD01":
             point_count_limit = 100
         
-        if md.sensor != "" and md.getNameOfSensor(chan) != md.sensor:
-            continue
-    
         print "\nPULSE PLOTS: Batch", md.getBatchNumber(),"sensor", md.getNameOfSensor(chan), chan, "\n"
         
+        noise_avg_std, pedestal_avg_std = getAvgStd(noise, pedestal)
+        noise_ranges, pedestal_ranges = getRanges(noise_avg_std, pedestal_avg_std, 6)
+        
         # Create TH objects with properties to be analyzed
+        noise_th1d                          = ROOT.TH1D("Noise", "noise", 300, noise_ranges[0], noise_ranges[1])
+        pedestal_th1d                       = ROOT.TH1D("Pedestal", "pedestal", 300, pedestal_ranges[0], pedestal_ranges[1])
+        
         peak_value_th1d                     = ROOT.TH1F("Pulse amplitude", "peak_value", charge_pulse_bins, 0, 500)
         rise_time_th1d                      = ROOT.TH1F("Rise time", "rise_time", rise_time_bins, 0, 4000)
         charge_th1d                         = ROOT.TH1F("Charge", "charge", charge_pulse_bins, 0, 500)
@@ -88,7 +102,8 @@ def producePulsePlots(numpy_variables):
         max_sample_th1d                     = ROOT.TH1F("Max sample", "max_sample", 100, 0, 400)
         max_sample_vs_points_threshold_th2d = ROOT.TH2D("Max sample vs points", "max_sample_vs_point_count", point_count_limit, 0, point_count_limit, 100, 0, 400)
         
-        TH1_objects = [peak_value_th1d, rise_time_th1d, charge_th1d, peak_time_th1d, cfd_th1d, point_count_th1d, max_sample_th1d]
+        TH1_objects = [noise_th1d, pedestal_th1d, peak_value_th1d, rise_time_th1d, charge_th1d, peak_time_th1d, cfd_th1d, point_count_th1d, max_sample_th1d]
+        #TH1_objects = [peak_value_th1d, rise_time_th1d, charge_th1d, peak_time_th1d, cfd_th1d, point_count_th1d, max_sample_th1d]
         
         # Fill TH1 objects
         for index in range(0, len(TH1_objects)):
@@ -102,9 +117,14 @@ def producePulsePlots(numpy_variables):
                 max_sample_vs_points_threshold_th2d.Fill(points[entry][chan], max_sample[entry][chan])
 
         # Create fits for pulse amplitude, rise time and charge
+        # Redefine ranges for noise and pedestal fits
+        ranges_noise_pedestal = getRanges(noise_avg_std, pedestal_avg_std, 3)
+        
+        noise_fit, pedestal_fit = makeNoisePedestalFits(noise_th1d, pedestal_th1d, ranges_noise_pedestal)
         pulse_amplitude_langaufit = makeLandauGausFit(peak_value_th1d, signal_limit)
         rise_time_fit = makeRiseTimeFit(rise_time_th1d)
         charge_langaufit = makeLandauGausFit(charge_th1d)
+
 
         # Export plots
         for TH_obj in TH1_objects:
@@ -114,7 +134,17 @@ def producePulsePlots(numpy_variables):
         exportHistogram(max_sample_vs_points_threshold_th2d)
 
         # Export results
-        exportResults(pulse_amplitude_langaufit, rise_time_fit, charge_langaufit)
+        exportResults([noise_fit, pedestal_fit, pulse_amplitude_langaufit, rise_time_fit, charge_langaufit])
+
+
+def makeNoisePedestalFits(noise_th1d, pedestal_th1d, ranges):
+    
+    noise_th1d.Fit("gaus","Q","", ranges[0][0], ranges[0][1])
+    pedestal_th1d.Fit("gaus","Q","", ranges[1][0], ranges[1][1])
+
+    return noise_th1d.GetFunction("gaus"), pedestal_th1d.GetFunction("gaus")
+
+
 
 def makeRiseTimeFit(graphList):
 
@@ -150,7 +180,7 @@ def makeLandauGausFit(graphList, signal_limit=0):
     MPV = graphList.GetBinCenter(MPV_bin)
     
     # Set range for fit
-    xMin = max((MPV - std_dev), 4.0)
+    xMin = max((MPV - std_dev), 0)
 
     
     # Define range of fit, limits for parameters
@@ -173,21 +203,57 @@ def makeLandauGausFit(graphList, signal_limit=0):
     return langauFit
 
 
-def exportResults(pulse_amplitude_langaufit, rise_time_fit, charge_langaufit):
+
+def getAvgStd(noise_std, noise_average):
+    
+    noise_avg   = np.average(noise_std[chan][np.nonzero(noise_std[chan])])
+    noise_std  = np.std(noise_std[chan][np.nonzero(noise_std[chan])])
+    
+    pedestal_avg = np.average(noise_average[chan][np.nonzero(noise_average[chan])])
+    pedestal_std  = np.std(noise_average[chan][np.nonzero(noise_average[chan])])
+
+    return [noise_avg, noise_std], [pedestal_avg, pedestal_std]
+
+
+def getRanges(noise_avg_std, pedestal_avg_std, N):
+
+    noise_ranges = [noise_avg_std[0] - N * noise_avg_std[1], noise_avg_std[0] + N * noise_avg_std[1]]
+    pedestal_ranges = [pedestal_avg_std[0] - N * pedestal_avg_std[1], pedestal_avg_std[0] + N * pedestal_avg_std[1]]
+
+    return noise_ranges, pedestal_ranges
+
+
+def exportResults(tf1_fit):
+
+    [noise_fit, pedestal_fit, pulse_amplitude_langaufit, rise_time_fit, charge_langaufit] = [i for i in tf1_fit]
+
+    noise_mean_error = [noise_fit.GetParameter(1), noise_fit.GetParError(1)]
+    pedestal_mean_error = [pedestal_fit.GetParameter(1), pedestal_fit.GetParError(1)]
 
     peak_mpv_error = [pulse_amplitude_langaufit.GetParameter(1), pulse_amplitude_langaufit.GetParError(1)]
     rise_time_mpv_error = [rise_time_fit.GetParameter(1), rise_time_fit.GetParError(1)]
     charge_mpv_error = [charge_langaufit.GetParameter(1), charge_langaufit.GetParError(1)]
 
+    noise_result   = np.empty(2, dtype=[('noise', '<f8')])
+    pedestal_result   = np.empty(2, dtype=[('pedestal', '<f8')])
+    
     peak_value_result   = np.empty(2, dtype=[('peak_value', '<f8')])
     rise_time_result    = np.empty(2, dtype=[('rise_time', '<f8')])
     charge_result       = np.empty(2, dtype=[('charge', '<f8')])
+    
+    noise_result['noise'] = noise_mean_error
+    pedestal_result['pedestal'] = pedestal_mean_error
     
     peak_value_result['peak_value'] = peak_mpv_error
     rise_time_result['rise_time']   = rise_time_mpv_error
     charge_result['charge']         = charge_mpv_error
     
-    dm.exportPulseResults(peak_value_result, rise_time_result, charge_result, chan)
+    p_main.defineNameOfProperties(True)
+    
+    var_numpy = [noise_result, pedestal_result, peak_value_result, rise_time_result, charge_result]
+    
+    for index in range(0, len(p_main.var_names)):
+        dm.exportImportROOTData("results", p_main.var_names[index], var_numpy[index])
 
 
 # Produce histograms
@@ -228,15 +294,26 @@ def exportHistogram(graphList):
 
 
     canvas.Print(titles[3])
-    dm.exportImportROOTHistogram(titles[3], True, graphList)
+    dm.exportImportROOTHistogram(titles[3], graphList)
 
 
 
 
 def getPlotAttributes(name):
 
+    yAxisTitle = "Entries"
     
-    if name.find("peak_value") != -1:
+    if name.find("noise") != -1:
+
+        head_title_type = "Noise"
+        xAxisTitle = "Standard deviation [mV]"
+ 
+    elif name.find("pedestal") != -1:
+
+        head_title_type = "Pedestal"
+        xAxisTitle = "Average value [mV]"
+    
+    elif name.find("peak_value") != -1:
 
         head_title_type = "Pulse amplitude"
         xAxisTitle = "Pulse amplitude [mV]"
@@ -269,6 +346,7 @@ def getPlotAttributes(name):
 
         head_title_type = "Max sample point vs number of points over threshold"
         xAxisTitle = "Number points > threshold"
+        yAxisTitle = "Max sample point [mV]"
 
     elif name.find("max_sample") != -1:
 
@@ -281,10 +359,9 @@ def getPlotAttributes(name):
         head_title_type = "Point count over threshold"
         xAxisTitle = "Point count over threshold [N]"
 
-
+    
 
     headTitle = head_title_type + " - " + md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"
     fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getNameOfSensor(chan)+"/pulse/"+name+"/"+name+"_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
     
-    return [headTitle, xAxisTitle, "Entries", fileName]
-
+    return [headTitle, xAxisTitle, yAxisTitle, fileName]

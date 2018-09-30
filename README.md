@@ -1,149 +1,121 @@
-# HGTD Efficiency Analysis
-
+# HGTD Sensor Perfomance analysis
 
 
 # Overall info
 
-This code analyses properties of the oscilloscope files given in data_XXXXX.tree.root format
-from the TB SEP 17 measurement. The main focus of this code is structured in groups of 'noise', 'pulse', 'timing' and tracking.
+The code analyzes properties of the sensors from data provided from the test beam measurement done in September 2017. 
+Main focus are timing resolution of the sensors, efficiency, which is a ratio between a signal from the sensor with a recorded 
+hit on the MIMOSA, that is the telescope.
 
- ```Data information```
-The code's input is an oscilloscope file for a given run, structured as a 3-dim array with "channels", "events", and "data points". There
-are 8 channels (chan0, chan1, chan2, ..., chan7), approximatelly 200000 events and 1002 data points. The data points lists voltages for
-which the pulses are negative and the time separation between the points is defined to be 0.1 ns.
 
- ```Resources - resources/run_list_tb_sep_2017```
- In the resources file, there is a run log  ```run_list_tb_sep_2017.csv``` which is copied form the oficial run list with modifications.
- These modifications are in form of removed run numbers which were either corrupted (the oscilloscope files) are not relevant to be
- used. 88 files out of 130 are considered from the original one.
- 
-   ```Produced data location - HGTD_material/oscilloscope_data_sep_2017```
-The location of oscilloscope files, not provided.
+# Prerequisites
 
-   ```Produced data location - HGTD_material/tracking_data_sep_2017```
-Here are the telescope files. For the telescope files there are only for batches 306, 507 and 607
- 
-  ```Produced plots location - HGTD_material/plots_hgtd_efficiency_sep_2017```
-Here are all produced plots from each of the sections listed below. In the folder there are different sensors listed and withing there are
-different folders marking which analysis has been performed.
+To run the code, certain files are needed. The raw data format is on LXPLUS and needs to be converted into ```data_'timestamp'.tree.root```-format
+This is done by using the  ```convertOscRawToRootTree.C``` which is in  ```folder_sensor_perfomance_tb_sep17/convertRawOscData/```. 
+It uses ```combinedNtuple.C``` where one can specify which data files to convert.
 
-  ```Produced data location - HGTD_material/data_hgtd_efficiency_sep_2017```
-Here are all produced ROOT files from each section.
+Additionally tracking files are needed. The tracking files are in  ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/tracking/tracking/``` For this code, which is from the September 2017 test beam measurement the tracking files are provided. They are structured to have for each event positions for x and y in micrometers.
+
+
+
+Furthermore the code needs packages to run with. These are
+
+- python 2.7
+- ROOT 6.10.06
+- numpy 1.15.2
+- root-numpy 4.7.3
+- pathos multiprocessing (can be found in pip)
+
+The code requires certain subfolders to be in correct place. The folder ```folder_sensor_perfomance_tb_sep17``` provides the structure
+which the code can be run with. In the file ```data_management.py``` in the function ```defineDataFolderPath()```
+this information can be modified.
 
 
 
 # How to run
 
-For this code the following packages has been used:
-- python 2.7
-- ROOT 6.10.06
-- numpy 1.13.3
-- root-numpy 4.7.3
 
 The code can be run in the terminal/console by providing
 
 ```python2 main.py```
 
-Before that, a list of functions can be choosed, these are:
+where the order of the listed functions is important for the first time. The code can be modified to choose which batches which each
+contain at least one run or multiple depending on batch. The information on the structure of which batches and runs is
+listed in ```run_list_tb_sep_2017.csv```.  One can then select which methods to run by commenting out the functions in  ```python2 main.py```.
 
-- noise.noiseAnalysis() - oscilloscope files needed!
-- pulse.pulseAnalysis() - oscilloscope files needed!
+The examples of choosing batches are
 
-- timing.timingAnalysis()
-- tracking.trackingAnalysis()
+```batches = "all" ``` takes all batches
+```batches = [101] ``` uses batch 101 only (for example it has 5 run f)
+```batches = [102, 401] ``` and so on.
 
-- noise_plot.noisePlots()
-- pulse_plot.pulsePlots()
-- timing_plot.timingPlots()
+```batches_exclude = [501] ``` is used when multiple matches are used which can exclude the listed batch.
 
-The first two functions needs oscilloscope files to run with. In general they do not to be run, since all files have been already created and exported. These are in ```HGTD_material/data_hgtd_efficiency_sep_2017``` folder.
-The methods are chosen by commenting out those which are of interest.
-
+```number_of_runs = 0 ``` considers all files within a batch to be calculated or a specific number. This only applies to ```pulseAnalysis()``` which can take shorter time to analyze.
 
 
-# Choosing what to run
+One can also choose which sensor to run with, 
 
-To adapt the code to run just certain batches, the function can be adapted for this
+```sensor = "W9-LGA35" ``` just one sensor
+```sensor = "" ``` all sensors 
 
- ```metadata.setBatchNumbers([306])```
-
-here the example shows only batch 306. For multiple, write as a new element, [306, 507]. Also all can be performed
-
-metadata.setBatchNumbers("all").
-
-If all methods below are in use, this usually takes (on 4 threads) 5 hours.
+which produces plots for selected sensor. This is ignored (where all sensors are considered) for functions which produces data files, that is  ```pulseAnalysis()``` and  ```timingAnalysis()```.
 
 
 
-# Noise analysis
-
-  ```noiseAnalysis() - method```
-This section receives an oscilloscope file and produces a two ROOT files, with run number XXXX:
-1. noise_noise_XXXX.root
-2. noise_pedestal_XXXX.root
-
-1. Gets from each event the standard deviation of the noise before a pulse is found in this event. The results are then collected in a structured array with "channels" and "events".
-
-2. Gets from each event the mean value of the noise before the pulse is found. The structure is the same.
-
- ```noisePlots() - method```
-Given the produced noise-files, it concatenates all run numbers for each batch listed in the run log and produces two different plots,
-one for each kind. These plots are then sorted in to sensor of interest.
-
-
-# Pulse analysis
+# pulseAnalysis() and pulsePlots()
 
   ```pulseAnalysis() - method```
-This section receives an oscilloscope file and produces a three ROOT files, with run number XXXX:
-1. pulse_peak_time_XXXX.root
-2. pulse_peak_value_XXXX.root
-3. pulse_rise_time.XXXX.root
+This section receives an oscilloscope file and produces nine ROOT files placed in   ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/pulse``` . The categories are
 
-1. Gets information about the pulse and at which time in that event it happens.
-2. Gets the maximal amplitude value of the same pulse
-3. Gets the rise time, which is defined to be 10%-90% of the pulse.
+1. CFD = time location at half of the rising edge of the pulse
+2. Charge = pulse integral over the pulse divided by the sensors resistivity
+3. Max sample = maximum sample above the threshold
+4. Noise = standard deviation of the backround signal, selection before a signal
+5. Peak time = time location at maximum value of the pulse
+6. Peak value = Pulse amplitude value using fits and corrections
+7. Pedestal = averaged value of the background signal, selection before a signal
+8. Rise time = rise time defined between 10% and 90% of the rising edge of the pulse
+
+The files are exported per run number, where each run number contains around 200k events, which are subdivided
+into channels ('chan0', 'chan1', etc) depending on the run, where each entry contains either a 0 (not calculated) or a value.
+Time dimension = [ns], voltage dimension = [-V]
+
 
  ```pulsePlots() - method```
-Given the produced pulse-files, it concatenates all run numbers for each batch listed in the run log and produces three different plots
-for each kind obtained in the analysis. These plots are then sorted in to sensor of interest.
+ The function receives produced files from the   ```pulseAnalysis()``` and concatenates all runs within a batch and plots all the different properties. These are placed in ```folder_sensor_perfomance_tb_sep17/plots_hgtd_tb_sep17``` which are subdivided into each sensor. Additionally ROOT files with histograms are produced with same folder structure in ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/histograms_root_data```. This function export the results all categories, except maximum sample, CFD and peak time. to ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/results``` for each sensor
 
 
-# Timing resolution analysis
 
-   ```timingAnalysis() - method```
- The method calculates the time difference for each event the peak location of the sensor of interest (DUT) and the SiPM (the reference
- sensor). This is then exported to a ROOT file with the same structure as a ROOT file
+# timingAnalysis() and timingPlots()
+
+  ```timingAnalysis() - method```
+  
+  This file imports ROOT files created with ```pulseAnalysis()``` with time location information. So both 'CFD' and 'peak time' are imported and then the time difference is calculated. There are two method of obtaining it,
+  1. Linear - which is the time difference between the DUT and the SiPM
+  2. System - which are time differences between each of the combinations within the first oscilloscope.
+  
+  Additionally this is done for both 'CFD' and 'peak time'. The files are exported to ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/timing``` having the same kind of structure as ```pulseAnalysis()```.
+  
+    ```timingPlots() - method```
+
+The function imports the files from previous function, concatenates all in the same batch, obtains the width and exports it to ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/results``` for each sensor.
+
+
+
+# trackingAnalysis()
+
+The function imports the exported files from the previous analyses together with provided tracking files placed in 
+ ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/tracking/tracking```. There is a method
+ of calculating the center of the sensors which is turned off by default. The method imports files for each batch and produces plots for
+ 1. Efficiency
+ 2. Inefficiency
+ 3. Gain (related to charge)
+ 4. Rise time
+ 5. Pulse mean amplitude
+ 6. Timing resolution, cfd and peak time
  
-1. timing_XXXX.root
-
- ```timingPlots() - method```
- Given the exported file, it produces four kind of plots:
- 1. timing_2d
- 2. timing_2d_diff_event
- 3. timing_2d_diff_lgad
- 4. timing_2d_diff_sipm
- 5. timing_distribution
  
- 1. 2D plot of time location of the sensor vs the time difference
- 2. 2D plot of event number of the calculated time difference vs the time difference
- 3. 2D plot of maximal amplitude of the sensor of interest (DUT) vs the time difference
- 4. 2D plot of maximal amplitude of the reference sensor (SiPM) vs the time difference
- 5. 1D histogram of the time difference distribution
- 
- 
+# resultsAnalysis()
 
-# Tracking - combined analysis
-
-```trackingAnalysis() - method```
-The methods concatenates the tracking data file listed in folder  ```tracking_data_sep_2017``` together with produced amplitude
-values produced from pulse analysis. Together with those, it produces three different 2D plots. The tracking file is used to give
-information on where on the sensors a hit has been recorded.
-
-1. 2D mean value graph, where each bin is a mean value of the filled amplitude value
-2. 2D efficiency graph which shows the fraction of noted hits from the sensor of interest and a noted hit from the tracking information (for each event)
-3. Same as 2. but plotted as an inefficiency.
-
-These plots are then sorted in to respective folder sensor.
-
-
-
+From the previously exported files, this collectes all of them and plots them into  ```folder_sensor_perfomance_tb_sep17/results_plots_hgtd_tb_sep17/```

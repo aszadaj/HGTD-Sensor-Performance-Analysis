@@ -4,6 +4,7 @@ import root_numpy as rnm
 
 import run_log_metadata as md
 import tracking_plot as tplot
+import tracking_calculations as t_calc
 import data_management as dm
 
 ROOT.gROOT.SetBatch(True)
@@ -35,17 +36,22 @@ def trackingAnalysis():
         for index in range(0, len(runLog)):
             
             md.defineGlobalVariableRun(runLog[index])
+            
+            
+            # Batch 203 have desynched events between oscilloscope and tracking
+            if md.getBatchNumber() == 203:
+                continue
 
             if not dm.checkIfFileAvailable():
                 continue
             
-            peak_values_run = dm.exportImportROOTData("pulse", "peak_value", False)
-            charge_run = dm.exportImportROOTData("pulse", "charge", False)
-            rise_times_run = dm.exportImportROOTData("pulse", "rise_time", False)
-            time_difference_peak_run = dm.exportImportROOTData("timing", "linear", False)
-            time_difference_cfd_run = dm.exportImportROOTData("timing", "linear_cfd", False)
+            peak_values_run = dm.exportImportROOTData("pulse", "peak_value")
+            charge_run = dm.exportImportROOTData("pulse", "charge")
+            rise_times_run = dm.exportImportROOTData("pulse", "rise_time")
+            time_difference_peak_run = dm.exportImportROOTData("timing", "linear")
+            time_difference_cfd_run = dm.exportImportROOTData("timing", "linear_cfd")
 
-            tracking_run = dm.exportImportROOTData("tracking", "", False)
+            tracking_run = dm.exportImportROOTData("tracking", "tracking")
  
             # Slice the peak values to match the tracking files
             if len(peak_values_run) > len(tracking_run):
@@ -63,7 +69,7 @@ def trackingAnalysis():
             results_batch.append([peak_values_run, charge_run, rise_times_run, tracking_run, time_difference_peak_run, time_difference_cfd_run])
 
         if len(results_batch) != 0:
-            print "\nProducing plots for batch " + str(md.getBatchNumber()) + ".\n"
+            print "\nProducing TRACKING plots for batch " + str(md.getBatchNumber()) + ".\n"
 
             peak_values          = np.empty(0, dtype=results_batch[0][0].dtype)
             charge               = np.empty(0, dtype=results_batch[0][1].dtype)
@@ -80,8 +86,7 @@ def trackingAnalysis():
                 time_difference_peak = np.concatenate((time_difference_peak,  results_run[4]), axis = 0)
                 time_difference_cfd  = np.concatenate((time_difference_cfd,  results_run[5]), axis = 0)
         
-            # This function calculates the center position and exports the file as position_XXX.root.
-            # One time only.
+            # For each bigger batch, this can be done once. It exports a position file which aims to center the plot
             #t_calc.calculateCenterOfSensorPerBatch(peak_values, tracking)
             
             tplot.produceTrackingGraphs(peak_values, charge, rise_times, time_difference_peak, time_difference_cfd, tracking)
