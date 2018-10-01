@@ -96,8 +96,9 @@ This file imports ROOT files created with ```pulseAnalysis()``` with time locati
   2. System - which are time differences between each of the combinations within the first oscilloscope.
   
 Additionally this is done for both 'CFD' and 'peak time'. The files are exported to ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/timing``` having the same kind of structure as ```pulseAnalysis()```.
-  
-```timingPlots() - method```
+
+
+  ```timingPlots() - method```
 
 The function imports the files from previous function, concatenates all in the same batch, obtains the width and exports it to ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/results``` for each sensor.
 
