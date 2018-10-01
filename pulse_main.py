@@ -77,7 +77,6 @@ def pulseAnalysisPerRun():
     
     results = p.map(lambda part: signalAnalysis(dataPath, [part, part + step]), ranges)
     
-    
     # Concatenate the results (which have different form from multiprocessing)
     results_variables = p_calc.concatenateResults(results)
     

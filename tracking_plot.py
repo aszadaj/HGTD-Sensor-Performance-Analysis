@@ -568,7 +568,7 @@ def printTHPlot(graphList, entries=0):
     if efficiency_bool:
     
         # This prints the selections for the efficiency bulk calculations
-        if md.checkIfArrayPad(md.chan_name):
+        if md.checkIfArrayPad(md.chan_name) and t_calc.array_pad_export:
             channels = t_calc.getArrayPadChannels()
         else:
             channels = [md.chan_name]

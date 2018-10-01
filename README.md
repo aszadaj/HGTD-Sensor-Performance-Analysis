@@ -65,7 +65,7 @@ which produces plots for selected sensor. This is ignored (where all sensors are
 
 # pulseAnalysis() and pulsePlots()
 
-  ```pulseAnalysis() - method```
+```pulseAnalysis() - method```
 This section receives an oscilloscope file and produces nine ROOT files placed in   ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/pulse``` . The categories are
 
 1. CFD = time location at half of the rising edge of the pulse
@@ -81,9 +81,9 @@ The files are exported per run number, where each run number contains around 200
 into channels ('chan0', 'chan1', etc) depending on the run, where each entry contains either a 0 (not calculated) or a value.
 Time dimension = [ns], voltage dimension = [-V]
 
-
  ```pulsePlots() - method```
- The function receives produced files from the   ```pulseAnalysis()``` and concatenates all runs within a batch and plots all the different properties. These are placed in ```folder_sensor_perfomance_tb_sep17/plots_hgtd_tb_sep17``` which are subdivided into each sensor. Additionally ROOT files with histograms are produced with same folder structure in ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/histograms_root_data```. This function export the results all categories, except maximum sample, CFD and peak time. to ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/results``` for each sensor
+ 
+The function receives produced files from the   ```pulseAnalysis()``` and concatenates all runs within a batch and plots all the different properties. These are placed in ```folder_sensor_perfomance_tb_sep17/plots_hgtd_tb_sep17``` which are subdivided into each sensor. Additionally ROOT files with histograms are produced with same folder structure in ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/histograms_root_data```. This function export the results all categories, except maximum sample, CFD and peak time. to ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/results``` for each sensor
 
 
 
@@ -91,13 +91,13 @@ Time dimension = [ns], voltage dimension = [-V]
 
   ```timingAnalysis() - method```
   
-  This file imports ROOT files created with ```pulseAnalysis()``` with time location information. So both 'CFD' and 'peak time' are imported and then the time difference is calculated. There are two method of obtaining it,
+This file imports ROOT files created with ```pulseAnalysis()``` with time location information. So both 'CFD' and 'peak time' are imported and then the time difference is calculated. There are two method of obtaining it,
   1. Linear - which is the time difference between the DUT and the SiPM
   2. System - which are time differences between each of the combinations within the first oscilloscope.
   
-  Additionally this is done for both 'CFD' and 'peak time'. The files are exported to ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/timing``` having the same kind of structure as ```pulseAnalysis()```.
+Additionally this is done for both 'CFD' and 'peak time'. The files are exported to ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/timing``` having the same kind of structure as ```pulseAnalysis()```.
   
-    ```timingPlots() - method```
+```timingPlots() - method```
 
 The function imports the files from previous function, concatenates all in the same batch, obtains the width and exports it to ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/results``` for each sensor.
 

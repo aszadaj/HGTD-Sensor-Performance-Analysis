@@ -9,10 +9,10 @@ import data_management as dm
 def importResultsValues(sensor_data, category):
 
     # Import results for the sensor and category
-    files1, files2= readResultsDataFiles(category)
-    
+    files = readResultsDataFiles(category)
+
     # here are imported all files, that is for each pad, temperature and bias voltage
-    for filePath in files1:
+    for filePath in files:
     
         results = rnm.root2array(filePath)
         batchNumber, chan = getBatchNumberAndChanFromFile(filePath)
@@ -56,6 +56,18 @@ def importResultsValues(sensor_data, category):
 
 # Read in results files for each category
 def readResultsDataFiles(category):
+
+    directory = dm.getSourceFolderPath() + dm.getDataSourceFolder()+ "/results/" + rm.processed_sensor + "/" + category + "/"
+    availableFiles = [directory + f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) and f != '.DS_Store']
+    availableFiles.sort()
+    return availableFiles
+
+
+
+
+# THis is for making the gain vs time resolution plot
+# Read in results files for each category
+def readResultsDataFilesTemp(category):
 
     if category != "gain_vs_time_res":
 

@@ -384,15 +384,16 @@ def setBatchNumbers(numbers, exclude=[]):
         batchNumbers = numbers
 
 
+def defineSettings(batches, batches_exclude, number, sensor_name):
+    
+    dm.printTime()
 
-def setLimitRunNumbers(number):
-    global limitRunNumbers
-    limitRunNumbers = number
+    setBatchNumbers(batches, batches_exclude)
 
-
-def setSensor(sensor_list):
     global sensor
-    sensor = sensor_list
+    global limitRunNumbers
+    sensor = sensor_name
+    limitRunNumbers = number
 
 
 def defTimeScope():

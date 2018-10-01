@@ -17,8 +17,8 @@ def defineDataFolderPath():
     sourceFolderPath = "/Users/aszadaj/cernbox/SH203X/folder_sensor_perfomance_tb_sep17/"
 
 
-    oscilloscopePath = sourceFolderPath + getOscillscopeSourceFolder() + "/"
-    #oscilloscopePath = "/Volumes/HITACHI/oscilloscope_data_hgtd_tb_sep17/" # my local HDD
+    #oscilloscopePath = sourceFolderPath + getOscillscopeSourceFolder() + "/"
+    oscilloscopePath = "/Volumes/HDD500/oscilloscope_data_hgtd_tb_sep17/" # my local HDD
 
 
 # Export pulse data

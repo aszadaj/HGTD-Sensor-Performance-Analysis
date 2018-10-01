@@ -49,11 +49,9 @@ def getTimeDifferencePerRunSysEq(time_location):
                     value[index] = (time_location[chan][event] - time_location[chan2][event])*1000
         
             time_difference[chan][event] = value
-    
+
+
     return time_difference
-
-
-
 
 
 # The input is of the convoluted form, that is \sigma_{ij} (here the DUT and the SiPM) and the

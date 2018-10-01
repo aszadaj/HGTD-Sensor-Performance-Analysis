@@ -1,5 +1,9 @@
-### This is a debugging function aimed to analyze waveforms ###
-# It can be run when the files for the given run/batch are produced!
+### This is a debugging function aimed to analyze waveforms and check the functions if they are working properly###
+# Can be run by
+# python graph.py
+
+# This can be run when the pulseAnalysis() for the given run/batch is done.
+# The oscilloscope file is required to run this file.
 
 
 import ROOT
@@ -12,11 +16,11 @@ import pulse_calculations as p_calc
 
 ROOT.gROOT.SetBatch(True)
 
-batch = 102
-sensor = "W9-LGA35"
+batch = 402
+sensor = "W4-S1061"
 
 # If event = 0, then the event number will be randomly selected based on condition
-event = 0
+event = 22883
 number_of_plots = 3
 
 # Print selected event for sensor and batch
@@ -25,6 +29,7 @@ def printWaveform(batchNumber, sensor, event = 0):
     # Factor N used in pulse_calculations.py
     N = 4.27
     
+    # Define
     runNumber = md.getAllRunNumbers(batchNumber)[0]
     md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
     dm.defineDataFolderPath()
@@ -38,8 +43,6 @@ def printWaveform(batchNumber, sensor, event = 0):
     peak_value_import = dm.exportImportROOTData("pulse", "peak_value")
     max_sample = dm.exportImportROOTData("pulse", "max_sample")
     peak_time_import = dm.exportImportROOTData("pulse", "peak_time")
-    pedestal_import = dm.exportImportROOTData("results", "pedestal")
-    noise_import = dm.exportImportROOTData("results", "noise")
     points_import = dm.exportImportROOTData("pulse", "points")
     charge_import = dm.exportImportROOTData("pulse", "charge")
 
@@ -47,7 +50,7 @@ def printWaveform(batchNumber, sensor, event = 0):
     if event == 0:
     
         # Here one can modify the condition which randomly selects an event. Event number must be 0
-        condition = peak_value_import[chan] < -0.05
+        condition = peak_value_import[chan] < -0.35
         selected_event =  np.argwhere(condition).flatten()
         np.random.shuffle(selected_event)
         event = selected_event[0]
@@ -107,7 +110,7 @@ def printWaveform(batchNumber, sensor, event = 0):
     for index in range(0, len(data)):
         graph_waveform.SetPoint(i,index*0.1, data[index]*1000)
         
-#        # This is done once
+#        # This is a function filling the pulse, but has to be adapted depending on the event.
 #        if data[index] > threshold and (400 < index < 450):
 #            charge_fill.SetPoint(j, index*0.1, data[index]*1000)
 #            charge_fill.SetPoint(n+j, (index+n-j)*0.1, data[index+n-j]*1000)
@@ -192,31 +195,31 @@ def printWaveform(batchNumber, sensor, event = 0):
 
     # Add the graphs to multigraph
     multi_graph.Add(graph_waveform)
-    multi_graph.Add(graph_threshold)
-    multi_graph.Add(graph_2nd_deg_fit)
-    multi_graph.Add(graph_linear_fit)
-    multi_graph.Add(graph_peak_value)
+    #multi_graph.Add(graph_threshold)
+    #multi_graph.Add(graph_2nd_deg_fit)
+    #multi_graph.Add(graph_linear_fit)
+    #multi_graph.Add(graph_peak_value)
     #multi_graph.Add(graph_max_sample)
     #multi_graph.Add(graph_10)
     #multi_graph.Add(graph_90)
-    multi_graph.Add(graph_cfd)
-    multi_graph.Add(graph_peak_time)
-    multi_graph.Add(graph_pedestal)
+    #multi_graph.Add(graph_cfd)
+    #multi_graph.Add(graph_peak_time)
+    #multi_graph.Add(graph_pedestal)
     #multi_graph.Add(charge_fill, "f")
 
     
     # Add the information to a legend box
-    legend.AddEntry(graph_waveform, "Waveform " + md.getNameOfSensor(chan), "l")
-    legend.AddEntry(graph_peak_value, "Peak value: "+str(peak_value*1000)[:5]+" mV", "l")
-    legend.AddEntry(graph_linear_fit, "Rise time: "+str(rise_time*1000)[:5]+" ps", "l")
-    legend.AddEntry(graph_cfd, "CFD " + str(cfd)[0:4] + " ns", "l")
-    legend.AddEntry(graph_peak_time, "Peak time " + str(peak_time[0])[0:4] + " ns", "l")
-    legend.AddEntry(graph_pedestal, "Pedestal: "+str(pedestal*1000)[:4]+" mV", "l")
-    legend.AddEntry(graph_threshold, "Noise: "+str(noise*1000)[:4]+" mV", "l")
-    legend.AddEntry(graph_threshold, "Threshold: "+str(threshold*1000)[:5]+" mV", "l")
-    legend.AddEntry(charge_fill, "Charge: "+str(charge*10**15)[:5]+" fC", "l")
-    legend.AddEntry(graph_max_sample, "Max sample: "+str(max_sample*1000)[:5]+" mV", "l")
-    legend.AddEntry(graph_waveform, "Points above threshold: "+str(point_count), "l")
+    #legend.AddEntry(graph_waveform, "Waveform " + md.getNameOfSensor(chan), "l")
+    #legend.AddEntry(graph_peak_value, "Peak value: "+str(peak_value*1000)[:5]+" mV", "l")
+    #legend.AddEntry(graph_linear_fit, "Rise time: "+str(rise_time*1000)[:5]+" ps", "l")
+    #legend.AddEntry(graph_cfd, "CFD " + str(cfd)[0:4] + " ns", "l")
+    #legend.AddEntry(graph_peak_time, "Peak time " + str(peak_time[0])[0:4] + " ns", "l")
+   # legend.AddEntry(graph_pedestal, "Pedestal: "+str(pedestal*1000)[:4]+" mV", "l")
+    #legend.AddEntry(graph_threshold, "Noise: "+str(noise*1000)[:4]+" mV", "l")
+    #legend.AddEntry(graph_threshold, "Threshold: "+str(threshold*1000)[:5]+" mV", "l")
+    #legend.AddEntry(charge_fill, "Charge: "+str(charge*10**15)[:5]+" fC", "l")
+    #legend.AddEntry(graph_max_sample, "Max sample: "+str(max_sample*1000)[:5]+" mV", "l")
+    #legend.AddEntry(graph_waveform, "Points above threshold: "+str(point_count), "l")
     #legend.AddEntry(graph_90, "10% and 90% limit", "l")
 
 
@@ -226,15 +229,16 @@ def printWaveform(batchNumber, sensor, event = 0):
     yAxisTitle = "Voltage [mV]"
     headTitle = "Waveform " + md.getNameOfSensor(chan)
     multi_graph.Draw("ALP")
-    legend.Draw()
+    #legend.Draw()
     multi_graph.SetTitle(headTitle)
     multi_graph.GetXaxis().SetTitle(xAxisTitle)
     multi_graph.GetYaxis().SetTitle(yAxisTitle)
 
     # Set ranges on axis
-    multi_graph.GetYaxis().SetRangeUser(-30,450)
+    multi_graph.GetYaxis().SetRangeUser(-100,550)
     #multi_graph.GetXaxis().SetRangeUser(cfd-3,cfd+5)
-    multi_graph.GetXaxis().SetRangeUser(0,100)
+    multi_graph.GetXaxis().SetRangeUser(44,52)
+    #multi_graph.GetXaxis().SetRangeUser(0,100)
 
     # Export the PDF file
     fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/waveforms/waveform"+"_"+str(md.getBatchNumber())+"_"+str(runNumber)+"_event_"+str(event)+"_"+str(sensor)+".pdf"

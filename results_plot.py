@@ -66,9 +66,9 @@ def drawAndExportResults(category, category_graph, legend_graph):
     legend_text.SetTextSize(0.035)
     legend_text.SetNDC(True)
     legend_text.DrawLatex(.7, .55, "Marker color")
-    legend_text.DrawLatex(.7, .5, "#color[2]{Red}    = 22\circC")
-    legend_text.DrawLatex(.7, .45, "#color[4]{Blue}  = -30\circC")
-    legend_text.DrawLatex(.7, .4, "#color[6]{Purple} = -40\circC")
+    legend_text.DrawLatex(.7, .5, "#color[2]{Red}    =  22 \circC")
+    legend_text.DrawLatex(.7, .45, "#color[4]{Blue}  = -30 \circC")
+    legend_text.DrawLatex(.7, .4, "#color[6]{Purple} = -40 \circC")
 
     
     fileName = dm.getSourceFolderPath() + dm.getResultsPlotSourceDataPath() + "/" + category + "_results.pdf"
@@ -77,7 +77,7 @@ def drawAndExportResults(category, category_graph, legend_graph):
 
 def setGraphAttributes(category_graph, category):
 
-    timing_res_max = 700
+    timing_res_max = 600
 
     # Define titles, head and axes
     if category == "noise":
@@ -90,7 +90,7 @@ def setGraphAttributes(category_graph, category):
         titleGraph = "Pedestal values per bias voltage"
         xTitle = "Bias voltage [V]"
         yTitle = "Pedestal [mV]"
-        y_lim = [-2, 10]
+        y_lim = [-3, 3]
 
     elif category == "peak_value":
     
