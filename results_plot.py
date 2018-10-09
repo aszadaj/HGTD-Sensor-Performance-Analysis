@@ -27,7 +27,7 @@ def addValuesToGraph(variables):
                     constant = 1./(0.46) # Divide by MIP charge = Gain
             
                 graph[rm.processed_sensor][temperature][DUT_pos].SetPoint(i, data[0], data[1][0] * constant)
-                graph[rm.processed_sensor][temperature][DUT_pos].SetPointError(i, 0, data[1][1])
+                graph[rm.processed_sensor][temperature][DUT_pos].SetPointError(i, 0, data[1][1] * constant)
                 
                 i += 1
             
@@ -42,8 +42,18 @@ def addValuesToGraph(variables):
 
 def drawAndExportResults(category, category_graph, legend_graph):
 
-    category_graph.Draw("APL")
-    setGraphAttributes(category_graph, category)
+    # The zoom option creates plots for the region \sigma < 100 ps and gain < 100. Also
+    # put in a separate folder
+    zoom = True
+    
+    drawOpt = "AP"
+    
+    if category.find("gain") == -1:
+        drawOpt += "L"
+    
+    
+    category_graph.Draw(drawOpt)
+    positions_latex = setGraphAttributes(category_graph, category, zoom)
     rm.canvas.Update()
     legend_graph.Draw()
     
@@ -52,7 +62,7 @@ def drawAndExportResults(category, category_graph, legend_graph):
         xmin = 0
         xmax = rm.bias_voltage_max
         ymin = 0.01
-        ymax = category_graph.GetXaxis().GetXmax()
+        ymax = category_graph.GetHistogram().GetMaximum()
         new_axis = ROOT.TGaxis(xmax,ymin,xmax,ymax,ymin,int(ymax*charge_mip),510,"+L")
         new_axis.SetTitle("Charge [fC]")
         new_axis.SetLabelFont(42)
@@ -65,82 +75,139 @@ def drawAndExportResults(category, category_graph, legend_graph):
     legend_text = ROOT.TLatex()
     legend_text.SetTextSize(0.035)
     legend_text.SetNDC(True)
-    legend_text.DrawLatex(.7, .55, "Marker color")
-    legend_text.DrawLatex(.7, .5, "#color[2]{Red}    =  22 \circC")
-    legend_text.DrawLatex(.7, .45, "#color[4]{Blue}  = -30 \circC")
-    legend_text.DrawLatex(.7, .4, "#color[6]{Purple} = -40 \circC")
+    legend_text.DrawLatex(positions_latex[0][0], positions_latex[0][1] , "Marker color")
+    legend_text.DrawLatex(positions_latex[1][0], positions_latex[1][1], "#color[3]{Green}  = 22 \circC")
+    legend_text.DrawLatex(positions_latex[2][0], positions_latex[2][1], "#color[4]{Blue}    = -30 \circC")
+    legend_text.DrawLatex(positions_latex[3][0], positions_latex[3][1], "#color[6]{Purple} = -40 \circC")
 
     
-    fileName = dm.getSourceFolderPath() + dm.getResultsPlotSourceDataPath() + "/" + category + "_results.pdf"
+    if category.find("gain") != -1:
+        if zoom:
+            fileName = dm.getSourceFolderPath() + dm.getResultsPlotSourceDataPath() + "/timing_vs_gain_zoom/" + category + "_results.pdf"
+        else:
+            fileName = dm.getSourceFolderPath() + dm.getResultsPlotSourceDataPath() + "/timing_vs_gain/" + category + "_results.pdf"
+    else:
+        fileName = dm.getSourceFolderPath() + dm.getResultsPlotSourceDataPath() +"/" + category + "_results.pdf"
+    
     rm.canvas.Print(fileName)
 
 
-def setGraphAttributes(category_graph, category):
+def setGraphAttributes(category_graph, category, zoom):
 
     timing_res_max = 600
-
+    
     # Define titles, head and axes
     if category == "noise":
-        titleGraph = "Noise values per bias voltage"
+        titleGraph = "Noise per bias voltage"
         xTitle = "Bias voltage [V]"
         yTitle = "Noise [mV]"
         y_lim = [0, 6]
     
     elif category == "pedestal":
-        titleGraph = "Pedestal values per bias voltage"
+        titleGraph = "Pedestal per bias voltage"
         xTitle = "Bias voltage [V]"
         yTitle = "Pedestal [mV]"
         y_lim = [-3, 3]
 
     elif category == "peak_value":
     
-        titleGraph = "Pulse amplitude values per voltage"
+        titleGraph = "Pulse amplitude per bias voltage"
         xTitle = "Bias voltage [V]"
         yTitle = "Pulse amplitude [mV]"
         y_lim = [0, 300]
 
     elif category == "charge":
     
-        titleGraph = "Gain and charge values per voltage"
+        titleGraph = "Gain/charge per bias voltage"
         xTitle = "Bias voltage [V]"
         yTitle = "Gain"
         y_lim = [0, 500]
 
     elif category == "rise_time":
         
-        titleGraph = "Rise time values per voltage"
+        titleGraph = "Rise time per bias voltage"
         xTitle = "Bias voltage [V]"
         yTitle = "Rise time [ps]"
         y_lim = [0, 2000]
 
     elif category == "linear":
     
-        titleGraph = "Time resolution values per voltage (peak)"
+        titleGraph = "Timing resolution per bias voltage (peak)"
         xTitle = "Bias voltage [V]"
         yTitle = "Time resolution [ps]"
-        y_lim = [0, timing_res_max]
 
 
     elif category == "linear_cfd":
     
-        titleGraph = "Time resolution values per voltage (cfd)"
+        titleGraph = "Timing resolution per bias voltage (CFD)"
         xTitle = "Bias voltage [V]"
         yTitle = "Time resolution [ps]"
-        y_lim = [0, timing_res_max]
 
     elif category == "system":
     
-        titleGraph = "Time resolution values per voltage (system, peak)"
+        titleGraph = "Timing resolution per bias voltage (sys of eqs, peak)"
         xTitle = "Bias voltage [V]"
         yTitle = "Time resolution [ps]"
-        y_lim = [0, timing_res_max]
 
     elif category == "system_cfd":
     
-        titleGraph = "Time resolution values per voltage (system, cfd)"
+        titleGraph = "Timing resolution per bias voltage (sys of eqs, CFD)"
         xTitle = "Bias voltage [V]"
         yTitle = "Time resolution [ps]"
+    
+    
+    
+    if category == "linear_gain":
+        
+        titleGraph = "Timing resolution per gain (peak)"
+        xTitle = "Gain"
+        yTitle = "Time resolution [ps]"
+    
+    
+    elif category == "linear_cfd_gain":
+    
+        titleGraph = "Timing resolution per gain (cfd)"
+        xTitle = "Gain"
+        yTitle = "Time resolution [ps]"
+
+    elif category == "system_gain":
+    
+        titleGraph = "Timing resolution per gain (system, peak)"
+        xTitle = "Gain"
+        yTitle = "Time resolution [ps]"
+
+    elif category == "system_cfd_gain":
+   
+        titleGraph = "Timing resolution per gain (system, cfd)"
+        xTitle = "Gain"
+        yTitle = "Time resolution [ps]"
+        
+
+    if category.find("gain") != -1:
+        rm.bias_voltage_max = 500
+    
+        if zoom:
+            timing_res_max = 100
+            rm.bias_voltage_max = 100
+
+
+    if category.find("linear") != -1 or category.find("system") != -1:
+        #positions_latex = [[.5, .76], [.5, .71], [.5, .66], [.5, .61]]
+        positions_latex = [[.7, .55], [.7, .5], [.7, .45], [.7, .4]]
         y_lim = [0, timing_res_max]
+
+    elif category.find("noise") != -1:
+        rm.bias_voltage_max = 500
+        positions_latex = [[.7, .55], [.7, .5], [.7, .45], [.7, .4]]
+
+    elif category.find("peak_value") != -1:
+        positions_latex = [[.5, .76], [.5, .71], [.5, .66], [.5, .61]]
+
+
+    else:
+        positions_latex = [[.7, .55], [.7, .5], [.7, .45], [.7, .4]]
+
+
 
     category_graph.SetTitle(titleGraph)
     category_graph.GetXaxis().SetTitle(xTitle)
@@ -149,6 +216,10 @@ def setGraphAttributes(category_graph, category):
     category_graph.GetXaxis().SetLimits(0, rm.bias_voltage_max)
     category_graph.SetMinimum(y_lim[0])
     category_graph.SetMaximum(y_lim[1])
+
+    rm.bias_voltage_max = 350
+
+    return positions_latex
 
 
 def setMarkerType(graph, pos, temperature):
@@ -159,7 +230,7 @@ def setMarkerType(graph, pos, temperature):
     
     # Red 22 deg C
     if temperature == "22":
-        color = 2
+        color = 3
     
     # Blue -30 deg C
     elif temperature == "-30":

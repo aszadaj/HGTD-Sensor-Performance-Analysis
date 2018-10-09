@@ -120,10 +120,8 @@ def calculateCenterOfSensorPerBatch(peak_values, tracking):
     position_temp = createCenterPositionArray()
 
     for chan in peak_values.dtype.names:
-        
-        if md.getNameOfSensor(chan) != "SiPM-AFP":
-        
-            position_temp[chan][0] = getCenterOfSensor(peak_values[chan], tracking, values)
+
+        position_temp[chan][0] = getCenterOfSensor(peak_values[chan], tracking, values)
 
     dm.exportImportROOTData("tracking", "position", position_temp)
 
@@ -223,35 +221,55 @@ def getTitleAndFileName(objectName, chan):
     headTitle = "empty"
 
     if objectName.find("Pulse") != -1:
-        headTitle = "Mean pulse amplitude value - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"+"; X [\mum] ; Y [\mum] ; V [mV]"
-        fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getNameOfSensor(chan)+"/tracking/pulse_amplitude_mean/tracking_mean_value_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+        graphTitle = "Pulse amplitude mean value"
+        dimension_z = "V [mV]"
+        folderLocation = "pulse_amplitude_mean/tracking_mean_value"
+    
     
     elif objectName.find("Gain") != -1:
-        headTitle = "Gain mean value - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"+"; X [\mum] ; Y [\mum] ; Gain"
-        fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getNameOfSensor(chan)+"/tracking/gain_mean/tracking_gain_mean_value_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+        graphTitle = "Gain mean value"
+        dimension_z = "Gain"
+        folderLocation = "gain_mean/tracking_gain_mean_value"
+
     
     elif objectName.find("Rise") != -1:
-        headTitle = "Mean pulse rise time value - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"+"; X [\mum] ; Y [\mum] ; t [ps]"
-        fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getNameOfSensor(chan)+"/tracking/rise_time_mean/tracking_rise_time_mean_value_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+        graphTitle = "Rise time mean value"
+        dimension_z = "t [ps]"
+        folderLocation = "rise_time_mean/tracking_rise_time_mean_value"
+
     
     elif objectName.find("peak") != -1:
-        headTitle = "Time resolution (peak ref.) - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"+"; X [\mum] ; Y [\mum] ; \sigma_{t} [ps]"
-        fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getNameOfSensor(chan)+"/tracking/time_resolution/peak/tracking_time_resolution_peak_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+        graphTitle = "Timing resolution (peak)"
+        dimension_z = "\sigma_{t} [ps]"
+        folderLocation = "time_resolution/peak/tracking_time_resolution_peak"
+
 
     elif objectName.find("cfd") != -1:
-        headTitle = "Time resolution (CFD ref) - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"+"; X [\mum] ; Y [\mum] ; \sigma_{t} [ps]"
-        fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getNameOfSensor(chan)+"/tracking/time_resolution/cfd/tracking_time_resolution_cfd_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+    
+        graphTitle = "Timing resolution (CFD)"
+        dimension_z = "\sigma_{t} [ps]"
+        folderLocation = "time_resolution/cfd/tracking_time_resolution_cfd"
+
     
     elif objectName.find("Efficiency") != -1:
-        headTitle = "Efficiency - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"+ "; X [\mum] ; Y [\mum] ; Efficiency (%)"
-        fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getNameOfSensor(chan)+"/tracking/efficiency/tracking_efficiency_" + str(md.getBatchNumber()) +"_" + chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+        graphTitle = "Efficiency"
+        dimension_z = "Efficiency (%)"
+        folderLocation = "efficiency/tracking_efficiency"
+
     
     elif objectName.find("Inefficiency") != -1:
-        headTitle = "Inefficiency - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"+ "; X [\mum] ; Y [\mum] ; Inefficiency (%)"
-        fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getNameOfSensor(chan)+"/tracking/inefficiency/tracking_inefficiency_"+ str(md.getBatchNumber()) +"_"+ chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+        graphTitle = "Inefficiency"
+        dimension_z = "Inefficiency (%)"
+        folderLocation = "inefficiency/tracking_inefficiency"
+
+
+    headTitle = graphTitle + " - " + md.getNameOfSensor(chan) + ", T = " + str(md.getTemperature()) + " \circ C, U = " + str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V; X [\mum] ; Y [\mum] ; " + dimension_z
+    fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder() + "/" + md.getNameOfSensor(chan)+ "/tracking/" + folderLocation + "_" + str(md.getBatchNumber()) + "_" + chan + "_" + str(md.getNameOfSensor(chan)) + ".pdf"
+    
 
     if array_pad_export:
         fileName = fileName.replace(".pdf", "_array.pdf")
+        
 
     return fileName, headTitle
 
@@ -285,6 +303,7 @@ def findSelectionRange():
     
     position = dm.exportImportROOTData("tracking", "position")
     
+    
     # In case of array pads, refer to the center of the pad
     if md.checkIfArrayPad(md.chan_name):
     
@@ -294,13 +313,27 @@ def findSelectionRange():
     else:
         center_position = (createCenterPositionArray()[md.chan_name])[0]
 
-    # Distance from the center of the pad and 300 um from the center
+    # Distance from the center of the pad and 350 um from the center
     projection_cut = 350
+
+    # This is a correction for the irradiated array pad to center the selection of the bulk for efficiency calculation
+    if md.getNameOfSensor(md.chan_name) == "W4-S204_6e14":
+        
+        if md.chan_name == "chan5":
+            center_position = [-530, -575]
+        
+        elif md.chan_name == "chan6":
+            center_position = [530, 500]
+            
+        elif md.chan_name == "chan7":
+            center_position = [-530, 500]
+        
 
     x1 = center_position[0] - projection_cut
     x2 = center_position[0] + projection_cut
     y1 = center_position[1] - projection_cut
     y2 = center_position[1] + projection_cut
+    
 
     return np.array([[x1, x2], [y1, y2]]), center_position
 
@@ -314,8 +347,8 @@ def removeBin(bin, time_diff, minEntries):
         time_diff.SetBinEntries(bin, 0)
 
 
-def fillTimeResBin(bin, time_diff, time_res):
-    entries_per_bin = t_plot.glob_variables[2]
+def fillTimeResBin(bin, time_diff, time_res, entries_per_bin):
+
     num = time_diff.GetBinEntries(bin)
 
     if num > entries_per_bin:

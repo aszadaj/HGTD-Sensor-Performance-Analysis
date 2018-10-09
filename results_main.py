@@ -14,10 +14,10 @@ def produceResults():
     global processed_sensor
     global bias_voltage_max
 
-    bias_voltage_max = 500
+    bias_voltage_max = 350
     
-    categories = ["noise", "pedestal", "peak_value", "charge", "rise_time", "linear", "system", "linear_cfd", "system_cfd"]
-    #categories = ["gain_vs_time_res"]
+    categories = ["noise", "pedestal", "peak_value", "charge", "rise_time", "linear", "system", "linear_cfd", "system_cfd", "linear_gain", "system_gain", "linear_cfd_gain", "system_cfd_gain"]
+    #categories = ["linear_gain", "system_gain", "linear_cfd_gain", "system_cfd_gain"]
     
     canvas = ROOT.TCanvas("Results", "Results")
     dm.defineDataFolderPath()
@@ -70,7 +70,8 @@ def produceResults():
             
             
             r_plot.addValuesToGraph([sensor_data, category, legend_graph, graph, category_graph])
-          
+    
+            
 
         r_plot.drawAndExportResults(category, category_graph, legend_graph)
 

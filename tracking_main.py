@@ -52,7 +52,7 @@ def trackingAnalysis():
             time_difference_cfd_run = dm.exportImportROOTData("timing", "linear_cfd")
 
             tracking_run = dm.exportImportROOTData("tracking", "tracking")
- 
+            
             # Slice the peak values to match the tracking files
             if len(peak_values_run) > len(tracking_run):
             
@@ -65,6 +65,7 @@ def trackingAnalysis():
             else:
             
                 tracking_run = np.take(tracking_run, np.arange(0, len(peak_values_run)))
+        
 
             results_batch.append([peak_values_run, charge_run, rise_times_run, tracking_run, time_difference_peak_run, time_difference_cfd_run])
 

@@ -114,7 +114,7 @@ The function imports the exported files from the previous analyses together with
  3. Gain (related to charge)
  4. Rise time
  5. Pulse mean amplitude
- 6. Timing resolution, cfd and peak time
+ 6. Timing resolution, CFD and peak time
  
  
 # resultsAnalysis()

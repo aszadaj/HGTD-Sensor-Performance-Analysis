@@ -23,6 +23,12 @@ def importResultsValues(sensor_data, category):
 
         value_error = [results[0][0], results[1][0]]
         voltage = md.getBiasVoltage(rm.processed_sensor, batchNumber)
+        
+        if (category.find("system") != -1 or category.find("linear") != -1) and category.find("gain") != -1:
+            md.setChannelName(chan)
+            gain = dm.exportImportROOTData("results", "charge")["charge"][0]/0.46
+            voltage = int(gain) # this takes the even number of gain (to select better values)
+        
         temperature = str(md.getTemperature())
         
         DUT_pos = md.getDUTPos(rm.processed_sensor, chan)
@@ -56,7 +62,10 @@ def importResultsValues(sensor_data, category):
 
 # Read in results files for each category
 def readResultsDataFiles(category):
-
+    
+    if category.endswith('gain'):
+        category = category[:-5]
+    
     directory = dm.getSourceFolderPath() + dm.getDataSourceFolder()+ "/results/" + rm.processed_sensor + "/" + category + "/"
     availableFiles = [directory + f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) and f != '.DS_Store']
     availableFiles.sort()
@@ -69,27 +78,11 @@ def readResultsDataFiles(category):
 # Read in results files for each category
 def readResultsDataFilesTemp(category):
 
-    if category != "gain_vs_time_res":
-
-        directory = dm.getSourceFolderPath() + dm.getDataSourceFolder()+ "/results/" + rm.processed_sensor + "/" + category + "/"
-        availableFiles = [directory + f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) and f != '.DS_Store']
-        availableFiles.sort()
-        return availableFiles
+    directory = dm.getSourceFolderPath() + dm.getDataSourceFolder()+ "/results/" + rm.processed_sensor + "/" + category + "/"
+    availableFiles = [directory + f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) and f != '.DS_Store']
+    availableFiles.sort()
     
-    else:
-        
-        directory = dm.getSourceFolderPath() + dm.getDataSourceFolder()+ "/results/" + rm.processed_sensor + "/" + "charge" + "/"
-        availableFiles_1 = [directory + f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) and f != '.DS_Store']
-        availableFiles_1.sort()
-    
-        directory = dm.getSourceFolderPath() + dm.getDataSourceFolder()+ "/results/" + rm.processed_sensor + "/" + "linear_cfd" + "/"
-        availableFiles_2 = [directory + f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)) and f != '.DS_Store']
-        availableFiles_2.sort()
-    
-        return availableFiles_1, availableFiles_2
-    
-
-
+    return availableFiles
 
 
 def getBatchNumberAndChanFromFile(file):
