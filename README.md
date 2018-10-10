@@ -20,11 +20,13 @@ Additionally tracking files are needed. The tracking files are in  ```folder_sen
 
 Furthermore the code needs packages to run with. These are
 
-- python 2.7
-- ROOT 6.10.06
+- python 2.7.15_1
+- ROOT 6.10.06 or 6.14.04
 - numpy 1.15.2
 - root-numpy 4.7.3
 - pathos multiprocessing (can be found in pip)
+
+
 
 The code requires certain subfolders to be in correct place. The folder ```folder_sensor_perfomance_tb_sep17``` provides the structure
 which the code can be run with. In the file ```data_management.py``` in the function ```defineDataFolderPath()```

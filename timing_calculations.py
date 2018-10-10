@@ -74,12 +74,6 @@ def solveLinearEq(sigmas, sigmas_error):
     sigma_chan_error = np.sqrt(np.divide(sigma_chan_squared.dot(sigma_vector_error), sigma_chan_squared))
     
     
-    # Given that width can be expressed as \sigma_{i}^2 = C_1\sigma_{A}^2 + C_2\sigma_{B}^2 and
-    # the error is given for \Delta\sigma_{A} and \Delta\sigma_{A},
-    # then the total error for \sigma_{i} will be
-    #
-    # \Delta_sigma_{i} = \sqrt{\frac{C_1\sigma_{A}^2\Delta\sigma_{A}^2 + C_2\sigma_{B}^2\Delta\sigma_{B}^2}{C_1\sigma_{A}^2 + C_2\sigma_{B}^2}}
-    
     return sigma_chan, sigma_chan_error
 
 

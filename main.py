@@ -7,6 +7,8 @@
 # - tracking which determines the position dependent signal for the pulse characteristics and time resolution (not the system of equations method).
 # - results which takes the fitted values with its errors and plots them for different types among different temperatures and bias voltages.
 
+# - Generally one can choose which functions to run from the pulse, timing resolution, tracking and results section. 
+
 
 
 ##########################################################################
@@ -34,7 +36,7 @@ def main():
     number_of_runs = 0
     
     # Choose batches to run. "all" or e.g. [101, 102].
-    batches = "all"
+    batches = [102]
     batches_exclude = []
     
     # Choose sensor for which the plots are produced.
@@ -44,14 +46,14 @@ def main():
     
     ########### PULSE ################
 
-    #pulse_main.pulseAnalysis() # This is a long procedure function
-    #pulse_plot.pulsePlots()
+    pulse_main.pulseAnalysis() # This is a long procedure function
+    pulse_plot.pulsePlots()
 
     
     ####### TIMING RESOLUTION ########
     
-    #timing.timingAnalysis()
-    #timing_plot.timingPlots()
+    timing.timingAnalysis()
+    timing_plot.timingPlots()
 
     
     ######### TRACKING  ##############
@@ -61,7 +63,7 @@ def main():
 
     ########### RESULTS ##############
     
-    #results.produceResults()
+    results.produceResults()
 
    
     dm.printTime()
