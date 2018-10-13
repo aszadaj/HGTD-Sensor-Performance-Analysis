@@ -166,14 +166,14 @@ def produceTProfilePlots(numpy_arrays, tracking):
     mpv_time_diff_cfd  =  dm.exportImportROOTData("results", "linear_cfd")["linear_cfd"][2]
 
     # Declare ROOT objects
-    peak_value_mean_th2d = ROOT.TProfile2D("Pulse amplitude mean value","Pulse amplitude mean value", xbin, -distance_x, distance_x, ybin, -distance_y, distance_y)
-    gain_mean_th2d = ROOT.TProfile2D("Gain mean value","Gain mean value", xbin, -distance_x, distance_x, ybin, -distance_y, distance_y)
-    rise_time_mean_th2d = ROOT.TProfile2D("Rise time mean value","Rise time mean value", xbin, -distance_x, distance_x, ybin, -distance_y, distance_y)
+    peak_value_mean_th2d        = ROOT.TProfile2D("Pulse amplitude mean value","Pulse amplitude mean value", xbin, -distance_x, distance_x, ybin, -distance_y, distance_y)
+    gain_mean_th2d              = ROOT.TProfile2D("Gain mean value","Gain mean value", xbin, -distance_x, distance_x, ybin, -distance_y, distance_y)
+    rise_time_mean_th2d         = ROOT.TProfile2D("Rise time mean value","Rise time mean value", xbin, -distance_x, distance_x, ybin, -distance_y, distance_y)
     
-    time_difference_peak_th2d = ROOT.TProfile2D("Time difference peak", "Time difference peak", xbin_timing, -distance_x, distance_x, ybin_timing, -distance_y, distance_y, "s")
-    time_difference_cfd_th2d = ROOT.TProfile2D("Time difference cfd", "Time difference cfd", xbin_timing, -distance_x, distance_x, ybin_timing, -distance_y, distance_y, "s")
-    timing_peak_th2d = ROOT.TH2D("Timing resolution peak", "timing resolution peak", xbin_timing, -distance_x, distance_x, ybin_timing, -distance_y, distance_y)
-    timing_cfd_th2d = ROOT.TH2D("Timing resolution cfd", "timing resolution cfd", xbin_timing, -distance_x, distance_x, ybin_timing, -distance_y, distance_y)
+    time_difference_peak_th2d   = ROOT.TProfile2D("Time difference peak", "Time difference peak", xbin_timing, -distance_x, distance_x, ybin_timing, -distance_y, distance_y, "s")
+    time_difference_cfd_th2d    = ROOT.TProfile2D("Time difference cfd", "Time difference cfd", xbin_timing, -distance_x, distance_x, ybin_timing, -distance_y, distance_y, "s")
+    timing_peak_th2d            = ROOT.TH2D("Timing resolution peak", "timing resolution peak", xbin_timing, -distance_x, distance_x, ybin_timing, -distance_y, distance_y)
+    timing_cfd_th2d             = ROOT.TH2D("Timing resolution cfd", "timing resolution cfd", xbin_timing, -distance_x, distance_x, ybin_timing, -distance_y, distance_y)
     
     TH2_objects_fill = [peak_value_mean_th2d, gain_mean_th2d, rise_time_mean_th2d, time_difference_peak_th2d, time_difference_cfd_th2d]
     

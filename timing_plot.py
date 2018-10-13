@@ -30,12 +30,11 @@ def timingPlots():
         runNumbers = md.getAllRunNumbers(batchNumber)
         # Create numpy arrays for linear time difference (one element per "channel")
         numpy_arrays = [np.empty(0, dtype = dm.getDTYPE(batchNumber)) for _ in range(2)]
-        
+
         # Create numpy arrays for system of equations (three elements per "channel")
         numpy_arrays.append(np.empty(0, dtype = t_calc.getDTYPESysEq()))
         numpy_arrays.append(np.empty(0, dtype = t_calc.getDTYPESysEq()))
 
-    
         var_names = ["linear", "linear_cfd", "system", "system_cfd"]
         
         if md.limitRunNumbers != 0:
@@ -174,18 +173,18 @@ def produceTimingDistributionPlotsSysEq(time_difference, category):
     
     omit_batch = False
     
-    osc1 = ["chan0", "chan1", "chan2", "chan3"]
-    sigma_convoluted = np.zeros((4,4))
-    sigma_error      = np.zeros((4,4))
+    channels_1st_oscilloscope   = ["chan0", "chan1", "chan2", "chan3"]
+    sigma_convoluted            = np.zeros((4,4))
+    sigma_convoluted_error      = np.zeros((4,4))
     
     # First loop, calculate the sigmas for each combination of time differences
-    for chan in osc1:
+    for chan in channels_1st_oscilloscope:
         md.setChannelName(chan)
     
         print md.getNameOfSensor(chan), "\n"
         
         # Do not consider the same channel when comparing two
-        chan2_list = list(osc1)
+        chan2_list = list(channels_1st_oscilloscope)
         chan2_list.remove(chan)
         
         # Create TH1 object
@@ -235,16 +234,16 @@ def produceTimingDistributionPlotsSysEq(time_difference, category):
            
                 # Get sigma between two channels
                 sigma_convoluted[i][j] = sigma_convoluted[j][i] = fit_function.GetParameter(2)
-                sigma_error[i][j] = sigma_error[j][i] = fit_function.GetParError(2)
+                sigma_convoluted_error[i][j] = sigma_convoluted_error[j][i] = fit_function.GetParError(2)
             
             except:
             
                 sigma_convoluted[i][j] = sigma_convoluted[j][i] = 0
-                sigma_error[i][j] = sigma_error[j][i] = 0
+                sigma_convoluted_error[i][j] = sigma_convoluted_error[j][i] = 0
 
     # Second loop, check if all combined plots have at least 1000 entries
     
-    for chan in osc1:
+    for chan in channels_1st_oscilloscope:
     
         md.setChannelName(chan)
         
@@ -252,7 +251,7 @@ def produceTimingDistributionPlotsSysEq(time_difference, category):
             break
         
         # Do not consider the same channel when comparing two
-        chan2_list = list(osc1)
+        chan2_list = list(channels_1st_oscilloscope)
         chan2_list.remove(chan)
         
         for chan2 in chan2_list:
@@ -271,10 +270,10 @@ def produceTimingDistributionPlotsSysEq(time_difference, category):
 
     # Solve the system
     if not omit_batch:
-        sigmas_chan, sigmas_error = t_calc.solveLinearEq(sigma_convoluted, sigma_error)
+        sigmas_chan, sigmas_error = t_calc.solveSystemOfEqs(sigma_convoluted, sigma_convoluted_error)
 
     # Third loop, print the graphs together with the solutions
-    for chan in osc1:
+    for chan in channels_1st_oscilloscope:
     
         md.setChannelName(chan)
         
@@ -282,7 +281,7 @@ def produceTimingDistributionPlotsSysEq(time_difference, category):
         if omit_batch:
             break
     
-        chan2_list = list(osc1)
+        chan2_list = list(channels_1st_oscilloscope)
         chan2_list.remove(chan)
         
         dt = ([(category, '<f8')])
@@ -302,8 +301,8 @@ def produceTimingDistributionPlotsSysEq(time_difference, category):
         
 
             index = int(chan[-1]) % 4
-            sigma_DUT = sigmas_chan.item((0, index))
-            sigma_DUT_error = sigmas_error.item((0, index))
+            sigma_DUT = sigmas_chan[index]
+            sigma_DUT_error = sigmas_error[index]
 
             titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
             exportTHPlot(time_diff_th1d[chan][chan2], titles, chan, [sigma_DUT, sigma_DUT_error])

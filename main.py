@@ -46,24 +46,24 @@ def main():
     
     ########### PULSE ################
 
-    pulse_main.pulseAnalysis() # This is a long procedure function
-    pulse_plot.pulsePlots()
+    #pulse_main.pulseAnalysis() # This is a long procedure function
+    #pulse_plot.pulsePlots()
 
     
     ####### TIMING RESOLUTION ########
     
-    timing.timingAnalysis()
+    #timing.timingAnalysis()
     timing_plot.timingPlots()
 
     
     ######### TRACKING  ##############
     
-    tracking.trackingAnalysis() # Considers batches with > 4 runs.
+    #tracking.trackingAnalysis() # Considers batches with > 4 runs.
     
 
     ########### RESULTS ##############
     
-    results.produceResults()
+    #results.produceResults()
 
    
     dm.printTime()

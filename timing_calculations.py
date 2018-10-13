@@ -3,6 +3,9 @@ import numpy as np
 
 import run_log_metadata as md
 
+# Define non-singular matrix with its inverse
+matrix = np.array([[1, 0, 0, 1], [0, 1, 1, 0], [0, 0, 1, 1], [0, 1, 0, 1]])
+matrix_inv = np.linalg.inv(matrix)
 
 def getTimeDifferencePerRun(time_location):
     
@@ -32,11 +35,11 @@ def getTimeDifferencePerRunSysEq(time_location):
     
     time_difference = np.zeros(len(time_location), dtype = dt)
     
-    osc1 = ["chan0", "chan1", "chan2", "chan3"]
+    channels_1st_oscilloscope = ["chan0", "chan1", "chan2", "chan3"]
 
-    for chan in osc1:
+    for chan in channels_1st_oscilloscope:
     
-        chan2_list = list(osc1)
+        chan2_list = list(channels_1st_oscilloscope)
         chan2_list.remove(chan)
         for event in range(0, len(time_location[chan])):
             
@@ -54,27 +57,28 @@ def getTimeDifferencePerRunSysEq(time_location):
     return time_difference
 
 
-# The input is of the convoluted form, that is \sigma_{ij} (here the DUT and the SiPM) and the
-# corresponding errors, that is \Delta\sigma_{ij}
-# Output are the solutions for the individual widths, \sigma_{k} and
-# the corresponding errors, \Delta\sigma_{k}, where k is the connected LGAD in
-# the oscilloscope (up to four different)
-def solveLinearEq(sigmas, sigmas_error):
+# The input is two matrices, one with widths (\sigma_{ij}) of time difference graphs between sensor i and j and
+# corresponding errors from the fits (\Delta\sigma_{ij}).
+# The output is the width of sensor i (\sigma_i) and corresponding error (\Delta\sigma{i}). All values in [ps].
+# The function solves the equation according to (4.3) in report.
+def solveSystemOfEqs(sigma_convoluted_matrix, error_convoluted_matrix): #solveLinearEq
 
-    # Non-singular matrix selected
-    matrix = np.matrix([[1, 0, 0, 1], [0, 1, 1, 0], [0, 0, 1, 1], [0, 1, 0, 1]])
-    matrix_inverse = np.linalg.inv(matrix)
+    # Get \sigma_{i}
+    sigma_convoluted_squared = np.power(matrix.dot(sigma_convoluted_matrix).diagonal(), 2)
+    sigma_squared = matrix_inv.dot(sigma_convoluted_squared)
+    sigma = np.sqrt(sigma_squared)
+ 
+    # Note, the error is of the form
+    # \sigma_{ij}^2 \cdot (\Delta\sigma_{ij})^2 =
+    # \sigma_{i}^2 \cdot (\Delta\sigma_{i})^2 + \sigma_{j}^2 \cdot (\Delta\sigma_{j})^2
     
-    sigma_vector = np.power(np.array([sigmas[0][3], sigmas[1][2], sigmas[2][3], sigmas[1][3]]), 2)
-    sigma_vector_error = np.power(np.array([sigmas_error[0][3], sigmas_error[1][2], sigmas_error[2][3], sigmas_error[1][3]]), 2)
-    
-    
-    sigma_chan_squared = matrix_inverse.dot(sigma_vector)
-    sigma_chan = np.sqrt(sigma_chan_squared)
-    sigma_chan_error = np.sqrt(np.divide(sigma_chan_squared.dot(sigma_vector_error), sigma_chan_squared))
-    
-    
-    return sigma_chan, sigma_chan_error
+    # Get \Delta\sigma_{i}
+    sigma_error_convoluted_squared = np.power(matrix.dot(error_convoluted_matrix).diagonal(), 2)
+    sigma_times_error_convoluted_squared = np.multiply(sigma_convoluted_squared, sigma_error_convoluted_squared)
+    sigma_times_error_squared = matrix_inv.dot(sigma_times_error_convoluted_squared)
+    error = np.divide(np.sqrt(sigma_times_error_squared), sigma)
+
+    return sigma, error
 
 
 def getSigmasFromFit(th1d_list, window_range, chan):
@@ -118,9 +122,9 @@ def getSigmasFromFit(th1d_list, window_range, chan):
             sigma_number = 3
             mean_number = 2
 
-        sigma_fit = abs(th1d_list.GetFunction("gaus_fit").GetParameter(sigma_number))
+        sigma_fit       = th1d_list.GetFunction("gaus_fit").GetParameter(sigma_number)
         sigma_fit_error = th1d_list.GetFunction("gaus_fit").GetParError(sigma_number)
-        time_diff_mean = th1d_list.GetFunction("gaus_fit").GetParameter(mean_number)
+        time_diff_mean  = th1d_list.GetFunction("gaus_fit").GetParameter(mean_number)
     
         if sigma_fit > sigma_SiPM:
             sigma_DUT = np.sqrt(np.power(sigma_fit, 2) - np.power(sigma_SiPM, 2))
