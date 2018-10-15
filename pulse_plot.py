@@ -30,10 +30,7 @@ def pulsePlots():
         runNumbers = md.getAllRunNumbers(batchNumber)
         
         numpy_arrays = [np.empty(0, dtype = dm.getDTYPE(batchNumber)) for _ in range(len(p_main.var_names))]
-        
-        if md.limitRunNumbers != 0:
-            runNumbers = runNumbers[0:md.limitRunNumbers] # Restrict to some run numbers
-    
+ 
         for runNumber in runNumbers:
             
             md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))

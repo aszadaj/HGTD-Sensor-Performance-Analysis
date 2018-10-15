@@ -12,7 +12,7 @@ ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
 canvas = ROOT.TCanvas("Timing", "timing")
 
 # Range and bins for the window for TH1 objects
-xbins = 2000
+xbins = 2000 # default 2000
 bin_range = 15000
 window_range = 1000
 
@@ -36,9 +36,6 @@ def timingPlots():
         numpy_arrays.append(np.empty(0, dtype = t_calc.getDTYPESysEq()))
 
         var_names = ["linear", "linear_cfd", "system", "system_cfd"]
-        
-        if md.limitRunNumbers != 0:
-            runNumbers = runNumbers[0:md.limitRunNumbers] # Restrict to some run numbers
     
         for runNumber in runNumbers:
         
@@ -215,7 +212,7 @@ def produceTimingDistributionPlotsSysEq(time_difference, category):
             time_diff_th1d[chan][chan2].SetAxisRange(xMin, xMax)
 
             # Redefine range for the fit
-            N = 2
+            N = 3
             sigma_window = time_diff_th1d[chan][chan2].GetStdDev()
             mean_window = time_diff_th1d[chan][chan2].GetMean()
             xMin = mean_window - N * sigma_window
@@ -224,17 +221,15 @@ def produceTimingDistributionPlotsSysEq(time_difference, category):
             # Obtain the parameters
             time_diff_th1d[chan][chan2].Fit("gaus", "Q", "", xMin, xMax)
             fit_function = time_diff_th1d[chan][chan2].GetFunction("gaus")
-            
-            # set a condition to set less than 1500 entries, since the function will not work, check will not work
-            
+          
             i = int(chan[-1]) % 4
             j = int(chan2[-1]) % 4
             
             try:
            
                 # Get sigma between two channels
-                sigma_convoluted[i][j] = sigma_convoluted[j][i] = fit_function.GetParameter(2)
-                sigma_convoluted_error[i][j] = sigma_convoluted_error[j][i] = fit_function.GetParError(2)
+                sigma_convoluted[i][j]  = fit_function.GetParameter(2)
+                sigma_convoluted_error[i][j] = fit_function.GetParError(2)
             
             except:
             

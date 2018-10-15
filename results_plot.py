@@ -2,14 +2,14 @@ import ROOT
 
 import run_log_metadata as md
 import data_management as dm
-import results_main as rm
+import results_calculations as r_calc
 
 
 def addValuesToGraph(variables):
     
     [sensor_data, category, legend_graph, graph, category_graph] = [i for i in variables]
     
-    for DUT_pos in md.availableDUTPositions(rm.processed_sensor):
+    for DUT_pos in md.availableDUTPositions(r_calc.processed_sensor):
         
         if DUT_pos in ["3_0", "3_1", "3_3", "8_1", "7_2", "7_3"]:
             continue
@@ -26,25 +26,24 @@ def addValuesToGraph(variables):
                 if category == "charge":
                     constant = 1./(0.46) # Divide by MIP charge = Gain
             
-                graph[rm.processed_sensor][temperature][DUT_pos].SetPoint(i, data[0], data[1][0] * constant)
-                graph[rm.processed_sensor][temperature][DUT_pos].SetPointError(i, 0, data[1][1] * constant)
+                graph[r_calc.processed_sensor][temperature][DUT_pos].SetPoint(i, data[0], data[1][0] * constant)
+                graph[r_calc.processed_sensor][temperature][DUT_pos].SetPointError(i, 0, data[1][1] * constant)
                 
                 i += 1
             
-            if graph[rm.processed_sensor][temperature][DUT_pos].GetN() != 0:
-                category_graph.Add(graph[rm.processed_sensor][temperature][DUT_pos])
+            if graph[r_calc.processed_sensor][temperature][DUT_pos].GetN() != 0:
+                category_graph.Add(graph[r_calc.processed_sensor][temperature][DUT_pos])
 
-                if rm.oneSensorInLegend:
-                    legend_graph.AddEntry(graph[rm.processed_sensor][temperature][DUT_pos], rm.processed_sensor, "p")
+                if r_calc.oneSensorInLegend:
+                    legend_graph.AddEntry(graph[r_calc.processed_sensor][temperature][DUT_pos], r_calc.processed_sensor, "p")
                 
-                rm.oneSensorInLegend = False
+                r_calc.oneSensorInLegend = False
 
 
-def drawAndExportResults(category, category_graph, legend_graph):
+def drawAndExportResults(category, category_graph, legend_graph, zoom):
 
     # The zoom option creates plots for the region \sigma < 100 ps and gain < 100. Also
     # put in a separate folder
-    zoom = True
     
     drawOpt = "AP"
     
@@ -54,13 +53,13 @@ def drawAndExportResults(category, category_graph, legend_graph):
     
     category_graph.Draw(drawOpt)
     positions_latex = setGraphAttributes(category_graph, category, zoom)
-    rm.canvas.Update()
+    r_calc.canvas.Update()
     legend_graph.Draw()
     
     if category == "charge":
         charge_mip = 0.46
         xmin = 0
-        xmax = rm.bias_voltage_max
+        xmax = r_calc.bias_voltage_max
         ymin = 0.01
         ymax = category_graph.GetHistogram().GetMaximum()
         new_axis = ROOT.TGaxis(xmax,ymin,xmax,ymax,ymin,int(ymax*charge_mip),510,"+L")
@@ -89,7 +88,7 @@ def drawAndExportResults(category, category_graph, legend_graph):
     else:
         fileName = dm.getSourceFolderPath() + dm.getResultsPlotSourceDataPath() +"/" + category + "_results.pdf"
     
-    rm.canvas.Print(fileName)
+    r_calc.canvas.Print(fileName)
 
 
 def setGraphAttributes(category_graph, category, zoom):
@@ -184,11 +183,11 @@ def setGraphAttributes(category_graph, category, zoom):
         
 
     if category.find("gain") != -1:
-        rm.bias_voltage_max = 500
+        r_calc.bias_voltage_max = 500
     
         if zoom:
             timing_res_max = 100
-            rm.bias_voltage_max = 100
+            r_calc.bias_voltage_max = 100
 
 
     if category.find("linear") != -1 or category.find("system") != -1:
@@ -197,7 +196,7 @@ def setGraphAttributes(category_graph, category, zoom):
         y_lim = [0, timing_res_max]
 
     elif category.find("noise") != -1:
-        rm.bias_voltage_max = 500
+        r_calc.bias_voltage_max = 500
         positions_latex = [[.7, .55], [.7, .5], [.7, .45], [.7, .4]]
 
     elif category.find("peak_value") != -1:
@@ -213,18 +212,18 @@ def setGraphAttributes(category_graph, category, zoom):
     category_graph.GetXaxis().SetTitle(xTitle)
     category_graph.GetYaxis().SetTitle(yTitle)
 
-    category_graph.GetXaxis().SetLimits(0, rm.bias_voltage_max)
+    category_graph.GetXaxis().SetLimits(0, r_calc.bias_voltage_max)
     category_graph.SetMinimum(y_lim[0])
     category_graph.SetMaximum(y_lim[1])
 
-    rm.bias_voltage_max = 350
+    r_calc.bias_voltage_max = 350
 
     return positions_latex
 
 
 def setMarkerType(graph, pos, temperature):
 
-    sensor = rm.processed_sensor
+    sensor = r_calc.processed_sensor
     
     size = 1
     

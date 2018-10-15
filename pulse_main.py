@@ -30,7 +30,7 @@ def pulseAnalysis():
     for runLog in runLog_batch:
     
          # Restrict to some run numbers
-        if md.limitRunNumbers != 0:
+        if md.limitRunNumbers != "all":
             runLog = runLog[0:md.limitRunNumbers]
     
         startTimeBatch = dm.getTime()

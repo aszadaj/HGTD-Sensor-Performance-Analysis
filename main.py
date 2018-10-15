@@ -19,21 +19,20 @@
 #                                                                        #
 ##########################################################################
 
-import pulse_main
+import pulse_main as pulse
 import pulse_plot
-import tracking_main as tracking
-import timing_main as timing
+import timing_calculations as timing
 import timing_plot
-import results_main as results
-
+import tracking_calculations as tracking
+import results_calculations as results
 import run_log_metadata as md
 import data_management as dm
 
 
 def main():
 
-    # Limit number of runs within a batch (works for pulse analysis)
-    number_of_runs = 0
+    # Limit number of runs within a batch or consider "all" (works for pulse analysis).
+    number_of_runs = "all"
     
     # Choose batches to run. "all" or e.g. [101, 102].
     batches = [102]
@@ -46,14 +45,14 @@ def main():
     
     ########### PULSE ################
 
-    #pulse_main.pulseAnalysis() # This is a long procedure function
+    pulse.pulseAnalysis() # This is a long procedure function, creates files for other methods
     #pulse_plot.pulsePlots()
 
     
     ####### TIMING RESOLUTION ########
     
-    #timing.timingAnalysis()
-    timing_plot.timingPlots()
+    #timing.createTimingFiles() # Creates files for timingPlots()
+    #timing_plot.timingPlots()
 
     
     ######### TRACKING  ##############

@@ -5,6 +5,8 @@ import run_log_metadata as md
 import data_management as dm
 import tracking_calculations as t_calc
 
+ROOT.gROOT.SetBatch(True)
+
 n_div = 10                  # Number of ticks on Z-axis
 percentage_efficiency = 80  # Limit the lower percentage
 timing_res_max = 100        # Z-axis limit for timing resolution graph
@@ -15,7 +17,7 @@ rise_time_max = 1000        # Z-axis limit for rise time graph
 ROOT.gStyle.SetPalette(1)
 ROOT.gStyle.SetNumberContours(5*n_div)
 
-def produceTrackingGraphs(peak_values, gain, rise_times, time_difference_peak, time_difference_cfd, tracking):
+def trackingPlots(peak_values, gain, rise_times, time_difference_peak, time_difference_cfd, tracking):
    
     global canvas, canvas_projection
     global glob_variables
@@ -179,7 +181,7 @@ def produceTProfilePlots(numpy_arrays, tracking):
     
     
     fill = False
-    # Fill all objects except timing resolution (will be dealt later)
+    # Fill all objects except timing resolution
     for event in range(0, len(tracking)):
         if (-distance_x < tracking['X'][event] < distance_x) and (-distance_y < tracking['Y'][event] < distance_y):
             for index in range(0, len(numpy_arrays)):
@@ -196,7 +198,6 @@ def produceTProfilePlots(numpy_arrays, tracking):
                     if fill:
                         TH2_objects_fill[index].Fill(tracking['X'][event], tracking['Y'][event], numpy_arrays[index][event])
                         fill = False
-
 
 
     # Remove bins with few entries
@@ -305,10 +306,10 @@ def produceEfficiencyPlot(peak_values, tracking):
     # Set up parameters for the projection objects. Projection Y have same limits to preserve same window
     projectionX_th1d = ROOT.TProfile("Projection X", "projection x", xbin,-distance_x,distance_x)
     
-    # Projection Y have extended limits (with larger bin number) to preserve the same length of the window,
-    # for better comparison with projection X. The window is then reduced to match the bin number
+    # Projection Y have extended limits (with larger bin number)
+    # to preserve the same length of the window, for better comparison with projection X.
+    # The window is then reduced to match the bin number
     projectionY_th1d = ROOT.TProfile("Projection Y", "projection y", xbin,-distance_x,distance_x)
-    projectionY_th1d.SetAxisRange(-distance_y, distance_y, "X")
 
     distance_projection, center_positions = t_calc.findSelectionRange()
     
@@ -323,10 +324,10 @@ def produceEfficiencyPlot(peak_values, tracking):
     bin_limits = np.array([bin_x_low, bin_x_high, bin_y_low, bin_y_high])
     
     efficiency_bulk_data = np.array([])
-    
+
     # Loop through each bin, to obtain inefficiency, and fill projection objects
-    for i in range(1, xbin+1): # Avoid underflow and overflow bins!
-        for j in range(1, ybin+1): # Avoid underflow and overflow bins!
+    for i in range(1, xbin+1):
+        for j in range(1, ybin+1):
             
             bin = efficiency_TH2D.GetBin(i,j)
             eff = efficiency_TH2D.GetBinContent(bin)
@@ -352,6 +353,8 @@ def produceEfficiencyPlot(peak_values, tracking):
                 x = LGAD_th2d.GetXaxis().GetBinCenter(i)
                 projectionX_th1d.Fill(x, eff)
 
+
+
     efficiency_bulk = [np.mean(efficiency_bulk_data), np.std(efficiency_bulk_data)]
     dm.exportImportROOTData("tracking", "efficiency", np.array(efficiency_bulk))
 
@@ -366,7 +369,6 @@ def produceEfficiencyPlot(peak_values, tracking):
     
     inefficiency_TH2D.SetAxisRange(0, 100-percentage_efficiency, "Z")
     printTHPlot(inefficiency_TH2D, totalEntries)
-
 
     # Create projection plots for single pad only
     produceProjectionPlots(projectionX_th1d, projectionY_th1d, center_positions)
@@ -384,17 +386,13 @@ def produceEfficiencyPlot(peak_values, tracking):
 
 def produceProjectionPlots(projectionX_th1d, projectionY_th1d, center_positions):
 
-    # Extend the projection y window, if not in an array pad.
-    if not md.checkIfArrayPad(chan):
-        projectionY_th1d.SetAxisRange(-glob_variables[0], glob_variables[0], "X")
-
     headTitle = "Projection of X-axis of efficiency 2D plot - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"+ "; X [\mum] ; Efficiency (%)"
     fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getNameOfSensor(chan)+"/tracking/projection/tracking_projectionX_efficiency_" + str(md.getBatchNumber()) +"_" + chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
 
+    
     sigmas = createProjectionFit(projectionX_th1d, center_positions[0])
     printProjectionPlot(projectionX_th1d, headTitle, fileName, sigmas)
-    
-    
+   
     headTitle = headTitle.replace("X-axis", "Y-axis")
     headTitle = headTitle.replace("X [\mum]", "Y [\mum]")
     fileName = fileName.replace("projectionX", "projectionY")
@@ -404,28 +402,20 @@ def produceProjectionPlots(projectionX_th1d, projectionY_th1d, center_positions)
 
 
 def createProjectionFit(projection_th1d, center_position):
-
+    
     separation_distance = 600
-    approx_width_projection = 10
+    approx_steepness = 10
     amplitude_efficiency = 100
-
-    formula_fit_left = "[0]*(1/(1+TMath::Exp(([1]-x)/[2)))"
-    formula_fit_right = "[0]*(1/(1+TMath::Exp((x-[1])/[2])))"
     
     # Left and right limits for the sensor
     left_position = center_position - separation_distance
     right_position = center_position + separation_distance
 
-    # Start parameters for the sigmoid fit
-    formula_fit_left = "[0]*(1/(1+TMath::Exp(([1]-x)/[2)))"
-    formula_fit_right = "[0]*(1/(1+TMath::Exp((x-[1])/[2])))"
-
-
-    fit_sigmoid_left = ROOT.TF1("sigmoid_left", formula_fit_left, left_position, center_position)
-    fit_sigmoid_left.SetParameters(amplitude_efficiency, left_position, approx_width_projection)
+    fit_sigmoid_left = ROOT.TF1("sigmoid_left", "[0]/(1+TMath::Exp(([1]-x)/[2]))", left_position, center_position)
+    fit_sigmoid_left.SetParameters(amplitude_efficiency, left_position, approx_steepness)
     
-    fit_sigmoid_right = ROOT.TF1("sigmoid_right", formula_fit_right, center_position, right_position)
-    fit_sigmoid_right.SetParameters(amplitude_efficiency, right_position, approx_width_projection)
+    fit_sigmoid_right = ROOT.TF1("sigmoid_right", "[0]/(1+TMath::Exp((x-[1])/[2]))", center_position, right_position)
+    fit_sigmoid_right.SetParameters(amplitude_efficiency, right_position, approx_steepness)
     
     projection_th1d.Fit("sigmoid_left", "QR")
     projection_th1d.Fit("sigmoid_right", "QR+")

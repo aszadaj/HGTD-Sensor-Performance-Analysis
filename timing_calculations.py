@@ -1,11 +1,63 @@
 import ROOT
 import numpy as np
+import itertools as it
 
+import data_management as dm
 import run_log_metadata as md
 
-# Define non-singular matrix with its inverse
-matrix = np.array([[1, 0, 0, 1], [0, 1, 1, 0], [0, 0, 1, 1], [0, 1, 0, 1]])
-matrix_inv = np.linalg.inv(matrix)
+# The function imports pulse files and creates timing resolution files with
+# time differences used for timingPlots and trackingAnalysis.
+def createTimingFiles():
+    
+    ROOT.gROOT.SetBatch(True)
+    
+    dm.setFunctionAnalysis("timing_analysis")
+    dm.defineDataFolderPath()
+    
+    runLog_batch = md.getRunLogBatches(md.batchNumbers)
+    print "\nStart TIMING RESOLUTION analysis, batches:", md.batchNumbers
+    
+    for runLog in runLog_batch:
+        
+        print "Batch:", runLog[0][5], len(runLog), "run files.\n"
+        
+        for index in range(0, len(runLog)):
+            
+            md.defineGlobalVariableRun(runLog[index])
+            
+            if not dm.checkIfFileAvailable():
+                continue
+        
+            print "Run", md.getRunNumber()
+            
+            # Import files per run
+            peak_time = dm.exportImportROOTData("pulse", "peak_time")
+            cfd = dm.exportImportROOTData("pulse", "cfd")
+            
+            # Perform linear calculations
+            time_diff_peak = getTimeDifferencePerRun(peak_time)
+            time_diff_cfd = getTimeDifferencePerRun(cfd)
+            
+            # Export per run number linear
+            dm.exportImportROOTData("timing", "linear", time_diff_peak)
+            dm.exportImportROOTData("timing", "linear_cfd", time_diff_cfd)
+            
+            if md.getBatchNumber()/100 != 6:
+                # Perform calculations sys eq
+                time_diff_peak_sys_eq = getTimeDifferencePerRunSysEq(peak_time)
+                time_diff_cfd_sys_eq = getTimeDifferencePerRunSysEq(cfd)
+                
+                # Export per run number sys eq
+                dm.exportImportROOTData("timing", "system", time_diff_peak_sys_eq)
+                dm.exportImportROOTData("timing", "system_cfd", time_diff_cfd_sys_eq)
+                    
+                print "Done with run", md.getRunNumber(), "\n"
+                        
+        print "Done with batch", runLog[0][5], "\n"
+
+    print "Done with TIMING RESOLUTION analysis\n"
+
+
 
 def getTimeDifferencePerRun(time_location):
     
@@ -61,24 +113,39 @@ def getTimeDifferencePerRunSysEq(time_location):
 # corresponding errors from the fits (\Delta\sigma_{ij}).
 # The output is the width of sensor i (\sigma_i) and corresponding error (\Delta\sigma{i}). All values in [ps].
 # The function solves the equation according to (4.3) in report.
-def solveSystemOfEqs(sigma_convoluted_matrix, error_convoluted_matrix): #solveLinearEq
-
-    # Get \sigma_{i}
-    sigma_convoluted_squared = np.power(matrix.dot(sigma_convoluted_matrix).diagonal(), 2)
-    sigma_squared = matrix_inv.dot(sigma_convoluted_squared)
-    sigma = np.sqrt(sigma_squared)
- 
-    # Note, the error is of the form
-    # \sigma_{ij}^2 \cdot (\Delta\sigma_{ij})^2 =
-    # \sigma_{i}^2 \cdot (\Delta\sigma_{i})^2 + \sigma_{j}^2 \cdot (\Delta\sigma_{j})^2
+def solveSystemOfEqs(sigma_convoluted_matrix, error_convoluted_matrix):
     
-    # Get \Delta\sigma_{i}
-    sigma_error_convoluted_squared = np.power(matrix.dot(error_convoluted_matrix).diagonal(), 2)
-    sigma_times_error_convoluted_squared = np.multiply(sigma_convoluted_squared, sigma_error_convoluted_squared)
-    sigma_times_error_squared = matrix_inv.dot(sigma_times_error_convoluted_squared)
-    error = np.divide(np.sqrt(sigma_times_error_squared), sigma)
+    matrices, inverses = possibleMatrices()
+    
+    check_sum = np.inf
+    
+    for index in range(0, len(matrices)):
+        
+        matrix = matrices[index]
+        matrix_inv = inverses[index]
+        
+        # Get \sigma_{i}
+        sigma_convoluted_squared = np.power(matrix.dot(sigma_convoluted_matrix).diagonal(), 2)
+        sigma_squared = matrix_inv.dot(sigma_convoluted_squared)
+        
+        if np.any(sigma_squared < 0):
+            continue
+        
+        sigma_solution = np.sqrt(sigma_squared)
+        
+        # Get \Delta\sigma_{i}, note that the errors cannot be subtracted
+        error_convoluted = matrix.dot(error_convoluted_matrix).diagonal()
+        error_solution = abs(matrix_inv).dot(error_convoluted)
+        
+        # Select the solution with the smallest sum of timing resolutions
+        if check_sum > np.sum(sigma_solution):
+            sigma = sigma_solution
+            error = error_solution
+            check_sum = np.sum(sigma_solution)
+
 
     return sigma, error
+
 
 
 def getSigmasFromFit(th1d_list, window_range, chan):
@@ -112,9 +179,8 @@ def getSigmasFromFit(th1d_list, window_range, chan):
         fit_function.SetParNames("Constant 1", "Constant 2", "Mean 1", "\sigma_{tot}")
 
     try:
-        # Create fit and calculate the width
-        th1d_list.Fit("gaus_fit", "Q", "", xMin, xMax)
-        sigma_SiPM = md.getSigmaSiPM()
+
+        
         if md.checkIfSameOscAsSiPM(chan):
             sigma_number = 2
             mean_number = 1
@@ -122,10 +188,16 @@ def getSigmasFromFit(th1d_list, window_range, chan):
             sigma_number = 3
             mean_number = 2
 
-        sigma_fit       = th1d_list.GetFunction("gaus_fit").GetParameter(sigma_number)
-        sigma_fit_error = th1d_list.GetFunction("gaus_fit").GetParError(sigma_number)
-        time_diff_mean  = th1d_list.GetFunction("gaus_fit").GetParameter(mean_number)
-    
+        # Create fit and calculate the width
+        th1d_list.Fit("gaus_fit", "Q", "", xMin, xMax)
+        th1_function = th1d_list.GetFunction("gaus_fit")
+
+        sigma_fit       = th1_function.GetParameter(sigma_number)
+        sigma_fit_error = th1_function.GetParError(sigma_number)
+        time_diff_mean  = th1_function.GetParameter(mean_number)
+
+        sigma_SiPM = md.getSigmaSiPM()
+
         if sigma_fit > sigma_SiPM:
             sigma_DUT = np.sqrt(np.power(sigma_fit, 2) - np.power(sigma_SiPM, 2))
 
@@ -146,3 +218,34 @@ def getSigmasFromFit(th1d_list, window_range, chan):
 def getDTYPESysEq():
 
     return (  [('chan0',  '<f8', (1,3)), ('chan1',  '<f8', (1,3)) ,('chan2',  '<f8', (1,3)) ,('chan3',  '<f8', (1,3))] )
+
+
+def possibleMatrices():
+    
+    # The arrays indicate the possible ways to extract the width between sensor i and j.
+    possible_combinations = np.array([ [1, 1, 0, 0], [1, 0, 1, 0], [1, 0, 0, 1], [0, 1, 1, 0], [0, 1, 0, 1], [0, 0, 1, 1] ])
+    
+    matrices = []
+    inverses = []
+    
+    for combination in list(it.permutations(possible_combinations,4)):
+
+        try:
+            matrix = np.array(combination)
+            inverse = np.linalg.inv(matrix)
+            
+            # Require that the matrix have diagonal elements
+            if np.sum(matrix.diagonal()) != 4:
+                continue
+
+            matrices.append(matrix)
+            inverses.append(inverse)
+
+        except:
+            continue
+                
+
+    return matrices, inverses
+
+
+
