@@ -9,7 +9,6 @@ import results_plot as r_plot
 def produceResults():
     
     global canvas
-    global oneSensorInLegend
     global processed_sensor
     global bias_voltage_max
     
@@ -21,7 +20,7 @@ def produceResults():
     canvas = ROOT.TCanvas("Results", "Results")
     dm.defineDataFolderPath()
     
-    sensorNames = md.getAllSensorNames()
+    sensorNames = ["50D-GBGR2", "W4-LG12", "W4-RD01", "W4-S203", "W4-S204_6e14", "W4-S215", "W4-S1022", "W4-S1061", "W9-LGA35"]
     
     if md.sensor != "":
         sensorNames = [md.sensor]
@@ -53,6 +52,10 @@ def produceResults():
             
             print processed_sensor
             
+            #md.defineRunInfo(md.getRowForBatchNumber(batchNumber))
+            md.defineRunInfo(md.getRowForRunNumber(getAllRunNumbers(batchNumber)[0]))
+            md.setChannelName(md.getChannelNameForSensor(processed_sensor))
+
             graph[processed_sensor] = dict()
             sensor_data = dict()
             
@@ -62,9 +65,7 @@ def produceResults():
                 graph[processed_sensor][temperature] = dict()
                 sensor_data[temperature] = dict()
                 
-                # availableDUTPositions(processed_sensor) consider only one pad so far.
-                
-                for DUT_pos in md.availableDUTPositions(processed_sensor):
+                for DUT_pos in availableDUTPositions(processed_sensor):
                     graph[processed_sensor][temperature][DUT_pos] = ROOT.TGraphErrors()
                     sensor_data[temperature][DUT_pos] = []
                     
@@ -75,7 +76,7 @@ def produceResults():
             importResultsValues(sensor_data, category)
 
             
-            addValuesToGraph([sensor_data, category, legend_graph, graph, category_graph])
+            r_plot.addValuesToGraph([sensor_data, category, legend_graph, graph, category_graph])
         
         
         
@@ -85,6 +86,8 @@ def produceResults():
 
 
 def importResultsValues(sensor_data, category):
+    
+    global oneSensorInLegend
 
     # Import results for the sensor and category
     files = readResultsDataFiles(category)
@@ -94,22 +97,23 @@ def importResultsValues(sensor_data, category):
     
         results = rnm.root2array(filePath)
         batchNumber, chan = getBatchNumberAndChanFromFile(filePath)
-        md.defineGlobalVariableRun(md.getRowForBatchNumber(batchNumber))
+        md.setChannelName(chan)
+        md.defineRunInfo(md.getRowForRunNumber(getAllRunNumbers(batchNumber)[0]))
         
         if omitBadData(batchNumber, category):
             continue
 
         value_error = [results[0][0], results[1][0]]
-        voltage = md.getBiasVoltage(processed_sensor, batchNumber)
+        voltage = md.getBiasVoltage()
         
         if (category.find("system") != -1 or category.find("linear") != -1) and category.find("gain") != -1:
-            md.setChannelName(chan)
+            
             gain = dm.exportImportROOTData("results", "charge")["charge"][0]/0.46
             voltage = int(gain) # this takes the even number of gain (to select better values)
         
         temperature = str(md.getTemperature())
         
-        DUT_pos = md.getDUTPos(processed_sensor, chan)
+        DUT_pos = md.getDUTPos()
       
         omitRun = False
     
@@ -191,3 +195,21 @@ def omitBadData(batch, category):
 
     return bool
 
+
+def availableDUTPositions(sensor):
+    
+    if sensor == "W4-S215":
+        
+        return ["3_0", "3_1", "3_2", "3_3"]
+
+    elif sensor == "W4-RD01":
+        
+        return ["8_1", "8_2"]
+
+elif sensor == "W4-S204_6e14":
+    
+    return ["7_0", "7_2", "7_3"]
+    
+    else:
+        
+        return md.getDUTPos()

@@ -18,7 +18,7 @@ def defineDataFolderPath():
 
 
     oscilloscopePath = sourceFolderPath + getOscillscopeSourceFolder() + "/"
-    #oscilloscopePath = "/Volumes/HDD500/oscilloscope_data_hgtd_tb_sep17/" # my local HDD
+    #oscilloscopePath = "/Volumes/HITACHI/oscilloscope_data_hgtd_tb_sep17/" # my local HDD
 
 
 # Export pulse data
@@ -37,23 +37,25 @@ def exportImportROOTData(group, category, data=np.empty(0)):
     if group != "timing" and group != "results" and category != "position" and data.size != 0:
         data = data.astype(getDTYPE())
 
-
     if group == "tracking":
+        
         if category == "tracking":
-            fileName = category+md.getTimeStamp()
+            fileName = category + md.getTimeStamp()
+        
         elif category == "efficiency":
-            fileName = category + "_" + str(md.getBatchNumber()) + "_" + md.getNameOfSensor(md.chan_name) + "_" + md.chan_name
+            fileName = category + "_" + str(md.getBatchNumber()) + "_" + md.getSensor() + "_" + md.chan_name
+
         else:
-            fileName = category+"_"+str(md.getBatchNumber())
+            fileName = category + "_" + str(md.getBatchNumber())
     else:
 
-        fileName = group+"_"+category+"_"+str(md.getRunNumber())
+        fileName = group + "_" + category + "_" + str(md.getRunNumber())
 
 
     dataPath = getSourceFolderPath() + getDataSourceFolder() + "/" + group + "/"
 
     if group == "results":
-        dataPath += md.getNameOfSensor(md.chan_name) + "/" + category + "/" + group+"_"+category+"_"+str(md.getBatchNumber()) + "_" + md.chan_name + ".root"
+        dataPath += md.getSensor() + "/" + category + "/" + group+"_"+category+"_"+str(md.getBatchNumber()) + "_" + md.chan_name + ".root"
 
     else:
         dataPath += category + "/" + fileName + ".root"
@@ -97,7 +99,6 @@ def readFileNames(group, category=""):
     # from a provided folder above, strips down non-integer characters and converts to integers.
     # The file is also checks if the file is readable and avoids .DS_Store-files typical for macOS.
 
-
     availableFiles = sorted([int(filter(lambda x: x.isdigit(), f)) for f in os.listdir(dataPath) if os.path.isfile(os.path.join(dataPath, f)) and f != '.DS_Store'])
 
     return availableFiles
@@ -107,7 +108,7 @@ def checkIfFileAvailable():
 
     found = False
 
-    if functionAnalysis == "noise_analysis" or functionAnalysis == "pulse_analysis" :
+    if functionAnalysis == "pulse_analysis" :
     
         files = readFileNames("oscilloscope")
 
@@ -126,7 +127,7 @@ def checkIfFileAvailable():
 
     elif functionAnalysis == "tracking_analysis":
 
-        files_peak_value    = readFileNames("pulse", "peak_value")
+        files_peak_value = readFileNames("pulse", "peak_value")
         files_tracking = readFileNames("tracking", "tracking")
 
         if int(md.getTimeStamp()) in files_tracking and int(md.getRunNumber()) in files_peak_value:
@@ -188,6 +189,16 @@ def getDTYPE(batchNumber = 0):
     return dtype
 
 
+def getDTYPETracking():
+    
+    return np.dtype( [('X', '<f4'), ('Y', '<f4')] )
+
+
+def getDTYPETrackingPosition():
+
+    return np.dtype([('chan0', '<f8', 2), ('chan1', '<f8', 2) ,('chan2', '<f8', 2) ,('chan3', '<f8', 2) ,('chan4', '<f8', 2) ,('chan5', '<f8', 2) ,('chan6', '<f8', 2) ,('chan7', '<f8', 2)])
+
+
 # Get actual time
 def getTime():
 
@@ -201,7 +212,6 @@ def printTime():
     print  "\nTime: " + str(time[:-7])
 
 
-
 def getResultsPlotSourceDataPath():
 
     return "results_plots_hgtd_tb_sep17"
@@ -211,13 +221,16 @@ def getPlotsSourceFolder():
 
     return "plots_hgtd_tb_sep17"
 
+
 def getDataSourceFolder():
 
      return "data_hgtd_tb_sep17"
 
+
 def getHistogramsSourceFolder():
 
     return getDataSourceFolder()+"/histograms_root_data"
+
 
 def getOscillscopeSourceFolder():
 
@@ -228,6 +241,7 @@ def getOscillscopeSourceFolder():
 def getSourceFolderPath():
 
     return sourceFolderPath
+
 
 def setFunctionAnalysis(function):
 

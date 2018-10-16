@@ -63,7 +63,7 @@ One can also choose which sensor to run with,
 
 which produces plots for selected sensor. This is ignored (where all sensors are considered) for functions which produces data files, that is  ```pulseAnalysis()``` and  ```timingAnalysis()```.
 
-Generally functions ```pulseAnalysis()``` and  ```timingAnalysis()``` exports data files which are used by plot functions and ```trackingAnalysis()```. Therefore to save time, one does not need to run them again.
+Generally functions ```pulseAnalysis()``` and  ```createTimingFiles()``` exports data files which are used by plot functions and ```trackingAnalysis()```. Therefore to save time, one does not need to run them again.
 One run file (MacBook Pro 2.8 GHz-i7 dual core 2013 four threads) takes approximatelly 5 mins and all 117 files about 10 hours. The time can be shortened in pulseAnalysis by increasing the variable ```threads = 4``` in ```pulse_main.py``` line 68.
 
 
@@ -92,9 +92,9 @@ The function receives produced files from the   ```pulseAnalysis()``` and concat
 
 
 
-# timingAnalysis() and timingPlots()
+# createTimingFiles() and timingPlots()
 
-  ```timingAnalysis() - method```
+  ```createTimingFiles() - method```
   
 This file imports ROOT files created with ```pulseAnalysis()``` with time location information. So both 'CFD' and 'peak time' are imported and then the time difference is calculated. There are two method of obtaining it,
   1. Linear - which is the time difference between the DUT and the SiPM

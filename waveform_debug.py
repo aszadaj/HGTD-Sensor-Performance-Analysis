@@ -31,9 +31,8 @@ def printWaveform(batchNumber, sensor, event = 0):
     
     # Define
     runNumber = md.getAllRunNumbers(batchNumber)[0]
-    md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
+    md.defineRunInfo(md.getRowForRunNumber(runNumber))
     dm.defineDataFolderPath()
-    md.defTimeScope()
     chan = md.getChannelNameForSensor(sensor)
     md.setChannelName(chan)
     dataPath = dm.getOscilloscopeFilePath()
@@ -64,7 +63,7 @@ def printWaveform(batchNumber, sensor, event = 0):
     
 
     # Set linear fit
-    timeScope = md.getTimeScope()
+    timeScope = 0.1
     noise, pedestal = p_calc.calculateNoiseAndPedestal(data)
     threshold = N * noise + pedestal
 
@@ -73,9 +72,9 @@ def printWaveform(batchNumber, sensor, event = 0):
     signal_limit_DUT = 0.3547959327697754
     point_difference = 2
     
-    rise_time, cfd, linear_fit, linear_fit_indices = p_calc.calculateRiseTime(data, pedestal, True)
-    peak_value, peak_time, poly_fit = p_calc.calculatePeakValue(data, pedestal, signal_limit_DUT, True)
-    point_count = p_calc.calculatePoints(data, threshold)
+    rise_time, cfd, linear_fit, linear_fit_indices = p_calc.calculateRiseTime(data, pedestal, timeScope, True)
+    peak_value, peak_time, poly_fit = p_calc.calculatePeakValue(data, pedestal, signal_limit_DUT, timeScope, True)
+    point_count = p_calc.calculatePoints(data, threshold, timeScope)
     charge = p_calc.calculateCharge(data, threshold)
     max_sample = np.amax(data) - pedestal
 
@@ -209,7 +208,7 @@ def printWaveform(batchNumber, sensor, event = 0):
 
     
     # Add the information to a legend box
-    #legend.AddEntry(graph_waveform, "Waveform " + md.getNameOfSensor(chan), "l")
+    #legend.AddEntry(graph_waveform, "Waveform " + md.getSensor(), "l")
     #legend.AddEntry(graph_peak_value, "Peak value: "+str(peak_value*1000)[:5]+" mV", "l")
     #legend.AddEntry(graph_linear_fit, "Rise time: "+str(rise_time*1000)[:5]+" ps", "l")
     #legend.AddEntry(graph_cfd, "CFD " + str(cfd)[0:4] + " ns", "l")
@@ -227,7 +226,7 @@ def printWaveform(batchNumber, sensor, event = 0):
 
     xAxisTitle = "Time [ns]"
     yAxisTitle = "Voltage [mV]"
-    headTitle = "Waveform " + md.getNameOfSensor(chan)
+    headTitle = "Waveform " + md.getSensor()
     multi_graph.Draw("ALP")
     #legend.Draw()
     multi_graph.SetTitle(headTitle)

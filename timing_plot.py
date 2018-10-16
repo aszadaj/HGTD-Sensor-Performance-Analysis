@@ -39,9 +39,9 @@ def timingPlots():
     
         for runNumber in runNumbers:
         
-            md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
+            md.defineRunInfo(md.getRowForRunNumber(runNumber))
             
-            if runNumber not in md.getRunsWithSensor(md.sensor) or runNumber in [3697, 3698, 3701]:
+            if runNumber not in md.getRunsWithSensor() or runNumber in [3697, 3698, 3701]:
                 continue
         
             for index in range(0, len(var_names)):
@@ -88,15 +88,16 @@ def produceTimingDistributionPlots(time_difference, category):
     time_diff_th1d = dict()
 
     for chan in time_difference.dtype.names:
+        
         md.setChannelName(chan)
 
         # Omit sensors which are not analyzed (defined in main.py)
-        if (md.getNameOfSensor(chan) != md.sensor and md.sensor != "") or md.getNameOfSensor(chan) == "SiPM-AFP":
+        if (md.getSensor() != md.sensor and md.sensor != "") or md.getSensor() == "SiPM-AFP":
             continue
         
-        print "\n", md.getNameOfSensor(chan), "\n"
+        print "\n", md.getSensor(), "\n"
 
-        time_diff_th1d[chan] = ROOT.TH1D("Time difference "+md.getNameOfSensor(chan), "time_difference" + chan, xbins, -bin_range, bin_range)
+        time_diff_th1d[chan] = ROOT.TH1D("Time difference "+md.getSensor(), "time_difference" + chan, xbins, -bin_range, bin_range)
      
         # Fill the objects, without cuts on the SiPM
         for entry in range(0, len(time_difference[chan])):
@@ -115,17 +116,17 @@ def produceTimingDistributionPlots(time_difference, category):
             else:
                 type = "peak reference"
                 
-            print "Omitting sensor", md.getNameOfSensor(chan), "for", type, "due to low statistics. \n"
+            print "Omitting sensor", md.getSensor(), "for", type, "due to low statistics. \n"
             
             continue
             
         sigma_DUT, sigma_fit_error, time_diff_mean = t_calc.getSigmasFromFit(time_diff_th1d[chan], window_range, chan)
 
         # Set titles and export file
-        headTitle = "Time difference SiPM and "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"
+        headTitle = "Time difference SiPM and "+md.getSensor()+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage()) + " V"
         xAxisTitle = "\Deltat [ps]"
         yAxisTitle = "Entries"
-        fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getNameOfSensor(chan)+"/timing/normal/peak/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_diff_osc_peak.pdf"
+        fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getSensor()+"/timing/normal/peak/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getSensor())+"_diff_osc_peak.pdf"
 
         if md.checkIfSameOscAsSiPM(chan):
             fileName = fileName.replace("diff_osc", "same_osc")
@@ -176,9 +177,10 @@ def produceTimingDistributionPlotsSysEq(time_difference, category):
     
     # First loop, calculate the sigmas for each combination of time differences
     for chan in channels_1st_oscilloscope:
+        
         md.setChannelName(chan)
     
-        print md.getNameOfSensor(chan), "\n"
+        print md.getSensor(), "\n"
         
         # Do not consider the same channel when comparing two
         chan2_list = list(channels_1st_oscilloscope)
@@ -258,7 +260,7 @@ def produceTimingDistributionPlotsSysEq(time_difference, category):
                 else:
                     type = "peak reference"
                 
-                print "Omitting batch", md.getBatchNumber(), "for", type, "time difference system plot for", md.getNameOfSensor(chan), "and", md.getNameOfSensor(chan2), "due to low statistics \n"
+                print "Omitting batch", md.getBatchNumber(), "for", type, "time difference system plot for", md.getSensor(), "and", md.getSensor(chan2), "due to low statistics \n"
                 omit_batch = True
                 break
                 
@@ -286,10 +288,10 @@ def produceTimingDistributionPlotsSysEq(time_difference, category):
         for chan2 in chan2_list:
 
             # Create titles and print the graph
-            headTitle = "Time difference "+md.getNameOfSensor(chan)+" and "+md.getNameOfSensor(chan2)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"
+            headTitle = "Time difference "+md.getSensor()+" and "+md.getSensor(chan2)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage()) + " V"
             xAxisTitle = "\Deltat [ps]"
             yAxisTitle = "Entries"
-            fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getNameOfSensor(chan)+"/timing/system/peak/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+"_and_"+str(md.getNameOfSensor(chan2))+"_peak.pdf"
+            fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getSensor()+"/timing/system/peak/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getSensor())+"_and_"+str(md.getSensor(chan2))+"_peak.pdf"
 
             if category.find("cfd") != -1:
                 fileName = fileName.replace("peak", "cfd")
@@ -330,7 +332,7 @@ def exportTHPlot(graphList, titles, chan, sigma):
     statsBox = canvas.GetPrimitive("stats")
     statsBox.SetName("Mystats")
     graphList.SetStats(0)
-    statsBox.AddText("\sigma_{"+md.getNameOfSensor(chan)+"} = "+str(sigma[0])[0:6] + " \pm " + str(sigma[1])[0:4])
+    statsBox.AddText("\sigma_{"+md.getSensor()+"} = "+str(sigma[0])[0:6] + " \pm " + str(sigma[1])[0:4])
     canvas.Modified()
     canvas.Update()
     

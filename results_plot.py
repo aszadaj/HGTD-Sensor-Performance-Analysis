@@ -9,7 +9,7 @@ def addValuesToGraph(variables):
     
     [sensor_data, category, legend_graph, graph, category_graph] = [i for i in variables]
     
-    for DUT_pos in md.availableDUTPositions(r_calc.processed_sensor):
+    for DUT_pos in r_calc.availableDUTPositions(r_calc.processed_sensor):
         
         if DUT_pos in ["3_0", "3_1", "3_3", "8_1", "7_2", "7_3"]:
             continue

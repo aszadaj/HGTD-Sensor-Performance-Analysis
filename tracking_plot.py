@@ -17,7 +17,10 @@ rise_time_max = 1000        # Z-axis limit for rise time graph
 ROOT.gStyle.SetPalette(1)
 ROOT.gStyle.SetNumberContours(5*n_div)
 
-def trackingPlots(peak_values, gain, rise_times, time_difference_peak, time_difference_cfd, tracking):
+def trackingPlots(numpy_arrays):
+    #def trackingPlots(peak_values, gain, rise_times, time_difference_peak, time_difference_cfd, tracking):
+   
+    [peak_values, gain, rise_times, time_difference_peak, time_difference_cfd, tracking] = [i for i in numpy_arrays]
    
     global canvas, canvas_projection
     global glob_variables
@@ -46,7 +49,7 @@ def trackingPlots(peak_values, gain, rise_times, time_difference_peak, time_diff
 
     createSinglePadGraphs(peak_values, gain, rise_times, time_difference_peak, time_difference_cfd, tracking)
 
-    # Create array pad graphs for all batches, except batch 80X
+    # Create array pad graphs for all batches
     if t_calc.sensorIsAnArrayPad():
         createArrayPadGraphs()
 
@@ -63,6 +66,7 @@ def createSinglePadGraphs(peak_values, gain, rise_times, time_difference_peak, t
     
     global chan
     global singlePadGraphs
+    
     singlePadGraphs = True
     
     # Produce single pad plots
@@ -70,10 +74,10 @@ def createSinglePadGraphs(peak_values, gain, rise_times, time_difference_peak, t
     
         md.setChannelName(chan)
         
-        if (md.getNameOfSensor(chan) != md.sensor and md.sensor != "") or md.getNameOfSensor(chan) == "SiPM-AFP":
+        if (md.getSensor() != md.sensor and md.sensor != "") or md.getSensor() == "SiPM-AFP":
             continue
     
-        print "\nSingle pad", md.getNameOfSensor(chan), "\n"
+        print "\nSingle pad", md.getSensor(), "\n"
 
         # This function requires a ROOT file which have the center positions for each pad
         tracking_chan = t_calc.changeCenterPositionSensor(np.copy(tracking))
@@ -106,6 +110,7 @@ def createArrayPadGraphs():
     ybin_timing = int(ybin/bin_timing_decrease)
 
     arrayPadChannels = t_calc.getArrayPadChannels()
+    
     chan = arrayPadChannels[0]
     md.setChannelName(chan)
 
@@ -122,7 +127,7 @@ def createArrayPadGraphs():
     
     TH2D_objects_list = [peak_value_mean_th2d, gain_mean_th2d, rise_time_mean_th2d, timing_peak_th2d, timing_cfd_th2d, efficiency_TH2D, inefficiency_TH2D]
 
-    print "\nArray Pad", md.getNameOfSensor(chan), "\n"
+    print "\nArray Pad", md.getSensor(), "\n"
     
     for TH2D_object in TH2D_objects_list:
         for index in range(0, len(arrayPadChannels)):
@@ -150,7 +155,7 @@ def produceTProfilePlots(numpy_arrays, tracking):
     [distance_x, distance_y, bin_entries_timing, bin_size, bin_entries, bin_timing_decrease, width_time_diff] = [i for i in glob_variables]
     
 
-    if md.checkIfArrayPad(chan):
+    if md.checkIfArrayPad():
     
         distance_x *= 2
         distance_y *= 2
@@ -242,7 +247,7 @@ def produceEfficiencyPlot(peak_values, tracking):
 
     [distance_x, distance_y, bin_entries_timing, bin_size, bin_entries, bin_timing_decrease, width_time_diff] = [i for i in glob_variables]
     
-    if md.checkIfArrayPad(chan):
+    if md.checkIfArrayPad():
     
         distance_x *= 2
         distance_y *= 2
@@ -386,8 +391,8 @@ def produceEfficiencyPlot(peak_values, tracking):
 
 def produceProjectionPlots(projectionX_th1d, projectionY_th1d, center_positions):
 
-    headTitle = "Projection of X-axis of efficiency 2D plot - "+md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"+ "; X [\mum] ; Efficiency (%)"
-    fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getNameOfSensor(chan)+"/tracking/projection/tracking_projectionX_efficiency_" + str(md.getBatchNumber()) +"_" + chan + "_"+str(md.getNameOfSensor(chan))+".pdf"
+    headTitle = "Projection of X-axis of efficiency 2D plot - "+md.getSensor()+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage()) + " V"+ "; X [\mum] ; Efficiency (%)"
+    fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getSensor()+"/tracking/projection/tracking_projectionX_efficiency_" + str(md.getBatchNumber()) +"_" + chan + "_"+str(md.getSensor())+".pdf"
 
     
     sigmas = createProjectionFit(projectionX_th1d, center_positions[0])
@@ -498,8 +503,9 @@ def printTHPlot(graphList, entries=0):
     if efficiency_bool:
     
         # This prints the selections for the efficiency bulk calculations
-        if md.checkIfArrayPad(md.chan_name) and t_calc.array_pad_export:
+        if md.checkIfArrayPad() and t_calc.array_pad_export:
             channels = t_calc.getArrayPadChannels()
+        
         else:
             channels = [md.chan_name]
     
@@ -518,7 +524,7 @@ def printTHPlot(graphList, entries=0):
             efficiency_text[chan_2] = ROOT.TLatex(center_position[0]-250,center_position[1],  "Eff = " + str(efficiency_bulk[chan_2][0])[0:5] + " \pm " + str(efficiency_bulk[chan_2][1])[0:4] + " %")
 
             efficiency_text[chan_2].SetNDC(False)
-            if md.checkIfArrayPad(md.chan_name):
+            if md.checkIfArrayPad():
                 efficiency_text[chan_2].SetTextSize(0.02)
             else:
                 efficiency_text[chan_2].SetTextSize(0.04)

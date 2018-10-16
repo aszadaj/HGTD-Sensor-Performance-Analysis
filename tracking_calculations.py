@@ -14,86 +14,46 @@ def trackingAnalysis():
     dm.setFunctionAnalysis("tracking_analysis")
     dm.defineDataFolderPath()
     startTime = dm.getTime()
-    runLog_batch = md.getRunLogBatches(md.batchNumbers)
 
     print "\nStart TRACKING analysis, batches:", md.batchNumbers
 
-    for runLog in runLog_batch:
+    for batchNumber in md.batchNumbers:
 
         startTimeBatch = dm.getTime()
+        runNumbers = md.getAllRunNumbers(batchNumber)
 
         # Set a condition of at least two run numbers to be analyzed
-        if len(runLog) < 3:
+        if len(runNumbers) < 3 or batchNumber == 203:
             continue
 
-        results_batch = []
+        var_names = [["pulse", "peak_value"], ["pulse", "charge"], ["pulse", "rise_time"], ["timing", "linear"], ["timing", "linear_cfd"]]
+        numpy_arrays = [np.empty(0, dtype = dm.getDTYPE(batchNumber)) for _ in range(len(var_names))]
+        numpy_arrays.append(np.empty(0, dtype = dm.getDTYPETracking()))
 
-        for index in range(0, len(runLog)):
+        for runNumber in runNumbers:
 
-            md.defineGlobalVariableRun(runLog[index])
-
-
-            # Batch 203 have desynched events between oscilloscope and tracking
-            if md.getBatchNumber() == 203:
-                continue
+            md.defineRunInfo(md.getRowForRunNumber(runNumber))
 
             if not dm.checkIfFileAvailable():
                 continue
-
-            peak_values_run = dm.exportImportROOTData("pulse", "peak_value")
-            charge_run = dm.exportImportROOTData("pulse", "charge")
-            rise_times_run = dm.exportImportROOTData("pulse", "rise_time")
-            time_difference_peak_run = dm.exportImportROOTData("timing", "linear")
-            time_difference_cfd_run = dm.exportImportROOTData("timing", "linear_cfd")
-
+        
             tracking_run = dm.exportImportROOTData("tracking", "tracking")
 
-            # Slice the peak values to match the tracking files
-            if len(peak_values_run) > len(tracking_run):
-
-                peak_values_run           = np.take(peak_values_run, np.arange(0, len(tracking_run)))
-                charge_run                = np.take(charge_run, np.arange(0, len(tracking_run)))
-                rise_times_run            = np.take(rise_times_run, np.arange(0, len(tracking_run)))
-                time_difference_peak_run  = np.take(time_difference_peak_run, np.arange(0, len(tracking_run)))
-                time_difference_cfd_run   = np.take(time_difference_cfd_run, np.arange(0, len(tracking_run)))
-
-            else:
-
-                tracking_run = np.take(tracking_run, np.arange(0, len(peak_values_run)))
+            # This strips the event number to match the ones with the tracking. It assumes that the tracking have fewer number of events than the oscilloscope events.
+            for index in range(0, len(var_names)):
+                numpy_arrays[index] = np.concatenate((numpy_arrays[index], np.take(dm.exportImportROOTData(var_names[index][0], var_names[index][1]), np.arange(0, len(tracking_run)))), axis=0)
+            
+            numpy_arrays[-1] = np.concatenate((numpy_arrays[-1], tracking_run), axis=0)
 
 
-            results_batch.append([peak_values_run, charge_run, rise_times_run, tracking_run, time_difference_peak_run, time_difference_cfd_run])
+        #calculateCenterOfSensorPerBatch(numpy_arrays[0], numpy_arrays[-1])
 
-        if len(results_batch) != 0:
-            print "\nProducing TRACKING plots for batch " + str(md.getBatchNumber()) + ".\n"
+        t_plot.trackingPlots(numpy_arrays)
+        
+        print "\nDone with batch", batchNumber, "Time analysing: "+str(md.dm.getTime()-startTimeBatch)+"\n"
 
-            peak_values          = np.empty(0, dtype=results_batch[0][0].dtype)
-            charge               = np.empty(0, dtype=results_batch[0][1].dtype)
-            rise_times           = np.empty(0, dtype=results_batch[0][2].dtype)
-            tracking             = np.empty(0, dtype=results_batch[0][3].dtype)
-            time_difference_peak = np.empty(0, dtype=results_batch[0][4].dtype)
-            time_difference_cfd  = np.empty(0, dtype=results_batch[0][5].dtype)
-
-            for results_run in results_batch:
-                peak_values          = np.concatenate((peak_values, results_run[0]), axis = 0)
-                charge               = np.concatenate((charge, results_run[1]), axis = 0)
-                rise_times           = np.concatenate((rise_times,  results_run[2]), axis = 0)
-                tracking             = np.concatenate((tracking,  results_run[3]), axis = 0)
-                time_difference_peak = np.concatenate((time_difference_peak,  results_run[4]), axis = 0)
-                time_difference_cfd  = np.concatenate((time_difference_cfd,  results_run[5]), axis = 0)
-
-            # For each bigger batch, this can be done once. It exports a position file which aims to center the plot
-            #calculateCenterOfSensorPerBatch(peak_values, tracking)
-
-            t_plot.trackingPlots(peak_values, charge, rise_times, time_difference_peak, time_difference_cfd, tracking)
-
-            print "\nDone with batch",runLog[0][5],"Time analysing: "+str(md.dm.getTime()-startTimeBatch)+"\n"
-
-
+            
     print "\nDone with TRACKING analysis. Time analysing: "+str(md.dm.getTime()-startTime)+"\n"
-
-
-
 
 
 # Change tracking information
@@ -103,7 +63,7 @@ def changeCenterPositionSensor(tracking):
 
     center = np.array([position[t_plot.chan][0][0], position[t_plot.chan][0][1]])
 
-    if md.checkIfArrayPad(t_plot.chan):
+    if md.checkIfArrayPad():
     
         dist_center = getDistanceFromCenterArrayPad(position)
  
@@ -115,7 +75,7 @@ def changeCenterPositionSensor(tracking):
         tracking["Y"] = tracking["Y"] - center[1]
 
         # Rotation for W4-S204_6e14
-        if md.getNameOfSensor(t_plot.chan) == "W4-S204_6e14":
+        if md.getSensor() == "W4-S204_6e14":
 
             theta = 4.3 * np.pi/180
 
@@ -124,7 +84,7 @@ def changeCenterPositionSensor(tracking):
             tracking["Y"] = np.multiply(tracking["X"], np.sin(theta)) + np.multiply(tracking["Y"], np.cos(theta))
 
         # Rotation for W4-S215
-        elif md.getNameOfSensor(t_plot.chan) == "W4-S215":
+        elif md.getSensor() == "W4-S215":
 
             theta = 0.6 * np.pi/180
             
@@ -150,7 +110,7 @@ def getDistanceFromCenterArrayPad(position):
    
     numberOfPads = len(position[arrayPadChannels][0])
 
-    if md.getNameOfSensor(t_plot.chan) == "W4-S204_6e14":
+    if md.getSensor() == "W4-S204_6e14":
         numberOfPads += 1
 
     pos_pad = np.zeros((numberOfPads, 2))
@@ -159,7 +119,7 @@ def getDistanceFromCenterArrayPad(position):
         for dim in range(0, 2):
             
             # This is a hand-waving fix for the missing pad, to temporarily calculate the average value to find the center of the three (four) pads
-            if md.getNameOfSensor(t_plot.chan) == "W4-S204_6e14" and pad_no == 3:
+            if md.getSensor() == "W4-S204_6e14" and pad_no == 3:
                 pos_pad[pad_no][0] = position[arrayPadChannels][0][1][0]
                 pos_pad[pad_no][1] = position[arrayPadChannels][0][0][1]
             
@@ -169,9 +129,9 @@ def getDistanceFromCenterArrayPad(position):
 
     centerArrayPadPosition = np.average(pos_pad, axis=0)
 
-    newArrayPositions = createCenterPositionArray()
+    newArrayPositions = np.zeros(1, dtype = getDTYPETrackingPosition())
 
-    if md.getNameOfSensor(t_plot.chan) == "W4-S204_6e14":
+    if md.getSensor() == "W4-S204_6e14":
         numberOfPads -= 1
 
     for index in range(0, numberOfPads):
@@ -179,14 +139,6 @@ def getDistanceFromCenterArrayPad(position):
         newArrayPositions[chan2][0] = pos_pad[index] - centerArrayPadPosition
 
     return newArrayPositions
-
-
-# Create array for exporting center positions, inside tracking
-def createCenterPositionArray():
-
-    dt = (  [('chan0', '<f8', 2), ('chan1', '<f8', 2) ,('chan2', '<f8', 2) ,('chan3', '<f8', 2) ,('chan4', '<f8', 2) ,('chan5', '<f8', 2) ,('chan6', '<f8', 2) ,('chan7', '<f8', 2)] )
-    
-    return np.zeros(1, dtype = dt)
 
 
 def calculateCenterOfSensorPerBatch(peak_values, tracking):
@@ -207,7 +159,7 @@ def calculateCenterOfSensorPerBatch(peak_values, tracking):
     
     values = [minEntries, xmin, xmax, ymin, ymax, xbin, ybin]
 
-    position_temp = createCenterPositionArray()
+    position_temp = np.zeros(1, dtype = getDTYPETrackingPosition())
 
     for chan in peak_values.dtype.names:
 
@@ -284,8 +236,9 @@ def sensorIsAnArrayPad():
     # Otherwise check if the sensor processed is an array pad
     else:
         chan = getArrayPadChannels()[0]
+        md.setChannelName(chan)
 
-        if md.sensor == md.getNameOfSensor(chan):
+        if md.sensor == md.getSensor():
             return True
         else:
             return False
@@ -297,7 +250,7 @@ def importAndAddHistogram(TH2D_object, index, export=False):
     chan = arrayPadChannels[index]
     objectName = TH2D_object.GetName()
 
-    fileName, headTitle = getTitleAndFileName(objectName, chan)
+    fileName, headTitle = getTitleAndFileName(objectName)
     
     TH2D_file = dm.exportImportROOTHistogram(fileName)
     TH2D_object_import = TH2D_file.Get(objectName)
@@ -305,7 +258,7 @@ def importAndAddHistogram(TH2D_object, index, export=False):
 
 
 
-def getTitleAndFileName(objectName, chan):
+def getTitleAndFileName(objectName):
     
     fileName = "empty"
     headTitle = "empty"
@@ -353,8 +306,8 @@ def getTitleAndFileName(objectName, chan):
         folderLocation = "inefficiency/tracking_inefficiency"
 
 
-    headTitle = graphTitle + " - " + md.getNameOfSensor(chan) + ", T = " + str(md.getTemperature()) + " \circ C, U = " + str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V; X [\mum] ; Y [\mum] ; " + dimension_z
-    fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder() + "/" + md.getNameOfSensor(chan)+ "/tracking/" + folderLocation + "_" + str(md.getBatchNumber()) + "_" + chan + "_" + str(md.getNameOfSensor(chan)) + ".pdf"
+    headTitle = graphTitle + " - " + md.getSensor() + ", T = " + str(md.getTemperature()) + " \circ C, U = " + str(md.getBiasVoltage()) + " V; X [\mum] ; Y [\mum] ; " + dimension_z
+    fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder() + "/" + md.getSensor()+ "/tracking/" + folderLocation + "_" + str(md.getBatchNumber()) + "_" + chan + "_" + str(md.getSensor()) + ".pdf"
     
 
     if array_pad_export:
@@ -395,19 +348,19 @@ def findSelectionRange():
     
     
     # In case of array pads, refer to the center of the pad
-    if md.checkIfArrayPad(md.chan_name):
+    if md.checkIfArrayPad():
     
         center_position  = (getDistanceFromCenterArrayPad(position)[md.chan_name])[0]
     
     # otherwise, refer from origo with predefined structured array
     else:
-        center_position = (createCenterPositionArray()[md.chan_name])[0]
+        center_position = (np.zeros(1, dtype = getDTYPETrackingPosition())[md.chan_name])[0]
 
     # Distance from the center of the pad and 350 um from the center
     projection_cut = 350
 
     # This is a correction for the irradiated array pad to center the selection of the bulk for efficiency calculation
-    if md.getNameOfSensor(md.chan_name) == "W4-S204_6e14":
+    if md.getSensor() == "W4-S204_6e14":
         
         if md.chan_name == "chan5":
             center_position = [-530, -575]

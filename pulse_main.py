@@ -14,43 +14,35 @@ ROOT.gROOT.SetBatch(True)
 # Start analysis of selected run numbers
 def pulseAnalysis():
 
-    # Set the time scope to 0.1 ns.
-    md.defTimeScope()
-
     dm.setFunctionAnalysis("pulse_analysis")
-    
     defineNameOfProperties()
-    
     dm.defineDataFolderPath()
     startTime = dm.getTime()
-    runLog_batch = md.getRunLogBatches(md.batchNumbers)
     
     print "\nStart PULSE analysis, batches:", md.batchNumbers
     
-    for runLog in runLog_batch:
-    
-         # Restrict to some run numbers
+    for batchNumber in md.batchNumbers:
+        
+        runNumbers = md.getAllRunNumbers(batchNumber)
+        
+        # Restrict to some run numbers
         if md.limitRunNumbers != "all":
-            runLog = runLog[0:md.limitRunNumbers]
-    
+            runNumbers = runNumbers[0:md.limitRunNumbers]
+        
         startTimeBatch = dm.getTime()
     
-        print "Batch:", runLog[0][5], len(runLog), "run files.\n"
+        print "Batch:", batchNumber, len(runNumbers), "run files.\n"
       
-        for index in range(0, len(runLog)):
-        
-            md.defineGlobalVariableRun(runLog[index])
+        for runNumber in runNumbers:
+            
+            md.defineRunInfo(md.getRowForRunNumber(runNumber))
             
             if not dm.checkIfFileAvailable():
                 continue
-                
-            print "Run", md.getRunNumber()
             
             pulseAnalysisPerRun()
             
-            print "Done with run", md.getRunNumber(), "\n"
-
-        print "Done with batch", runLog[0][5], "Time analysing: "+str(dm.getTime()-startTimeBatch)+"\n"
+        print "Done with batch", batchNumber, "Time analysing: "+str(dm.getTime()-startTimeBatch)+"\n"
 
     print "Done with PULSE analysis. Time analysing: "+str(dm.getTime()-startTime)+"\n"
 
@@ -58,23 +50,16 @@ def pulseAnalysis():
 # Subdivide the file (has 4GB) to analyze by parts. Start pool.
 def pulseAnalysisPerRun():
     
-    # Set how many events should be run
+    print "Run", md.getRunNumber()
+    
+    # Define pool attributes, threads and number of events in each thread
+    p = Pool(4)
+    step = 10000 # was 10 000
     max = md.getNumberOfEvents()
-    
-    # Set steps for multiprocessing
-    step = 10000
-    
-    # Adapt number of threads depending on the computer and number of cores of the processor
-    threads = 4
-    
-    # Start the pool
-    p = Pool(threads)
     ranges = range(0, max, step)
-    
-    # Get path import noise and start the pool
     dataPath = dm.getOscilloscopeFilePath()
-    # Start processing pool
     
+    # Start processing pool
     results = p.map(lambda part: signalAnalysis(dataPath, [part, part + step]), ranges)
     
     # Concatenate the results (which have different form from multiprocessing)
@@ -87,8 +72,7 @@ def pulseAnalysisPerRun():
     for index in range(0, len(var_names)):
         dm.exportImportROOTData("pulse", var_names[index], results_variables[index])
 
-
-
+    print "Done with run", md.getRunNumber(), "\n"
 
 # Data input is in negative voltage values, but the methods handles them in "positive manner"
 # The output is the listed characteristics below
@@ -105,7 +89,7 @@ def signalAnalysis(dataPath, ranges):
         
         for event in range(0, len(data)):
         
-            variables = [data[chan][event], signal_limit_DUT[chan], md.getThresholdSamples(chan)]
+            variables = [data[chan][event], signal_limit_DUT[chan], getThresholdSamples(chan)]
             
             results = p_calc.getPulseCharacteristics(variables)
 
@@ -115,6 +99,7 @@ def signalAnalysis(dataPath, ranges):
 
     
     return properties
+
 
 def defineNameOfProperties(results=False):
 
@@ -129,4 +114,28 @@ def defineNameOfProperties(results=False):
         var_names = ["noise", "pedestal", "peak_value", "rise_time", "charge"]
 
 
+# These are set values for each sensor. These values are determined between a plot for:
+# Combined plot between maximum sample value and point above the threshold. In this way
+# one can cut away pulses which are treated as noise
 
+def getThresholdSamples(chan):
+    
+    sensor = md.getSensor(chan)
+    
+    if sensor == "50D-GBGR2" or sensor == "W9-LGA35":
+        number_samples = 5
+    
+    elif sensor == "SiPM-AFP" or sensor == "W4-RD01":
+        number_samples = 50
+    
+    elif sensor == "W4-LG12" or sensor == "W4-S203" or sensor == "W4-S215" or sensor == "W4-S1061":
+        number_samples = 10
+    
+    elif sensor == "W4-S204_6e14":
+        number_samples = 3
+    
+    elif sensor == "W4-S1022":
+        number_samples = 7
+    
+    
+    return number_samples

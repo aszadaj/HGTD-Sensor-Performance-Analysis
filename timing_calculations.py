@@ -23,7 +23,7 @@ def createTimingFiles():
         
         for index in range(0, len(runLog)):
             
-            md.defineGlobalVariableRun(runLog[index])
+            md.defineRunInfo(runLog[index])
             
             if not dm.checkIfFileAvailable():
                 continue
@@ -66,8 +66,10 @@ def getTimeDifferencePerRun(time_location):
     SiPM_chan = md.getChannelNameForSensor("SiPM-AFP")
 
     for chan in time_location.dtype.names:
+        
+        md.setChannelName(chan)
 
-        if md.getNameOfSensor(chan) == "SiPM-AFP":
+        if md.getSensor() == "SiPM-AFP":
             continue
 
         for event in range (0, len(time_location)):

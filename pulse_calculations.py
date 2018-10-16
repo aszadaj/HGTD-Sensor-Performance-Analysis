@@ -10,7 +10,6 @@ data_point_correction = 3
 # Dimensions used are U = [V], t = [ns], q = [C]
 def getPulseCharacteristics(variables):
 
-
     [data, signal_limit_DUT, threshold_points] = [i for i in variables]
     
     # Invert waveform data
@@ -30,10 +29,11 @@ def getPulseCharacteristics(variables):
     
 
     if points >= threshold_points:
-
-        peak_value, peak_time = calculatePeakValue(data, pedestal, signal_limit_DUT)
-        rise_time, cfd  = calculateRiseTime(data, pedestal)
-        charge = calculateCharge(data, threshold)
+        
+        timeScope = 0.1
+        peak_value, peak_time = calculatePeakValue(data, pedestal, signal_limit_DUT, timeScope)
+        rise_time, cfd  = calculateRiseTime(data, pedestal, timeScope)
+        charge = calculateCharge(data, threshold, timeScope)
         
 
         # Condition: if the time locations are not in synch, disregard those
@@ -78,7 +78,7 @@ def calculateNoiseAndPedestal(data):
 
 
 # Get rise time
-def calculateRiseTime(data, pedestal, graph=False):
+def calculateRiseTime(data, pedestal, timeScope, graph=False):
     
     # Default values
     rise_time = 0
@@ -97,7 +97,7 @@ def calculateRiseTime(data, pedestal, graph=False):
         # Require three points above threshold
         if len(linear_fit_indices) >= 3:
 
-            x_values = linear_fit_indices * md.getTimeScope()
+            x_values = linear_fit_indices * timeScope
             y_values = data[linear_fit_indices]
            
             linear_fit = np.polyfit(x_values, y_values, 1)
@@ -114,8 +114,9 @@ def calculateRiseTime(data, pedestal, graph=False):
     else:
         return rise_time, cfd
 
+
 # Calculate the pulse amplitude value
-def calculatePeakValue(data, pedestal, signal_limit_DUT, graph=False):
+def calculatePeakValue(data, pedestal, signal_limit_DUT, timeScope, graph=False):
 
     # Default values
     peak_value = 0
@@ -129,16 +130,15 @@ def calculatePeakValue(data, pedestal, signal_limit_DUT, graph=False):
     
     # This is to ensure that the obtained value is in the entry window
     if 2 < arg_max < 999:
-    
+        
         poly_fit_data = data[poly_fit_indices]
-        poly_fit = np.polyfit((poly_fit_indices * md.getTimeScope()), poly_fit_data, 2)
+        poly_fit = np.polyfit((poly_fit_indices * timeScope), poly_fit_data, 2)
 
         if poly_fit[0] < 0:
             
             peak_time = np.array([-poly_fit[1] / (2 * poly_fit[0])])
             peak_value = poly_fit[0] * np.power(peak_time, 2) + poly_fit[1] * peak_time + poly_fit[2] - pedestal
 
-    
 
     # If the signal reaches the oscilloscope limit, take the maximum value instead and ignore the
     # time location, since it cannot be extracted with great precision
@@ -157,11 +157,11 @@ def calculatePeakValue(data, pedestal, signal_limit_DUT, graph=False):
 
 
 # Calculate the charge over the threshold
-def calculateCharge(data, threshold):
+def calculateCharge(data, threshold, timeScope):
 
     # transimpendence is the same for all sensors, except for W4-RD01, which is unknown
     transimpendence = 4700
-    voltage_integral = np.trapz(data[data > threshold], dx = md.getTimeScope())*10**(-9)
+    voltage_integral = np.trapz(data[data > threshold], dx = timeScope)*10**(-9)
     charge = voltage_integral / transimpendence
     
     return charge
@@ -238,6 +238,28 @@ def concatenateResults(results):
     return variable_array
 
 
-def defTimeScope():
-    global dt
-    dt = 0.1
+# These are set values for each sensor. These values are determined between a plot for:
+# Combined plot between maximum sample value and point above the threshold. In this way
+# one can cut away pulses which are treated as noise
+
+def getThresholdSamples(chan):
+    
+    sensor = getSensor(chan)
+    
+    if sensor == "50D-GBGR2" or sensor == "W9-LGA35":
+        number_samples = 5
+    
+    elif sensor == "SiPM-AFP" or sensor == "W4-RD01":
+        number_samples = 50
+    
+    elif sensor == "W4-LG12" or sensor == "W4-S203" or sensor == "W4-S215" or sensor == "W4-S1061":
+        number_samples = 10
+    
+    elif sensor == "W4-S204_6e14":
+        number_samples = 3
+    
+    elif sensor == "W4-S1022":
+        number_samples = 7
+    
+    
+    return number_samples

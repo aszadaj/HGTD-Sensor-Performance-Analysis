@@ -51,7 +51,7 @@ def main():
     
     ####### TIMING RESOLUTION ########
     
-    #timing.createTimingFiles() # Creates files for timingPlots()
+    #timing.createTimingFiles() # Creates files for timingPlots() and trackingAnalysis()
     #timing_plot.timingPlots()
 
     

@@ -33,10 +33,10 @@ def pulsePlots():
  
         for runNumber in runNumbers:
             
-            md.defineGlobalVariableRun(md.getRowForRunNumber(runNumber))
+            md.defineRunInfo(md.getRowForRunNumber(runNumber))
             p_main.defineNameOfProperties()
             
-            if runNumber not in md.getRunsWithSensor(md.sensor):
+            if runNumber not in md.getRunsWithSensor():
                 continue
         
             for index in range(0, len(p_main.var_names)):
@@ -66,20 +66,20 @@ def producePulsePlots(numpy_variables):
     
     for chan in peak_value.dtype.names:
     
-        if md.sensor != "" and md.getNameOfSensor(chan) != md.sensor:
-            continue
-    
         md.setChannelName(chan)
         
+        if md.sensor != "" and md.getSensor() != md.sensor:
+            continue
+
         point_count_limit = 50
         charge_pulse_bins = 150
         rise_time_bins = 300
         
         # This is a limit for the point count, to increase it
-        if md.getNameOfSensor(chan) == "SiPM-AFP" or md.getNameOfSensor(chan) == "W4-RD01":
+        if md.getSensor() == "SiPM-AFP" or md.getSensor() == "W4-RD01":
             point_count_limit = 100
         
-        print "\nPULSE PLOTS: Batch", md.getBatchNumber(),"sensor", md.getNameOfSensor(chan), chan, "\n"
+        print "\nPULSE PLOTS: Batch", md.getBatchNumber(),"sensor", md.getSensor(), chan, "\n"
         
         noise_avg_std, pedestal_avg_std = getAvgStd(noise, pedestal)
         noise_ranges, pedestal_ranges = getRanges(noise_avg_std, pedestal_avg_std, 6)
@@ -100,7 +100,6 @@ def producePulsePlots(numpy_variables):
         max_sample_vs_points_threshold_th2d = ROOT.TH2D("Max sample vs points", "max_sample_vs_point_count", point_count_limit, 0, point_count_limit, 100, 0, 400)
         
         TH1_objects = [noise_th1d, pedestal_th1d, peak_value_th1d, rise_time_th1d, charge_th1d, peak_time_th1d, cfd_th1d, point_count_th1d, max_sample_th1d]
-        #TH1_objects = [peak_value_th1d, rise_time_th1d, charge_th1d, peak_time_th1d, cfd_th1d, point_count_th1d, max_sample_th1d]
         
         # Fill TH1 objects
         for index in range(0, len(TH1_objects)):
@@ -294,8 +293,6 @@ def exportHistogram(graphList):
     dm.exportImportROOTHistogram(titles[3], graphList)
 
 
-
-
 def getPlotAttributes(name):
 
     yAxisTitle = "Entries"
@@ -358,7 +355,7 @@ def getPlotAttributes(name):
 
     
 
-    headTitle = head_title_type + " - " + md.getNameOfSensor(chan)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage(md.getNameOfSensor(chan), md.getBatchNumber())) + " V"
-    fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getNameOfSensor(chan)+"/pulse/"+name+"/"+name+"_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getNameOfSensor(chan))+".pdf"
+    headTitle = head_title_type + " - " + md.getSensor()+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage()) + " V"
+    fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getSensor()+"/pulse/"+name+"/"+name+"_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getSensor())+".pdf"
     
     return [headTitle, xAxisTitle, yAxisTitle, fileName]
