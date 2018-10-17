@@ -5,55 +5,138 @@ import run_log_metadata as md
 import data_management as dm
 import tracking_plot as t_plot
 
-ROOT.gROOT.SetBatch(True)
 
-# Function appends tracking files and oscilloscope files and
-# matches the sizes of them
-def trackingAnalysis():
+def fillTHObjects(numpy_arrays, TH2_objects_fill, tracking, th1_limits):
+    
+    [peak_value_mean_TH2F, gain_mean_TH2F, rise_time_mean_TH2F, time_difference_peak_TH2F, time_difference_cfd_TH2F, timing_peak_TH2F, timing_cfd_TH2F] = [i for i in TH2_objects_fill]
+    
+    [xbin, ybin, xbin_timing, ybin_timing, distance_x, distance_y] = [i for i in th1_limits]
+    
+    fill = False
+    
+    # Import values mean values of the time difference.
+    mpv_time_diff_peak =  dm.exportImportROOTData("results", "linear")["linear"][2]
+    mpv_time_diff_cfd  =  dm.exportImportROOTData("results", "linear_cfd")["linear_cfd"][2]
+    
+    # Fill all objects except timing resolution
+    for event in range(0, len(tracking)):
+        if (-distance_x < tracking['X'][event] < distance_x) and (-distance_y < tracking['Y'][event] < distance_y):
+            for index in range(0, len(numpy_arrays)):
+                if numpy_arrays[index][event] != 0:
+                    if index == 3:
+                        if (mpv_time_diff_peak - t_plot.width_time_diff) < numpy_arrays[index][event] < (mpv_time_diff_peak + t_plot.width_time_diff):
+                            fill = True
+                    elif index == 4:
+                        if (mpv_time_diff_cfd - t_plot.width_time_diff) < numpy_arrays[index][event] < (mpv_time_diff_cfd + t_plot.width_time_diff):
+                            fill = True
+                    else:
+                        fill = True
+                    
+                    if fill:
+                        TH2_objects_fill[index].Fill(tracking['X'][event], tracking['Y'][event], numpy_arrays[index][event])
+                        fill = False
 
-    dm.setFunctionAnalysis("tracking_analysis")
-    dm.defineDataFolderPath()
-    startTime = dm.getTime()
 
-    print "\nStart TRACKING analysis, batches:", md.batchNumbers
-
-    for batchNumber in md.batchNumbers:
-
-        startTimeBatch = dm.getTime()
-        runNumbers = md.getAllRunNumbers(batchNumber)
-
-        # Set a condition of at least two run numbers to be analyzed
-        if len(runNumbers) < 3 or batchNumber == 203:
-            continue
-
-        var_names = [["pulse", "peak_value"], ["pulse", "charge"], ["pulse", "rise_time"], ["timing", "linear"], ["timing", "linear_cfd"]]
-        numpy_arrays = [np.empty(0, dtype = dm.getDTYPE(batchNumber)) for _ in range(len(var_names))]
-        numpy_arrays.append(np.empty(0, dtype = dm.getDTYPETracking()))
-
-        for runNumber in runNumbers:
-
-            md.defineRunInfo(md.getRowForRunNumber(runNumber))
-
-            if not dm.checkIfFileAvailable():
-                continue
-        
-            tracking_run = dm.exportImportROOTData("tracking", "tracking")
-
-            # This strips the event number to match the ones with the tracking. It assumes that the tracking have fewer number of events than the oscilloscope events.
-            for index in range(0, len(var_names)):
-                numpy_arrays[index] = np.concatenate((numpy_arrays[index], np.take(dm.exportImportROOTData(var_names[index][0], var_names[index][1]), np.arange(0, len(tracking_run)))), axis=0)
+    # Remove bins with few entries
+    for i in range(1, xbin+1):
+        for j in range(1, ybin+1):
             
-            numpy_arrays[-1] = np.concatenate((numpy_arrays[-1], tracking_run), axis=0)
+            bin = peak_value_mean_TH2F.GetBin(i,j)
+            removeBin(bin, peak_value_mean_TH2F)
+            removeBin(bin, rise_time_mean_TH2F)
+            removeBin(bin, gain_mean_TH2F)
 
+        peak_value_mean_TH2F.ResetStats()
+        rise_time_mean_TH2F.ResetStats()
+        gain_mean_TH2F.ResetStats()
 
-        #calculateCenterOfSensorPerBatch(numpy_arrays[0], numpy_arrays[-1])
-
-        t_plot.trackingPlots(numpy_arrays)
-        
-        print "\nDone with batch", batchNumber, "Time analysing: "+str(md.dm.getTime()-startTimeBatch)+"\n"
-
+    
+    # Fill timing resolution bins
+    for i in range(1, xbin_timing+1):
+        for j in range(1, ybin_timing+1):
             
-    print "\nDone with TRACKING analysis. Time analysing: "+str(md.dm.getTime()-startTime)+"\n"
+            bin = time_difference_peak_TH2F.GetBin(i,j)
+            fillTimeResBin(bin, time_difference_peak_TH2F, timing_peak_TH2F)
+            fillTimeResBin(bin, time_difference_cfd_TH2F, timing_cfd_TH2F)
+
+
+def fillEfficiencyObjects(LGAD_TH2F, MIMOSA_TH2F, tracking, peak_values, distance_x, distance_y, xbin, ybin):
+
+    # Fill MIMOSA and LGAD (TH2 objects)
+    for event in range(0, len(tracking)):
+        if (-distance_x < tracking['X'][event] < distance_x) and (-distance_y < tracking['Y'][event] < distance_y):
+
+            # Total events
+            MIMOSA_TH2F.Fill(tracking['X'][event], tracking['Y'][event], 1)
+
+            # Passed events
+            if peak_values[event] != 0:
+                LGAD_TH2F.Fill(tracking['X'][event], tracking['Y'][event], 1)
+
+    # Remove bins with less than some entries
+    for i in range(1, xbin+1):
+        for j in range(1, ybin+1):
+            bin = LGAD_TH2F.GetBin(i,j)
+            num_LGAD = LGAD_TH2F.GetBinContent(bin)
+            
+            if num_LGAD < t_plot.bin_entries:
+                LGAD_TH2F.SetBinContent(bin, 0)
+                MIMOSA_TH2F.SetBinContent(bin, 0)
+
+    LGAD_TH2F.ResetStats()
+    MIMOSA_TH2F.ResetStats()
+
+
+def fillInefficiencyAndProjectionObjects(efficiency_TH2F, inefficiency_TH2F, projectionX_th1d, projectionY_th1d, xbin, ybin):
+    
+    distance_projection, center_positions = findSelectionRange()
+
+    # Define lower and upper limits bins
+    bin_x_low = efficiency_TH2F.GetXaxis().FindBin(distance_projection[0][0])
+    bin_x_high = efficiency_TH2F.GetXaxis().FindBin(distance_projection[0][1])
+    bin_y_low = efficiency_TH2F.GetYaxis().FindBin(distance_projection[1][0])
+    bin_y_high = efficiency_TH2F.GetYaxis().FindBin(distance_projection[1][1])
+    
+    bin_limits = np.array([bin_x_low, bin_x_high, bin_y_low, bin_y_high])
+    
+    efficiency_bulk_data = np.array([])
+    
+    # Loop through each bin, to obtain inefficiency, and fill projection objects
+    for i in range(1, xbin+1):
+        for j in range(1, ybin+1):
+            
+            bin = efficiency_TH2F.GetBin(i,j)
+            eff = efficiency_TH2F.GetBinContent(bin)
+            
+            if eff > 0:
+                inefficiency_TH2F.SetBinContent(bin, 100-eff)
+                
+                if (bin_limits[0] <= i <= bin_limits[1]) and (bin_limits[2] <= j <= bin_limits[3]):
+                    
+                    efficiency_bulk_data = np.concatenate((efficiency_bulk_data, np.array([eff])))
+            
+            if eff == 100:
+                inefficiency_TH2F.SetBinContent(bin, 0.001)
+            
+            
+            # Fill projection Y efficiency values within x-limits
+            if bin_limits[0] <= i <= bin_limits[1]:
+                y = efficiency_TH2F.GetYaxis().GetBinCenter(j)
+                projectionY_th1d.Fill(y, eff)
+            
+            # Fill projection X efficiency values within y-limits
+            if bin_limits[2] <= j <= bin_limits[3]:
+                x = efficiency_TH2F.GetXaxis().GetBinCenter(i)
+                projectionX_th1d.Fill(x, eff)
+
+    # Additional comment: bin_limits marks the lines for which the selection of the
+    # projection for each dimension. Vertical limits are for the Y-projection, where
+    # horizontal is for X-projection. Then for each "line of bins" are projected by
+    # filling within the limits. TProfile objects then calculate the mean in each filled
+    # line. The point here is to see how the edges increases
+
+    efficiency_bulk = [np.mean(efficiency_bulk_data), np.std(efficiency_bulk_data)]
+    dm.exportImportROOTData("tracking", "efficiency", np.array(efficiency_bulk))
 
 
 # Change tracking information
@@ -61,14 +144,14 @@ def changeCenterPositionSensor(tracking):
 
     position = dm.exportImportROOTData("tracking", "position")
 
-    center = np.array([position[t_plot.chan][0][0], position[t_plot.chan][0][1]])
+    center = np.array([position[md.chan_name][0][0], position[md.chan_name][0][1]])
 
     if md.checkIfArrayPad():
     
         dist_center = getDistanceFromCenterArrayPad(position)
  
-        tracking["X"] = tracking["X"] + dist_center[t_plot.chan][0][0]
-        tracking["Y"] = tracking["Y"] + dist_center[t_plot.chan][0][1]
+        tracking["X"] = tracking["X"] + dist_center[md.chan_name][0][0]
+        tracking["Y"] = tracking["Y"] + dist_center[md.chan_name][0][1]
     
         # Center the pad or array
         tracking["X"] = tracking["X"] - center[0]
@@ -105,7 +188,6 @@ def changeCenterPositionSensor(tracking):
 
 def getDistanceFromCenterArrayPad(position):
 
-
     arrayPadChannels = getArrayPadChannels()
    
     numberOfPads = len(position[arrayPadChannels][0])
@@ -129,7 +211,7 @@ def getDistanceFromCenterArrayPad(position):
 
     centerArrayPadPosition = np.average(pos_pad, axis=0)
 
-    newArrayPositions = np.zeros(1, dtype = getDTYPETrackingPosition())
+    newArrayPositions = np.zeros(1, dtype = dm.getDTYPETrackingPosition())
 
     if md.getSensor() == "W4-S204_6e14":
         numberOfPads -= 1
@@ -159,7 +241,7 @@ def calculateCenterOfSensorPerBatch(peak_values, tracking):
     
     values = [minEntries, xmin, xmax, ymin, ymax, xbin, ybin]
 
-    position_temp = np.zeros(1, dtype = getDTYPETrackingPosition())
+    position_temp = np.zeros(1, dtype = dm.getDTYPETrackingPosition())
 
     for chan in peak_values.dtype.names:
 
@@ -174,7 +256,7 @@ def getCenterOfSensor(peak_values, tracking, values):
 
     [minEntries, xmin, xmax, ymin, ymax, xbin, ybin] = [i for i in values]
 
-    mean_values = ROOT.TProfile2D("Mean value","Mean value", xbin, xmin, xmax, ybin, ymin, ymax)
+    mean_values = ROOT.TProfile2F("Mean value","Mean value", xbin, xmin, xmax, ybin, ymin, ymax)
 
     # Fill the events
     for event in range(0, len(tracking)):
@@ -226,39 +308,34 @@ def getArrayPadChannels():
 
     return channels
 
-
+# Check if the sensor processed is an array pad
 def sensorIsAnArrayPad():
 
-    # If all sensors are considered, progress with the function
-    if md.sensor == "":
-        return True
-    
-    # Otherwise check if the sensor processed is an array pad
-    else:
-        chan = getArrayPadChannels()[0]
-        md.setChannelName(chan)
+    bool = True
 
-        if md.sensor == md.getSensor():
-            return True
-        else:
-            return False
+    if md.sensor != "":
+        md.setChannelName(getArrayPadChannels()[0])
+        
+        if md.sensor != md.getSensor():
+            bool = False
+
+    return bool
 
 
-def importAndAddHistogram(TH2D_object, index, export=False):
+def importAndAddHistogram(TH2_object, index):
 
     arrayPadChannels = getArrayPadChannels()
     chan = arrayPadChannels[index]
-    objectName = TH2D_object.GetName()
-
-    fileName, headTitle = getTitleAndFileName(objectName)
     
-    TH2D_file = dm.exportImportROOTHistogram(fileName)
-    TH2D_object_import = TH2D_file.Get(objectName)
-    TH2D_object.Add(TH2D_object_import)
+    objectName = TH2_object.GetName()
+    fileName, headTitle = getTitleAndFileName(objectName, chan)
+    
+    TH2_file = dm.exportImportROOTHistogram(fileName)
+    TH2_object_import = TH2_file.Get(objectName)
+    TH2_object.Add(TH2_object_import)
 
 
-
-def getTitleAndFileName(objectName):
+def getTitleAndFileName(objectName, chan):
     
     fileName = "empty"
     headTitle = "empty"
@@ -287,7 +364,7 @@ def getTitleAndFileName(objectName):
         folderLocation = "time_resolution/peak/tracking_time_resolution_peak"
 
 
-    elif objectName.find("cfd") != -1:
+    elif objectName.find("CFD") != -1:
     
         graphTitle = "Timing resolution (CFD)"
         dimension_z = "\sigma_{t} [ps]"
@@ -354,7 +431,7 @@ def findSelectionRange():
     
     # otherwise, refer from origo with predefined structured array
     else:
-        center_position = (np.zeros(1, dtype = getDTYPETrackingPosition())[md.chan_name])[0]
+        center_position = (np.zeros(1, dtype = dm.getDTYPETrackingPosition())[md.chan_name])[0]
 
     # Distance from the center of the pad and 350 um from the center
     projection_cut = 350
@@ -381,23 +458,18 @@ def findSelectionRange():
     return np.array([[x1, x2], [y1, y2]]), center_position
 
 
-def removeBin(bin, time_diff, minEntries):
+def removeBin(bin, time_diff):
 
-    num = time_diff.GetBinEntries(bin)
-    
-    if num < minEntries:
+    if time_diff.GetBinEntries(bin) < t_plot.bin_entries:
         time_diff.SetBinContent(bin, 0)
         time_diff.SetBinEntries(bin, 0)
 
 
-def fillTimeResBin(bin, time_diff, time_res, entries_per_bin):
+def fillTimeResBin(bin, time_diff, time_res):
 
-    num = time_diff.GetBinEntries(bin)
+    if time_diff.GetBinEntries(bin) > t_plot.bin_entries_timing:
 
-    if num > entries_per_bin:
-
-        sigma_convoluted = time_diff.GetBinError(bin)
-        sigma_DUT = np.sqrt(np.power(sigma_convoluted, 2) - np.power(md.getSigmaSiPM(), 2))
+        sigma_DUT = np.sqrt(np.power(time_diff.GetBinError(bin), 2) - np.power(md.getSigmaSiPM(), 2))
         time_res.SetBinContent(bin, sigma_DUT)
 
 

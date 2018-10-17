@@ -5,7 +5,6 @@ import os
 import data_management as dm
 
 
-
 def defineSettings(batches, batches_exclude, number, sensor_name):
     
     dm.printTime()
@@ -33,7 +32,7 @@ def setBatchNumbers(numbers, exclude=[]):
                 if numbers[index] not in exclude:
                     number_included.append(numbers[index])
     
-        numbers = number_included
+            numbers = number_included
         
         elif sensor != "":
             for index in range(0, len(numbers)):
@@ -41,13 +40,13 @@ def setBatchNumbers(numbers, exclude=[]):
                 if numbers[index] in getAllBatchNumberForSensor(sensor):
                     number_included.append(numbers[index])
 
-    numbers = number_included
+            numbers = number_included
         
         batchNumbers = numbers
 
-else:
+    else:
     
-    batchNumbers = numbers
+        batchNumbers = numbers
 
 
 # Return run log imported from a .csv file
@@ -153,7 +152,7 @@ def getAllRunNumbers(batchNumber=0):
 
 
 # Return run numbers for given sensor
-def getRunsWithSensor():
+def getRunsWithSensor(sensor=""):
     
     if sensor == "":
         return getAllRunNumbers()
@@ -163,8 +162,10 @@ def getRunsWithSensor():
     runNumbers = []
     
     for row in runLog:
-        if sensor in getSensorsForBatch():
-            runNumbers.append(int(row[3]))
+        if sensor in row:
+            if int(row[3]) not in runNumbers:
+                runNumbers.append(int(row[3]))
+
 
     return runNumbers
 
@@ -201,7 +202,7 @@ def getSensor(chan=""):
 
 
 # Return sensors available for given run/batch (each run have same sensors for same batch)
-def getSensorsForBatch():
+def getSensorsForBatch(batchNumber=0):
 
     runNumber = getRunNumber()
     

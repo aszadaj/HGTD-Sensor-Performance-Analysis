@@ -19,7 +19,7 @@ signal_limit = 340
 
 def pulsePlots():
 
-    print "\nStart producing PULSE plots, batches:", md.batchNumbers
+    print "\nStart producing PULSE plots, batches:", md.batchNumbers, "\n"
     
     dm.defineDataFolderPath()
     
@@ -62,8 +62,10 @@ def producePulsePlots(numpy_variables):
     dm.changeIndexNumpyArray(rise_time, 1000)
     dm.changeIndexNumpyArray(charge, 10**15)
     dm.changeIndexNumpyArray(max_sample, -1000)
-   
     
+    print "\nBATCH", md.getBatchNumber(), "\n"
+   
+   
     for chan in peak_value.dtype.names:
     
         md.setChannelName(chan)
@@ -79,27 +81,28 @@ def producePulsePlots(numpy_variables):
         if md.getSensor() == "SiPM-AFP" or md.getSensor() == "W4-RD01":
             point_count_limit = 100
         
-        print "\nPULSE PLOTS: Batch", md.getBatchNumber(),"sensor", md.getSensor(), chan, "\n"
+        print md.getSensor(), "\n"
         
         noise_avg_std, pedestal_avg_std = getAvgStd(noise, pedestal)
         noise_ranges, pedestal_ranges = getRanges(noise_avg_std, pedestal_avg_std, 6)
         
         # Create TH objects with properties to be analyzed
-        noise_th1d                          = ROOT.TH1D("Noise", "noise", 300, noise_ranges[0], noise_ranges[1])
-        pedestal_th1d                       = ROOT.TH1D("Pedestal", "pedestal", 300, pedestal_ranges[0], pedestal_ranges[1])
+        noise_TH1F                          = ROOT.TH1F("Noise"+" "+str(md.getBatchNumber())+" "+md.chan_name, "noise", 300, noise_ranges[0], noise_ranges[1])
+        pedestal_TH1F                       = ROOT.TH1F("Pedestal"+" "+str(md.getBatchNumber())+" "+md.chan_name, "pedestal", 300, pedestal_ranges[0], pedestal_ranges[1])
         
-        peak_value_th1d                     = ROOT.TH1F("Pulse amplitude", "peak_value", charge_pulse_bins, 0, 500)
-        rise_time_th1d                      = ROOT.TH1F("Rise time", "rise_time", rise_time_bins, 0, 4000)
-        charge_th1d                         = ROOT.TH1F("Charge", "charge", charge_pulse_bins, 0, 500)
+        peak_value_TH1F                     = ROOT.TH1F("Pulse amplitude"+" "+str(md.getBatchNumber())+" "+md.chan_name, "peak_value", charge_pulse_bins, 0, 500)
+        rise_time_TH1F                      = ROOT.TH1F("Rise time"+" "+str(md.getBatchNumber())+" "+md.chan_name, "rise_time", rise_time_bins, 0, 4000)
+        charge_TH1F                         = ROOT.TH1F("Charge"+" "+str(md.getBatchNumber())+" "+md.chan_name, "charge", charge_pulse_bins, 0, 500)
         
         # Additional TH objects for inspection of signals
-        peak_time_th1d                      = ROOT.TH1F("Peak time", "peak_time", 100, 0, 100)
-        cfd_th1d                            = ROOT.TH1F("CFD", "cfd", 100, 0, 100)
-        point_count_th1d                    = ROOT.TH1F("Point count", "point_count", point_count_limit, 0, point_count_limit)
-        max_sample_th1d                     = ROOT.TH1F("Max sample", "max_sample", 100, 0, 400)
-        max_sample_vs_points_threshold_th2d = ROOT.TH2D("Max sample vs points", "max_sample_vs_point_count", point_count_limit, 0, point_count_limit, 100, 0, 400)
+        peak_time_TH1F                      = ROOT.TH1F("Peak time"+" "+str(md.getBatchNumber())+" "+md.chan_name, "peak_time", 100, 0, 100)
+        cfd_TH1F                            = ROOT.TH1F("CFD"+" "+str(md.getBatchNumber())+" "+md.chan_name, "cfd", 100, 0, 100)
+        point_count_TH1F                    = ROOT.TH1F("Point count"+" "+str(md.getBatchNumber())+" "+md.chan_name, "point_count", point_count_limit, 0, point_count_limit)
+        max_sample_TH1F                     = ROOT.TH1F("Max sample"+" "+str(md.getBatchNumber())+" "+md.chan_name, "max_sample", 100, 0, 400)
+        max_sample_vs_points_threshold_TH2F = ROOT.TH2F("Max sample vs points"+" "+str(md.getBatchNumber())+" "+md.chan_name, "max_sample_vs_point_count", point_count_limit, 0, point_count_limit, 100, 0, 400)
         
-        TH1_objects = [noise_th1d, pedestal_th1d, peak_value_th1d, rise_time_th1d, charge_th1d, peak_time_th1d, cfd_th1d, point_count_th1d, max_sample_th1d]
+
+        TH1_objects = [noise_TH1F, pedestal_TH1F, peak_value_TH1F, rise_time_TH1F, charge_TH1F, peak_time_TH1F, cfd_TH1F, point_count_TH1F, max_sample_TH1F]
         
         # Fill TH1 objects
         for index in range(0, len(TH1_objects)):
@@ -107,38 +110,41 @@ def producePulsePlots(numpy_variables):
                 if numpy_variables[index][chan][entry] != 0:
                     TH1_objects[index].Fill(numpy_variables[index][chan][entry])
 
-        # Fill TH2D objects
+        # Fill TH2 object
         for entry in range(0, len(peak_value[chan])):
             if max_sample[chan][entry] != 0 and points[chan][entry] != 0:
-                max_sample_vs_points_threshold_th2d.Fill(points[entry][chan], max_sample[entry][chan])
+                max_sample_vs_points_threshold_TH2F.Fill(points[entry][chan], max_sample[entry][chan])
+
 
         # Create fits for pulse amplitude, rise time and charge
         # Redefine ranges for noise and pedestal fits
         ranges_noise_pedestal = getRanges(noise_avg_std, pedestal_avg_std, 3)
         
-        noise_fit, pedestal_fit = makeNoisePedestalFits(noise_th1d, pedestal_th1d, ranges_noise_pedestal)
-        pulse_amplitude_langaufit = makeLandauGausFit(peak_value_th1d, signal_limit)
-        rise_time_fit = makeRiseTimeFit(rise_time_th1d)
-        charge_langaufit = makeLandauGausFit(charge_th1d)
+        noise_fit, pedestal_fit = makeNoisePedestalFits(noise_TH1F, pedestal_TH1F, ranges_noise_pedestal)
+        pulse_amplitude_langaufit = makeLandauGausFit(peak_value_TH1F, signal_limit)
+        rise_time_fit = makeRiseTimeFit(rise_time_TH1F)
+        charge_langaufit = makeLandauGausFit(charge_TH1F)
 
 
         # Export plots
         for TH_obj in TH1_objects:
             exportHistogram(TH_obj)
 
-        
-        exportHistogram(max_sample_vs_points_threshold_th2d)
+        exportHistogram(max_sample_vs_points_threshold_TH2F)
 
         # Export results
         exportResults([noise_fit, pedestal_fit, pulse_amplitude_langaufit, rise_time_fit, charge_langaufit])
 
+        del noise_TH1F, pedestal_TH1F, peak_value_TH1F, rise_time_TH1F, charge_TH1F, peak_time_TH1F, cfd_TH1F, point_count_TH1F, max_sample_TH1F
 
-def makeNoisePedestalFits(noise_th1d, pedestal_th1d, ranges):
+
+
+def makeNoisePedestalFits(noise_TH1F, pedestal_TH1F, ranges):
     
-    noise_th1d.Fit("gaus","Q","", ranges[0][0], ranges[0][1])
-    pedestal_th1d.Fit("gaus","Q","", ranges[1][0], ranges[1][1])
+    noise_TH1F.Fit("gaus","Q","", ranges[0][0], ranges[0][1])
+    pedestal_TH1F.Fit("gaus","Q","", ranges[1][0], ranges[1][1])
 
-    return noise_th1d.GetFunction("gaus"), pedestal_th1d.GetFunction("gaus")
+    return noise_TH1F.GetFunction("gaus"), pedestal_TH1F.GetFunction("gaus")
 
 
 
@@ -359,3 +365,41 @@ def getPlotAttributes(name):
     fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getSensor()+"/pulse/"+name+"/"+name+"_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getSensor())+".pdf"
     
     return [headTitle, xAxisTitle, yAxisTitle, fileName]
+
+
+#
+#        # This is for batch 304 for W9-LGA35
+#        if md.getSensor() == "W9-LGA35":
+#            for entry in range(0, len(cfd)):
+#                #if -12275 < time_diff[chan][entry] < -12225: # left peak first try [-12275]
+#                if -12175 < time_diff[chan][entry] < -12125: # right peak
+#                    time_loc_vs_time_loc.Fill(cfd[chan][entry], cfd["chan6"][entry])
+#
+#
+#for entry in range(0, len(time_diff)):
+#    if time_diff[chan][entry] != 0:
+#        time_loc_vs_time_loc.Fill(time_diff[chan][entry], cfd["chan6"][entry])
+#
+#
+#        time_loc_vs_time_loc.SetTitle("Time diff W9-lga35 304 chan0 vs time location sipm cfd reference")
+#        time_loc_vs_time_loc.GetXaxis().SetTitle("Time difference cfd reference")
+#        time_loc_vs_time_loc.GetYaxis().SetTitle("time location SiPM")
+#        time_loc_vs_time_loc.SetAxisRange(5,100, "Z")
+#        canvas.Clear()
+#        time_loc_vs_time_loc.Draw("COLZ")
+#        canvas.Update()
+#
+#        # Redefine the stats box
+#        stats_box = time_loc_vs_time_loc.GetListOfFunctions().FindObject("stats")
+#        stats_box.SetX1NDC(0.15)
+#        stats_box.SetX2NDC(0.25)
+#        stats_box.SetY1NDC(0.93)
+#        stats_box.SetY2NDC(0.83)
+#        stats_box.SetOptStat(1000000011)
+#
+#
+#
+#        #canvas.Print("/Users/aszadaj/Desktop/time_loc/SiPM-w9-lga35-left-peak.pdf")
+#        #        canvas.Print("/Users/aszadaj/Desktop/time_loc/SiPM-w9-lga35-right-peak.pdf")
+#        canvas.Print("/Users/aszadaj/Desktop/time_loc/time_diff_vs_time_loc_sipm_306_cfd_chan0.pdf")
+#        canvas.Clear()

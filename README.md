@@ -64,7 +64,7 @@ One can also choose which sensor to run with,
 which produces plots for selected sensor. This is ignored (where all sensors are considered) for functions which produces data files, that is  ```pulseAnalysis()``` and  ```timingAnalysis()```.
 
 Generally functions ```pulseAnalysis()``` and  ```createTimingFiles()``` exports data files which are used by plot functions and ```trackingAnalysis()```. Therefore to save time, one does not need to run them again.
-One run file (MacBook Pro 2.8 GHz-i7 dual core 2013 four threads) takes approximatelly 5 mins and all 117 files about 10 hours. The time can be shortened in pulseAnalysis by increasing the variable ```threads = 4``` in ```pulse_main.py``` line 68.
+One run file (MacBook Pro 2.8 GHz-i7 dual core 2013 four threads) takes approximatelly 5 mins and all 117 files about 10 hours. The time can be shortened in pulseAnalysis by increasing the variable ```threads = 4``` in ```pulse_main.py```.
 
 
 # pulseAnalysis() and pulsePlots()

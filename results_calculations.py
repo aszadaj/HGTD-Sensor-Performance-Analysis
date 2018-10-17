@@ -52,8 +52,7 @@ def produceResults():
             
             print processed_sensor
             
-            #md.defineRunInfo(md.getRowForBatchNumber(batchNumber))
-            md.defineRunInfo(md.getRowForRunNumber(getAllRunNumbers(batchNumber)[0]))
+            md.defineRunInfo(md.getRowForRunNumber(md.getRunsWithSensor(processed_sensor)[0]))
             md.setChannelName(md.getChannelNameForSensor(processed_sensor))
 
             graph[processed_sensor] = dict()
@@ -71,18 +70,12 @@ def produceResults():
                     
                     # Change each marker type and color
                     r_plot.setMarkerType(graph[processed_sensor][temperature][DUT_pos], DUT_pos, temperature)
-        
-            
+
             importResultsValues(sensor_data, category)
 
-            
             r_plot.addValuesToGraph([sensor_data, category, legend_graph, graph, category_graph])
-        
-        
-        
+
         r_plot.drawAndExportResults(category, category_graph, legend_graph, zoom)
-
-
 
 
 def importResultsValues(sensor_data, category):
@@ -98,7 +91,7 @@ def importResultsValues(sensor_data, category):
         results = rnm.root2array(filePath)
         batchNumber, chan = getBatchNumberAndChanFromFile(filePath)
         md.setChannelName(chan)
-        md.defineRunInfo(md.getRowForRunNumber(getAllRunNumbers(batchNumber)[0]))
+        md.defineRunInfo(md.getRowForRunNumber(md.getAllRunNumbers(batchNumber)[0]))
         
         if omitBadData(batchNumber, category):
             continue
@@ -206,9 +199,9 @@ def availableDUTPositions(sensor):
         
         return ["8_1", "8_2"]
 
-elif sensor == "W4-S204_6e14":
+    elif sensor == "W4-S204_6e14":
     
-    return ["7_0", "7_2", "7_3"]
+        return ["7_0", "7_2", "7_3"]
     
     else:
         

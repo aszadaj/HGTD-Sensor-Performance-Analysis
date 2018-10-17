@@ -150,22 +150,22 @@ def solveSystemOfEqs(sigma_convoluted_matrix, error_convoluted_matrix):
 
 
 
-def getSigmasFromFit(th1d_list, window_range, chan):
+def getSigmasFromFit(TH1F_list, window_range, chan):
 
     # Find the maximal value
-    MPV_bin = th1d_list.GetMaximumBin()
-    MPV_time_diff = int(th1d_list.GetXaxis().GetBinCenter(MPV_bin))
-    MPV_entries = th1d_list.GetMaximum()
+    MPV_bin = TH1F_list.GetMaximumBin()
+    MPV_time_diff = int(TH1F_list.GetXaxis().GetBinCenter(MPV_bin))
+    MPV_entries = TH1F_list.GetMaximum()
     
     # Change the window
     xMin = MPV_time_diff - window_range
     xMax = MPV_time_diff + window_range
-    th1d_list.SetAxisRange(xMin, xMax)
+    TH1F_list.SetAxisRange(xMin, xMax)
     
     # Fit using normal gaussian
     N = 3
-    mean_window = th1d_list.GetMean()
-    sigma_window = th1d_list.GetStdDev()
+    mean_window = TH1F_list.GetMean()
+    sigma_window = TH1F_list.GetStdDev()
     xMin = mean_window - N * sigma_window
     xMax = mean_window + N * sigma_window
     
@@ -191,8 +191,8 @@ def getSigmasFromFit(th1d_list, window_range, chan):
             mean_number = 2
 
         # Create fit and calculate the width
-        th1d_list.Fit("gaus_fit", "Q", "", xMin, xMax)
-        th1_function = th1d_list.GetFunction("gaus_fit")
+        TH1F_list.Fit("gaus_fit", "Q", "", xMin, xMax)
+        th1_function = TH1F_list.GetFunction("gaus_fit")
 
         sigma_fit       = th1_function.GetParameter(sigma_number)
         sigma_fit_error = th1_function.GetParError(sigma_number)

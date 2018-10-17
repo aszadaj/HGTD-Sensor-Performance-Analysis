@@ -74,8 +74,8 @@ def printWaveform(batchNumber, sensor, event = 0):
     
     rise_time, cfd, linear_fit, linear_fit_indices = p_calc.calculateRiseTime(data, pedestal, timeScope, True)
     peak_value, peak_time, poly_fit = p_calc.calculatePeakValue(data, pedestal, signal_limit_DUT, timeScope, True)
-    point_count = p_calc.calculatePoints(data, threshold, timeScope)
-    charge = p_calc.calculateCharge(data, threshold)
+    charge = p_calc.calculateCharge(data, threshold, timeScope)
+    point_count = p_calc.calculatePoints(data, threshold)
     max_sample = np.amax(data) - pedestal
 
     # Create TMultigraph and define underlying graphs
