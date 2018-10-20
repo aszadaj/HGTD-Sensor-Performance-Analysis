@@ -35,7 +35,7 @@ def main():
     number_of_runs = "all"
     
     # Choose batches to run. "all" or e.g. [101, 102].
-    batches = [102]
+    batches = "all"
     batches_exclude = []
     
     # Choose sensor for which the plots are produced.
@@ -48,7 +48,7 @@ def main():
     ########### PULSE ################
     
 
-    pulse.pulseAnalysis() # Long procedure function ~5 min per run.
+    #pulse.pulseAnalysis() # Long procedure function ~5 min per run.
     #pulse_plot.pulsePlots()
 
     
@@ -57,7 +57,7 @@ def main():
     
     
     #timing.createTimingFiles() # Creates files for timingPlots() and trackingAnalysis()
-    #timing_plot.timingPlots()
+    timing_plot.timingPlots()
 
     
     

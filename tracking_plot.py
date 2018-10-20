@@ -9,24 +9,30 @@ ROOT.gROOT.SetBatch(True)
 
 distance_x = 800 # Width from the center of the canvas in x default 800
 distance_y = 600 # Width from the center of the canvas in y default 600
-bin_size = 18.5 # Pixel size from the MIMOSA
 
 n_div = 10                  # Number of ticks on Z-axis
 percentage_efficiency = 80  # Limit the lower percentage
-timing_res_max = 100        # Z-axis limit for timing resolution graph
+timing_res_max = 200        # Z-axis limit for timing resolution graph
 peak_value_max = 400        # Z-axis limit for pulse amplitude graph
-gain_max = 160              # Z-axis limit for gain graph
-rise_time_max = 1000        # Z-axis limit for rise time graph
+gain_max = 500              # Z-axis limit for gain graph
+rise_time_max = 1500        # Z-axis limit for rise time graph
 
-bin_timing_decrease = 3 # Bin size increase to adapt for timing resolution plots
+    
+min_entries_bin = 10 # Minimum entries per bin
+min_entries_bin_timing = 50 # Required entries for timing resolution graphs
+pixel_size = 18.5 # Pixel size from the MIMOSA
+bin_size_increase_timing = 2.5 # Bin size increase to adapt for timing resolution plots
+
 
 ROOT.gStyle.SetPalette(1)
-ROOT.gStyle.SetNumberContours(5*n_div)
+ROOT.gStyle.SetNumberContours(10*n_div)
 
 
 # Function appends tracking files and oscilloscope files and
 # matches the sizes of them
 def trackingAnalysis():
+    
+    global var_names
     
     dm.setFunctionAnalysis("tracking_analysis")
     dm.defineDataFolderPath()
@@ -61,9 +67,10 @@ def trackingAnalysis():
                 numpy_arrays[index] = np.concatenate((numpy_arrays[index], np.take(dm.exportImportROOTData(var_names[index][0], var_names[index][1]), np.arange(0, len(tracking_run)))), axis=0)
 
             numpy_arrays[-1] = np.concatenate((numpy_arrays[-1], tracking_run), axis=0)
-                        
-                        
-        #calculateCenterOfSensorPerBatch(numpy_arrays[0], numpy_arrays[-1])
+        
+        
+        # This function can be turned on once, to export the center positions for each pad.
+        #t_calc.calculateCenterOfSensorPerBatch(numpy_arrays[0], numpy_arrays[-1])
                         
         trackingPlots(numpy_arrays)
                         
@@ -76,24 +83,19 @@ def trackingAnalysis():
 
 def trackingPlots(numpy_arrays):
    
-   
     [peak_values, gain, rise_times, time_difference_peak, time_difference_cfd, tracking] = [i for i in numpy_arrays]
    
-    global canvas, canvas_projection, width_time_diff
-    global bin_entries, bin_entries_timing
+    declareTCanvas()
+    defineBinSizes()
     
-    bin_entries = 5 # Minimum entries per bin
-    bin_entries_timing = 50 # Required entries for timing resolution graphs
-    width_time_diff = 500 # Width from the mean value of filling time difference values, this is to exclude extreme values
+    if md.getBatchNumber()/100 == 7:
+        updateBinSize(1.5)
     
     t_calc.setArrayPadExportBool(False)
     
-    canvas = ROOT.TCanvas("Tracking "+str(md.getBatchNumber()), "tracking")
-    canvas_projection = ROOT.TCanvas("Projection "+str(md.getBatchNumber()), "projection")
-    
     createSinglePadGraphs(peak_values, gain, rise_times, time_difference_peak, time_difference_cfd, tracking)
 
-    createArrayPadGraphs([distance_x, distance_y, bin_size])
+    createArrayPadGraphs(distance_x, distance_y)
 
 
 ###########################################
@@ -124,12 +126,8 @@ def createSinglePadGraphs(peak_values, gain, rise_times, time_difference_peak, t
         # This function requires a ROOT file which have the center positions for each pad
         tracking_chan = t_calc.changeCenterPositionSensor(np.copy(tracking))
         
-        distance_x = 800 # Width from the center of the canvas in x default 800
-        distance_y = 600 # Width from the center of the canvas in y default 600
-        bin_size = 18.5 # Pixel size from the MIMOSA
-
-        produceTProfilePlots([peak_values[md.chan_name], gain[md.chan_name], rise_times[md.chan_name], time_difference_peak[md.chan_name], time_difference_cfd[md.chan_name]], tracking_chan, [distance_x, distance_y, bin_size])
-        produceEfficiencyPlot(peak_values[md.chan_name], tracking_chan, [distance_x, distance_y, bin_size])
+        produceTProfilePlots([peak_values[chan], gain[chan], rise_times[chan], time_difference_peak[chan], time_difference_cfd[chan]], tracking_chan, distance_x, distance_y)
+        produceEfficiencyPlot(peak_values[chan], tracking_chan, distance_x, distance_y)
 
 
 ###########################################
@@ -139,9 +137,7 @@ def createSinglePadGraphs(peak_values, gain, rise_times, time_difference_peak, t
 ###########################################
 
 
-def createArrayPadGraphs(limits):
-    
-    [distance_x, distance_y, bin_size] = [i for i in limits]
+def createArrayPadGraphs(distance_x, distance_y):
     
     if not t_calc.sensorIsAnArrayPad():
         return 0
@@ -194,9 +190,7 @@ def createArrayPadGraphs(limits):
 
 
 # Produce mean value and time resolution plots
-def produceTProfilePlots(numpy_arrays, tracking, limits):
-    
-    [distance_x, distance_y, bin_size] = [i for i in limits]
+def produceTProfilePlots(numpy_arrays, tracking, distance_x, distance_y):
     
     if md.checkIfArrayPad():
         
@@ -240,9 +234,7 @@ def produceTProfilePlots(numpy_arrays, tracking, limits):
 
 
 # Produce efficiency graphs (for array and single pads) and projection histograms (single pad arrays only)
-def produceEfficiencyPlot(peak_values, tracking, limits):
-    
-    [distance_x, distance_y, bin_size] = [i for i in limits]
+def produceEfficiencyPlot(peak_values, tracking, distance_x, distance_y):
     
     if md.checkIfArrayPad():
     
@@ -277,11 +269,12 @@ def produceEfficiencyPlot(peak_values, tracking, limits):
     efficiency_TH2D.Scale(100)
 
     # PROJECTION X AND Y #
-    # Set up parameters for the projection objects. Projection Y have same limits to preserve same window
-    projectionX_th1d = ROOT.TProfile("Projection X", "projection x", xbin,-distance_x,distance_x)
+    
     # Projection Y have extended limits (with larger bin number)
     # to preserve the same length of the window, for better comparison with projection X.
     # The window is then reduced to match the bin number
+    
+    projectionX_th1d = ROOT.TProfile("Projection X", "projection x", xbin,-distance_x,distance_x)
     projectionY_th1d = ROOT.TProfile("Projection Y", "projection y", xbin,-distance_x,distance_x)
     
     t_calc.fillInefficiencyAndProjectionObjects(efficiency_TH2D, inefficiency_TH2D, projectionX_th1d, projectionY_th1d, xbin, ybin)
@@ -295,7 +288,6 @@ def produceEfficiencyPlot(peak_values, tracking, limits):
     # Create projection plots for single pad only
     produceProjectionPlots(projectionX_th1d, projectionY_th1d)
 
-    del LGAD_TH2D, MIMOSA_TH2D, efficiency_TEff, inefficiency_TH2D, projectionX_th1d, projectionY_th1d
 
 
 
@@ -499,4 +491,29 @@ def printProjectionPlot(th1_projection, headTitle, fileName, sigmas):
     # Export histogram as ROOT file
     dm.exportImportROOTHistogram(fileName, th1_projection)
     canvas_projection.Clear()
+
+
+
+def declareTCanvas():
+
+    global canvas, canvas_projection
     
+    canvas = ROOT.TCanvas("Tracking "+str(md.getBatchNumber()), "tracking")
+    canvas_projection = ROOT.TCanvas("Projection "+str(md.getBatchNumber()), "projection")
+
+
+def defineBinSizes():
+    
+    global bin_size, bin_entries, bin_entries_timing, bin_timing_decrease
+
+    bin_size = pixel_size
+    bin_entries = min_entries_bin
+    bin_entries_timing = min_entries_bin_timing
+    bin_timing_decrease = bin_size_increase_timing
+
+
+def updateBinSize(factor):
+    
+    global bin_size
+    
+    bin_size *= factor

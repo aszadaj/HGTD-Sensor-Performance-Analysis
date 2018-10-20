@@ -54,7 +54,7 @@ def pulseAnalysisPerRun():
     
     # Define pool attributes, threads and number of events in each thread
     p = Pool(4)
-    step = 10000 # was 10 000
+    step = 10000
     max = md.getNumberOfEvents()
     ranges = range(0, max, step)
     dataPath = dm.getOscilloscopeFilePath()
@@ -74,7 +74,7 @@ def pulseAnalysisPerRun():
 
     print "Done with run", md.getRunNumber(), "\n"
 
-# Data input is in negative voltage values, but the methods handles them in "positive manner"
+# Data input is in negative voltage values, but the methods handles them in "positive values"
 # The output is the listed characteristics below
 def signalAnalysis(dataPath, ranges):
 

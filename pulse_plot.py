@@ -52,8 +52,6 @@ def pulsePlots():
 # Fill TH1 objects
 def producePulsePlots(numpy_variables):
 
-    global chan
-    
     [noise, pedestal, peak_value, rise_time, charge, cfd, peak_time, points, max_sample] = [i for i in numpy_variables]
     
     dm.changeIndexNumpyArray(noise, 1000)
@@ -208,11 +206,11 @@ def makeLandauGausFit(graphList, signal_limit=0):
 
 def getAvgStd(noise_std, noise_average):
     
-    noise_avg   = np.average(noise_std[chan][np.nonzero(noise_std[chan])])
-    noise_std  = np.std(noise_std[chan][np.nonzero(noise_std[chan])])
+    noise_avg   = np.average(noise_std[md.chan_name][np.nonzero(noise_std[md.chan_name])])
+    noise_std  = np.std(noise_std[md.chan_name][np.nonzero(noise_std[md.chan_name])])
     
-    pedestal_avg = np.average(noise_average[chan][np.nonzero(noise_average[chan])])
-    pedestal_std  = np.std(noise_average[chan][np.nonzero(noise_average[chan])])
+    pedestal_avg = np.average(noise_average[md.chan_name][np.nonzero(noise_average[md.chan_name])])
+    pedestal_std  = np.std(noise_average[md.chan_name][np.nonzero(noise_average[md.chan_name])])
 
     return [noise_avg, noise_std], [pedestal_avg, pedestal_std]
 
@@ -362,44 +360,6 @@ def getPlotAttributes(name):
     
 
     headTitle = head_title_type + " - " + md.getSensor()+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage()) + " V"
-    fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getSensor()+"/pulse/"+name+"/"+name+"_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getSensor())+".pdf"
+    fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getSensor()+"/pulse/"+name+"/"+name+"_"+str(md.getBatchNumber())+"_"+md.chan_name+ "_"+str(md.getSensor())+".pdf"
     
     return [headTitle, xAxisTitle, yAxisTitle, fileName]
-
-
-#
-#        # This is for batch 304 for W9-LGA35
-#        if md.getSensor() == "W9-LGA35":
-#            for entry in range(0, len(cfd)):
-#                #if -12275 < time_diff[chan][entry] < -12225: # left peak first try [-12275]
-#                if -12175 < time_diff[chan][entry] < -12125: # right peak
-#                    time_loc_vs_time_loc.Fill(cfd[chan][entry], cfd["chan6"][entry])
-#
-#
-#for entry in range(0, len(time_diff)):
-#    if time_diff[chan][entry] != 0:
-#        time_loc_vs_time_loc.Fill(time_diff[chan][entry], cfd["chan6"][entry])
-#
-#
-#        time_loc_vs_time_loc.SetTitle("Time diff W9-lga35 304 chan0 vs time location sipm cfd reference")
-#        time_loc_vs_time_loc.GetXaxis().SetTitle("Time difference cfd reference")
-#        time_loc_vs_time_loc.GetYaxis().SetTitle("time location SiPM")
-#        time_loc_vs_time_loc.SetAxisRange(5,100, "Z")
-#        canvas.Clear()
-#        time_loc_vs_time_loc.Draw("COLZ")
-#        canvas.Update()
-#
-#        # Redefine the stats box
-#        stats_box = time_loc_vs_time_loc.GetListOfFunctions().FindObject("stats")
-#        stats_box.SetX1NDC(0.15)
-#        stats_box.SetX2NDC(0.25)
-#        stats_box.SetY1NDC(0.93)
-#        stats_box.SetY2NDC(0.83)
-#        stats_box.SetOptStat(1000000011)
-#
-#
-#
-#        #canvas.Print("/Users/aszadaj/Desktop/time_loc/SiPM-w9-lga35-left-peak.pdf")
-#        #        canvas.Print("/Users/aszadaj/Desktop/time_loc/SiPM-w9-lga35-right-peak.pdf")
-#        canvas.Print("/Users/aszadaj/Desktop/time_loc/time_diff_vs_time_loc_sipm_306_cfd_chan0.pdf")
-#        canvas.Clear()

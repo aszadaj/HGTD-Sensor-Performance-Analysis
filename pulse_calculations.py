@@ -77,44 +77,6 @@ def calculateNoiseAndPedestal(data):
 
 
 
-# Get rise time
-def calculateRiseTime(data, pedestal, timeScope, graph=False):
-    
-    # Default values
-    rise_time = 0
-    cfd = 0
-    linear_fit = [0,0]
-    linear_fit_indices = 0
-    
-    # Select points between 10 and 90 procent, before the max point
-    linear_fit_bool = (data < np.amax(data)*0.9) & (data > np.amax(data)*0.1) & (np.nonzero(data) < np.argmax(data))[0]
-    
-    if np.sum(linear_fit_bool) > 0:
-    
-        linear_fit_indices = np.argwhere(linear_fit_bool).flatten()
-        linear_fit_indices = getConsecutiveSeries(linear_fit_indices)
-  
-        # Require three points above threshold
-        if len(linear_fit_indices) >= 3:
-
-            x_values = linear_fit_indices * timeScope
-            y_values = data[linear_fit_indices]
-           
-            linear_fit = np.polyfit(x_values, y_values, 1)
-        
-            if linear_fit[0] > 0:
-                
-                # Get rise time and CFD Z = 0.5 of the rising edge, pedestal corrected
-                rise_time = 0.8 * (np.amax(data) - pedestal) / linear_fit[0]
-                cfd = (0.5 * (np.amax(data) - pedestal) - linear_fit[1]) / linear_fit[0]
-
-    if graph:
-        return rise_time, cfd, linear_fit, linear_fit_indices
-    
-    else:
-        return rise_time, cfd
-
-
 # Calculate the pulse amplitude value
 def calculatePeakValue(data, pedestal, signal_limit_DUT, timeScope, graph=False):
 
@@ -130,6 +92,8 @@ def calculatePeakValue(data, pedestal, signal_limit_DUT, timeScope, graph=False)
     
     # This is to ensure that the obtained value is in the entry window
     if 2 < arg_max < 999:
+        
+        print "peak_value", timeScope
         
         poly_fit_data = data[poly_fit_indices]
         poly_fit = np.polyfit((poly_fit_indices * timeScope), poly_fit_data, 2)
@@ -154,6 +118,46 @@ def calculatePeakValue(data, pedestal, signal_limit_DUT, timeScope, graph=False)
     
     else:
         return peak_value, peak_time
+
+
+# Get rise time
+def calculateRiseTime(data, pedestal, timeScope, graph=False):
+    
+    print "rise time", timeScope
+    
+    # Default values
+    rise_time = 0
+    cfd = 0
+    linear_fit = [0,0]
+    linear_fit_indices = 0
+    
+    # Select points between 10 and 90 procent, before the max point
+    linear_fit_bool = (data < np.amax(data)*0.9) & (data > np.amax(data)*0.1) & (np.nonzero(data) < np.argmax(data))[0]
+    
+    if np.sum(linear_fit_bool) > 0:
+        
+        linear_fit_indices = np.argwhere(linear_fit_bool).flatten()
+        linear_fit_indices = getConsecutiveSeries(linear_fit_indices)
+        
+        # Require three points above threshold
+        if len(linear_fit_indices) >= 3:
+            
+            x_values = linear_fit_indices * timeScope
+            y_values = data[linear_fit_indices]
+            
+            linear_fit = np.polyfit(x_values, y_values, 1)
+            
+            if linear_fit[0] > 0:
+                
+                # Get rise time and CFD Z = 0.5 of the rising edge, pedestal corrected
+                rise_time = 0.8 * (np.amax(data) - pedestal) / linear_fit[0]
+                cfd = (0.5 * (np.amax(data) - pedestal) - linear_fit[1]) / linear_fit[0]
+
+    if graph:
+        return rise_time, cfd, linear_fit, linear_fit_indices
+        
+    else:
+        return rise_time, cfd
 
 
 # Calculate the charge over the threshold

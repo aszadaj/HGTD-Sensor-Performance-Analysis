@@ -12,9 +12,9 @@ ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
 canvas = ROOT.TCanvas("Timing", "timing")
 
 # Range and bins for the window for TH1 objects
-xbins = 4000 # default 2000
+xbins = 2000 # default 2000
 bin_range = 15000
-window_range = 500 # default 1000
+window_range = 1000 # default 1000
 
 # Between each combination of LGADs, require to have at least 200 entries
 min_entries_per_run = 200
@@ -70,10 +70,11 @@ def timingPlots():
 
 ############## LINEAR TIME DIFFERENCE ###############
 
+
 def produceTimingDistributionPlots(time_difference, category):
 
     if category.find("system") != -1:
-    
+
         # Comment this function if you want to omit producing plots for system of equations
         produceTimingDistributionPlotsSysEq(time_difference, category)
         return 0
@@ -122,22 +123,7 @@ def produceTimingDistributionPlots(time_difference, category):
             
         sigma_DUT, sigma_fit_error, time_diff_mean = t_calc.getSigmasFromFit(time_diff_TH1F[chan], window_range, chan)
 
-        # Set titles and export file
-        headTitle = "Time difference "+md.getSensor()+" and SiPM, T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage()) + " V"
-        xAxisTitle = "\Deltat [ps]"
-        yAxisTitle = "Entries"
-        fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getSensor()+"/timing/normal/peak/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getSensor())+"_diff_osc_peak.pdf"
-
-        if md.checkIfSameOscAsSiPM(chan):
-            fileName = fileName.replace("diff_osc", "same_osc")
-
-        if category.find("cfd") != -1:
-            fileName = fileName.replace("peak", "cfd")
-
-
-
-        titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
-        exportTHPlot(time_diff_TH1F[chan], titles, chan, [sigma_DUT, sigma_fit_error] )
+        exportTHPlot(time_diff_TH1F[chan], [sigma_DUT, sigma_fit_error], category)
 
 
         # Export the result together with its error
@@ -145,7 +131,6 @@ def produceTimingDistributionPlots(time_difference, category):
         timing_results = np.empty(3, dtype = dt)
         timing_results[category][0] = sigma_DUT
         timing_results[category][1] = sigma_fit_error
-        timing_results[category][2] = time_diff_mean
         
         dm.exportImportROOTData("results", category, timing_results)
 
@@ -170,8 +155,9 @@ def produceTimingDistributionPlotsSysEq(time_difference, category):
     time_diff_TH1F = dict()
     
     omit_batch = False
-    
+
     channels_1st_oscilloscope   = ["chan0", "chan1", "chan2", "chan3"]
+
     sigma_convoluted            = np.zeros((4,4))
     sigma_convoluted_error      = np.zeros((4,4))
     
@@ -287,35 +273,26 @@ def produceTimingDistributionPlotsSysEq(time_difference, category):
         # Loop through the combinations
         for chan2 in chan2_list:
 
-            # Create titles and print the graph
-            headTitle = "Time difference "+md.getSensor()+" and "+md.getSensor(chan2)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage()) + " V"
-            xAxisTitle = "\Deltat [ps]"
-            yAxisTitle = "Entries"
-            fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getSensor()+"/timing/system/peak/timing_"+str(md.getBatchNumber())+"_"+chan+ "_"+str(md.getSensor())+"_and_"+str(md.getSensor(chan2))+"_peak.pdf"
-
-            if category.find("cfd") != -1:
-                fileName = fileName.replace("peak", "cfd")
-        
-
             index = int(chan[-1]) % 4
             sigma_DUT = sigmas_chan[index]
             sigma_DUT_error = sigmas_error[index]
 
-            titles = [headTitle, xAxisTitle, yAxisTitle, fileName]
-            exportTHPlot(time_diff_TH1F[chan][chan2], titles, chan, [sigma_DUT, sigma_DUT_error])
+            exportTHPlot(time_diff_TH1F[chan][chan2], [sigma_DUT, sigma_DUT_error], category, chan2)
 
             timing_results_sys_eq[category][0] = sigma_DUT
             timing_results_sys_eq[category][1] = sigma_DUT_error
 
         # Export the results
-        dm.exportImportROOTData("results", category, timing_results_sys_eq)
+        #dm.exportImportROOTData("results", category, timing_results_sys_eq)
 
 
 ############## EXPORT PLOT ###############
 
-def exportTHPlot(graphList, titles, chan, sigma):
+def exportTHPlot(graphList, sigma, category, chan2 = ""):
 
     canvas.Clear()
+    
+    titles = getPlotAttributes(category, chan2)
  
     graphList.SetLineColor(1)
     graphList.SetTitle(titles[0])
@@ -341,3 +318,29 @@ def exportTHPlot(graphList, titles, chan, sigma):
     dm.exportImportROOTHistogram(titles[3], graphList)
 
 
+
+def getPlotAttributes(category, chan2=""):
+
+    # Set titles and export file
+    headTitle = "Time difference "+md.getSensor()+" and SiPM, T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage()) + " V"
+    xAxisTitle = "\Deltat [ps]"
+    yAxisTitle = "Entries"
+    fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getSensor()+"/timing/normal/peak/timing_"+str(md.getBatchNumber())+"_"+md.chan_name+ "_"+str(md.getSensor())+"_diff_osc_peak.pdf"
+
+    
+    if md.checkIfSameOscAsSiPM(md.chan_name):
+        fileName = fileName.replace("diff_osc", "same_osc")
+        
+    if category.find("cfd") != -1:
+        fileName = fileName.replace("peak", "cfd")
+    
+    if chan2 != "":
+        # Create titles and print the graph
+        headTitle = "Time difference "+md.getSensor()+" and "+md.getSensor(chan2)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage()) + " V"
+        fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getSensor()+"/timing/system/peak/timing_"+str(md.getBatchNumber())+"_"+md.chan_name+ "_"+str(md.getSensor())+"_and_"+str(md.getSensor(chan2))+"_peak.pdf"
+        
+        if category.find("cfd") != -1:
+            fileName = fileName.replace("peak", "cfd")
+
+
+    return [headTitle, xAxisTitle, yAxisTitle, fileName]

@@ -310,7 +310,6 @@ def getDUTPos():
     return str(runInfo[12+int(getChanName()[-1])*5])
 
 
-
 def setChannelName(chan):
 
     global chan_name

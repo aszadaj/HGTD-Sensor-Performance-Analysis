@@ -17,8 +17,8 @@ def defineDataFolderPath():
     sourceFolderPath = "/Users/aszadaj/cernbox/SH203X/folder_sensor_perfomance_tb_sep17/"
     oscilloscopePath = sourceFolderPath + getOscillscopeSourceFolder() + "/"
 
-
     #oscilloscopePath = "/Volumes/HDD500/oscilloscope_data_hgtd_tb_sep17/" # my local HDD
+    #oscilloscopePath = "/Volumes/HITACHI/oscilloscope_data_hgtd_tb_sep17/" # my local HDD
 
 
 # Export pulse data
@@ -30,10 +30,10 @@ def exportPulseData(variable_array):
         exportImportROOTData("pulse", var_names[index], variable_array[index])
 
 
-# Export ROOT file with selected information
-
+# Export or import ROOT file
 def exportImportROOTData(group, category, data=np.empty(0)):
-
+    
+    # This line is for exporting data and adapting correct dtype for the numpy array
     if group != "timing" and group != "results" and category != "position" and data.size != 0:
         data = data.astype(getDTYPE())
 
@@ -46,7 +46,7 @@ def exportImportROOTData(group, category, data=np.empty(0)):
             fileName = category + "_" + str(md.getBatchNumber()) + "_" + md.getSensor() + "_" + md.chan_name
 
         else:
-            fileName = category + "_" + str(md.getBatchNumber())
+            fileName = category + "_" + str(md.getBatchNumber()/100)
     else:
 
         fileName = group + "_" + category + "_" + str(md.getRunNumber())
@@ -70,6 +70,7 @@ def exportImportROOTData(group, category, data=np.empty(0)):
         rnm.array2root(data, dataPath, mode="recreate")
 
 
+# Export or import ROOT histograms
 def exportImportROOTHistogram(fileName, graphList = 0):
 
     rootDirectory = fileName.replace(getPlotsSourceFolder(), getHistogramsSourceFolder())

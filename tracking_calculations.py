@@ -4,6 +4,8 @@ import numpy as np
 import run_log_metadata as md
 import data_management as dm
 import tracking_plot as t_plot
+import pulse_plot as p_plot
+import timing_plot as tim_plot
 
 
 def fillTHObjects(numpy_arrays, TH2_objects_fill, tracking, th1_limits):
@@ -12,29 +14,14 @@ def fillTHObjects(numpy_arrays, TH2_objects_fill, tracking, th1_limits):
     
     [xbin, ybin, xbin_timing, ybin_timing, distance_x, distance_y] = [i for i in th1_limits]
     
-    fill = False
-    
-    # Import values mean values of the time difference.
-    mpv_time_diff_peak =  dm.exportImportROOTData("results", "linear")["linear"][2]
-    mpv_time_diff_cfd  =  dm.exportImportROOTData("results", "linear_cfd")["linear_cfd"][2]
+    stripNumpyArrays(numpy_arrays)
     
     # Fill all objects except timing resolution
     for event in range(0, len(tracking)):
         if (-distance_x < tracking['X'][event] < distance_x) and (-distance_y < tracking['Y'][event] < distance_y):
             for index in range(0, len(numpy_arrays)):
                 if numpy_arrays[index][event] != 0:
-                    if index == 3:
-                        if (mpv_time_diff_peak - t_plot.width_time_diff) < numpy_arrays[index][event] < (mpv_time_diff_peak + t_plot.width_time_diff):
-                            fill = True
-                    elif index == 4:
-                        if (mpv_time_diff_cfd - t_plot.width_time_diff) < numpy_arrays[index][event] < (mpv_time_diff_cfd + t_plot.width_time_diff):
-                            fill = True
-                    else:
-                        fill = True
-                    
-                    if fill:
-                        TH2_objects_fill[index].Fill(tracking['X'][event], tracking['Y'][event], numpy_arrays[index][event])
-                        fill = False
+                    TH2_objects_fill[index].Fill(tracking['X'][event], tracking['Y'][event], numpy_arrays[index][event])
 
 
     # Remove bins with few entries
@@ -72,6 +59,7 @@ def fillEfficiencyObjects(LGAD_TH2F, MIMOSA_TH2F, tracking, peak_values, distanc
             # Passed events
             if peak_values[event] != 0:
                 LGAD_TH2F.Fill(tracking['X'][event], tracking['Y'][event], 1)
+
 
     # Remove bins with less than some entries
     for i in range(1, xbin+1):
@@ -139,48 +127,85 @@ def fillInefficiencyAndProjectionObjects(efficiency_TH2F, inefficiency_TH2F, pro
     dm.exportImportROOTData("tracking", "efficiency", np.array(efficiency_bulk))
 
 
+# Import results from already exported histograms to strip extreme values. Set a 5 sigma level on the standard deviation from the histogram.
+def stripNumpyArrays(numpy_arrays):
+    
+    # These are names of the TH1D objects declared in plot .py-files
+    objectNames = ["Pulse amplitude"+" "+str(md.getBatchNumber())+" "+md.chan_name,"Charge"+" "+str(md.getBatchNumber())+" "+md.chan_name,"Rise time"+" "+str(md.getBatchNumber())+" "+md.chan_name,"Linear time difference "+str(md.getBatchNumber())+" "+md.chan_name,"Linear time difference "+str(md.getBatchNumber())+" "+md.chan_name]
+
+    N = 5
+    
+    # Strip pulse amplitude values higher than 390 mV
+    numpy_arrays[0][numpy_arrays[0] > 390] = 0
+    
+    for index in range(2, len(numpy_arrays)):
+
+        if t_plot.var_names[index][1] == "rise_time":
+            
+            [headTitle, xAxisTitle, yAxisTitle, fileName] = p_plot.getPlotAttributes(t_plot.var_names[index][1])
+        
+        else:
+            
+            [headTitle, xAxisTitle, yAxisTitle, fileName] = tim_plot.getPlotAttributes(t_plot.var_names[index][1])
+            
+
+        TFile = dm.exportImportROOTHistogram(fileName)
+        THistogram = TFile.Get(objectNames[index])
+        
+        mean = THistogram.GetMean()
+        sigma = THistogram.GetStdDev()
+        
+        numpy_arrays[index][mean - N * sigma > numpy_arrays[index]] = 0
+        numpy_arrays[index][mean + N * sigma < numpy_arrays[index]] = 0
+
+
+
 # Change tracking information
 def changeCenterPositionSensor(tracking):
 
     position = dm.exportImportROOTData("tracking", "position")
 
     center = np.array([position[md.chan_name][0][0], position[md.chan_name][0][1]])
+    theta = 0
+    
+    # Center the pad or array
+    tracking["X"] = tracking["X"] - center[0]
+    tracking["Y"] = tracking["Y"] - center[1]
 
     if md.checkIfArrayPad():
     
+        # Plot each pad to its position
         dist_center = getDistanceFromCenterArrayPad(position)
- 
         tracking["X"] = tracking["X"] + dist_center[md.chan_name][0][0]
         tracking["Y"] = tracking["Y"] + dist_center[md.chan_name][0][1]
     
-        # Center the pad or array
-        tracking["X"] = tracking["X"] - center[0]
-        tracking["Y"] = tracking["Y"] - center[1]
+    
+    # Rotation for W4-S204_6e14
+    if md.getSensor() == "W4-S204_6e14":
 
-        # Rotation for W4-S204_6e14
-        if md.getSensor() == "W4-S204_6e14":
+        theta = 4.3
 
-            theta = 4.3 * np.pi/180
+    # Rotation or W4-S215
+    elif md.getSensor() == "W4-S215" and md.checkIfArrayPad():
+        
+        theta = 0.6 # was 0.6
+    
+    # Rotation or W4-S215
+    elif md.getSensor() == "W4-S215" and md.getBatchNumber()/100 == 5:
+        
+        theta = 1.5
 
-            # Use the rotation matrix around z
-            tracking["X"] = np.multiply(tracking["X"], np.cos(theta)) - np.multiply(tracking["Y"], np.sin(theta))
-            tracking["Y"] = np.multiply(tracking["X"], np.sin(theta)) + np.multiply(tracking["Y"], np.cos(theta))
-
-        # Rotation for W4-S215
-        elif md.getSensor() == "W4-S215":
-
-            theta = 0.6 * np.pi/180
-            
-              # Use the rotation matrix around z
-            tracking["X"] = np.multiply(tracking["X"], np.cos(theta)) - np.multiply(tracking["Y"], np.sin(theta))
-            tracking["Y"] = np.multiply(tracking["X"], np.sin(theta)) + np.multiply(tracking["Y"], np.cos(theta))
+    # Rotation or W4-S215
+    elif md.getSensor() == "W4-S215" and md.getBatchNumber()/100 == 7:
+        
+        theta = 1.2
 
     
-    else:
-    
-        # Center the pad or array
-        tracking["X"] = tracking["X"] - center[0]
-        tracking["Y"] = tracking["Y"] - center[1]
+    if theta != 0:
+        # Use the rotation matrix around z
+        theta *= np.pi/180
+        tracking["X"] = np.multiply(tracking["X"], np.cos(theta)) - np.multiply(tracking["Y"], np.sin(theta))
+        tracking["Y"] = np.multiply(tracking["X"], np.sin(theta)) + np.multiply(tracking["Y"], np.cos(theta))
 
 
     return tracking
@@ -225,38 +250,59 @@ def getDistanceFromCenterArrayPad(position):
 
 def calculateCenterOfSensorPerBatch(peak_values, tracking):
 
-    print "Producing center positions for batch", md.getBatchNumber(), "\n"
-
-    # Choose ranges for the tracking info
-    xmin = -7000
-    xmax = 7000
-    ymin = 5000
-    ymax = 16000
+    # Calculate position for largest batches
+    if md.getBatchNumber() not in [101, 207, 306, 401, 507, 601, 707]:
+        return 0
     
-    bin_size = 18.5 * 2
-    xbin = int((xmax-xmin)/bin_size)
-    ybin = int((ymax-ymin)/bin_size)
-
-    minEntries = 7
+    global canvas_center
     
-    values = [minEntries, xmin, xmax, ymin, ymax, xbin, ybin]
+    canvas_center = ROOT.TCanvas("c1", "c1")
+    
+    print "\nCalculating CENTER POSITIONS for batch", md.getBatchNumber(), "\n"
 
     position_temp = np.zeros(1, dtype = dm.getDTYPETrackingPosition())
 
     for chan in peak_values.dtype.names:
+        md.setChannelName(chan)
 
-        position_temp[chan][0] = getCenterOfSensor(peak_values[chan], tracking, values)
+        position_temp[chan][0] = getCenterOfSensor(peak_values[chan], tracking)
 
     dm.exportImportROOTData("tracking", "position", position_temp)
 
-    print "Done producing center position for batch", md.getBatchNumber()
+    print "DONE producing CENTER POSITIONS for batch", md.getBatchNumber(), "\n"
 
 
-def getCenterOfSensor(peak_values, tracking, values):
+def getCenterOfSensor(peak_values, tracking):
+    
+    bin_size = 18.5
+    
+    # Choose ranges to center the DUTs depending on batch (the SiPM is larger, therefore the mean values of it are not exact)
+    if md.getBatchNumber() == 101:
+        [xmin, xmax, ymin, ymax, minEntries] = [-1500, 1500, 12000, 14500, 10]
+    
+    elif md.getBatchNumber() == 207:
+        [xmin, xmax, ymin, ymax, minEntries] = [-1000, 1500, 11500, 14500, 20]
 
-    [minEntries, xmin, xmax, ymin, ymax, xbin, ybin] = [i for i in values]
+    elif md.getBatchNumber() == 306:
+        [xmin, xmax, ymin, ymax, minEntries] = [-4500, -1000, 11000, 14000, 20]
+    
+    elif md.getBatchNumber() == 401:
+        [xmin, xmax, ymin, ymax, minEntries] = [-4000, -1200, 10500, 13500, 10]
 
-    mean_values = ROOT.TProfile2F("Mean value","Mean value", xbin, xmin, xmax, ybin, ymin, ymax)
+    elif md.getBatchNumber() == 507:
+        [xmin, xmax, ymin, ymax, minEntries] = [-3000, 1000, 10000, 13500, 15]
+    
+    elif md.getBatchNumber() == 601:
+        [xmin, xmax, ymin, ymax, minEntries] = [-1200, 300, 10000, 13000, 20]
+    
+    elif md.getBatchNumber() == 707:
+        [xmin, xmax, ymin, ymax, minEntries] = [-3000, 800, 10000, 13500, 5]
+
+
+    xbin = int((xmax-xmin)/bin_size)
+    ybin = int((ymax-ymin)/bin_size)
+    
+    mean_values = ROOT.TProfile2D("Mean value","Mean value", xbin, xmin, xmax, ybin, ymin, ymax)
 
     # Fill the events
     for event in range(0, len(tracking)):
@@ -270,16 +316,18 @@ def getCenterOfSensor(peak_values, tracking, values):
 
             bin = mean_values.GetBin(i,j)
             num = mean_values.GetBinEntries(bin)
-
-            if num < minEntries:
-                mean_values.SetBinContent(bin, 0)
-                mean_values.SetBinEntries(bin, 0)
+            removeBin(bin, mean_values, minEntries)
 
     mean_values.ResetStats()
-    
+
+    # Calculate the mean value for each DUT
     position_temp = np.array([mean_values.GetMean(), mean_values.GetMean(2)])
 
-    del mean_values
+    # Print the graph to estimate if the positions are correct
+    mean_values.Draw("COLZ")
+    canvas_center.Update()
+    position_plots_filePath = dm.getSourceFolderPath() + dm.getDataSourceFolder() + "/positions/"+md.getSensor()+"_"+str(md.getBatchNumber())+"_"+md.chan_name+"_"+".pdf"
+    canvas_center.Print(position_plots_filePath)
     
     return position_temp
 
@@ -458,9 +506,12 @@ def findSelectionRange():
     return np.array([[x1, x2], [y1, y2]]), center_position
 
 
-def removeBin(bin, time_diff):
+def removeBin(bin, time_diff, minEntries=0):
 
-    if time_diff.GetBinEntries(bin) < t_plot.bin_entries:
+    if minEntries == 0:
+        minEntries = t_plot.bin_entries
+    
+    if time_diff.GetBinEntries(bin) < minEntries:
         time_diff.SetBinContent(bin, 0)
         time_diff.SetBinEntries(bin, 0)
 

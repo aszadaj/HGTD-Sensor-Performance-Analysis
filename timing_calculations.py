@@ -46,11 +46,11 @@ def createTimingFiles():
                 # Perform calculations sys eq
                 time_diff_peak_sys_eq = getTimeDifferencePerRunSysEq(peak_time)
                 time_diff_cfd_sys_eq = getTimeDifferencePerRunSysEq(cfd)
-                
+
                 # Export per run number sys eq
                 dm.exportImportROOTData("timing", "system", time_diff_peak_sys_eq)
                 dm.exportImportROOTData("timing", "system_cfd", time_diff_cfd_sys_eq)
-                    
+
                 print "Done with run", md.getRunNumber(), "\n"
                         
         print "Done with batch", runLog[0][5], "\n"
@@ -90,9 +90,9 @@ def getTimeDifferencePerRunSysEq(time_location):
     time_difference = np.zeros(len(time_location), dtype = dt)
     
     channels_1st_oscilloscope = ["chan0", "chan1", "chan2", "chan3"]
-
-    for chan in channels_1st_oscilloscope:
     
+    for chan in channels_1st_oscilloscope:
+        
         chan2_list = list(channels_1st_oscilloscope)
         chan2_list.remove(chan)
         for event in range(0, len(time_location[chan])):
@@ -104,8 +104,8 @@ def getTimeDifferencePerRunSysEq(time_location):
                 
                 if time_location[chan][event] != 0 and time_location[chan2][event] != 0:
                     value[index] = (time_location[chan][event] - time_location[chan2][event])*1000
-        
-            time_difference[chan][event] = value
+    
+        time_difference[chan][event] = value
 
 
     return time_difference
@@ -119,7 +119,7 @@ def solveSystemOfEqs(sigma_convoluted_matrix, error_convoluted_matrix):
     
     matrices, inverses = possibleMatrices()
     
-    check_sum = np.inf
+    check_sum = 0
     
     for index in range(0, len(matrices)):
         
@@ -139,8 +139,8 @@ def solveSystemOfEqs(sigma_convoluted_matrix, error_convoluted_matrix):
         error_convoluted = matrix.dot(error_convoluted_matrix).diagonal()
         error_solution = abs(matrix_inv).dot(error_convoluted)
         
-        # Select the solution with the smallest sum of timing resolutions
-        if check_sum > np.sum(sigma_solution):
+        # Select the solution with the largest sum of timing resolutions
+        if check_sum < np.sum(sigma_solution):
             sigma = sigma_solution
             error = error_solution
             check_sum = np.sum(sigma_solution)
@@ -172,31 +172,23 @@ def getSigmasFromFit(TH1F_list, window_range, chan):
     # Within the same oscilloscope
     if md.checkIfSameOscAsSiPM(chan):
         
-        fit_function = ROOT.TF1("gaus_fit", "gaus", xMin, xMax)
+        fit_function = ROOT.TF1("gaus", "gaus", xMin, xMax)
 
     # Else in different oscilloscopes
     else:
-        fit_function = ROOT.TF1("gaus_fit", "[0]*exp(-0.5*((x-[2])/[3])^2) + [1]*exp(-0.5*((x-([2]+100))/[3])^2)", xMin, xMax)
-        fit_function.SetParameters(MPV_entries, MPV_entries, mean_window, sigma_window)
-        fit_function.SetParNames("Constant 1", "Constant 2", "Mean 1", "\sigma_{tot}")
+        fit_function = ROOT.TF1("gaus", "[0]*exp(-0.5*((x-[1] )/[2])^2) + [3]*exp(-0.5*((x-([1]+100))/[2])^2)", xMin, xMax)
+        fit_function.SetParameters(MPV_entries, mean_window, sigma_window, MPV_entries)
+        fit_function.SetParNames("Constant1", "Mean1", "Sigma-tot", "Constant2")
 
     try:
 
-        
-        if md.checkIfSameOscAsSiPM(chan):
-            sigma_number = 2
-            mean_number = 1
-        else:
-            sigma_number = 3
-            mean_number = 2
-
         # Create fit and calculate the width
-        TH1F_list.Fit("gaus_fit", "Q", "", xMin, xMax)
-        th1_function = TH1F_list.GetFunction("gaus_fit")
+        TH1F_list.Fit("gaus", "Q", "", xMin, xMax)
+        th1_function = TH1F_list.GetFunction("gaus")
 
-        sigma_fit       = th1_function.GetParameter(sigma_number)
-        sigma_fit_error = th1_function.GetParError(sigma_number)
-        time_diff_mean  = th1_function.GetParameter(mean_number)
+        sigma_fit       = th1_function.GetParameter(2)
+        sigma_fit_error = th1_function.GetParError(2)
+        time_diff_mean  = th1_function.GetParameter(1)
 
         sigma_SiPM = md.getSigmaSiPM()
 
@@ -217,8 +209,9 @@ def getSigmasFromFit(TH1F_list, window_range, chan):
 
     return sigma_DUT, sigma_fit_error, time_diff_mean
 
-def getDTYPESysEq():
 
+def getDTYPESysEq():
+    
     return (  [('chan0',  '<f8', (1,3)), ('chan1',  '<f8', (1,3)) ,('chan2',  '<f8', (1,3)) ,('chan3',  '<f8', (1,3))] )
 
 
@@ -248,6 +241,3 @@ def possibleMatrices():
                 
 
     return matrices, inverses
-
-
-
