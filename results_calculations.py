@@ -18,7 +18,6 @@ def produceResults():
     #categories = ["linear_gain", "system_gain", "linear_cfd_gain", "system_cfd_gain"]
     
     canvas = ROOT.TCanvas("Results", "Results")
-    dm.defineDataFolderPath()
     
     sensorNames = ["50D-GBGR2", "W4-LG12", "W4-RD01", "W4-S203", "W4-S204_6e14", "W4-S215", "W4-S1022", "W4-S1061", "W9-LGA35"]
     

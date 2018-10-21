@@ -1,12 +1,17 @@
 import ROOT
 import numpy as np
 import root_numpy as rnm
+import pathos
 
 import pulse_calculations as p_calc
 import run_log_metadata as md
 import data_management as dm
 
-from pathos.multiprocessing import ProcessingPool as Pool
+# Number of threads for multiprocesing
+threads = 4
+
+# number of events per iteration and thread
+step = 10000
 
 ROOT.gROOT.SetBatch(True)
 
@@ -16,7 +21,6 @@ def pulseAnalysis():
 
     dm.setFunctionAnalysis("pulse_analysis")
     defineNameOfProperties()
-    dm.defineDataFolderPath()
     startTime = dm.getTime()
     
     print "\nStart PULSE analysis, batches:", md.batchNumbers
@@ -43,7 +47,7 @@ def pulseAnalysis():
             pulseAnalysisPerRun()
             
         print "Done with batch", batchNumber, "Time analysing: "+str(dm.getTime()-startTimeBatch)+"\n"
-
+    
     print "Done with PULSE analysis. Time analysing: "+str(dm.getTime()-startTime)+"\n"
 
 
@@ -53,20 +57,19 @@ def pulseAnalysisPerRun():
     print "Run", md.getRunNumber()
     
     # Define pool attributes, threads and number of events in each thread
-    p = Pool(4)
-    step = 10000
-    max = md.getNumberOfEvents()
-    ranges = range(0, max, step)
-    dataPath = dm.getOscilloscopeFilePath()
+    ranges = range(0, md.getNumberOfEvents(), step)
     
-    # Start processing pool
-    results = p.map(lambda part: signalAnalysis(dataPath, [part, part + step]), ranges)
+    # Start Pool
+    Pool = pathos.multiprocessing.ProcessPool(threads)
+    results = Pool.map(lambda part: signalAnalysis(part, part + step), ranges)
     
-    # Concatenate the results (which have different form from multiprocessing)
+    # Concatenate results for each variable
     results_variables = p_calc.concatenateResults(results)
     
-    # Clear the pool
-    p.clear()
+    # Clear and restart the pool
+    Pool.clear()
+    Pool.terminate()
+    Pool.restart()
     
     # Export data
     for index in range(0, len(var_names)):
@@ -74,30 +77,29 @@ def pulseAnalysisPerRun():
 
     print "Done with run", md.getRunNumber(), "\n"
 
+
 # Data input is in negative voltage values, but the methods handles them in "positive values"
 # The output is the listed characteristics below
-def signalAnalysis(dataPath, ranges):
-
-    data = rnm.root2array(dataPath, start=ranges[0], stop=ranges[1])
+def signalAnalysis(start, stop):
+    
+    data = rnm.root2array(dm.getOscilloscopeFilePath(), start=start, stop=stop)
 
     properties = [np.zeros(len(data), dtype = data.dtype) for _ in range(len(var_names))]
 
     # Maximum signal output
-    signal_limit_DUT = p_calc.getSignalLimit(data)
+    signal_limit = getSignalLimit(data)
 
     for chan in data.dtype.names:
         
         for event in range(0, len(data)):
         
-            variables = [data[chan][event], signal_limit_DUT[chan], getThresholdSamples(chan)]
-            
-            results = p_calc.getPulseCharacteristics(variables)
+            results = p_calc.getPulseCharacteristics(data[chan][event], signal_limit[chan], getThresholdSamples(chan))
 
             for type in range(0, len(results)):
                 
                 properties[type][event][chan] = results[type]
 
-    
+
     return properties
 
 
@@ -117,6 +119,17 @@ def defineNameOfProperties(results=False):
 # These are set values for each sensor. These values are determined between a plot for:
 # Combined plot between maximum sample value and point above the threshold. In this way
 # one can cut away pulses which are treated as noise
+
+# Get maximum values for given channel and oscilloscope
+def getSignalLimit(data):
+    
+    signal_limit = np.empty(1, dtype=dm.getDTYPE())
+    
+    for chan in data.dtype.names:
+        signal_limit[chan] = np.amin(np.concatenate(data[chan]))
+    
+    return signal_limit
+
 
 def getThresholdSamples(chan):
     

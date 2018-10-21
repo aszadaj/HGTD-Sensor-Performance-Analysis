@@ -72,9 +72,9 @@ def printWaveform(batchNumber, sensor, event = 0):
     signal_limit_DUT = 0.3547959327697754
     point_difference = 2
     
-    rise_time, cfd, linear_fit, linear_fit_indices = p_calc.calculateRiseTime(data, pedestal, timeScope, True)
-    peak_value, peak_time, poly_fit = p_calc.calculatePeakValue(data, pedestal, signal_limit_DUT, timeScope, True)
-    charge = p_calc.calculateCharge(data, threshold, timeScope)
+    rise_time, cfd, linear_fit, linear_fit_indices = p_calc.calculateRiseTime(data, pedestal, True)
+    peak_value, peak_time, poly_fit = p_calc.calculatePeakValue(data, pedestal, signal_limit_DUT, True)
+    charge = p_calc.calculateCharge(data, threshold)
     point_count = p_calc.calculatePoints(data, threshold)
     max_sample = np.amax(data) - pedestal
 

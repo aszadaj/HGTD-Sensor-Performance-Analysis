@@ -166,7 +166,6 @@ def changeCenterPositionSensor(tracking):
     position = dm.exportImportROOTData("tracking", "position")
 
     center = np.array([position[md.chan_name][0][0], position[md.chan_name][0][1]])
-    theta = 0
     
     # Center the pad or array
     tracking["X"] = tracking["X"] - center[0]
@@ -179,36 +178,88 @@ def changeCenterPositionSensor(tracking):
         tracking["X"] = tracking["X"] + dist_center[md.chan_name][0][0]
         tracking["Y"] = tracking["Y"] + dist_center[md.chan_name][0][1]
     
+    rotateSensor(tracking)
+
+    return tracking
+
+
+def rotateSensor(tracking):
+    
+    theta = 0.0
+    
+    sensor = md.getSensor()
+    batchGroup = md.getBatchNumber()/100
     
     # Rotation for W4-S204_6e14
-    if md.getSensor() == "W4-S204_6e14":
-
-        theta = 4.3
-
-    # Rotation or W4-S215
-    elif md.getSensor() == "W4-S215" and md.checkIfArrayPad():
-        
-        theta = 0.6 # was 0.6
     
-    # Rotation or W4-S215
-    elif md.getSensor() == "W4-S215" and md.getBatchNumber()/100 == 5:
+    if sensor == "W9-LGA35" and batchGroup == 2:
         
-        theta = 1.5
+        theta = 0.3
+    
+    elif sensor == "W4-LG12" and batchGroup == 2:
+        
+        theta = 0
 
-    # Rotation or W4-S215
-    elif md.getSensor() == "W4-S215" and md.getBatchNumber()/100 == 7:
+    elif sensor == "W4-RD01":
         
-        theta = 1.2
+        theta = 0.0
+        
+        if batchGroup == 3:
+            theta = 0.2
+
+    elif sensor == "W4-S1022":
+        
+        theta = 0.2
+        
+        if batchGroup == 5:
+            
+            theta = 0.1
+        
+        elif batchGroup == 7:
+            
+            theta = 0.1
+
+
+    elif sensor == "W4-S1061":
+        
+        theta = 0.2
+        if batchGroup == 5:
+            theta = 0.15
+        
+        elif batchGroup == 7:
+            theta = 0.15
+
+
+    elif sensor == "W4-S203":
+        
+        theta = -0.1
+        if batchGroup == 5:
+            theta = -0.2
+                
+        elif batchGroup == 7:
+            theta = -0.5
+                
+
+    elif sensor == "W4-S204_6e14":
+        
+        theta = 4.45
+    
+
+    elif sensor == "W4-S215":
+        
+        theta = 0.55
+        if batchGroup == 5:
+            theta = 0.8
+        elif batchGroup == 7:
+            theta = 0.8
 
     
-    if theta != 0:
+    if theta != 0.0:
         # Use the rotation matrix around z
-        theta *= np.pi/180
+        theta *= np.pi/180.0
         tracking["X"] = np.multiply(tracking["X"], np.cos(theta)) - np.multiply(tracking["Y"], np.sin(theta))
         tracking["Y"] = np.multiply(tracking["X"], np.sin(theta)) + np.multiply(tracking["Y"], np.cos(theta))
 
-
-    return tracking
 
 
 def getDistanceFromCenterArrayPad(position):
@@ -264,12 +315,13 @@ def calculateCenterOfSensorPerBatch(peak_values, tracking):
 
     for chan in peak_values.dtype.names:
         md.setChannelName(chan)
+        print md.getSensor()
 
-        position_temp[chan][0] = getCenterOfSensor(peak_values[chan], tracking)
+        position_temp[chan][0] = getCenterOfSensor(peak_values[chan], np.copy(tracking))
 
     dm.exportImportROOTData("tracking", "position", position_temp)
 
-    print "DONE producing CENTER POSITIONS for batch", md.getBatchNumber(), "\n"
+    print "\nDONE producing CENTER POSITIONS for batch", md.getBatchNumber(), "\n"
 
 
 def getCenterOfSensor(peak_values, tracking):
@@ -277,57 +329,81 @@ def getCenterOfSensor(peak_values, tracking):
     bin_size = 18.5
     
     # Choose ranges to center the DUTs depending on batch (the SiPM is larger, therefore the mean values of it are not exact)
-    if md.getBatchNumber() == 101:
-        [xmin, xmax, ymin, ymax, minEntries] = [-1500, 1500, 12000, 14500, 10]
-    
-    elif md.getBatchNumber() == 207:
-        [xmin, xmax, ymin, ymax, minEntries] = [-1000, 1500, 11500, 14500, 20]
+    if md.getBatchNumber() == 101 or md.getBatchNumber() == 207:
+        [xmin, xmax, ymin, ymax, minEntries] = [-1500, 1500, 11500, 14500, 8]
 
     elif md.getBatchNumber() == 306:
         [xmin, xmax, ymin, ymax, minEntries] = [-4500, -1000, 11000, 14000, 20]
     
     elif md.getBatchNumber() == 401:
-        [xmin, xmax, ymin, ymax, minEntries] = [-4000, -1200, 10500, 13500, 10]
+        [xmin, xmax, ymin, ymax, minEntries] = [-4000, -1200, 10500, 13500, 5]
 
-    elif md.getBatchNumber() == 507:
-        [xmin, xmax, ymin, ymax, minEntries] = [-3000, 1000, 10000, 13500, 15]
+    elif md.getBatchNumber() == 507 or md.getBatchNumber() == 707:
+        [xmin, xmax, ymin, ymax, minEntries] = [-3000, 800, 10000, 13500, 5]
+        if md.getBatchNumber() == 707:
+            bin_size *= 2
     
     elif md.getBatchNumber() == 601:
-        [xmin, xmax, ymin, ymax, minEntries] = [-1200, 300, 10000, 13000, 20]
-    
-    elif md.getBatchNumber() == 707:
-        [xmin, xmax, ymin, ymax, minEntries] = [-3000, 800, 10000, 13500, 5]
+        [xmin, xmax, ymin, ymax, minEntries] = [-1500, 500, 10000, 13000, 20]
 
 
     xbin = int((xmax-xmin)/bin_size)
     ybin = int((ymax-ymin)/bin_size)
-    
-    mean_values = ROOT.TProfile2D("Mean value","Mean value", xbin, xmin, xmax, ybin, ymin, ymax)
+
+    passed_th2d = ROOT.TH2D("passed","passed",xbin,xmin,xmax,ybin,ymin,ymax)
+    total_th2d = ROOT.TH2D("total","total",xbin,xmin,xmax,ybin,ymin,ymax)
 
     # Fill the events
     for event in range(0, len(tracking)):
-        if tracking['X'][event] > -9990 and tracking['Y'][event] > -9990 and peak_values[event] != 0:
-            mean_values.Fill(tracking['X'][event], tracking['Y'][event], peak_values[event])
+        if tracking['X'][event] > -9990 and tracking['Y'][event] > -9990:
+            total_th2d.Fill(tracking['X'][event], tracking['Y'][event], 1)
+            if peak_values[event] != 0:
+                passed_th2d.Fill(tracking['X'][event], tracking['Y'][event], 1)
 
 
-    # Remove bins with less than minEntries
+    # Remove bins with less than some entries
     for i in range(1, xbin+1):
         for j in range(1, ybin+1):
+            bin = passed_th2d.GetBin(i,j)
+            num_passed = float(passed_th2d.GetBinContent(bin))
+            num_total = float(total_th2d.GetBinContent(bin))
+            
+            if num_total != 0.0:
+                if 0.8 > (num_passed/num_total):
+                    passed_th2d.SetBinContent(bin, 0)
+                    total_th2d.SetBinContent(bin, 0)
+        
+            if num_total < minEntries:
+                passed_th2d.SetBinContent(bin, 0)
+                total_th2d.SetBinContent(bin, 0)
 
-            bin = mean_values.GetBin(i,j)
-            num = mean_values.GetBinEntries(bin)
-            removeBin(bin, mean_values, minEntries)
+    passed_th2d.ResetStats()
+    total_th2d.ResetStats()
 
-    mean_values.ResetStats()
+    efficiency = ROOT.TEfficiency(passed_th2d, total_th2d)
+    efficiency.Draw("COLZ")
+    canvas_center.Update()
+    efficiency_th2d = efficiency.GetPaintedHistogram()
 
     # Calculate the mean value for each DUT
-    position_temp = np.array([mean_values.GetMean(), mean_values.GetMean(2)])
+    position_temp = np.array([efficiency_th2d.GetMean(), efficiency_th2d.GetMean(2)])
+
+    line_distance = 700
+    line_x = ROOT.TLine(position_temp[0], position_temp[1]-line_distance, position_temp[0], position_temp[1]+line_distance)
+    line_y = ROOT.TLine(position_temp[0]-line_distance, position_temp[1], position_temp[0]+line_distance, position_temp[1])
 
     # Print the graph to estimate if the positions are correct
-    mean_values.Draw("COLZ")
+    canvas_center.Clear()
+    efficiency_th2d.SetStats(1)
+    efficiency_th2d
+    efficiency_th2d.Draw("COLZ")
+    line_x.Draw("same")
+    line_y.Draw("same")
     canvas_center.Update()
-    position_plots_filePath = dm.getSourceFolderPath() + dm.getDataSourceFolder() + "/positions/"+md.getSensor()+"_"+str(md.getBatchNumber())+"_"+md.chan_name+"_"+".pdf"
+    position_plots_filePath = dm.getSourceFolderPath() + dm.getDataSourceFolder() + "/positions/"+"position_"+str(md.getBatchNumber())+"_"+md.getSensor()+"_"+md.chan_name+".pdf"
     canvas_center.Print(position_plots_filePath)
+
+    canvas_center.Clear()
     
     return position_temp
 
@@ -485,17 +561,17 @@ def findSelectionRange():
     projection_cut = 350
 
     # This is a correction for the irradiated array pad to center the selection of the bulk for efficiency calculation
-    if md.getSensor() == "W4-S204_6e14":
-        
+    if md.getSensor() == "W4-S204_6e14": # check for batch 707
+
         if md.chan_name == "chan5":
-            center_position = [-530, -575]
-        
+            center_position = [-540, -550]
+
         elif md.chan_name == "chan6":
-            center_position = [530, 500]
-            
+            center_position = [530, 530]
+
         elif md.chan_name == "chan7":
-            center_position = [-530, 500]
-        
+            center_position = [-540, 530]
+
 
     x1 = center_position[0] - projection_cut
     x2 = center_position[0] + projection_cut

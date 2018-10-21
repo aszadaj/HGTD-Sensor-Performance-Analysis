@@ -18,7 +18,7 @@ gain_max = 500              # Z-axis limit for gain graph
 rise_time_max = 1500        # Z-axis limit for rise time graph
 
     
-min_entries_bin = 10 # Minimum entries per bin
+min_entries_bin = 5 # Minimum entries per bin
 min_entries_bin_timing = 50 # Required entries for timing resolution graphs
 pixel_size = 18.5 # Pixel size from the MIMOSA
 bin_size_increase_timing = 2.5 # Bin size increase to adapt for timing resolution plots
@@ -35,7 +35,6 @@ def trackingAnalysis():
     global var_names
     
     dm.setFunctionAnalysis("tracking_analysis")
-    dm.defineDataFolderPath()
     startTime = dm.getTime()
     
     print "\nStart TRACKING analysis, batches:", md.batchNumbers, "\n"
@@ -45,11 +44,21 @@ def trackingAnalysis():
         startTimeBatch = dm.getTime()
         runNumbers = md.getAllRunNumbers(batchNumber)
         
-        # Set a condition of at least two run numbers to be analyzed
-        if len(runNumbers) < 3 or batchNumber == 203:
+        # Omit batches with less than 3 runs and batch 203
+        if len(runNumbers) < 3 :
+            
+            print "Skipping Batch", batchNumber, "which have less than 3 entries.\n"
             continue
+        
+        elif batchNumber == 203:
+            
+            print "Skipping Batch 203 which have desynchronized events.\n"
+            continue
+        
+        print "BATCH", batchNumber, "\n"
     
         var_names = [["pulse", "peak_value"], ["pulse", "charge"], ["pulse", "rise_time"], ["timing", "linear"], ["timing", "linear_cfd"]]
+        
         numpy_arrays = [np.empty(0, dtype = dm.getDTYPE(batchNumber)) for _ in range(len(var_names))]
         numpy_arrays.append(np.empty(0, dtype = dm.getDTYPETracking()))
         
@@ -120,7 +129,7 @@ def createSinglePadGraphs(peak_values, gain, rise_times, time_difference_peak, t
         
         if (md.getSensor() != md.sensor and md.sensor != "") or md.getSensor() == "SiPM-AFP":
             continue
-    
+
         print "Single pad", md.getSensor(), "\n"
 
         # This function requires a ROOT file which have the center positions for each pad
@@ -306,20 +315,20 @@ def produceProjectionPlots(projectionX_th1d, projectionY_th1d):
     fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getSensor()+"/tracking/projection/tracking_projectionX_efficiency_" + str(md.getBatchNumber()) +"_" + md.chan_name + "_"+str(md.getSensor())+".pdf"
 
     
-    sigmas = createProjectionFit(projectionX_th1d, center_positions[0])
-    printProjectionPlot(projectionX_th1d, headTitle, fileName, sigmas)
+    sigmas_x = createProjectionFit(projectionX_th1d, center_positions[0])
+    printProjectionPlot(projectionX_th1d, headTitle, fileName, sigmas_x)
    
     headTitle = headTitle.replace("X-axis", "Y-axis")
     headTitle = headTitle.replace("X [\mum]", "Y [\mum]")
     fileName = fileName.replace("projectionX", "projectionY")
     
-    sigmas = createProjectionFit(projectionY_th1d, center_positions[1])
-    printProjectionPlot(projectionY_th1d, headTitle, fileName, sigmas)
+    sigmas_y = createProjectionFit(projectionY_th1d, center_positions[1])
+    printProjectionPlot(projectionY_th1d, headTitle, fileName, sigmas_y)
 
 
 def createProjectionFit(projection_th1d, center_position):
     
-    separation_distance = 600
+    separation_distance = 500
     approx_steepness = 10
     amplitude_efficiency = 100
     
@@ -327,10 +336,10 @@ def createProjectionFit(projection_th1d, center_position):
     left_position = center_position - separation_distance
     right_position = center_position + separation_distance
 
-    fit_sigmoid_left = ROOT.TF1("sigmoid_left", "[0]/(1+TMath::Exp(([1]-x)/[2]))", left_position, center_position)
+    fit_sigmoid_left = ROOT.TF1("sigmoid_left", "[0]/(1+TMath::Exp(([1]-x)/[2]))", left_position-100, center_position)
     fit_sigmoid_left.SetParameters(amplitude_efficiency, left_position, approx_steepness)
     
-    fit_sigmoid_right = ROOT.TF1("sigmoid_right", "[0]/(1+TMath::Exp((x-[1])/[2]))", center_position, right_position)
+    fit_sigmoid_right = ROOT.TF1("sigmoid_right", "[0]/(1+TMath::Exp((x-[1])/[2]))", center_position, right_position+100)
     fit_sigmoid_right.SetParameters(amplitude_efficiency, right_position, approx_steepness)
     
     projection_th1d.Fit("sigmoid_left", "QR")

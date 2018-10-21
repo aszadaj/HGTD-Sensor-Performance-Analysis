@@ -24,8 +24,7 @@ def timingPlots():
     print "\nStart producing TIMING RESOLUTION plots, batches:", md.batchNumbers
 
     for batchNumber in md.batchNumbers:
-    
-        dm.defineDataFolderPath()
+
         
         runNumbers = md.getAllRunNumbers(batchNumber)
         # Create numpy arrays for linear time difference (one element per "channel")

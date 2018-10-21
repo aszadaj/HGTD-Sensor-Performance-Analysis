@@ -21,8 +21,6 @@ def pulsePlots():
 
     print "\nStart producing PULSE plots, batches:", md.batchNumbers, "\n"
     
-    dm.defineDataFolderPath()
-    
     for batchNumber in md.batchNumbers:
     
         p_main.defineNameOfProperties()
@@ -182,7 +180,6 @@ def makeLandauGausFit(graphList, signal_limit=0):
     # Set range for fit
     xMin = max((MPV - std_dev), 0)
 
-    
     # Define range of fit, limits for parameters
     # Parameters for gaus(*)landau - fit
     # 1. Width/constant of the landau fit

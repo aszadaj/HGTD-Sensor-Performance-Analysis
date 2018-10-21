@@ -17,6 +17,8 @@ def defineSettings(batches, batches_exclude, number, sensor_name):
     
     setBatchNumbers(batches, batches_exclude)
 
+    dm.defineDataFolderPath()
+
 
 # For main.py
 def setBatchNumbers(numbers, exclude=[]):
@@ -54,7 +56,7 @@ def setBatchNumbers(numbers, exclude=[]):
 # shape as the sep2017 one!
 def getRunLog():
     
-    run_log_file_name = "run_list_tb_sep_2017.csv"
+    run_log_file_name = "supplements/run_list_tb_sep_2017.csv"
     runLog = []
     
     with open(run_log_file_name, "rb") as csvFile:
@@ -258,6 +260,21 @@ def getAllBatchNumberForSensor(sensor):
 def getTemperature():
 
     return int(runInfo[10])
+
+
+# Get available sensors from the run file
+def getAvailableSensors():
+
+    runLog = getRunLog()
+
+    availableSensors = []
+
+    for row in runLog:
+        for i in range(0,8):
+            if row[13+i*5] not in availableSensors and len(row[13+i*5]) > 2:
+                availableSensors.append(row[13+i*5])
+
+    return availableSensors
 
 
 def getAvailableTemperatures():

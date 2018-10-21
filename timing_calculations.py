@@ -12,7 +12,6 @@ def createTimingFiles():
     ROOT.gROOT.SetBatch(True)
     
     dm.setFunctionAnalysis("timing_analysis")
-    dm.defineDataFolderPath()
     
     runLog_batch = md.getRunLogBatches(md.batchNumbers)
     print "\nStart TIMING RESOLUTION analysis, batches:", md.batchNumbers

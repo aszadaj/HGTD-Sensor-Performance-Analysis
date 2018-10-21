@@ -11,11 +11,8 @@ hit on the MIMOSA, that is the telescope.
 # Prerequisites
 
 To run the code, certain files are needed. The raw data format is on LXPLUS and needs to be converted into ```data_'timestamp'.tree.root```-format
-This is done by using the  ```convertOscRawToRootTree.C``` which is in  ```folder_sensor_perfomance_tb_sep17/convertRawOscData/```. 
+This is done by using the  ```convertOscRawToRootTree.C``` which is in  ```supplements/convertRawOscData/```. 
 It uses ```combinedNtuple.C``` where one can specify which data files to convert.
-
-Additionally tracking files are needed. The tracking files are in  ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/tracking/tracking/``` For this code, which is from the September 2017 test beam measurement the tracking files are provided. They are structured to have for each event positions for x and y in micrometers. 
-
 
 
 Furthermore the code needs packages to run with. These are
@@ -41,7 +38,9 @@ The code can be run in the terminal/console by providing
 
 ```python2 main.py```
 
-where the order of the listed functions is important for the first time. The code can be modified to choose which batches which each
+which creates all folder and subfolders before the code can run. 
+
+The code can be modified to choose which batches which each
 contain at least one run or multiple depending on batch. The information on the structure of which batches and runs is
 listed in ```run_list_tb_sep_2017.csv```.  One can then select which methods to run by commenting out the functions in  ```python2 main.py```.
 

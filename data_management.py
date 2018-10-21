@@ -2,6 +2,7 @@ import ROOT
 import numpy as np
 import root_numpy as rnm
 import os
+import csv
 import datetime as dt
 
 import run_log_metadata as md
@@ -13,13 +14,12 @@ def defineDataFolderPath():
     global oscilloscopePath
     global sourceFolderPath
     
-    # This is the source to the folder containing all material related to the code.
-    sourceFolderPath = "/Users/aszadaj/cernbox/SH203X/folder_sensor_perfomance_tb_sep17/"
+    sourceFolderPath = createDirectories()
     oscilloscopePath = sourceFolderPath + getOscillscopeSourceFolder() + "/"
 
     #oscilloscopePath = "/Volumes/HDD500/oscilloscope_data_hgtd_tb_sep17/" # my local HDD
     #oscilloscopePath = "/Volumes/HITACHI/oscilloscope_data_hgtd_tb_sep17/" # my local HDD
-
+    
 
 # Export pulse data
 def exportPulseData(variable_array):
@@ -28,6 +28,56 @@ def exportPulseData(variable_array):
     
     for index in range(0, len(var_names)):
         exportImportROOTData("pulse", var_names[index], variable_array[index])
+
+
+# This creates the main folder "folder_sensor_perfomance_tb_sep17" with all subfolders with names of
+# sensors imported from the run log file.
+def createDirectories():
+                    
+    folderInformationFile = "supplements/folderPaths.csv"
+    paths = []
+    
+    with open(folderInformationFile, "rb") as csvFile:
+        fileData = csv.reader(csvFile, delimiter="\n")
+        for row in fileData:
+            paths.append(row)
+
+    sourceFolderPath = paths[0][0]
+    exists = False
+
+    try:
+        os.mkdir(sourceFolderPath)
+        del paths[0]
+
+    except:
+        #print "\nFolder with subfolders for analysis already exists. Continuing with the code.\n"
+        exists = True
+
+    sensors = md.getAvailableSensors()
+
+    if not exists:
+        for filePath in paths:
+            if filePath[0].find(",") == -1:
+                os.mkdir(filePath[0])
+            else:
+                for chosenSensor in sensors:
+                    p1 = filePath[0].replace(",",chosenSensor)
+       
+                    try:
+                        os.mkdir(p1)
+
+                    except:
+                        p2 = filePath[0].split(",")[0]
+
+                        for chosenSensor in sensors:
+                            os.mkdir(p2+chosenSensor)
+
+                        os.mkdir(p1)
+
+    if not exists:
+        print "\nFolders with subfolders created. Placed at '../folder_sensor_perfomance_tb_sep17/' \n"
+
+    return sourceFolderPath
 
 
 # Export or import ROOT file
@@ -63,7 +113,14 @@ def exportImportROOTData(group, category, data=np.empty(0)):
 
     # read the file
     if data.size == 0:
-        return rnm.root2array(dataPath)
+        
+        try:
+            return rnm.root2array(dataPath)
+        
+        except IOError as e:
+            
+            print "\nFile", fileName+".root", "not found!\n"
+            return np.zeros(1)
 
     # export the file
     else:
@@ -112,8 +169,7 @@ def checkIfFileAvailable():
     if functionAnalysis == "pulse_analysis" :
     
         files = readFileNames("oscilloscope")
-
-
+        
         if int(md.getTimeStamp()) in files:
             found = True
 

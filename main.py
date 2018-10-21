@@ -35,7 +35,7 @@ def main():
     number_of_runs = "all"
     
     # Choose batches to run. "all" or e.g. [101, 102].
-    batches = "all"
+    batches = [102]
     batches_exclude = []
     
     # Choose sensor for which the plots are produced.
@@ -57,7 +57,7 @@ def main():
     
     
     #timing.createTimingFiles() # Creates files for timingPlots() and trackingAnalysis()
-    timing_plot.timingPlots()
+    #timing_plot.timingPlots()
 
     
     

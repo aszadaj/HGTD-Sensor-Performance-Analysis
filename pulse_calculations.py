@@ -1,20 +1,17 @@
 import numpy as np
-import run_log_metadata as md
-import data_management as dm
 
+timeScope = 0.1
 threshold_noise = 20 * 0.001
 data_point_correction = 3
 
 
 # Input is in negative values, but the calculation is in positive values!
 # Dimensions used are U = [V], t = [ns], q = [C]
-def getPulseCharacteristics(variables):
-
-    [data, signal_limit_DUT, threshold_points] = [i for i in variables]
+def getPulseCharacteristics(data, signal_limit, threshold_points):
     
     # Invert waveform data
     data = -data
-    signal_limit_DUT = -signal_limit_DUT
+    signal_limit = -signal_limit
     
     # Define threshold and sigma level, this gives a 1% prob for a noise data sample to exceed the
     # noise level, see report
@@ -30,10 +27,9 @@ def getPulseCharacteristics(variables):
 
     if points >= threshold_points:
         
-        timeScope = 0.1
-        peak_value, peak_time = calculatePeakValue(data, pedestal, signal_limit_DUT, timeScope)
-        rise_time, cfd  = calculateRiseTime(data, pedestal, timeScope)
-        charge = calculateCharge(data, threshold, timeScope)
+        peak_value, peak_time = calculatePeakValue(data, pedestal, signal_limit)
+        rise_time, cfd  = calculateRiseTime(data, pedestal)
+        charge = calculateCharge(data, threshold)
         
 
         # Condition: if the time locations are not in synch, disregard those
@@ -78,12 +74,12 @@ def calculateNoiseAndPedestal(data):
 
 
 # Calculate the pulse amplitude value
-def calculatePeakValue(data, pedestal, signal_limit_DUT, timeScope, graph=False):
+def calculatePeakValue(data, pedestal, signal_limit, graph=False):
 
     # Default values
     peak_value = 0
     peak_time = 0
-    poly_fit = [0,0,0]
+    second_deg_fit = [0,0,0]
 
     # Select indices
     point_sep = 2
@@ -92,38 +88,34 @@ def calculatePeakValue(data, pedestal, signal_limit_DUT, timeScope, graph=False)
     
     # This is to ensure that the obtained value is in the entry window
     if 2 < arg_max < 999:
-        
-        print "peak_value", timeScope
-        
         poly_fit_data = data[poly_fit_indices]
-        poly_fit = np.polyfit((poly_fit_indices * timeScope), poly_fit_data, 2)
+        
+        second_deg_fit = np.polyfit(poly_fit_indices * timeScope, poly_fit_data, 2)
 
-        if poly_fit[0] < 0:
+        if second_deg_fit[0] < 0:
             
-            peak_time = np.array([-poly_fit[1] / (2 * poly_fit[0])])
-            peak_value = poly_fit[0] * np.power(peak_time, 2) + poly_fit[1] * peak_time + poly_fit[2] - pedestal
+            peak_time = np.array([-second_deg_fit[1] / (2 * second_deg_fit[0])])
+            peak_value = second_deg_fit[0] * np.power(peak_time, 2) + second_deg_fit[1] * peak_time + second_deg_fit[2] - pedestal
 
 
     # If the signal reaches the oscilloscope limit, take the maximum value instead and ignore the
     # time location, since it cannot be extracted with great precision
 
-    if np.abs(np.amax(data) - signal_limit_DUT) < 0.005:
+    if np.abs(np.amax(data) - signal_limit) < 0.005:
 
         peak_time = np.zeros(1)
         peak_value = np.amax(data) - pedestal
 
 
     if graph:
-        return peak_value, peak_time, poly_fit
+        return peak_value, peak_time, second_deg_fit
     
     else:
         return peak_value, peak_time
 
 
 # Get rise time
-def calculateRiseTime(data, pedestal, timeScope, graph=False):
-    
-    print "rise time", timeScope
+def calculateRiseTime(data, pedestal, graph=False):
     
     # Default values
     rise_time = 0
@@ -161,7 +153,7 @@ def calculateRiseTime(data, pedestal, timeScope, graph=False):
 
 
 # Calculate the charge over the threshold
-def calculateCharge(data, threshold, timeScope):
+def calculateCharge(data, threshold):
 
     # transimpendence is the same for all sensors, except for W4-RD01, which is unknown
     transimpendence = 4700
@@ -211,17 +203,6 @@ def group_consecutives(data, stepsize=1):
     return np.split(data, np.where(np.diff(data) != stepsize)[0]+1)
 
 
-# Get maximum values for given channel and oscilloscope
-def getSignalLimit(data):
-
-    signal_limit_DUT = np.empty(1, dtype=dm.getDTYPE())
-    
-    for chan in data.dtype.names:
-        signal_limit_DUT[chan] = np.amin(np.concatenate(data[chan]))
-
-    return signal_limit_DUT
-
-
 # related to multiprocessing
 def concatenateResults(results):
 
@@ -231,9 +212,9 @@ def concatenateResults(results):
         
         variable = np.empty(0, dtype=results[0][variable_index].dtype)
         
-        for clutch in range(0, len(results)):
+        for group in range(0, len(results)):
         
-            variable  = np.concatenate((variable, results[clutch][variable_index]), axis = 0)
+            variable  = np.concatenate((variable, results[group][variable_index]), axis = 0)
         
         variable_array.append(variable)
     
