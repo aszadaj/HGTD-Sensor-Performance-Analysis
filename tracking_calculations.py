@@ -194,7 +194,7 @@ def rotateSensor(tracking):
     
     if sensor == "W9-LGA35" and batchGroup == 2:
         
-        theta = 0.3
+        theta = 0.1
     
     elif sensor == "W4-LG12" and batchGroup == 2:
         

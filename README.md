@@ -10,11 +10,6 @@ hit on the MIMOSA, that is the telescope.
 
 # Prerequisites
 
-To run the code, certain files are needed. The raw data format is on LXPLUS and needs to be converted into ```data_'timestamp'.tree.root```-format
-This is done by using the  ```convertOscRawToRootTree.C``` which is in  ```supplements/convertRawOscData/```. 
-It uses ```combinedNtuple.C``` where one can specify which data files to convert.
-
-
 Furthermore the code needs packages to run with. These are
 
 - python 2.7.10
@@ -23,11 +18,20 @@ Furthermore the code needs packages to run with. These are
 - root-numpy 4.7.3
 - pathos 0.2.2.1
 
+The latter three packages can be found in ```pip2``` by installing those
+```pip2 install numpy```
+```pip2 install root_numpy```
+```pip2 install pathos```
 
+When the code is ready to run, folders with subfolders are created in ```../folder_sensor_perfomance_tb_sep17/```. The code needs files of the type ```data_'timestamp'.tree.root```-format placed in ```../folder_sensor_perfomance_tb_sep17/oscilloscope_data_hgtd_tb_sep17/```. The ```.root```files are converted with  ```convertOscRawToRootTree.C``` which is in the folder  ```/supplements/```. 
 
-The code requires certain subfolders to be in correct place. The folder ```folder_sensor_perfomance_tb_sep17``` provides the structure
-which the code can be run with. In the file ```data_management.py``` in the function ```defineDataFolderPath()```
-this information can be modified.
+For the ```trackingAnalysis()```, tracking files are needed. They need to be placed in the folder 
+
+```../folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/tracking/tracking/```
+
+these files, together with the already converted oscilloscope files, can be found in LXPLUS under directory
+
+```eos/user/a/aszadaj/public/HGTD_Sensor_Performance_Code/```.
 
 
 
@@ -38,11 +42,15 @@ The code can be run in the terminal/console by providing
 
 ```python2 main.py```
 
-which creates all folder and subfolders before the code can run. 
+which creates all folder and subfolders from the file ```supplements/folderPaths.csv``` before the code can run. 
 
 The code can be modified to choose which batches which each
 contain at least one run or multiple depending on batch. The information on the structure of which batches and runs is
-listed in ```run_list_tb_sep_2017.csv```.  One can then select which methods to run by commenting out the functions in  ```python2 main.py```.
+listed in
+
+```run_list_tb_sep_2017.csv```.  
+
+One can then select which methods to run by commenting out the functions in  ```main.py```.
 
 The examples of choosing batches are
 
@@ -52,7 +60,7 @@ The examples of choosing batches are
 
 ```batches_exclude = [501] ``` is used when multiple matches are used which can exclude the listed batch.
 
-```number_of_runs = 0 ``` considers all files within a batch to be calculated or a specific number. 0 is a default value selecting all runs. This only applies to ```pulseAnalysis()``` which can take shorter time to analyze.
+```number_of_runs = "all" ``` considers all files within a batch to be calculated or a specific number. "all" is a default value selecting all runs. This only applies to ```pulseAnalysis()``` which can take shorter time to analyze.
 
 
 One can also choose which sensor to run with, 
@@ -111,7 +119,11 @@ The function imports the files from previous function, concatenates all in the s
 
 The function imports the exported files from the previous analyses together with provided tracking files placed in 
  ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/tracking/tracking```. There is a method
- of calculating the center of the sensors which is turned off by default. The method imports files for each batch and produces plots for
+ 
+ ```calculateCenterOfSensorPerBatch()``` 
+ 
+ of calculating the center of the sensors which is turned on by default. This can be done once for each group of batches, meaning the data is the same for batch 101 as for 108.
+ The method imports files for each batch and produces plots for
  1. Efficiency
  2. Inefficiency
  3. Gain (related to charge)

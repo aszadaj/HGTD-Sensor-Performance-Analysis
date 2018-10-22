@@ -79,7 +79,7 @@ def trackingAnalysis():
         
         
         # This function can be turned on once, to export the center positions for each pad.
-        #t_calc.calculateCenterOfSensorPerBatch(numpy_arrays[0], numpy_arrays[-1])
+        t_calc.calculateCenterOfSensorPerBatch(numpy_arrays[0], numpy_arrays[-1])
                         
         trackingPlots(numpy_arrays)
                         
