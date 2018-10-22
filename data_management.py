@@ -7,46 +7,48 @@ import datetime as dt
 
 import run_log_metadata as md
 
+# Return run log imported from a .csv file
+# For future .csv files, it is crucial that the run log have the same
+# shape as the sep2017 one!
+def getRunLog():
+    
+    run_log_file_name = "supplements/run_list_tb_sep_2017.csv"
+    runLog = []
+    
+    with open(run_log_file_name, "rb") as file:
+        fileData = csv.reader(file, delimiter=";")
+        for row in fileData:
+            runLog.append(row)
+
+    del runLog[0:2]
+
+    return runLog
+
 
 # Define the original folder of produced ROOT files, plots and miscellaneous data
-def defineDataFolderPath():
-
-    global oscilloscopePath
-    global sourceFolderPath
-    
-    sourceFolderPath = createDirectories()
-    oscilloscopePath = sourceFolderPath + getOscillscopeSourceFolder() + "/"
-
-    #oscilloscopePath = "/Volumes/HDD500/oscilloscope_data_hgtd_tb_sep17/" # my local HDD
-    #oscilloscopePath = "/Volumes/HITACHI/oscilloscope_data_hgtd_tb_sep17/" # my local HDD
-    
-
-# Export pulse data
-def exportPulseData(variable_array):
-
-    [noise, pedestal, peak_values, rise_times, charge, cfd, peak_times, points, max_sample] = [i for i in variable_array]
-    
-    for index in range(0, len(var_names)):
-        exportImportROOTData("pulse", var_names[index], variable_array[index])
-
-
 # This creates the main folder "folder_sensor_perfomance_tb_sep17" with all subfolders with names of
 # sensors imported from the run log file.
-def createDirectories():
-                    
-    folderInformationFile = "supplements/folderPaths.csv"
-    paths = []
+def defineDataFolderPath():
     
+    sourceFolder = "../folder_sensor_perfomance_tb_sep17/"
+    folderInformationFile = "supplements/folderPaths.csv"
+    paths = [sourceFolder]
+  
     with open(folderInformationFile, "rb") as csvFile:
-        fileData = csv.reader(csvFile, delimiter="\n")
+        fileData = csv.reader(csvFile, delimiter=";")
         for row in fileData:
-            paths.append(row)
+            if row[1] == "":
+                paths.append(sourceFolder+row[0])
+            else:
+                paths.append(sourceFolder+row[0]+";"+row[1])
 
-    sourceFolderPath = paths[0][0]
+
+    defMainDirectories(paths)
+    
     exists = False
 
     try:
-        os.mkdir(sourceFolderPath)
+        os.mkdir(getSourceFolderPath())
         del paths[0]
 
     except:
@@ -57,27 +59,34 @@ def createDirectories():
 
     if not exists:
         for filePath in paths:
-            if filePath[0].find(",") == -1:
-                os.mkdir(filePath[0])
+            if filePath.find(";") == -1:
+                os.mkdir(filePath)
             else:
                 for chosenSensor in sensors:
-                    p1 = filePath[0].replace(",",chosenSensor)
+                    p1 = filePath.replace(";",chosenSensor)
        
                     try:
                         os.mkdir(p1)
 
                     except:
-                        p2 = filePath[0].split(",")[0]
+                        p2 = filePath.split(";")[0]
 
-                        for chosenSensor in sensors:
-                            os.mkdir(p2+chosenSensor)
+                        for selectedSensor in sensors:
+                            os.mkdir(p2+selectedSensor)
 
                         os.mkdir(p1)
 
-    if not exists:
+    
         print "\nFolders with subfolders created. Placed at '../folder_sensor_perfomance_tb_sep17/' \n"
 
-    return sourceFolderPath
+
+# Export pulse data
+def exportPulseData(variable_array):
+    
+    [noise, pedestal, peak_values, rise_times, charge, cfd, peak_times, points, max_sample] = [i for i in variable_array]
+    
+    for index in range(0, len(var_names)):
+        exportImportROOTData("pulse", var_names[index], variable_array[index])
 
 
 # Export or import ROOT file
@@ -148,7 +157,7 @@ def readFileNames(group, category=""):
     
     if group == "oscilloscope":
         
-        dataPath = oscilloscopePath
+        dataPath = getSourceFolderPath() + getOscillscopeSourceFolder() + "/"
 
     else:
         dataPath = getSourceFolderPath() + getDataSourceFolder() + "/" + group + "/" + category + "/"
@@ -269,35 +278,53 @@ def printTime():
     print  "\nTime: " + str(time[:-7])
 
 
-def getResultsPlotSourceDataPath():
-
-    return "results_plots_hgtd_tb_sep17"
-
-
-def getPlotsSourceFolder():
-
-    return "plots_hgtd_tb_sep17"
-
-
 def getDataSourceFolder():
-
-     return "data_hgtd_tb_sep17"
+    
+    return dataSourceFolder
 
 
 def getHistogramsSourceFolder():
-
-    return getDataSourceFolder()+"/histograms_root_data"
+    
+    return histogramsSourceFolder
 
 
 def getOscillscopeSourceFolder():
+    
+    return oscillscopeSourceFolder
 
-    return "oscilloscope_data_hgtd_tb_sep17"
 
+def getPlotsSourceFolder():
+    
+    return plotsSourceFolder
+
+
+def getResultsPlotSourceDataPath():
+    
+    
+    return resultsPlotSourceDataPath
 
 # Return path of data files
 def getSourceFolderPath():
-
+    
     return sourceFolderPath
+
+
+def defMainDirectories(directories):
+    
+    global sourceFolderPath
+    global dataSourceFolder
+    global histogramsSourceFolder
+    global oscillscopeSourceFolder
+    global plotsSourceFolder
+    global resultsPlotSourceDataPath
+    
+    sourceFolderPath = directories[0]
+    dataSourceFolder = directories[1]
+    histogramsSourceFolder = directories[2]
+    oscillscopeSourceFolder = directories[3]
+    plotsSourceFolder = directories[4]
+    resultsPlotSourceDataPath = directories[5]
+
 
 
 def setFunctionAnalysis(function):
@@ -308,6 +335,6 @@ def setFunctionAnalysis(function):
 
 def getOscilloscopeFilePath():
 
-    dataPath = oscilloscopePath + "data_"+str(md.getTimeStamp())+".tree.root"
+    dataPath = getSourceFolderPath() + getOscillscopeSourceFolder() + "/" + "data_"+str(md.getTimeStamp())+".tree.root"
 
     return dataPath

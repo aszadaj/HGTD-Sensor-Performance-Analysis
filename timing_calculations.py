@@ -57,7 +57,7 @@ def createTimingFiles():
     print "Done with TIMING RESOLUTION analysis\n"
 
 
-
+# This takes the time difference between a DUT and the SiPM.
 def getTimeDifferencePerRun(time_location):
     
     time_difference = np.zeros(len(time_location), dtype = time_location.dtype)

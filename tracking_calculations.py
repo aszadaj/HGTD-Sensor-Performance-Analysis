@@ -135,9 +135,10 @@ def stripNumpyArrays(numpy_arrays):
 
     N = 5
     
-    # Strip pulse amplitude values higher than 390 mV
-    numpy_arrays[0][numpy_arrays[0] > 390] = 0
+    # Strip pulse amplitude values higher than 500 mV
+    numpy_arrays[0][numpy_arrays[0] > 500] = 0
     
+    # For other types, strip with a 5 sigma width from the histograms
     for index in range(2, len(numpy_arrays)):
 
         if t_plot.var_names[index][1] == "rise_time":
@@ -328,23 +329,27 @@ def getCenterOfSensor(peak_values, tracking):
     
     bin_size = 18.5
     
+    # This has to be changed to match the MIMOSA! These are ranges in um.
+    [xmin, xmax, ymin, ymax, minEntries] = [-7000, 8000, 9000, 16000, 5]
+    
     # Choose ranges to center the DUTs depending on batch (the SiPM is larger, therefore the mean values of it are not exact)
-    if md.getBatchNumber() == 101 or md.getBatchNumber() == 207:
-        [xmin, xmax, ymin, ymax, minEntries] = [-1500, 1500, 11500, 14500, 8]
+#    if md.getBatchNumber() == 101 or md.getBatchNumber() == 207:
+#        [xmin, xmax, ymin, ymax, minEntries] = [-1500, 1500, 11500, 14500, 8]
+#
+#    elif md.getBatchNumber() == 306:
+#        [xmin, xmax, ymin, ymax, minEntries] = [-4500, -1000, 11000, 14000, 20]
+#
+#    elif md.getBatchNumber() == 401:
+#        [xmin, xmax, ymin, ymax, minEntries] = [-4000, -1200, 10500, 13500, 5]
+#
+#    elif md.getBatchNumber() == 507 or md.getBatchNumber() == 707:
+#        [xmin, xmax, ymin, ymax, minEntries] = [-3000, 800, 10000, 13500, 5]
+#        if md.getBatchNumber() == 707:
+#            bin_size *= 2
+#
+#    elif md.getBatchNumber() == 601:
+#        [xmin, xmax, ymin, ymax, minEntries] = [-1500, 500, 10000, 13000, 20]
 
-    elif md.getBatchNumber() == 306:
-        [xmin, xmax, ymin, ymax, minEntries] = [-4500, -1000, 11000, 14000, 20]
-    
-    elif md.getBatchNumber() == 401:
-        [xmin, xmax, ymin, ymax, minEntries] = [-4000, -1200, 10500, 13500, 5]
-
-    elif md.getBatchNumber() == 507 or md.getBatchNumber() == 707:
-        [xmin, xmax, ymin, ymax, minEntries] = [-3000, 800, 10000, 13500, 5]
-        if md.getBatchNumber() == 707:
-            bin_size *= 2
-    
-    elif md.getBatchNumber() == 601:
-        [xmin, xmax, ymin, ymax, minEntries] = [-1500, 500, 10000, 13000, 20]
 
 
     xbin = int((xmax-xmin)/bin_size)
@@ -400,8 +405,11 @@ def getCenterOfSensor(peak_values, tracking):
     line_x.Draw("same")
     line_y.Draw("same")
     canvas_center.Update()
-    position_plots_filePath = dm.getSourceFolderPath() + dm.getDataSourceFolder() + "/positions/"+"position_"+str(md.getBatchNumber())+"_"+md.getSensor()+"_"+md.chan_name+".pdf"
-    canvas_center.Print(position_plots_filePath)
+    
+    filePath = dm.getSourceFolderPath()+"/position_"+str(md.getBatchNumber())+"_"+md.getSensor()+"_"+md.chan_name+".pdf"
+    
+    # If one wants to see where the center is, comment this line and change filePath
+    #canvas_center.Print(filePath)
 
     canvas_center.Clear()
     

@@ -50,11 +50,6 @@ def trackingAnalysis():
             print "Skipping Batch", batchNumber, "which have less than 3 entries.\n"
             continue
         
-        elif batchNumber == 203:
-            
-            print "Skipping Batch 203 which have desynchronized events.\n"
-            continue
-        
         print "BATCH", batchNumber, "\n"
     
         var_names = [["pulse", "peak_value"], ["pulse", "charge"], ["pulse", "rise_time"], ["timing", "linear"], ["timing", "linear_cfd"]]

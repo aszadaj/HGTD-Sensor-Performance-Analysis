@@ -1,9 +1,4 @@
-import ROOT
-import csv
-import os
-
 import data_management as dm
-
 
 def defineSettings(batches, batches_exclude, number, sensor_name):
     
@@ -51,23 +46,6 @@ def setBatchNumbers(numbers, exclude=[]):
         batchNumbers = numbers
 
 
-# Return run log imported from a .csv file
-# For future .csv files, it is crucial that the run log have the same
-# shape as the sep2017 one!
-def getRunLog():
-    
-    run_log_file_name = "supplements/run_list_tb_sep_2017.csv"
-    runLog = []
-    
-    with open(run_log_file_name, "rb") as csvFile:
-        fileData = csv.reader(csvFile, delimiter=";")
-        for row in fileData:
-            runLog.append(row)
-
-    del runLog[0:2]
-
-    return runLog
-
 
 # Set run information from the run log (gets the row with information).
 # Plays a key role for all functions in the code.
@@ -80,7 +58,7 @@ def defineRunInfo(row):
 # Return row in run log for given run number
 def getRowForRunNumber(runNumber):
     
-    runLog = getRunLog()
+    runLog = dm.getRunLog()
     
     for row in runLog:
         if int(row[3]) == runNumber:
@@ -94,7 +72,7 @@ def getRunLogBatches(batchNumbers):
     if batchNumbers == "all":
         batchNumbers = getAllBatchNumbers()
 
-    runLog = getRunLog()
+    runLog = dm.getRunLog()
 
     runLog_parts = []
 
@@ -138,7 +116,7 @@ def getRunNumber():
 # Return all run numbers for given batch
 def getAllRunNumbers(batchNumber=0):
     
-    runLog = getRunLog()
+    runLog = dm.getRunLog()
     
     runNumbers = []
     
@@ -159,7 +137,7 @@ def getRunsWithSensor(sensor=""):
     if sensor == "":
         return getAllRunNumbers()
     
-    runLog = getRunLog()
+    runLog = dm.getRunLog()
     
     runNumbers = []
     
@@ -220,7 +198,7 @@ def getSensorsForBatch(batchNumber=0):
 def getBatchNumber(runNumber=""):
 
     if runNumber != "":
-        runLog = getRunLog()
+        runLog = dm.getRunLog()
         for row in runLog:
             if int(row[3]) == runNumber:
                 return int(row[5])
@@ -231,7 +209,7 @@ def getBatchNumber(runNumber=""):
 
 def getAllBatchNumbers():
 
-    runLog = getRunLog()
+    runLog = dm.getRunLog()
     batchNumbers = [int(runLog[0][5])]
     
     for row in runLog:
@@ -244,7 +222,7 @@ def getAllBatchNumbers():
 
 def getAllBatchNumberForSensor(sensor):
 
-    runLog = getRunLog()
+    runLog = dm.getRunLog()
     batchNumbers = []
 
     for row in runLog:
@@ -265,7 +243,7 @@ def getTemperature():
 # Get available sensors from the run file
 def getAvailableSensors():
 
-    runLog = getRunLog()
+    runLog = dm.getRunLog()
 
     availableSensors = []
 
@@ -279,7 +257,7 @@ def getAvailableSensors():
 
 def getAvailableTemperatures():
     
-    runLog = getRunLog()
+    runLog = dm.getRunLog()
     temperatures = []
     
     for row in runLog:

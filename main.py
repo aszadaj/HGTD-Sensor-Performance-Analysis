@@ -48,30 +48,30 @@ def main():
     ########### PULSE ################
     
 
-    pulse.pulseAnalysis() # Long procedure function ~5 min per run.
-    pulse_plot.pulsePlots()
+    #pulse.pulseAnalysis() # Long procedure function ~5 min per run.
+    #pulse_plot.pulsePlots()
 
     
     
     ####### TIMING RESOLUTION ########
     
     
-    timing.createTimingFiles() # Creates files for timingPlots() and trackingAnalysis()
-    timing_plot.timingPlots()
+    #timing.createTimingFiles() # Creates files for timingPlots() and trackingAnalysis()
+    #timing_plot.timingPlots()
 
     
     
     ######### TRACKING ###############
     
     
-    tracking.trackingAnalysis() # Considers batches with > 4 runs.
+    #tracking.trackingAnalysis() # Considers batches with > 4 runs.
     
     
 
     ########### RESULTS ##############
     
     
-    results.produceResults()
+    #results.produceResults()
 
 
     dm.printTime()

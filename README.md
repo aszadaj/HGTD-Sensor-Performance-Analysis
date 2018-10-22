@@ -19,6 +19,7 @@ Furthermore the code needs packages to run with. These are
 - pathos 0.2.2.1
 
 The latter three packages can be found in ```pip2``` by installing those
+
 ```pip2 install numpy```
 ```pip2 install root_numpy```
 ```pip2 install pathos```
@@ -32,7 +33,6 @@ For the ```trackingAnalysis()```, tracking files are needed. They need to be pla
 these files, together with the already converted oscilloscope files, can be found in LXPLUS under directory
 
 ```eos/user/a/aszadaj/public/HGTD_Sensor_Performance_Code/```.
-
 
 
 # How to run
@@ -78,7 +78,7 @@ One run file (MacBook Pro 2.8 GHz-i7 dual core 2013 four threads) takes approxim
 
 ```pulseAnalysis() - method```
 
-This section receives an oscilloscope file and produces nine ROOT files placed in   ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/pulse``` . The categories are
+This section receives an oscilloscope file and produces nine ROOT files placed in   ```folder_sensor_perfomance_tb_sep17/data_ROOT/pulse``` . The categories are
 
 1. CFD = time location at half of the rising edge of the pulse
 2. Charge = pulse integral over the pulse divided by the sensors resistivity
@@ -95,7 +95,7 @@ Time dimension = [ns], voltage dimension = [-V]
 
  ```pulsePlots() - method```
  
-The function receives produced files from the   ```pulseAnalysis()``` and concatenates all runs within a batch and plots all the different properties. These are placed in ```folder_sensor_perfomance_tb_sep17/plots_hgtd_tb_sep17``` which are subdivided into each sensor. Additionally ROOT files with histograms are produced with same folder structure in ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/histograms_root_data```. This function export the results all categories, except maximum sample, CFD and peak time. to ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/results``` for each sensor
+The function receives produced files from the   ```pulseAnalysis()``` and concatenates all runs within a batch and plots all the different properties. These are placed in ```folder_sensor_perfomance_tb_sep17/plots_sensors``` which are subdivided into each sensor. Additionally ROOT files with histograms are produced with same folder structure in ```folder_sensor_perfomance_tb_sep17/data_ROOT/histograms_data```. This function export the results all categories, except maximum sample, CFD and peak time. to ```folder_sensor_perfomance_tb_sep17/data_ROOT/results``` for each sensor
 
 
 
@@ -107,11 +107,11 @@ This file imports ROOT files created with ```pulseAnalysis()``` with time locati
   1. Linear - which is the time difference between the DUT and the SiPM
   2. System - which are time differences between each of the combinations within the first oscilloscope.
   
-Additionally this is done for both 'CFD' and 'peak time'. The files are exported to ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/timing``` having the same kind of structure as ```pulseAnalysis()```.
+Additionally this is done for both 'CFD' and 'peak time'. The files are exported to ```folder_sensor_perfomance_tb_sep17/data_ROOT/timing``` having the same kind of structure as ```pulseAnalysis()```.
 
   ```timingPlots() - method```
 
-The function imports the files from previous function, concatenates all in the same batch, obtains the width and exports it to ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/results``` for each sensor.
+The function imports the files from previous function, concatenates all in the same batch, obtains the width and exports it to ```folder_sensor_perfomance_tb_sep17/data_ROOT/results``` for each sensor.
 
 
 
@@ -135,3 +135,26 @@ The function imports the exported files from the previous analyses together with
 # resultsAnalysis()
 
 From the previously exported files, this collectes all of them and plots them into  ```folder_sensor_perfomance_tb_sep17/results_plots_hgtd_tb_sep17/```
+
+
+
+# Adaptation to other test beam campaigns
+
+The code is suited to be adapted for other test beam campaigns. Some notes should be noted:
+
+Timing resolution Analysis:
+1. The code handles only one SiPM named "SiPM-AFP".
+2. The system of equations is restricted to the first oscilloscope
+
+Tracking Analysis
+1. The tracking-code is adapted to rotate and center for TB Sep 2017.
+
+Other
+1. The run log needs to be in the same structure as ```run_list_tb_sep_2017.csv```.  
+
+
+# What can be improved with the software
+
+1. As it looks like, there are multiple files which could be concatenated into one, such as the .root files which can be grouped.
+2. Make the code more modular than it is, especially with tracking
+3. Each of the plots section export a root file, which can be skipped by refering to the histogram.root file instead, where the results are.
