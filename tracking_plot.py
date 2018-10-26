@@ -13,14 +13,14 @@ distance_y = 600 # Width from the center of the canvas in y default 600
 n_div = 10                  # Number of ticks on Z-axis
 percentage_efficiency = 80  # Limit the lower percentage
 timing_res_max = 200        # Z-axis limit for timing resolution graph
-peak_value_max = 400        # Z-axis limit for pulse amplitude graph
+pulse_amplitude_max = 400        # Z-axis limit for pulse amplitude graph
 gain_max = 500              # Z-axis limit for gain graph
 rise_time_max = 1500        # Z-axis limit for rise time graph
 
     
 min_entries_bin = 5 # Minimum entries per bin
 min_entries_bin_timing = 50 # Required entries for timing resolution graphs
-pixel_size = 18.5 # Pixel size from the MIMOSA
+pixel_size = 18.4 # Pixel size for the MIMOSA
 bin_size_increase_timing = 2.5 # Bin size increase to adapt for timing resolution plots
 
 
@@ -45,14 +45,14 @@ def trackingAnalysis():
         runNumbers = md.getAllRunNumbers(batchNumber)
         
         # Omit batches with less than 3 runs and batch 203
-        if len(runNumbers) < 3 :
+        if len(runNumbers) < 3 or batchNumber == 203:
             
-            print "Skipping Batch", batchNumber, "which have less than 3 entries.\n"
+            print "Batch", batchNumber, "omitted, < 3 runs.\n"
             continue
         
         print "BATCH", batchNumber, "\n"
     
-        var_names = [["pulse", "peak_value"], ["pulse", "charge"], ["pulse", "rise_time"], ["timing", "linear"], ["timing", "linear_cfd"]]
+        var_names = [["pulse", "pulse_amplitude"], ["pulse", "charge"], ["pulse", "rise_time"], ["timing", "normal_peak"], ["timing", "normal_cfd"]]
         
         numpy_arrays = [np.empty(0, dtype = dm.getDTYPE(batchNumber)) for _ in range(len(var_names))]
         numpy_arrays.append(np.empty(0, dtype = dm.getDTYPETracking()))
@@ -87,7 +87,7 @@ def trackingAnalysis():
 
 def trackingPlots(numpy_arrays):
    
-    [peak_values, gain, rise_times, time_difference_peak, time_difference_cfd, tracking] = [i for i in numpy_arrays]
+    [pulse_amplitude, gain, rise_time, time_difference_peak, time_difference_cfd, tracking] = [i for i in numpy_arrays]
    
     declareTCanvas()
     defineBinSizes()
@@ -97,7 +97,7 @@ def trackingPlots(numpy_arrays):
     
     t_calc.setArrayPadExportBool(False)
     
-    createSinglePadGraphs(peak_values, gain, rise_times, time_difference_peak, time_difference_cfd, tracking)
+    createSinglePadGraphs(pulse_amplitude, gain, rise_time, time_difference_peak, time_difference_cfd, tracking)
 
     createArrayPadGraphs(distance_x, distance_y)
 
@@ -110,15 +110,15 @@ def trackingPlots(numpy_arrays):
 
 
 
-def createSinglePadGraphs(peak_values, gain, rise_times, time_difference_peak, time_difference_cfd, tracking):
+def createSinglePadGraphs(pulse_amplitude, gain, rise_time, time_difference_peak, time_difference_cfd, tracking):
     
     # Convert pulse amplitude values from [-V] to [+mV], charge from [C] to gain, rise time from [ns] to [ps]
-    dm.changeIndexNumpyArray(peak_values, -1000)
-    dm.changeIndexNumpyArray(gain, 1./(0.46*10**-15))
-    dm.changeIndexNumpyArray(rise_times, 1000)
+    dm.changeIndexNumpyArray(pulse_amplitude, -1000)
+    dm.changeIndexNumpyArray(gain, 1./(md.getChargeWithoutGainLayer()*10**-15))
+    dm.changeIndexNumpyArray(rise_time, 1000)
     
     # Produce single pad plots
-    for chan in peak_values.dtype.names:
+    for chan in pulse_amplitude.dtype.names:
     
         md.setChannelName(chan)
         
@@ -130,8 +130,118 @@ def createSinglePadGraphs(peak_values, gain, rise_times, time_difference_peak, t
         # This function requires a ROOT file which have the center positions for each pad
         tracking_chan = t_calc.changeCenterPositionSensor(np.copy(tracking))
         
-        produceTProfilePlots([peak_values[chan], gain[chan], rise_times[chan], time_difference_peak[chan], time_difference_cfd[chan]], tracking_chan, distance_x, distance_y)
-        produceEfficiencyPlot(peak_values[chan], tracking_chan, distance_x, distance_y)
+        produceTProfilePlots([pulse_amplitude[chan], gain[chan], rise_time[chan], time_difference_peak[chan], time_difference_cfd[chan]], tracking_chan, distance_x, distance_y)
+        produceEfficiencyPlot(pulse_amplitude[chan], tracking_chan, distance_x, distance_y)
+
+
+
+#####################################################################
+#                                                                   #
+#    PULSE AMPLITUDE, RISE TIME, GAIN AND TIME RESOLUTION GRAPHS    #
+#                                                                   #
+#####################################################################
+
+
+# Produce mean value and time resolution plots
+def produceTProfilePlots(numpy_arrays, tracking, distance_x, distance_y):
+    
+    if md.checkIfArrayPad():
+        
+        distance_x *= 2
+        distance_y *= 2
+    
+    # Adaptive bin number
+    xbin = int(2*distance_x/bin_size)
+    ybin = int(2*distance_y/bin_size)
+    
+    # Decreased number of bins for timing resolution plots
+    xbin_timing = int(xbin/bin_timing_decrease)
+    ybin_timing = int(ybin/bin_timing_decrease)
+
+    th_name = "_"+str(md.getBatchNumber())+"_"+md.chan_name
+    
+    # Declare ROOT objects
+    pulse_amplitude_TH2D   = ROOT.TProfile2D("pulse_amplitude"+th_name, "pulse_amplitude", xbin, -distance_x, distance_x, ybin, -distance_y, distance_y)
+    gain_TH2D              = ROOT.TProfile2D("gain"+th_name,"gain", xbin, -distance_x, distance_x, ybin, -distance_y, distance_y)
+    rise_time_TH2D         = ROOT.TProfile2D("rise_time"+th_name,"rise_time", xbin, -distance_x, distance_x, ybin, -distance_y, distance_y)
+    
+    timing_peak_TH2D       = ROOT.TH2D("timing_peak"+th_name, "timing_peak", xbin_timing, -distance_x, distance_x, ybin_timing, -distance_y, distance_y)
+    timing_cfd_TH2D        = ROOT.TH2D("timing_cfd"+th_name, "timing_cfd", xbin_timing, -distance_x, distance_x, ybin_timing, -distance_y, distance_y)
+    
+    TH2_pulse = [pulse_amplitude_TH2D, gain_TH2D, rise_time_TH2D]
+    TH2_timing = [timing_peak_TH2D, timing_cfd_TH2D]
+    entries_timing_resolution = t_calc.fillTHObjects(numpy_arrays, TH2_pulse, TH2_timing, tracking, [xbin, ybin, xbin_timing, ybin_timing, distance_x, distance_y])
+
+    # Print pulse amplitude mean value 2D plot
+    TH2D_objects = [pulse_amplitude_TH2D, gain_TH2D, rise_time_TH2D, timing_peak_TH2D, timing_cfd_TH2D, 0, 0]
+    setPlotLimitsAndPrint(TH2D_objects, entries_timing_resolution)
+
+
+
+###########################################
+#                                         #
+#           EFFICIENCY GRAPHS             #
+#                                         #
+###########################################
+
+
+# Produce efficiency graphs (for array and single pads) and projection histograms (for each pad)
+def produceEfficiencyPlot(pulse_amplitude, tracking, distance_x, distance_y):
+    
+    if md.checkIfArrayPad():
+    
+        distance_x *= 2
+        distance_y *= 2
+
+    # Define how many bins to use for the TH2-objects
+    xbin = int(2*distance_x/bin_size)
+    ybin = int(2*distance_y/bin_size)
+
+    # Fill events for which the sensors records a hit
+    LGAD_TH2D         = ROOT.TH2D("LGAD_particles", "LGAD particles",xbin,-distance_x,distance_x,ybin,-distance_y,distance_y)
+    
+    # Fill events for which the tracking notes a hit
+    MIMOSA_TH2D       = ROOT.TH2D("tracking_particles", "Tracking particles",xbin,-distance_x,distance_x,ybin,-distance_y,distance_y)
+    
+    t_calc.fillEfficiencyObjects(LGAD_TH2D, MIMOSA_TH2D, tracking, pulse_amplitude, distance_x, distance_y, xbin, ybin)
+
+    # Create efficiency and inefficiency objects
+    th_name = "_" + str(md.getBatchNumber()) + "_" + md.chan_name
+    efficiency_TEff = ROOT.TEfficiency(LGAD_TH2D, MIMOSA_TH2D)
+    inefficiency_TH2D = ROOT.TH2D("inefficiency"+th_name, "inefficiency",xbin,-distance_x,distance_x,ybin,-distance_y,distance_y)
+
+    # Total entries refer to pass events, that is number of recorded pixels on the sensor given a hit
+    # in the MIMOSA. This number is used for both efficiency and inefficiency plots.
+    totalEntries = efficiency_TEff.GetPassedHistogram().GetEntries()
+
+    # Draw the TEfficiency object, and rescale it
+    efficiency_TEff.Draw("COLZ0")
+    canvas.Update()
+    efficiency_TH2D = efficiency_TEff.GetPaintedHistogram()
+    efficiency_TH2D.SetName("efficiency"+th_name)
+    efficiency_TH2D.SetTitle("efficiency")
+    efficiency_TH2D.Scale(100)
+
+    # PROJECTION X AND Y #
+    
+    # Projection Y have extended limits (with larger bin number)
+    # to preserve the same length of the window, for better comparison with projection X.
+    # The window is then reduced to match the bin number
+    
+    projectionX_th1d = ROOT.TProfile("projection_x"+th_name, "projection_x", xbin,-distance_x,distance_x)
+    projectionY_th1d = ROOT.TProfile("projection_y"+th_name, "projection_y", xbin,-distance_x,distance_x)
+    
+    t_calc.fillInefficiencyAndProjectionObjects(efficiency_TH2D, inefficiency_TH2D, projectionX_th1d, projectionY_th1d, xbin, ybin)
+
+    efficiency_TH2D.SetAxisRange(percentage_efficiency, 100, "Z")
+    printTHPlot(efficiency_TH2D, totalEntries)
+    
+    inefficiency_TH2D.SetAxisRange(0, 100-percentage_efficiency, "Z")
+    printTHPlot(inefficiency_TH2D, totalEntries)
+
+    # Create projection plots for single pad only
+    produceProjectionPlots(projectionX_th1d, projectionY_th1d)
+
 
 
 ###########################################
@@ -155,27 +265,29 @@ def createArrayPadGraphs(distance_x, distance_y):
     # The binning for the timing resolution is decreased
     xbin_timing = int(xbin/bin_timing_decrease)
     ybin_timing = int(ybin/bin_timing_decrease)
- 
+    
     arrayPadChannels = t_calc.getArrayPadChannels()
     md.setChannelName(arrayPadChannels[0])
-
-    peak_value_mean_TH2D = ROOT.TProfile2D("Pulse amplitude mean value", "Pulse amplitude mean value", xbin, -distance_x, distance_x, ybin, -distance_y, distance_y)
-    gain_mean_TH2D = ROOT.TProfile2D("Gain mean value", "Gain mean value", xbin, -distance_x, distance_x, ybin, -distance_y, distance_y)
-    rise_time_mean_TH2D = ROOT.TProfile2D("Rise time mean value", "Rise time mean value", xbin, -distance_x, distance_x, ybin, -distance_y, distance_y)
     
-    timing_peak_TH2D = ROOT.TH2D("Timing resolution peak", "timing resolution peak", xbin_timing, -distance_x, distance_x, ybin_timing, -distance_y, distance_y)
-    timing_cfd_TH2D = ROOT.TH2D("Timing resolution CFD", "timing resolution cfd", xbin_timing, -distance_x, distance_x, ybin_timing, -distance_y, distance_y)
+    th_name = "_"+str(md.getBatchNumber())+"_"+md.chan_name
     
-    efficiency_TH2D = ROOT.TH2D("Efficiency", "Efficiency",xbin,-distance_x,distance_x,ybin,-distance_y,distance_y)
-    inefficiency_TH2D = ROOT.TH2D("Inefficiency", "Inefficiency",xbin,-distance_x,distance_x,ybin,-distance_y,distance_y)
+    pulse_amplitude_TH2D   = ROOT.TProfile2D("pulse_amplitude"+th_name, "pulse_amplitude", xbin, -distance_x, distance_x, ybin, -distance_y, distance_y)
+    gain_TH2D              = ROOT.TProfile2D("gain"+th_name, "gain", xbin, -distance_x, distance_x, ybin, -distance_y, distance_y)
+    rise_time_TH2D         = ROOT.TProfile2D("rise_time"+th_name, "rise_time", xbin, -distance_x, distance_x, ybin, -distance_y, distance_y)
     
-    TH2D_objects_list = [peak_value_mean_TH2D, gain_mean_TH2D, rise_time_mean_TH2D, timing_peak_TH2D, timing_cfd_TH2D, efficiency_TH2D, inefficiency_TH2D]
-
+    timing_peak_TH2D       = ROOT.TH2D("timing_peak"+th_name, "timing_peak", xbin_timing, -distance_x, distance_x, ybin_timing, -distance_y, distance_y)
+    timing_cfd_TH2D        = ROOT.TH2D("timing_cfd"+th_name, "timing_cfd", xbin_timing, -distance_x, distance_x, ybin_timing, -distance_y, distance_y)
+    
+    efficiency_TH2D        = ROOT.TH2D("efficiency"+th_name, "efficiency", xbin,-distance_x,distance_x,ybin,-distance_y,distance_y)
+    inefficiency_TH2D      = ROOT.TH2D("inefficiency"+th_name, "inefficiency", xbin,-distance_x,distance_x,ybin,-distance_y,distance_y)
+    
+    TH2D_objects_list = [pulse_amplitude_TH2D, gain_TH2D, rise_time_TH2D, timing_peak_TH2D, timing_cfd_TH2D, efficiency_TH2D, inefficiency_TH2D]
+    
     print "\nArray Pad", md.getSensor(), "\n"
     
     for TH2D_object in TH2D_objects_list:
         for index in range(0, len(arrayPadChannels)):
-         
+            
             t_calc.importAndAddHistogram(TH2D_object, index)
 
 
@@ -183,117 +295,6 @@ def createArrayPadGraphs(distance_x, distance_y):
     t_calc.setArrayPadExportBool(True)
 
     setPlotLimitsAndPrint(TH2D_objects_list)
-
-
-
-#########################################################
-#                                                       #
-#   GAIN, PULSE MEAN VALUE AND TIME RESOLUTION GRAPHS   #
-#                                                       #
-#########################################################
-
-
-# Produce mean value and time resolution plots
-def produceTProfilePlots(numpy_arrays, tracking, distance_x, distance_y):
-    
-    if md.checkIfArrayPad():
-        
-        distance_x *= 2
-        distance_y *= 2
-    
-    # Adaptive bin number
-    xbin = int(2*distance_x/bin_size)
-    ybin = int(2*distance_y/bin_size)
-    
-    # Decreased number of bins for timing resolution plots
-    xbin_timing = int(xbin/bin_timing_decrease)
-    ybin_timing = int(ybin/bin_timing_decrease)
-
-    # Declare ROOT objects
-    peak_value_mean_TH2D        = ROOT.TProfile2D("Pulse amplitude mean value", "Pulse amplitude mean value", xbin, -distance_x, distance_x, ybin, -distance_y, distance_y)
-    gain_mean_TH2D              = ROOT.TProfile2D("Gain mean value","Gain mean value", xbin, -distance_x, distance_x, ybin, -distance_y, distance_y)
-    rise_time_mean_TH2D         = ROOT.TProfile2D("Rise time mean value","Rise time mean value", xbin, -distance_x, distance_x, ybin, -distance_y, distance_y)
-    
-    time_difference_peak_TH2D   = ROOT.TProfile2D("Time difference peak", "Time difference peak", xbin_timing, -distance_x, distance_x, ybin_timing, -distance_y, distance_y, "s")
-    time_difference_cfd_TH2D    = ROOT.TProfile2D("Time difference CFD", "Time difference cfd", xbin_timing, -distance_x, distance_x, ybin_timing, -distance_y, distance_y, "s")
-    timing_peak_TH2D            = ROOT.TH2D("Timing resolution peak", "timing resolution peak", xbin_timing, -distance_x, distance_x, ybin_timing, -distance_y, distance_y)
-    timing_cfd_TH2D             = ROOT.TH2D("Timing resolution CFD", "timing resolution cfd", xbin_timing, -distance_x, distance_x, ybin_timing, -distance_y, distance_y)
-    
-    TH2_objects_fill = [peak_value_mean_TH2D, gain_mean_TH2D, rise_time_mean_TH2D, time_difference_peak_TH2D, time_difference_cfd_TH2D, timing_peak_TH2D, timing_cfd_TH2D]
-    
-    t_calc.fillTHObjects(numpy_arrays, TH2_objects_fill, tracking, [xbin, ybin, xbin_timing, ybin_timing, distance_x, distance_y])
-
-    # Print pulse amplitude mean value 2D plot
-    TH2D_objects = [peak_value_mean_TH2D, gain_mean_TH2D, rise_time_mean_TH2D, timing_peak_TH2D, timing_cfd_TH2D, 0, 0]
-    limits = [time_difference_peak_TH2D.GetEntries(), time_difference_cfd_TH2D.GetEntries()]
-    setPlotLimitsAndPrint(TH2D_objects, limits)
-
-
-
-###########################################
-#                                         #
-#           EFFICIENCY GRAPHS             #
-#                                         #
-###########################################
-
-
-# Produce efficiency graphs (for array and single pads) and projection histograms (single pad arrays only)
-def produceEfficiencyPlot(peak_values, tracking, distance_x, distance_y):
-    
-    if md.checkIfArrayPad():
-    
-        distance_x *= 2
-        distance_y *= 2
-
-    # Define how many bins to use for the TH2-objects
-    xbin = int(2*distance_x/bin_size)
-    ybin = int(2*distance_y/bin_size)
-
-    # Fill events for which the sensors records a hit
-    LGAD_TH2D         = ROOT.TH2D("LGAD_particles", "LGAD particles",xbin,-distance_x,distance_x,ybin,-distance_y,distance_y)
-    
-    # Fill events for which the tracking notes a hit
-    MIMOSA_TH2D       = ROOT.TH2D("tracking_particles", "Tracking particles",xbin,-distance_x,distance_x,ybin,-distance_y,distance_y)
-    
-    t_calc.fillEfficiencyObjects(LGAD_TH2D, MIMOSA_TH2D, tracking, peak_values, distance_x, distance_y, xbin, ybin)
-
-    # Create efficiency and inefficiency objects
-    efficiency_TEff = ROOT.TEfficiency(LGAD_TH2D, MIMOSA_TH2D)
-    inefficiency_TH2D = ROOT.TH2D("Inefficiency", "Inefficiency",xbin,-distance_x,distance_x,ybin,-distance_y,distance_y)
-
-    # Total entries refer to pass events, that is number of recorded pixels on the sensor given a hit
-    # in the MIMOSA. This number is used for both efficiency and inefficiency plots.
-    totalEntries = efficiency_TEff.GetPassedHistogram().GetEntries()
-
-    # Draw the TEfficiency object, and rescale it
-    efficiency_TEff.Draw("COLZ0")
-    canvas.Update()
-    efficiency_TH2D = efficiency_TEff.GetPaintedHistogram()
-    efficiency_TH2D.SetName("Efficiency")
-    efficiency_TH2D.Scale(100)
-
-    # PROJECTION X AND Y #
-    
-    # Projection Y have extended limits (with larger bin number)
-    # to preserve the same length of the window, for better comparison with projection X.
-    # The window is then reduced to match the bin number
-    
-    projectionX_th1d = ROOT.TProfile("Projection X", "projection x", xbin,-distance_x,distance_x)
-    projectionY_th1d = ROOT.TProfile("Projection Y", "projection y", xbin,-distance_x,distance_x)
-    
-    t_calc.fillInefficiencyAndProjectionObjects(efficiency_TH2D, inefficiency_TH2D, projectionX_th1d, projectionY_th1d, xbin, ybin)
-
-    efficiency_TH2D.SetAxisRange(percentage_efficiency, 100, "Z")
-    printTHPlot(efficiency_TH2D, totalEntries)
-    
-    inefficiency_TH2D.SetAxisRange(0, 100-percentage_efficiency, "Z")
-    printTHPlot(inefficiency_TH2D, totalEntries)
-
-    # Create projection plots for single pad only
-    produceProjectionPlots(projectionX_th1d, projectionY_th1d)
-
-
-
 
 ###########################################
 #                                         #
@@ -307,15 +308,21 @@ def produceProjectionPlots(projectionX_th1d, projectionY_th1d):
     distance_projection, center_positions = t_calc.findSelectionRange()
 
     headTitle = "Projection of X-axis of efficiency 2D plot - "+md.getSensor()+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage()) + " V"+ "; X [\mum] ; Efficiency (%)"
-    fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getSensor()+"/tracking/projection/tracking_projectionX_efficiency_" + str(md.getBatchNumber()) +"_" + md.chan_name + "_"+str(md.getSensor())+".pdf"
+    
+    category = projectionX_th1d.GetTitle()
+    fileName = dm.getFileNameForHistogram("tracking", category)
 
     
     sigmas_x = createProjectionFit(projectionX_th1d, center_positions[0])
     printProjectionPlot(projectionX_th1d, headTitle, fileName, sigmas_x)
    
+   
     headTitle = headTitle.replace("X-axis", "Y-axis")
     headTitle = headTitle.replace("X [\mum]", "Y [\mum]")
-    fileName = fileName.replace("projectionX", "projectionY")
+    
+    category = projectionY_th1d.GetTitle()
+    fileName = dm.getFileNameForHistogram("tracking", category)
+
     
     sigmas_y = createProjectionFit(projectionY_th1d, center_positions[1])
     printProjectionPlot(projectionY_th1d, headTitle, fileName, sigmas_y)
@@ -359,7 +366,7 @@ def createProjectionFit(projection_th1d, center_position):
 
 def setPlotLimitsAndPrint(TH2D_objects, timing_entries=[0,0]):
 
-    limits_graph = [peak_value_max, gain_max, rise_time_max, timing_res_max, timing_res_max]
+    limits_graph = [pulse_amplitude_max, gain_max, rise_time_max, timing_res_max, timing_res_max]
     entries = [0, 0, 0, timing_entries[0], timing_entries[1]]
     
     for index in range(0, len(limits_graph)):
@@ -389,19 +396,19 @@ def printTHPlot(graphList, entries=0):
         entries = graphList.GetEntries()
     
     # Get file name and title for graph
-    
-    objectName = graphList.GetName()
-    fileName, headTitle = t_calc.getTitleAndFileName(objectName, md.chan_name)
+    category = graphList.GetTitle()
+    headTitle = getTitles(category)
 
     # Move the right margin to fit the Z axis
     canvas.SetRightMargin(0.14)
+    canvas.SetLeftMargin(0.11)
 
     # Draw graph to move and recreate the stats box
     graphList.SetStats(1)
     graphList.Draw("COLZ0")
     canvas.Update()
     stats_box = graphList.GetListOfFunctions().FindObject("stats")
-    stats_box.SetX1NDC(.1)
+    stats_box.SetX1NDC(.11)
     stats_box.SetX2NDC(.25)
     stats_box.SetY1NDC(.93)
     stats_box.SetY2NDC(.83)
@@ -414,7 +421,7 @@ def printTHPlot(graphList, entries=0):
     graphList.Draw("COLZ0")
 
     # Draw lines which selects the projection limits
-    efficiency_bool = False if objectName.find("Efficiency") == -1 else True
+    efficiency_bool = False if category.find("efficiency") == -1 else True
 
     if efficiency_bool:
     
@@ -458,14 +465,23 @@ def printTHPlot(graphList, entries=0):
 
     # Export PDF and Histogram
     canvas.Update()
+    subcategory = ""
+
+    if category.find("timing") != -1:
+        category, subcategory = category.split("_")
+
+    fileName = dm.getFileNameForHistogram("tracking", category, subcategory)
+
     canvas.Print(fileName)
-    dm.exportImportROOTHistogram(fileName, graphList)
+    dm.exportImportROOTHistogram("tracking", category, subcategory, "", graphList)
     canvas.Clear()
 
 
 # Print projection plot
 def printProjectionPlot(th1_projection, headTitle, fileName, sigmas):
-
+    
+    category = th1_projection.GetTitle()
+    
     canvas_projection.cd()
 
     ROOT.gStyle.SetOptStat("e")
@@ -493,7 +509,7 @@ def printProjectionPlot(th1_projection, headTitle, fileName, sigmas):
     canvas_projection.Print(fileName)
     
     # Export histogram as ROOT file
-    dm.exportImportROOTHistogram(fileName, th1_projection)
+    dm.exportImportROOTHistogram("tracking", category , "", "", th1_projection)
     canvas_projection.Clear()
 
 
@@ -521,3 +537,47 @@ def updateBinSize(factor):
     global bin_size
     
     bin_size *= factor
+
+
+def getTitles(objectTitle):
+    
+    headTitle = "empty"
+    
+    if objectTitle.find("pulse_amplitude") != -1:
+        graphTitle = "Pulse amplitude mean value"
+        dimension_z = "V [mV]"
+    
+    
+    elif objectTitle.find("gain") != -1:
+        graphTitle = "Gain mean value"
+        dimension_z = "Gain"
+    
+    
+    elif objectTitle.find("rise_time") != -1:
+        graphTitle = "Rise time mean value"
+        dimension_z = "t [ps]"
+    
+    
+    elif objectTitle.find("peak") != -1:
+        graphTitle = "Timing resolution (peak)"
+        dimension_z = "\sigma_{t} [ps]"
+    
+    
+    elif objectTitle.find("cfd") != -1:
+        
+        graphTitle = "Timing resolution (CFD)"
+        dimension_z = "\sigma_{t} [ps]"
+    
+    
+    elif objectTitle.find("efficiency") != -1:
+        graphTitle = "Efficiency"
+        dimension_z = "Efficiency (%)"
+    
+    
+    elif objectTitle.find("inefficiency") != -1:
+        graphTitle = "Inefficiency"
+        dimension_z = "Inefficiency (%)"
+
+    headTitle = graphTitle + " - " + md.getSensor() + ", T = " + str(md.getTemperature()) + " \circ C, U = " + str(md.getBiasVoltage()) + " V; X [\mum] ; Y [\mum] ; " + dimension_z
+
+    return headTitle

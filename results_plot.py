@@ -24,7 +24,8 @@ def addValuesToGraph(variables):
                 
                 constant = 1
                 if category == "charge":
-                    constant = 1./(0.46) # Divide by MIP charge = Gain
+                    constant = 1./md.getChargeWithoutGainLayer()
+                
             
                 graph[r_calc.processed_sensor][temperature][DUT_pos].SetPoint(i, data[0], data[1][0] * constant)
                 graph[r_calc.processed_sensor][temperature][DUT_pos].SetPointError(i, 0, data[1][1] * constant)
@@ -57,7 +58,7 @@ def drawAndExportResults(category, category_graph, legend_graph, zoom):
     legend_graph.Draw()
     
     if category == "charge":
-        charge_mip = 0.46
+        charge_mip = md.getChargeWithoutGainLayer()
         xmin = 0
         xmax = r_calc.bias_voltage_max
         ymin = 0.01
@@ -108,7 +109,7 @@ def setGraphAttributes(category_graph, category, zoom):
         yTitle = "Pedestal [mV]"
         y_lim = [-3, 3]
 
-    elif category == "peak_value":
+    elif category == "pulse_amplitude":
     
         titleGraph = "Pulse amplitude per bias voltage"
         xTitle = "Bias voltage [V]"
@@ -129,57 +130,56 @@ def setGraphAttributes(category_graph, category, zoom):
         yTitle = "Rise time [ps]"
         y_lim = [0, 2000]
 
-    elif category == "linear":
+    elif category == "normal_peak":
     
         titleGraph = "Timing resolution per bias voltage (peak)"
         xTitle = "Bias voltage [V]"
-        yTitle = "Time resolution [ps]"
+        yTitle = "Timing resolution [ps]"
 
 
-    elif category == "linear_cfd":
+    elif category == "normal_cfd":
     
         titleGraph = "Timing resolution per bias voltage (CFD)"
         xTitle = "Bias voltage [V]"
-        yTitle = "Time resolution [ps]"
+        yTitle = "Timing resolution [ps]"
 
-    elif category == "system":
+    elif category == "system_peak":
     
         titleGraph = "Timing resolution per bias voltage (sys of eqs, peak)"
         xTitle = "Bias voltage [V]"
-        yTitle = "Time resolution [ps]"
+        yTitle = "Timing resolution [ps]"
 
     elif category == "system_cfd":
     
         titleGraph = "Timing resolution per bias voltage (sys of eqs, CFD)"
         xTitle = "Bias voltage [V]"
-        yTitle = "Time resolution [ps]"
+        yTitle = "Timing resolution [ps]"
     
     
-    
-    if category == "linear_gain":
+    if category == "normal_peak_gain":
         
         titleGraph = "Timing resolution per gain (peak)"
         xTitle = "Gain"
-        yTitle = "Time resolution [ps]"
+        yTitle = "Timing resolution [ps]"
     
     
-    elif category == "linear_cfd_gain":
+    elif category == "normal_cfd_gain":
     
         titleGraph = "Timing resolution per gain (cfd)"
         xTitle = "Gain"
-        yTitle = "Time resolution [ps]"
+        yTitle = "Timing resolution [ps]"
 
-    elif category == "system_gain":
+    elif category == "system_peak_gain":
     
         titleGraph = "Timing resolution per gain (system, peak)"
         xTitle = "Gain"
-        yTitle = "Time resolution [ps]"
+        yTitle = "Timing resolution [ps]"
 
     elif category == "system_cfd_gain":
    
         titleGraph = "Timing resolution per gain (system, cfd)"
         xTitle = "Gain"
-        yTitle = "Time resolution [ps]"
+        yTitle = "Timing resolution [ps]"
         
 
     if category.find("gain") != -1:
@@ -190,8 +190,7 @@ def setGraphAttributes(category_graph, category, zoom):
             r_calc.bias_voltage_max = 100
 
 
-    if category.find("linear") != -1 or category.find("system") != -1:
-        #positions_latex = [[.5, .76], [.5, .71], [.5, .66], [.5, .61]]
+    if category.find("normal") != -1 or category.find("system") != -1:
         positions_latex = [[.7, .55], [.7, .5], [.7, .45], [.7, .4]]
         y_lim = [0, timing_res_max]
 
@@ -199,7 +198,7 @@ def setGraphAttributes(category_graph, category, zoom):
         r_calc.bias_voltage_max = 500
         positions_latex = [[.7, .55], [.7, .5], [.7, .45], [.7, .4]]
 
-    elif category.find("peak_value") != -1:
+    elif category.find("pulse_amplitude") != -1:
         positions_latex = [[.5, .76], [.5, .71], [.5, .66], [.5, .61]]
 
 

@@ -4,6 +4,8 @@ import root_numpy as rnm
 import os
 import csv
 import datetime as dt
+import pulse_plot
+import tracking_calculations as t_calc
 
 import run_log_metadata as md
 
@@ -83,7 +85,7 @@ def defineDataFolderPath():
 # Export pulse data
 def exportPulseData(variable_array):
     
-    [noise, pedestal, peak_values, rise_times, charge, cfd, peak_times, points, max_sample] = [i for i in variable_array]
+    [noise, pedestal, pulse_amplitude, rise_times, charge, cfd, peak_times, points, max_sample] = [i for i in variable_array]
     
     for index in range(0, len(var_names)):
         exportImportROOTData("pulse", var_names[index], variable_array[index])
@@ -91,6 +93,9 @@ def exportPulseData(variable_array):
 
 # Export or import ROOT file
 def exportImportROOTData(group, category, data=np.empty(0)):
+    
+    dataPath = getDataSourceFolder() + "/" + group + "/"
+    
     
     # This line is for exporting data and adapting correct dtype for the numpy array
     if group != "timing" and group != "results" and category != "position" and data.size != 0:
@@ -104,19 +109,24 @@ def exportImportROOTData(group, category, data=np.empty(0)):
         elif category == "efficiency":
             fileName = category + "_" + str(md.getBatchNumber()) + "_" + md.getSensor() + "_" + md.chan_name
 
+        # Position
         else:
             fileName = category + "_" + str(md.getBatchNumber()/100)
-    else:
 
+        dataPath += category + "/" + fileName + ".root"
+
+    elif group == "timing":
+        
+        category, subcategory = category.split("_")
+        
+        fileName = group + "_" + category + "_" + subcategory + "_" + str(md.getRunNumber())
+        
+        dataPath += category + "/" + subcategory + "/" + fileName + ".root"
+
+    else:
+        
         fileName = group + "_" + category + "_" + str(md.getRunNumber())
-
-
-    dataPath = getSourceFolderPath() + getDataSourceFolder() + "/" + group + "/"
-
-    if group == "results":
-        dataPath += md.getSensor() + "/" + category + "/" + group+"_"+category+"_"+str(md.getBatchNumber()) + "_" + md.chan_name + ".root"
-
-    else:
+        
         dataPath += category + "/" + fileName + ".root"
 
 
@@ -137,19 +147,62 @@ def exportImportROOTData(group, category, data=np.empty(0)):
 
 
 # Export or import ROOT histograms
-def exportImportROOTHistogram(fileName, graphList = 0):
-
-    rootDirectory = fileName.replace(getPlotsSourceFolder(), getHistogramsSourceFolder())
-    rootDirectory = rootDirectory.replace(".pdf", ".root")
+def exportImportROOTHistogram(group, category, subcategory="", chan2="", graphList = 0):
+  
+    fileName = getFileNameForHistogram(group, category, subcategory, chan2)
+    fileName = fileName.replace(getPlotsSourceFolder(), getHistogramsSourceFolder())
+    fileName = fileName.replace(".pdf", ".root")
     
     if graphList != 0:
         
-        fileObject = ROOT.TFile(rootDirectory, "RECREATE")
+        fileObject = ROOT.TFile(fileName, "RECREATE")
         graphList.Write()
         fileObject.Close()
         
     else:
-        return ROOT.TFile(rootDirectory)
+        th_name = "_"+str(md.getBatchNumber())+"_"+md.chan_name+chan2
+        objectName = category + th_name
+        
+        if subcategory != "":
+            objectName = category + "_" + subcategory + th_name
+    
+    
+        exists = os.path.isfile(fileName)
+    
+        if exists:
+            fileObject = ROOT.TFile(fileName)
+            histogram = fileObject.Get(objectName)
+            histogram.SetDirectory(0) # This is to disconnect the ownership of the TFile object from the imported TH-object
+            fileObject.Close()
+            return histogram
+        else:
+            print fileName, "does not exist!\n"
+            return exists
+
+
+
+# only for pulse and timing
+def getFileNameForHistogram(group, category, subcategory="", chan2=""):
+    
+    # pulse all plots
+    fileName = getPlotsSourceFolder() + "/" + md.getSensor() + "/" + group + "/" + category + "/" + group + "_" + category + "_" + str(md.getBatchNumber())+ "_" + md.chan_name
+    ending = "_"+md.getSensor()+".pdf"
+    
+    if subcategory != "":
+        
+        # timing normal and tracking
+        fileName = fileName.replace(category + "/", category + "/" + subcategory + "/", 1)
+        ending = "_" + md.getSensor() + "_" + md.getOscText() + "_" + subcategory + ".pdf"
+        
+        # sys eq
+        if chan2 != "":
+            ending = "_" + md.getSensor() + "_and_" + md.getSensor(chan2) + "_" + subcategory + ".pdf"
+
+                
+    if group == "tracking" and t_calc.array_pad_export:
+        ending = ending.replace(".pdf", "_array.pdf")
+
+    return fileName+ending
 
 
 # Read file names which are enlisted in the folder
@@ -193,10 +246,10 @@ def checkIfFileAvailable():
 
     elif functionAnalysis == "tracking_analysis":
 
-        files_peak_value = readFileNames("pulse", "peak_value")
+        files_pulse_amplitude = readFileNames("pulse", "pulse_amplitude")
         files_tracking = readFileNames("tracking", "tracking")
 
-        if int(md.getTimeStamp()) in files_tracking and int(md.getRunNumber()) in files_peak_value:
+        if int(md.getTimeStamp()) in files_tracking and int(md.getRunNumber()) in files_pulse_amplitude:
 
             found = True
 

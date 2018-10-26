@@ -65,6 +65,11 @@ def getRowForRunNumber(runNumber):
             return row
 
 
+def getChargeWithoutGainLayer():
+
+    return 0.46
+
+
 # Structure of runLog: [runLogBatch1, runLogBatch1, ...,] and
 # runLogBatch1 = [run1, run2, run3, ]... run1 = row from the run log for selected run
 def getRunLogBatches(batchNumbers):
@@ -104,6 +109,16 @@ def checkIfSameOscAsSiPM(chan):
 
     else:
         return False
+
+
+def getOscText():
+
+    if checkIfSameOscAsSiPM(chan_name):
+
+        return "same_osc"
+
+    else:
+        return "diff_osc"
 
 
 # Get current run number
@@ -233,6 +248,24 @@ def getAllBatchNumberForSensor(sensor):
 
     return batchNumbers
 
+
+
+def getAllChannelsForSensor(batch, sensor):
+    
+    runLog = dm.getRunLog()
+    
+    channels = []
+    
+    for row in runLog:
+        if int(row[5]) == batch:
+            
+            for index in range(0,7):
+                
+                if row[13+index*5] == sensor and "chan"+str(index) not in channels:
+                    channels.append("chan"+str(index))
+
+
+    return channels
 
 
 def getTemperature():

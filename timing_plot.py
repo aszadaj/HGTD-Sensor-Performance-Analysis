@@ -23,9 +23,10 @@ def timingPlots():
 
     print "\nStart producing TIMING RESOLUTION plots, batches:", md.batchNumbers
 
+    global var_names
+    
     for batchNumber in md.batchNumbers:
 
-        
         runNumbers = md.getAllRunNumbers(batchNumber)
         # Create numpy arrays for linear time difference (one element per "channel")
         numpy_arrays = [np.empty(0, dtype = dm.getDTYPE(batchNumber)) for _ in range(2)]
@@ -34,7 +35,7 @@ def timingPlots():
         numpy_arrays.append(np.empty(0, dtype = t_calc.getDTYPESysEq()))
         numpy_arrays.append(np.empty(0, dtype = t_calc.getDTYPESysEq()))
 
-        var_names = ["linear", "linear_cfd", "system", "system_cfd"]
+        var_names = ["normal_peak", "normal_cfd", "system_peak", "system_cfd"]
     
         for runNumber in runNumbers:
         
@@ -72,6 +73,8 @@ def timingPlots():
 
 def produceTimingDistributionPlots(time_difference, category):
 
+    group = "timing"
+
     if category.find("system") != -1:
 
         # Comment this function if you want to omit producing plots for system of equations
@@ -96,8 +99,8 @@ def produceTimingDistributionPlots(time_difference, category):
             continue
         
         print md.getSensor(), "\n"
-
-        time_diff_TH1F[chan] = ROOT.TH1F("Linear time difference "+str(md.getBatchNumber())+" "+md.chan_name, "time_difference", xbins, -bin_range, bin_range)
+        th_name = "_" + str(md.getBatchNumber()) + "_" + md.chan_name
+        time_diff_TH1F[chan] = ROOT.TH1F(category+th_name, category, xbins, -bin_range, bin_range)
      
         # Fill the objects, without cuts on the SiPM
         for entry in range(0, len(time_difference[chan])):
@@ -120,19 +123,9 @@ def produceTimingDistributionPlots(time_difference, category):
             
             continue
             
-        sigma_DUT, sigma_fit_error, time_diff_mean = t_calc.getSigmasFromFit(time_diff_TH1F[chan], window_range, chan)
+        sigma_DUT, sigma_fit_error = t_calc.getSigmasFromFit(time_diff_TH1F[chan], window_range, chan)
 
         exportTHPlot(time_diff_TH1F[chan], [sigma_DUT, sigma_fit_error], category)
-
-
-        # Export the result together with its error
-        dt = (  [(category, '<f8') ])
-        timing_results = np.empty(3, dtype = dt)
-        timing_results[category][0] = sigma_DUT
-        timing_results[category][1] = sigma_fit_error
-        
-        dm.exportImportROOTData("results", category, timing_results)
-
 
 
 ############## SYSTEM OF EQUATIONS ###############
@@ -174,7 +167,8 @@ def produceTimingDistributionPlotsSysEq(time_difference, category):
         # Create TH1 object
         time_diff_TH1F[chan] = dict()
         for chan2 in chan2_list:
-            time_diff_TH1F[chan][chan2] = ROOT.TH1F("Sys. of eqs. time difference "+str(md.getBatchNumber())+" "+md.chan_name + "" + chan2, "time_difference", xbins, -bin_range, bin_range)
+            th_name = "_" + str(md.getBatchNumber()) + "_" + md.chan_name+chan2
+            time_diff_TH1F[chan][chan2] = ROOT.TH1F(category+th_name, category, xbins, -bin_range, bin_range)
         
         # Fill TH1 object between channels in first oscilloscope
         for entry in range(0, len(time_difference[chan])):
@@ -265,10 +259,8 @@ def produceTimingDistributionPlotsSysEq(time_difference, category):
     
         chan2_list = list(channels_1st_oscilloscope)
         chan2_list.remove(chan)
-        
-        dt = ([(category, '<f8')])
-        timing_results_sys_eq = np.empty(2, dtype = dt)
-        
+
+
         # Loop through the combinations
         for chan2 in chan2_list:
 
@@ -278,20 +270,14 @@ def produceTimingDistributionPlotsSysEq(time_difference, category):
 
             exportTHPlot(time_diff_TH1F[chan][chan2], [sigma_DUT, sigma_DUT_error], category, chan2)
 
-            timing_results_sys_eq[category][0] = sigma_DUT
-            timing_results_sys_eq[category][1] = sigma_DUT_error
-
-        # Export the results
-        #dm.exportImportROOTData("results", category, timing_results_sys_eq)
-
 
 ############## EXPORT PLOT ###############
 
 def exportTHPlot(graphList, sigma, category, chan2 = ""):
-
+    
     canvas.Clear()
     
-    titles = getPlotAttributes(category, chan2)
+    titles = getPlotAttributes(chan2)
  
     graphList.SetLineColor(1)
     graphList.SetTitle(titles[0])
@@ -312,34 +298,39 @@ def exportTHPlot(graphList, sigma, category, chan2 = ""):
     canvas.Modified()
     canvas.Update()
     
+    category, subcategory = getCategorySubcategory(category)
+    
+    fileName = dm.getFileNameForHistogram("timing", category, subcategory, chan2)
+    
+    canvas.Print(fileName)
 
-    canvas.Print(titles[3])
-    dm.exportImportROOTHistogram(titles[3], graphList)
+    dm.exportImportROOTHistogram("timing", category, subcategory, chan2, graphList)
 
 
-
-def getPlotAttributes(category, chan2=""):
+def getPlotAttributes(chan2=""):
 
     # Set titles and export file
     headTitle = "Time difference "+md.getSensor()+" and SiPM, T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage()) + " V"
     xAxisTitle = "\Deltat [ps]"
     yAxisTitle = "Entries"
-    fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getSensor()+"/timing/normal/peak/timing_"+str(md.getBatchNumber())+"_"+md.chan_name+ "_"+str(md.getSensor())+"_diff_osc_peak.pdf"
 
-    
-    if md.checkIfSameOscAsSiPM(md.chan_name):
-        fileName = fileName.replace("diff_osc", "same_osc")
-        
-    if category.find("cfd") != -1:
-        fileName = fileName.replace("peak", "cfd")
-    
+
     if chan2 != "":
         # Create titles and print the graph
         headTitle = "Time difference "+md.getSensor()+" and "+md.getSensor(chan2)+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage()) + " V"
-        fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/"+md.getSensor()+"/timing/system/peak/timing_"+str(md.getBatchNumber())+"_"+md.chan_name+ "_"+str(md.getSensor())+"_and_"+str(md.getSensor(chan2))+"_peak.pdf"
-        
-        if category.find("cfd") != -1:
-            fileName = fileName.replace("peak", "cfd")
 
 
-    return [headTitle, xAxisTitle, yAxisTitle, fileName]
+    return [headTitle, xAxisTitle, yAxisTitle]
+
+
+def getCategorySubcategory(category_subcategory):
+    
+    subcategory = "peak"
+    
+    if category_subcategory.find("cfd") != -1:
+        category = category_subcategory[:-4]
+        subcategory = "cfd"
+    else:
+        category = category_subcategory[:-5]
+
+    return category, subcategory

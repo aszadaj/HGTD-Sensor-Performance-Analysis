@@ -44,7 +44,6 @@ def main():
     md.defineSettings(batches, batches_exclude, number_of_runs, sensor)
     
     
-    
     ########### PULSE ################
     
 

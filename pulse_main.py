@@ -103,17 +103,11 @@ def signalAnalysis(start, stop):
     return properties
 
 
-def defineNameOfProperties(results=False):
+def defineNameOfProperties():
 
     global var_names
     
-    # This is for export of data and plotting those
-    if not results:
-        var_names = ["noise", "pedestal", "peak_value", "rise_time", "charge", "cfd", "peak_time", "points", "max_sample"]
-    
-    # This is export of results from plots
-    else:
-        var_names = ["noise", "pedestal", "peak_value", "rise_time", "charge"]
+    var_names = ["noise", "pedestal", "pulse_amplitude", "rise_time", "charge", "cfd", "peak_time", "points", "max_sample"]
 
 
 # These are set values for each sensor. These values are determined between a plot for:

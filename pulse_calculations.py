@@ -27,7 +27,7 @@ def getPulseCharacteristics(data, signal_limit, threshold_points):
 
     if points >= threshold_points:
         
-        peak_value, peak_time = calculatePeakValue(data, pedestal, signal_limit)
+        pulse_amplitude, peak_time = calculatePeakValue(data, pedestal, signal_limit)
         rise_time, cfd  = calculateRiseTime(data, pedestal)
         charge = calculateCharge(data, threshold)
         
@@ -38,7 +38,7 @@ def getPulseCharacteristics(data, signal_limit, threshold_points):
              peak_time = cfd = 0
 
         # Invert again to maintain the same shape
-        return noise, -pedestal, -peak_value, rise_time, charge, cfd, peak_time, points, -max_sample
+        return noise, -pedestal, -pulse_amplitude, rise_time, charge, cfd, peak_time, points, -max_sample
 
     else:
         return noise, -pedestal, 0, 0, 0, 0, 0, points, -max_sample
@@ -77,7 +77,7 @@ def calculateNoiseAndPedestal(data):
 def calculatePeakValue(data, pedestal, signal_limit, graph=False):
 
     # Default values
-    peak_value = 0
+    pulse_amplitude = 0
     peak_time = 0
     second_deg_fit = [0,0,0]
 
@@ -95,7 +95,7 @@ def calculatePeakValue(data, pedestal, signal_limit, graph=False):
         if second_deg_fit[0] < 0:
             
             peak_time = np.array([-second_deg_fit[1] / (2 * second_deg_fit[0])])
-            peak_value = second_deg_fit[0] * np.power(peak_time, 2) + second_deg_fit[1] * peak_time + second_deg_fit[2] - pedestal
+            pulse_amplitude = second_deg_fit[0] * np.power(peak_time, 2) + second_deg_fit[1] * peak_time + second_deg_fit[2] - pedestal
 
 
     # If the signal reaches the oscilloscope limit, take the maximum value instead and ignore the
@@ -104,14 +104,14 @@ def calculatePeakValue(data, pedestal, signal_limit, graph=False):
     if np.abs(np.amax(data) - signal_limit) < 0.005:
 
         peak_time = np.zeros(1)
-        peak_value = np.amax(data) - pedestal
+        pulse_amplitude = np.amax(data) - pedestal
 
 
     if graph:
-        return peak_value, peak_time, second_deg_fit
+        return pulse_amplitude, peak_time, second_deg_fit
     
     else:
-        return peak_value, peak_time
+        return pulse_amplitude, peak_time
 
 
 # Get rise time
@@ -222,29 +222,3 @@ def concatenateResults(results):
 
     return variable_array
 
-
-# These are set values for each sensor. These values are determined between a plot for:
-# Combined plot between maximum sample value and point above the threshold. In this way
-# one can cut away pulses which are treated as noise
-
-def getThresholdSamples(chan):
-    
-    sensor = getSensor(chan)
-    
-    if sensor == "50D-GBGR2" or sensor == "W9-LGA35":
-        number_samples = 5
-    
-    elif sensor == "SiPM-AFP" or sensor == "W4-RD01":
-        number_samples = 50
-    
-    elif sensor == "W4-LG12" or sensor == "W4-S203" or sensor == "W4-S215" or sensor == "W4-S1061":
-        number_samples = 10
-    
-    elif sensor == "W4-S204_6e14":
-        number_samples = 3
-    
-    elif sensor == "W4-S1022":
-        number_samples = 7
-    
-    
-    return number_samples

@@ -38,8 +38,8 @@ def createTimingFiles():
             time_diff_cfd = getTimeDifferencePerRun(cfd)
             
             # Export per run number linear
-            dm.exportImportROOTData("timing", "linear", time_diff_peak)
-            dm.exportImportROOTData("timing", "linear_cfd", time_diff_cfd)
+            dm.exportImportROOTData("timing", "normal_peak", time_diff_peak)
+            dm.exportImportROOTData("timing", "normal_cfd", time_diff_cfd)
             
             if md.getBatchNumber()/100 != 6:
                 # Perform calculations sys eq
@@ -47,7 +47,7 @@ def createTimingFiles():
                 time_diff_cfd_sys_eq = getTimeDifferencePerRunSysEq(cfd)
 
                 # Export per run number sys eq
-                dm.exportImportROOTData("timing", "system", time_diff_peak_sys_eq)
+                dm.exportImportROOTData("timing", "system_peak", time_diff_peak_sys_eq)
                 dm.exportImportROOTData("timing", "system_cfd", time_diff_cfd_sys_eq)
 
                 print "Done with run", md.getRunNumber(), "\n"
@@ -104,7 +104,7 @@ def getTimeDifferencePerRunSysEq(time_location):
                 if time_location[chan][event] != 0 and time_location[chan2][event] != 0:
                     value[index] = (time_location[chan][event] - time_location[chan2][event])*1000
     
-        time_difference[chan][event] = value
+            time_difference[chan][event] = value
 
 
     return time_difference
@@ -187,7 +187,6 @@ def getSigmasFromFit(TH1F_list, window_range, chan):
 
         sigma_fit       = th1_function.GetParameter(2)
         sigma_fit_error = th1_function.GetParError(2)
-        time_diff_mean  = th1_function.GetParameter(1)
 
         sigma_SiPM = md.getSigmaSiPM()
 
@@ -196,17 +195,15 @@ def getSigmasFromFit(TH1F_list, window_range, chan):
 
         else:
             sigma_DUT = 0
-            time_diff_mean = 0
 
     # In case that the fit fails, due to no data, ignore the result.
     except:
 
         sigma_DUT = 0
         sigma_fit_error = 0
-        time_diff_mean = 0
 
 
-    return sigma_DUT, sigma_fit_error, time_diff_mean
+    return sigma_DUT, sigma_fit_error
 
 
 def getDTYPESysEq():

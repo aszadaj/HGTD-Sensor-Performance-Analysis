@@ -16,11 +16,11 @@ import pulse_calculations as p_calc
 
 ROOT.gROOT.SetBatch(True)
 
-batch = 402
-sensor = "W4-S1061"
+batch = 102
+sensor = "W9-LGA35"
 
 # If event = 0, then the event number will be randomly selected based on condition
-event = 22883
+event = 151999
 number_of_plots = 3
 
 # Print selected event for sensor and batch
@@ -59,9 +59,6 @@ def printWaveform(batchNumber, sensor, event = 0):
     data = data_import[chan][0]
     data = -data
     
-    
-    
-
     # Set linear fit
     timeScope = 0.1
     noise, pedestal = p_calc.calculateNoiseAndPedestal(data)
@@ -82,7 +79,7 @@ def printWaveform(batchNumber, sensor, event = 0):
 
     multi_graph = ROOT.TMultiGraph()
     canvas = ROOT.TCanvas("Waveforms","Waveforms")
-    legend = ROOT.TLegend(0.55, 0.9, 0.9, 0.7)
+    legend = ROOT.TLegend(0.65, 0.9, 0.9, 0.6)
 
 
     graph_waveform = ROOT.TGraph(1002)
@@ -109,11 +106,12 @@ def printWaveform(batchNumber, sensor, event = 0):
     for index in range(0, len(data)):
         graph_waveform.SetPoint(i,index*0.1, data[index]*1000)
         
-#        # This is a function filling the pulse, but has to be adapted depending on the event.
-#        if data[index] > threshold and (400 < index < 450):
-#            charge_fill.SetPoint(j, index*0.1, data[index]*1000)
-#            charge_fill.SetPoint(n+j, (index+n-j)*0.1, data[index+n-j]*1000)
-#            j+=1
+        # This is a function filling the pulse, but has to be adapted depending on the event.
+        # This one is adapted for Batch 102, W9-LGA35, event 151999
+        if data[index] > threshold and (400 < index < 450):
+            charge_fill.SetPoint(j, index*0.1, data[index]*1000)
+            charge_fill.SetPoint(n+j, (index+n-j)*0.1, data[index+n-j]*1000)
+            j+=1
 
         i+=1
         
@@ -170,7 +168,7 @@ def printWaveform(batchNumber, sensor, event = 0):
     graph_waveform.SetLineColor(2)
 
     
-    graph_2nd_deg_fit.SetLineColor(4)
+    graph_2nd_deg_fit.SetLineColor(3)
     graph_peak_value.SetLineColor(4)
     graph_linear_fit.SetLineColor(1)
     graph_cfd.SetLineColor(8)
@@ -194,29 +192,29 @@ def printWaveform(batchNumber, sensor, event = 0):
 
     # Add the graphs to multigraph
     multi_graph.Add(graph_waveform)
-    #multi_graph.Add(graph_threshold)
-    #multi_graph.Add(graph_2nd_deg_fit)
-    #multi_graph.Add(graph_linear_fit)
-    #multi_graph.Add(graph_peak_value)
+    multi_graph.Add(graph_threshold)
+    multi_graph.Add(graph_2nd_deg_fit)
+    multi_graph.Add(graph_linear_fit)
+    multi_graph.Add(graph_peak_value)
     #multi_graph.Add(graph_max_sample)
     #multi_graph.Add(graph_10)
     #multi_graph.Add(graph_90)
-    #multi_graph.Add(graph_cfd)
-    #multi_graph.Add(graph_peak_time)
-    #multi_graph.Add(graph_pedestal)
-    #multi_graph.Add(charge_fill, "f")
+    multi_graph.Add(graph_cfd)
+    multi_graph.Add(graph_peak_time)
+    multi_graph.Add(graph_pedestal)
+    multi_graph.Add(charge_fill, "f")
 
     
     # Add the information to a legend box
-    #legend.AddEntry(graph_waveform, "Waveform " + md.getSensor(), "l")
-    #legend.AddEntry(graph_peak_value, "Peak value: "+str(peak_value*1000)[:5]+" mV", "l")
-    #legend.AddEntry(graph_linear_fit, "Rise time: "+str(rise_time*1000)[:5]+" ps", "l")
-    #legend.AddEntry(graph_cfd, "CFD " + str(cfd)[0:4] + " ns", "l")
-    #legend.AddEntry(graph_peak_time, "Peak time " + str(peak_time[0])[0:4] + " ns", "l")
-   # legend.AddEntry(graph_pedestal, "Pedestal: "+str(pedestal*1000)[:4]+" mV", "l")
-    #legend.AddEntry(graph_threshold, "Noise: "+str(noise*1000)[:4]+" mV", "l")
-    #legend.AddEntry(graph_threshold, "Threshold: "+str(threshold*1000)[:5]+" mV", "l")
-    #legend.AddEntry(charge_fill, "Charge: "+str(charge*10**15)[:5]+" fC", "l")
+    legend.AddEntry(graph_waveform, "Waveform " + md.getSensor(), "l")
+    legend.AddEntry(graph_peak_value, "Pulse amplitude: "+str(peak_value[0]*1000)[:5]+" mV", "l")
+    legend.AddEntry(graph_linear_fit, "Rise time: "+str(rise_time*1000)[:5]+" ps", "l")
+    legend.AddEntry(graph_cfd, "CFD: " + str(cfd)[0:4] + " ns", "l")
+    legend.AddEntry(graph_peak_time, "Time at peak: " + str(peak_time[0])[0:4] + " ns", "l")
+    legend.AddEntry(graph_pedestal, "Pedestal: "+str(pedestal*1000)[:4]+" mV", "l")
+    legend.AddEntry(graph_threshold, "Noise: "+str(noise*1000)[:4]+" mV", "l")
+    legend.AddEntry(graph_threshold, "Threshold: "+str(threshold*1000)[:5]+" mV", "l")
+    legend.AddEntry(charge_fill, "Charge: "+str(charge*10**15)[:5]+" fC", "l")
     #legend.AddEntry(graph_max_sample, "Max sample: "+str(max_sample*1000)[:5]+" mV", "l")
     #legend.AddEntry(graph_waveform, "Points above threshold: "+str(point_count), "l")
     #legend.AddEntry(graph_90, "10% and 90% limit", "l")
@@ -228,15 +226,15 @@ def printWaveform(batchNumber, sensor, event = 0):
     yAxisTitle = "Voltage [mV]"
     headTitle = "Waveform " + md.getSensor()
     multi_graph.Draw("ALP")
-    #legend.Draw()
+    legend.Draw()
     multi_graph.SetTitle(headTitle)
     multi_graph.GetXaxis().SetTitle(xAxisTitle)
     multi_graph.GetYaxis().SetTitle(yAxisTitle)
 
     # Set ranges on axis
-    multi_graph.GetYaxis().SetRangeUser(-100,550)
-    #multi_graph.GetXaxis().SetRangeUser(cfd-3,cfd+5)
-    multi_graph.GetXaxis().SetRangeUser(44,52)
+    multi_graph.GetYaxis().SetRangeUser(-30,350)
+    multi_graph.GetXaxis().SetRangeUser(cfd-1,cfd+2.5)
+    #multi_graph.GetXaxis().SetRangeUser(0,100)
     #multi_graph.GetXaxis().SetRangeUser(0,100)
 
     # Export the PDF file
