@@ -35,10 +35,10 @@ def main():
     number_of_runs = "all"
     
     # Choose batches to run. "all" or e.g. [101, 102].
-    batches = [102]
+    batches = [101]
     batches_exclude = []
     
-    # Choose sensor for which the plots are produced.
+    # Choose sensor for which the plots are produced. E.g. "W9-LGA35"
     sensor = ""
     
     md.defineSettings(batches, batches_exclude, number_of_runs, sensor)

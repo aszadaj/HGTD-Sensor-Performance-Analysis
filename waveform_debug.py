@@ -1,4 +1,4 @@
-### This is a debugging function aimed to analyze waveforms and check the functions if they are working properly###
+### This is a debugging function aimed to analyze waveforms and check the functions if they are working properly ###
 # Can be run by
 # python graph.py
 
@@ -20,7 +20,7 @@ batch = 102
 sensor = "W9-LGA35"
 
 # If event = 0, then the event number will be randomly selected based on condition
-event = 151999
+event = 0
 number_of_plots = 3
 
 # Print selected event for sensor and batch
@@ -66,7 +66,7 @@ def printWaveform(batchNumber, sensor, event = 0):
 
     
     # Define point difference for 2nd degree fit
-    signal_limit_DUT = 0.3547959327697754
+    signal_limit_DUT = 0.3547959
     point_difference = 2
     
     rise_time, cfd, linear_fit, linear_fit_indices = p_calc.calculateRiseTime(data, pedestal, True)
@@ -97,7 +97,6 @@ def printWaveform(batchNumber, sensor, event = 0):
     # Define points for all selected values
     
     # Fill shade between threshold and waveform
-
     n = np.sum((data > threshold)) - 1
     charge_fill = ROOT.TGraph(2*n)
 
@@ -108,10 +107,10 @@ def printWaveform(batchNumber, sensor, event = 0):
         
         # This is a function filling the pulse, but has to be adapted depending on the event.
         # This one is adapted for Batch 102, W9-LGA35, event 151999
-        if data[index] > threshold and (400 < index < 450):
-            charge_fill.SetPoint(j, index*0.1, data[index]*1000)
-            charge_fill.SetPoint(n+j, (index+n-j)*0.1, data[index+n-j]*1000)
-            j+=1
+#        if data[index] > threshold and (400 < index < 450):
+#            charge_fill.SetPoint(j, index*0.1, data[index]*1000)
+#            charge_fill.SetPoint(n+j, (index+n-j)*0.1, data[index+n-j]*1000)
+#            j+=1
 
         i+=1
         
@@ -136,6 +135,7 @@ def printWaveform(batchNumber, sensor, event = 0):
         graph_linear_fit.SetPoint(i, time, value*1000)
         i+=1
 
+    # Set points to draw lines
     graph_threshold.SetPoint(0,0, threshold*1000)
     graph_threshold.SetPoint(1,1002, threshold*1000)
     
@@ -160,7 +160,6 @@ def printWaveform(batchNumber, sensor, event = 0):
     graph_90.SetPoint(1,1002, peak_value*0.9*1000)
     
     # Define line and marker attributes
-
     graph_waveform.SetLineWidth(2)
     graph_linear_fit.SetLineWidth(3)
     graph_2nd_deg_fit.SetLineWidth(3)
@@ -183,8 +182,7 @@ def printWaveform(batchNumber, sensor, event = 0):
 
     graph_linear_fit.SetMarkerColorAlpha(1, 0.0)
     graph_2nd_deg_fit.SetMarkerColorAlpha(1, 0.0)
-    
-    # Fill
+
     charge_fill.SetFillStyle(3013)
     charge_fill.SetFillColor(4)
     
@@ -196,13 +194,13 @@ def printWaveform(batchNumber, sensor, event = 0):
     multi_graph.Add(graph_2nd_deg_fit)
     multi_graph.Add(graph_linear_fit)
     multi_graph.Add(graph_peak_value)
-    #multi_graph.Add(graph_max_sample)
-    #multi_graph.Add(graph_10)
-    #multi_graph.Add(graph_90)
+    multi_graph.Add(graph_max_sample)
+    multi_graph.Add(graph_10)
+    multi_graph.Add(graph_90)
     multi_graph.Add(graph_cfd)
     multi_graph.Add(graph_peak_time)
     multi_graph.Add(graph_pedestal)
-    multi_graph.Add(charge_fill, "f")
+    #multi_graph.Add(charge_fill, "f")
 
     
     # Add the information to a legend box
@@ -215,9 +213,9 @@ def printWaveform(batchNumber, sensor, event = 0):
     legend.AddEntry(graph_threshold, "Noise: "+str(noise*1000)[:4]+" mV", "l")
     legend.AddEntry(graph_threshold, "Threshold: "+str(threshold*1000)[:5]+" mV", "l")
     legend.AddEntry(charge_fill, "Charge: "+str(charge*10**15)[:5]+" fC", "l")
-    #legend.AddEntry(graph_max_sample, "Max sample: "+str(max_sample*1000)[:5]+" mV", "l")
-    #legend.AddEntry(graph_waveform, "Points above threshold: "+str(point_count), "l")
-    #legend.AddEntry(graph_90, "10% and 90% limit", "l")
+    legend.AddEntry(graph_max_sample, "Max sample: "+str(max_sample*1000)[:5]+" mV", "l")
+    legend.AddEntry(graph_waveform, "Points above threshold: "+str(point_count), "l")
+    legend.AddEntry(graph_90, "10% and 90% limit", "l")
 
 
     # Define the titles and draw the graph
@@ -233,9 +231,9 @@ def printWaveform(batchNumber, sensor, event = 0):
 
     # Set ranges on axis
     multi_graph.GetYaxis().SetRangeUser(-30,350)
-    multi_graph.GetXaxis().SetRangeUser(cfd-1,cfd+2.5)
-    #multi_graph.GetXaxis().SetRangeUser(0,100)
-    #multi_graph.GetXaxis().SetRangeUser(0,100)
+    #multi_graph.GetXaxis().SetRangeUser(cfd-1,cfd+2.5) # This centers the canvas around the cfd time location point
+    multi_graph.GetXaxis().SetRangeUser(0,100)
+
 
     # Export the PDF file
     fileName = dm.getSourceFolderPath() + dm.getPlotsSourceFolder()+"/waveforms/waveform"+"_"+str(md.getBatchNumber())+"_"+str(runNumber)+"_event_"+str(event)+"_"+str(sensor)+".pdf"
@@ -243,8 +241,7 @@ def printWaveform(batchNumber, sensor, event = 0):
     canvas.Print(fileName)
 
 
-
-
+# Print the graph 'number_of_plots' times
 def mainPrint():
 
     

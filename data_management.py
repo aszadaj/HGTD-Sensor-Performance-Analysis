@@ -46,40 +46,36 @@ def defineDataFolderPath():
 
 
     defMainDirectories(paths)
-    
-    exists = False
 
     try:
         os.mkdir(getSourceFolderPath())
         del paths[0]
 
     except:
-        #print "\nFolder with subfolders for analysis already exists. Continuing with the code.\n"
-        exists = True
+        return 0
 
     sensors = md.getAvailableSensors()
 
-    if not exists:
-        for filePath in paths:
-            if filePath.find(";") == -1:
-                os.mkdir(filePath)
-            else:
-                for chosenSensor in sensors:
-                    p1 = filePath.replace(";",chosenSensor)
-       
-                    try:
-                        os.mkdir(p1)
+    for filePath in paths:
+        if filePath.find(";") == -1:
+            os.mkdir(filePath)
+        else:
+            for chosenSensor in sensors:
+                p1 = filePath.replace(";",chosenSensor)
+   
+                try:
+                    os.mkdir(p1)
 
-                    except:
-                        p2 = filePath.split(";")[0]
+                except:
+                    p2 = filePath.split(";")[0]
 
-                        for selectedSensor in sensors:
-                            os.mkdir(p2+selectedSensor)
+                    for selectedSensor in sensors:
+                        os.mkdir(p2+selectedSensor)
 
-                        os.mkdir(p1)
+                    os.mkdir(p1)
 
     
-        print "\nFolders with subfolders created. Placed at '../folder_sensor_perfomance_tb_sep17/' \n"
+    print "\nFolders with subfolders created. Placed at '../folder_sensor_perfomance_tb_sep17/' \n"
 
 
 # Export pulse data
@@ -353,8 +349,8 @@ def getPlotsSourceFolder():
 
 def getResultsPlotSourceDataPath():
     
-    
     return resultsPlotSourceDataPath
+
 
 # Return path of data files
 def getSourceFolderPath():

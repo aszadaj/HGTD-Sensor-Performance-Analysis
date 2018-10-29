@@ -26,13 +26,10 @@ The latter three packages can be found in ```pip2``` by installing those
 
 When the code is ready to run, folders with subfolders are created in ```../folder_sensor_perfomance_tb_sep17/```. The code needs files of the type ```data_'timestamp'.tree.root```-format placed in ```../folder_sensor_perfomance_tb_sep17/oscilloscope_data_hgtd_tb_sep17/```. The ```.root```files are converted with  ```convertOscRawToRootTree.C``` which is in the folder  ```/supplements/```. 
 
-For the ```trackingAnalysis()```, tracking files are needed. They need to be placed in the folder 
+For the ```trackingAnalysis()```, tracking files are needed of the format ```tracking'timestamp'.root```. They need to be placed in the folder 
 
 ```../folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/tracking/tracking/```
 
-these files, together with the already converted oscilloscope files, can be found in LXPLUS under directory
-
-```eos/user/a/aszadaj/public/HGTD_Sensor_Performance_Code/```.
 
 
 # How to run
@@ -95,7 +92,9 @@ Time dimension = [ns], voltage dimension = [-V]
 
  ```pulsePlots() - method```
  
-The function receives produced files from the   ```pulseAnalysis()``` and concatenates all runs within a batch and plots all the different properties. These are placed in ```folder_sensor_perfomance_tb_sep17/plots_sensors``` which are subdivided into each sensor. Additionally ROOT files with histograms are produced with same folder structure in ```folder_sensor_perfomance_tb_sep17/data_ROOT/histograms_data```. This function export the results all categories, except maximum sample, CFD and peak time. to ```folder_sensor_perfomance_tb_sep17/data_ROOT/results``` for each sensor
+The function receives produced files from the   ```pulseAnalysis()``` and concatenates all runs within a batch and plots all the different properties. These are placed in ```folder_sensor_perfomance_tb_sep17/plots_sensors``` which are subdivided into each sensor. Additionally ROOT files with histograms are produced with same folder structure in ```folder_sensor_perfomance_tb_sep17/data_ROOT/histograms_data```. 
+
+NOTE: If the code gives error when calculating the pulses, that is ```results = Pool.map(lambda part: signalAnalysis(part, part + step), ranges)``` L.64 in ```pulse_main.py``` it is an error related to memory allocation (appears on macOS 10.13 High Sierra). It disappears when running the code again (or after multiple times).
 
 
 
@@ -110,8 +109,6 @@ This file imports ROOT files created with ```pulseAnalysis()``` with time locati
 Additionally this is done for both 'CFD' and 'peak time'. The files are exported to ```folder_sensor_perfomance_tb_sep17/data_ROOT/timing``` having the same kind of structure as ```pulseAnalysis()```.
 
   ```timingPlots() - method```
-
-The function imports the files from previous function, concatenates all in the same batch, obtains the width and exports it to ```folder_sensor_perfomance_tb_sep17/data_ROOT/results``` for each sensor.
 
 
 
@@ -131,10 +128,12 @@ The function imports the exported files from the previous analyses together with
  5. Pulse mean amplitude
  6. Timing resolution, CFD and peak time
  
+ The tracking file has trees 'X' and 'Y' for each event. 
+ 
  
 # resultsAnalysis()
 
-From the previously exported files, this collectes all of them and plots them into  ```folder_sensor_perfomance_tb_sep17/results_plots_hgtd_tb_sep17/```
+From the previously exported files, this collectes all of them and plots them into  ```folder_sensor_perfomance_tb_sep17/plots_sensors/results```
 
 
 
@@ -144,7 +143,7 @@ The code is suited to be adapted for other test beam campaigns. Some notes shoul
 
 Timing resolution Analysis:
 1. The code handles only one SiPM named "SiPM-AFP".
-2. The system of equations is restricted to the first oscilloscope
+2. The system of equations is restricted to the first oscilloscope.
 
 Tracking Analysis
 1. The tracking-code is adapted to rotate and center for TB Sep 2017.
@@ -155,6 +154,8 @@ Other
 
 # What can be improved with the software
 
-1. As it looks like, there are multiple files which could be concatenated into one, such as the .root files which can be grouped.
-2. Make the code more modular than it is, especially with tracking
-3. Each of the plots section export a root file, which can be skipped by refering to the histogram.root file instead, where the results are.
+1. ```pulseAnalysis()``` creates 8 types of different .root files, whic could be stripped into one (optional).
+2. ```resultsAnalysis()``` contains hard-coded functions which could be improved. 
+3. Remove the dependence using time location at the peak of the pulse.
+4. Fix the memory allocation problem (if this is a problem).
+5. Implement ```convertOscRawToRootTree.C``` to automatically convert missing files which imports it from lxplus.

@@ -1,4 +1,7 @@
+# This file handles information from the run log.
+
 import data_management as dm
+
 
 def defineSettings(batches, batches_exclude, number, sensor_name):
     
@@ -64,7 +67,7 @@ def getRowForRunNumber(runNumber):
         if int(row[3]) == runNumber:
             return row
 
-
+# This is the value which is taken from the TB paper (2018)
 def getChargeWithoutGainLayer():
 
     return 0.46
@@ -93,7 +96,7 @@ def getRunLogBatches(batchNumbers):
 
     return runLog_parts
 
-
+# Checks if the SiPM is in different oscilloscope. Note that this is adapted for only one SiPM!
 def checkIfSameOscAsSiPM(chan):
 
     SiPM_chan = getChannelNameForSensor("SiPM-AFP")
@@ -109,6 +112,7 @@ def checkIfSameOscAsSiPM(chan):
 
     else:
         return False
+
 
 
 def getOscText():
