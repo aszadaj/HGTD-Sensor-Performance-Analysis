@@ -110,10 +110,6 @@ def defineNameOfProperties():
     var_names = ["noise", "pedestal", "pulse_amplitude", "rise_time", "charge", "cfd", "peak_time", "points", "max_sample"]
 
 
-# These are set values for each sensor. These values are determined between a plot for:
-# Combined plot between maximum sample value and point above the threshold. In this way
-# one can cut away pulses which are treated as noise
-
 # Get maximum values for given channel and oscilloscope
 def getSignalLimit(data):
     
@@ -125,6 +121,9 @@ def getSignalLimit(data):
     return signal_limit
 
 
+# These are set values for each sensor. These values are determined between a plot for:
+# Plot between maximum sample value and point above the threshold. In this way
+# one can cut away pulses which are treated as noise
 def getThresholdSamples(chan):
     
     sensor = md.getSensor(chan)

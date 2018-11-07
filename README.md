@@ -154,8 +154,7 @@ Other
 
 # What can be improved with the software
 
-1. ```pulseAnalysis()``` creates 8 types of different .root files, whic could be stripped into one (optional).
+1. ```pulseAnalysis()``` creates 8 types of different .root files, which could be stripped into one (optional).
 2. ```resultsAnalysis()``` contains hard-coded functions which could be improved. 
 3. Remove the dependence using time location at the peak of the pulse.
-4. Fix the memory allocation problem (if this is a problem).
-5. Implement ```convertOscRawToRootTree.C``` to automatically convert missing files which imports it from lxplus.
+4. Implement ```convertOscRawToRootTree.C``` to automatically convert missing files which imports it from lxplus.

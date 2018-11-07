@@ -206,10 +206,10 @@ def readFileNames(group, category=""):
     
     if group == "oscilloscope":
         
-        dataPath = getSourceFolderPath() + getOscillscopeSourceFolder() + "/"
+        dataPath = getOscillscopeSourceFolder() + "/"
 
     else:
-        dataPath = getSourceFolderPath() + getDataSourceFolder() + "/" + group + "/" + category + "/"
+        dataPath = getDataSourceFolder() + "/" + group + "/" + category + "/"
 
     # This line reads in a list of sorted files
     # from a provided folder above, strips down non-integer characters and converts to integers.
@@ -314,6 +314,16 @@ def getDTYPETrackingPosition():
     return np.dtype([('chan0', '<f8', 2), ('chan1', '<f8', 2) ,('chan2', '<f8', 2) ,('chan3', '<f8', 2) ,('chan4', '<f8', 2) ,('chan5', '<f8', 2) ,('chan6', '<f8', 2) ,('chan7', '<f8', 2)])
 
 
+def positionFileExists():
+    
+    check = exportImportROOTData("tracking", "position")
+
+    if check.size == 1:
+        return False
+    else:
+        return True
+
+
 # Get actual time
 def getTime():
 
@@ -352,7 +362,6 @@ def getResultsPlotSourceDataPath():
     return resultsPlotSourceDataPath
 
 
-# Return path of data files
 def getSourceFolderPath():
     
     return sourceFolderPath
@@ -375,7 +384,6 @@ def defMainDirectories(directories):
     resultsPlotSourceDataPath = directories[5]
 
 
-
 def setFunctionAnalysis(function):
 
     global functionAnalysis
@@ -384,6 +392,6 @@ def setFunctionAnalysis(function):
 
 def getOscilloscopeFilePath():
 
-    dataPath = getSourceFolderPath() + getOscillscopeSourceFolder() + "/" + "data_"+str(md.getTimeStamp())+".tree.root"
+    dataPath = getOscillscopeSourceFolder() + "/" + "data_"+str(md.getTimeStamp())+".tree.root"
 
     return dataPath

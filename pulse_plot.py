@@ -46,7 +46,6 @@ def pulsePlots():
     print "Done with producing PULSE plots.\n"
 
 
-# Fill TH1 objects
 def producePulsePlots(numpy_variables):
 
     [noise, pedestal, pulse_amplitude, rise_time, charge, cfd, peak_time, points, max_sample] = [i for i in numpy_variables]
@@ -69,18 +68,24 @@ def producePulsePlots(numpy_variables):
             continue
 
         point_count_limit = 50
-        charge_pulse_bins = 150
+        charge_pulse_bins = 140
         rise_time_bins = 300
+        charge_max = 150
         
         # This is a limit for the point count, to increase it
         if md.getSensor() == "SiPM-AFP" or md.getSensor() == "W4-RD01":
             point_count_limit = 100
+            charge_max = 500
+
         
         print md.getSensor(), "\n"
+
+        noise_avg_std    = [np.average(noise[chan]), np.std(noise[chan])]
+        pedestal_avg_std = [np.average(pedestal[chan]), np.std(pedestal[chan])]
         
-        noise_avg_std, pedestal_avg_std = getAvgStd(noise, pedestal)
         noise_ranges, pedestal_ranges = getRanges(noise_avg_std, pedestal_avg_std, 6)
         
+ 
         # Create TH objects with properties to be analyzed
         
         th_name = "_"+str(md.getBatchNumber())+"_"+md.chan_name
@@ -90,7 +95,7 @@ def producePulsePlots(numpy_variables):
         
         pulse_amplitude_TH1F                = ROOT.TH1F("pulse_amplitude"+th_name, "pulse_amplitude", 200, 0, 500)
         rise_time_TH1F                      = ROOT.TH1F("rise_time"+th_name, "rise_time", rise_time_bins, 0, 4000)
-        charge_TH1F                         = ROOT.TH1F("charge"+th_name, "charge", charge_pulse_bins, 0, 500)
+        charge_TH1F                         = ROOT.TH1F("charge"+th_name, "charge", charge_pulse_bins, 0, charge_max)
         
         # Additional TH objects for inspection of signals
         peak_time_TH1F                      = ROOT.TH1F("peak_time"+th_name, "peak_time", 100, 0, 100)
@@ -114,10 +119,10 @@ def producePulsePlots(numpy_variables):
                 max_sample_vs_points_threshold_TH2F.Fill(points[entry][chan], max_sample[entry][chan])
 
 
-        # Create fits for pulse amplitude, rise time and charge
         # Redefine ranges for noise and pedestal fits
         ranges_noise_pedestal = getRanges(noise_avg_std, pedestal_avg_std, 3)
-        
+
+        # Create fits
         noise_fit, pedestal_fit = makeNoisePedestalFits(noise_TH1F, pedestal_TH1F, ranges_noise_pedestal)
         pulse_amplitude_langaufit = makeLandauGausFit(pulse_amplitude_TH1F, signal_limit)
         rise_time_fit = makeRiseTimeFit(rise_time_TH1F)
@@ -129,8 +134,6 @@ def producePulsePlots(numpy_variables):
 
         exportHistogram(max_sample_vs_points_threshold_TH2F)
 
-        del noise_TH1F, pedestal_TH1F, pulse_amplitude_TH1F, rise_time_TH1F, charge_TH1F, peak_time_TH1F, cfd_TH1F, point_count_TH1F, max_sample_TH1F
-
 
 def makeNoisePedestalFits(noise_TH1F, pedestal_TH1F, ranges):
     
@@ -140,38 +143,38 @@ def makeNoisePedestalFits(noise_TH1F, pedestal_TH1F, ranges):
     return noise_TH1F.GetFunction("gaus"), pedestal_TH1F.GetFunction("gaus")
 
 
-def makeRiseTimeFit(graphList):
+def makeRiseTimeFit(th1_object):
 
     # Change window for rise time values
-    bin_max_rise_time = graphList.GetMaximumBin()
-    max_value_rise_time = graphList.GetBinCenter(bin_max_rise_time)
+    bin_max_rise_time = th1_object.GetMaximumBin()
+    max_value_rise_time = th1_object.GetBinCenter(bin_max_rise_time)
     window_range = 1000
     xMin = max_value_rise_time - window_range
     xMax = max_value_rise_time + window_range
-    graphList.SetAxisRange(xMin, xMax)
+    th1_object.SetAxisRange(xMin, xMax)
 
     # Select range for the fit for rise time plot
-    xMin = max_value_rise_time - graphList.GetStdDev()
-    xMax = max_value_rise_time + graphList.GetStdDev()
-    graphList.Fit("gaus", "Q", "", xMin, xMax)
+    xMin = max_value_rise_time - th1_object.GetStdDev()
+    xMax = max_value_rise_time + th1_object.GetStdDev()
+    th1_object.Fit("gaus", "Q", "", xMin, xMax)
 
-    return graphList.GetFunction("gaus")
+    return th1_object.GetFunction("gaus")
 
 
-def makeLandauGausFit(graphList, signal_limit=0):
+def makeLandauGausFit(th1_object, signal_limit=0):
     
-    if graphList.GetTitle() == "charge":
-        xMax = graphList.GetXaxis().GetXmax()
+    if th1_object.GetTitle() == "charge":
+        xMax = th1_object.GetXaxis().GetXmax()
     
     else:
         xMax = signal_limit
-        graphList.SetAxisRange(0, xMax)
+        th1_object.SetAxisRange(0, xMax)
     
     # Create parameters for landau (*) gaus fit for CHARGE distribution
-    std_dev = graphList.GetStdDev()
-    integral = graphList.Integral()
-    MPV_bin = graphList.GetMaximumBin()
-    MPV = graphList.GetBinCenter(MPV_bin)
+    std_dev = th1_object.GetStdDev()
+    integral = th1_object.Integral()
+    MPV_bin = th1_object.GetMaximumBin()
+    MPV = th1_object.GetBinCenter(MPV_bin)
     
     # Set range for fit
     xMin = max((MPV - std_dev), 0)
@@ -188,24 +191,12 @@ def makeLandauGausFit(graphList, signal_limit=0):
     param_limits_low = np.multiply(np.array([std_dev, MPV, integral, std_dev]), 0.1)
     param_limits_high = np.multiply(param_limits_low, 100)
 
-    langauFit = ROOT.langaufit(graphList, fit_range, start_values, param_limits_low, param_limits_high)
+    langauFit = ROOT.langaufit(th1_object, fit_range, start_values, param_limits_low, param_limits_high)
 
-    if graphList.GetTitle() == "pulse_amplitude":
-        graphList.SetAxisRange(0, 500)
+    if th1_object.GetTitle() == "pulse_amplitude":
+        th1_object.SetAxisRange(0, 500)
 
     return langauFit
-
-
-
-def getAvgStd(noise_std, noise_average):
-    
-    noise_avg   = np.average(noise_std[md.chan_name][np.nonzero(noise_std[md.chan_name])])
-    noise_std  = np.std(noise_std[md.chan_name][np.nonzero(noise_std[md.chan_name])])
-    
-    pedestal_avg = np.average(noise_average[md.chan_name][np.nonzero(noise_average[md.chan_name])])
-    pedestal_std  = np.std(noise_average[md.chan_name][np.nonzero(noise_average[md.chan_name])])
-
-    return [noise_avg, noise_std], [pedestal_avg, pedestal_std]
 
 
 def getRanges(noise_avg_std, pedestal_avg_std, N):
@@ -218,32 +209,32 @@ def getRanges(noise_avg_std, pedestal_avg_std, N):
 
 
 # Produce histograms
-def exportHistogram(graphList):
+def exportHistogram(th1_object):
 
     canvas.Clear()
-    category = graphList.GetTitle()
+    category = th1_object.GetTitle()
     titles = getPlotAttributes(category)
     drawOpt = "COLZ"
     
     if category != "max_sample_vs_point_count":
         ROOT.gStyle.SetOptStat("ne")
         ROOT.gStyle.SetOptFit(0012)
-        graphList.SetLineColor(1)
+        th1_object.SetLineColor(1)
         drawOpt = ""
     
-    graphList.SetTitle(titles[0])
-    graphList.GetXaxis().SetTitle(titles[1])
-    graphList.GetYaxis().SetTitle(titles[2])
+    th1_object.SetTitle(titles[0])
+    th1_object.GetXaxis().SetTitle(titles[1])
+    th1_object.GetYaxis().SetTitle(titles[2])
 
-    graphList.Draw(drawOpt)
+    th1_object.Draw(drawOpt)
     canvas.Update()
     
     if category == "max_sample_vs_point_count":
     
-        graphList.SetAxisRange(0, 500, "Z")
+        th1_object.SetAxisRange(0, 500, "Z")
     
         # Redefine the stats box
-        stats_box = graphList.GetListOfFunctions().FindObject("stats")
+        stats_box = th1_object.GetListOfFunctions().FindObject("stats")
         stats_box.SetX1NDC(0.65)
         stats_box.SetX2NDC(0.9)
         stats_box.SetY1NDC(0.93)
@@ -252,7 +243,7 @@ def exportHistogram(graphList):
 
 
     canvas.Print(titles[3])
-    dm.exportImportROOTHistogram("pulse", category, "", "", graphList)
+    dm.exportImportROOTHistogram("pulse", category, "", "", th1_object)
 
 
 def getPlotAttributes(category):

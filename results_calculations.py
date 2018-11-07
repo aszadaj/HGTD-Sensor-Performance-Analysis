@@ -16,7 +16,8 @@ def produceResults():
     bias_voltage_max = 350
     
     categories = ["noise", "pulse_amplitude", "charge", "rise_time", "normal_peak", "system_peak", "normal_cfd", "system_cfd", "normal_peak_gain", "system_peak_gain", "normal_cfd_gain", "system_cfd_gain", "normal_peak_gain_zoom", "system_peak_gain_zoom", "normal_cfd_gain_zoom", "system_cfd_gain_zoom"]
-    
+
+
     canvas = ROOT.TCanvas("Results", "Results")
     
     sensorNames = md.getAvailableSensors()
@@ -84,7 +85,12 @@ def importResultsValues(sensor_data, category_subcategory):
     
     global oneSensorInLegend
     
-    gain_category = False
+    if category_subcategory.endswith('gain'):
+        category_subcategory = category_subcategory[:-5]
+        gain_category = True
+    
+    else:
+        gain_category = False
     
 
     # here are imported all files, that is for each pad, temperature and bias voltage
@@ -101,12 +107,8 @@ def importResultsValues(sensor_data, category_subcategory):
             
             if md.getDUTPos() in ["3_0", "3_1", "3_3", "8_1", "7_2", "7_3"]:
                 continue
-            
+ 
 
-            if category_subcategory.endswith('gain'):
-                category_subcategory = category_subcategory[:-5]
-                gain_category = True
-            
 
             # for noise, pedestal, rise time and timing resolution graphs
             if category_subcategory.find("pulse_amplitude") == -1 and category_subcategory.find("charge") == -1:
@@ -173,8 +175,6 @@ def importResultsValues(sensor_data, category_subcategory):
             voltage = md.getBiasVoltage()
             
             if (category_subcategory.find("system") != -1 or category_subcategory.find("normal") != -1) and gain_category:
-                
-                category_subcategory = category_subcategory[:-5]
                 
                 histogram = dm.exportImportROOTHistogram("pulse", "charge")
                 th_name = "_"+str(md.getBatchNumber())+"_"+md.chan_name

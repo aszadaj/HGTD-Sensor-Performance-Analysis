@@ -83,11 +83,11 @@ def drawAndExportResults(category, category_graph, legend_graph, zoom):
     
     if category.find("gain") != -1:
         if zoom:
-            fileName = dm.getSourceFolderPath() + dm.getResultsPlotSourceDataPath() + "/timing_vs_gain_zoom/" + category + "_results.pdf"
+            fileName = dm.getResultsPlotSourceDataPath() + "/timing_vs_gain_zoom/" + category + "_results.pdf"
         else:
-            fileName = dm.getSourceFolderPath() + dm.getResultsPlotSourceDataPath() + "/timing_vs_gain/" + category + "_results.pdf"
+            fileName = dm.getResultsPlotSourceDataPath() + "/timing_vs_gain/" + category + "_results.pdf"
     else:
-        fileName = dm.getSourceFolderPath() + dm.getResultsPlotSourceDataPath() +"/" + category + "_results.pdf"
+        fileName = dm.getResultsPlotSourceDataPath() +"/" + category + "_results.pdf"
     
     r_calc.canvas.Print(fileName)
 

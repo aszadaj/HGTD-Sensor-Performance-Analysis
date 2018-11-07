@@ -71,10 +71,10 @@ def trackingAnalysis():
                 numpy_arrays[index] = np.concatenate((numpy_arrays[index], np.take(dm.exportImportROOTData(var_names[index][0], var_names[index][1]), np.arange(0, len(tracking_run)))), axis=0)
 
             numpy_arrays[-1] = np.concatenate((numpy_arrays[-1], tracking_run), axis=0)
-        
-        
-        # This function can be turned on once, to export the center positions for each pad.
-        t_calc.calculateCenterOfSensorPerBatch(numpy_arrays[0], numpy_arrays[-1])
+    
+        # This checks if the position file exists, otherwise it will create it for future reference. This is done once for whole batch 10X etc
+        if not dm.positionFileExists():
+            t_calc.calculateCenterOfSensorPerBatch(numpy_arrays[0], numpy_arrays[-1])
                         
         trackingPlots(numpy_arrays)
                         

@@ -19,17 +19,16 @@ def getPulseCharacteristics(data, signal_limit, threshold_points):
     noise, pedestal = calculateNoiseAndPedestal(data)
     threshold = N * noise + pedestal
     
-    # points and max_sample are calculated without the threshold point condition
-    # to analyze how many points are required
+    # Calculate number of data samples and max sample value above threshold.
     points = calculatePoints(data, threshold)
     max_sample = np.amax(data[data > threshold]) if np.sum(data > threshold) != 0 else 0
-    
+
 
     if points >= threshold_points:
         
         pulse_amplitude, peak_time = calculatePeakValue(data, pedestal, signal_limit)
         rise_time, cfd  = calculateRiseTime(data, pedestal)
-        charge = calculateCharge(data, threshold)
+        charge = calculateCharge(data, pedestal)
         
 
         # Condition: if the time locations are not in synch, disregard those
@@ -44,12 +43,13 @@ def getPulseCharacteristics(data, signal_limit, threshold_points):
         return noise, -pedestal, 0, 0, 0, 0, 0, points, -max_sample
 
 
+
 def calculateNoiseAndPedestal(data):
 
     # Select samples above threshold
     samples_bool = data > threshold_noise
     
-    # If that is low, ignore the event (this is checked, happens for ~0.03 % of all events)
+    # If that is low, ignore the event (~0.03 % of all events)
     if np.sum(samples_bool) > 0 and np.where(samples_bool)[0][0] <= data_point_correction:
     
         std = 0
@@ -68,9 +68,12 @@ def calculateNoiseAndPedestal(data):
         std = np.std(data)
         avg = np.average(data)
     
+    # In case of 'corrupted' samples, set them to zero (< 0.0001% of all events)
+    if np.isnan(std) or np.isnan(avg):
+    
+        std = avg = 0
 
     return std, avg
-
 
 
 # Calculate the pulse amplitude value
@@ -153,13 +156,15 @@ def calculateRiseTime(data, pedestal, graph=False):
 
 
 # Calculate the charge over the threshold
-def calculateCharge(data, threshold):
-
-    # transimpendence is the same for all sensors, except for W4-RD01, which is unknown
-    transimpendence = 4700
-    voltage_integral = np.trapz(data[data > threshold], dx = timeScope)*10**(-9)
-    charge = voltage_integral / transimpendence
+def calculateCharge(data, pedestal):
     
+    # transimpendence is the same for all sensors, except for W4-RD01, which is unknown
+    transimpendence = 4700.0
+    args_pedestal = np.argwhere(data > pedestal).flatten()
+    selection = getConsecutiveSeries(data, args_pedestal)
+    voltage_integral = np.trapz(data[selection], dx = timeScope)*10**(-9)
+    charge = voltage_integral / transimpendence
+
     return charge
 
 
@@ -167,32 +172,30 @@ def calculateCharge(data, threshold):
 def calculatePoints(data, threshold):
 
     points_threshold = np.argwhere(data > threshold).flatten()
-    points_consecutive = getConsecutiveSeriesPoints(data, points_threshold)
+    points_consecutive = getConsecutiveSeries(data, points_threshold)
     
     return len(points_consecutive)
 
 
 # Select consecutive samples for a range of data set
-def getConsecutiveSeriesPoints(data, points_threshold):
-    
-    if len(points_threshold) == 0:
-        return []
-
-    group_points = group_consecutives(points_threshold)
-    group_points_max = [np.amax(data[group]) for group in group_points]
-    max_arg_series = group_points[group_points_max.index(max(group_points_max))]
-    
-    return max_arg_series
-
-
-# Select consecutive samples which have the maximum height
-def getConsecutiveSeries(data):
+def getConsecutiveSeries(data, limit_arguments=False):
     
     if len(data) == 0:
         return []
 
-    group_points = group_consecutives(data)
-    group_points_max = [np.amax(group) for group in group_points]
+    # For the case of linear fit selection
+    if len(data) < 1002:
+
+        group_points = group_consecutives(data)
+        group_points_max = [np.amax(group) for group in group_points]
+
+    elif not np.any(limit_arguments):
+        return []
+    
+    else:
+        group_points = group_consecutives(limit_arguments)
+        group_points_max = [np.amax(data[group]) for group in group_points]
+
     max_arg_series = group_points[group_points_max.index(max(group_points_max))]
     
     return max_arg_series
