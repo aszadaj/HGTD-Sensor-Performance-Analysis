@@ -3,15 +3,13 @@
 import data_management as dm
 
 
-def defineSettings(batches, batches_exclude, number, sensor_name):
+def defineSettings(batches, batches_exclude, sensor_name):
     
     dm.printTime()
     
     global sensor
-    global limitRunNumbers
     
     sensor = sensor_name
-    limitRunNumbers = number
     
     setBatchNumbers(batches, batches_exclude)
 
@@ -67,41 +65,77 @@ def getRowForRunNumber(runNumber):
         if int(row[3]) == runNumber:
             return row
 
-# This is the value which is taken from the TB paper (2018)
-def getChargeWithoutGainLayer():
 
-    return 0.46
+# Return name of sensor for chosen run and channel
+def getSensor(chan=""):
+    
+    if chan != "":
+        return runInfo[13+int(chan[-1:])*5]
+    else:
+        
+        return runInfo[13+int(getChanName()[-1:])*5]
 
 
-# Structure of runLog: [runLogBatch1, runLogBatch1, ...,] and
-# runLogBatch1 = [run1, run2, run3, ]... run1 = row from the run log for selected run
-def getRunLogBatches(batchNumbers):
-
-    if batchNumbers == "all":
-        batchNumbers = getAllBatchNumbers()
-
-    runLog = dm.getRunLog()
-
-    runLog_parts = []
-
-    for batch in batchNumbers:
-        runLog_batch = []
-
+def getBatchNumber(runNumber=""):
+    
+    if runNumber != "":
+        runLog = dm.getRunLog()
         for row in runLog:
+            if int(row[3]) == runNumber:
+                return int(row[5])
 
-            if batch == int(row[5]):
-                runLog_batch.append(row)
+    else:
+        return int(runInfo[5])
 
-        runLog_parts.append(runLog_batch)
 
-    return runLog_parts
+# Get current run number
+def getRunNumber():
+    
+    return int(runInfo[3])
+
+
+# Get current time stamp (which corresponds to the run number)
+def getTimeStamp():
+    
+    return int(runInfo[4])
+
+
+# Get number of events inside the current ROOT file
+def getNumberOfEvents():
+    
+    return int(runInfo[6])
+
+
+def getTemperature():
+    
+    return int(runInfo[10])
+
+
+def getBiasVoltage():
+    
+    return float(runInfo[14+int(getChanName()[-1])*5])
+
+
+def getDUTPos():
+    
+    return str(runInfo[12+int(getChanName()[-1])*5])
+
+
+# Get index for the name of the sensor in run log
+def getChannelNameForSensor(sensor):
+    
+    for index in range(0,7):
+        
+        if runInfo[13+index*5] == sensor:
+            return "chan"+str(index)
+
 
 # Checks if the SiPM is in different oscilloscope. Note that this is adapted for only one SiPM!
-def checkIfSameOscAsSiPM(chan):
+def checkIfSameOscAsSiPM():
 
     SiPM_chan = getChannelNameForSensor("SiPM-AFP")
     
-    chan_DUT = int(chan[-1])
+    chan_DUT = int(chan_name[-1])
     chan_SiPM = int(SiPM_chan[-1])
     
     if chan_DUT < 4 and chan_SiPM < 4:
@@ -112,24 +146,6 @@ def checkIfSameOscAsSiPM(chan):
 
     else:
         return False
-
-
-
-def getOscText():
-
-    if checkIfSameOscAsSiPM(chan_name):
-
-        return "same_osc"
-
-    else:
-        return "diff_osc"
-
-
-# Get current run number
-def getRunNumber():
-    
-    return int(runInfo[3])
-
 
 
 # Return all run numbers for given batch
@@ -169,63 +185,6 @@ def getRunsWithSensor(sensor=""):
     return runNumbers
 
 
-# Get current time stamp (which corresponds to the run number)
-def getTimeStamp():
-    
-    return runInfo[4]
-
-
-# Get number of events inside the current ROOT file
-def getNumberOfEvents():
-
-    return int(runInfo[6])
-
-
-# Get index for the name of the sensor in run log
-def getChannelNameForSensor(sensor):
-
-    for index in range(0,7):
-        
-        if runInfo[13+index*5] == sensor:
-            return "chan"+str(index)
-
-
-# Return name of sensor for chosen run and channel
-def getSensor(chan=""):
-    
-    if chan != "":
-        return runInfo[13+int(chan[-1:])*5]
-    else:
-    
-        return runInfo[13+int(getChanName()[-1:])*5]
-
-
-# Return sensors available for given run/batch (each run have same sensors for same batch)
-def getSensorsForBatch(batchNumber=0):
-
-    runNumber = getRunNumber()
-    
-    sensors = []
-
-    for i in range(0,8):
-        
-        sensors.append(getRowForRunNumber(runNumber)[13+i*5])
-
-    return sensors
-
-
-def getBatchNumber(runNumber=""):
-
-    if runNumber != "":
-        runLog = dm.getRunLog()
-        for row in runLog:
-            if int(row[3]) == runNumber:
-                return int(row[5])
-
-    else:
-        return int(runInfo[5])
-
-
 def getAllBatchNumbers():
 
     runLog = dm.getRunLog()
@@ -253,7 +212,6 @@ def getAllBatchNumberForSensor(sensor):
     return batchNumbers
 
 
-
 def getAllChannelsForSensor(batch, sensor):
     
     runLog = dm.getRunLog()
@@ -270,11 +228,6 @@ def getAllChannelsForSensor(batch, sensor):
 
 
     return channels
-
-
-def getTemperature():
-
-    return int(runInfo[10])
 
 
 # Get available sensors from the run file
@@ -304,19 +257,23 @@ def getAvailableTemperatures():
     return temperatures
 
 
-# Reference: RD50 Workshop in Krakow (2017), E.L. Vagelis
-# value in [ps]
+# Reference: RD50 Workshop in Krakow (2017), E.L. Gkougkousis
+# In the reference, the values are at U_b = 29 V, with the
+# assumption that they are the same at U_b = 26.5 V (TB Sep 17).
 def getSigmaSiPM():
+    
+    sigma_SiPM = 18.4
 
     if getTemperature() < 0:
-        return 9
-    else:
-        return 15
+        sigma_SiPM = 9.6
+  
+    return sigma_SiPM
 
 
-def getBiasVoltage():
+# This is the value which is taken from the TB paper (2018)
+def getChargeWithoutGainLayer():
     
-    return float(runInfo[14+int(getChanName()[-1])*5])
+    return 0.46
 
 
 def checkIfArrayPad():
@@ -335,11 +292,6 @@ def checkIfArrayPad():
         array_pad = True
 
     return array_pad
-
-
-def getDUTPos():
-   
-    return str(runInfo[12+int(getChanName()[-1])*5])
 
 
 def setChannelName(chan):

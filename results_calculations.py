@@ -23,6 +23,7 @@ def produceResults():
     sensorNames = md.getAvailableSensors()
     sensorNames.remove("SiPM-AFP")
     
+    sensorNames.sort()
     
     if md.sensor != "":
         sensorNames = [md.sensor]
@@ -50,7 +51,9 @@ def produceResults():
         legend_graph = ROOT.TLegend(0.7, 0.9, 0.9, 0.6)
         
         graph = dict()
-        
+
+        doOnce = True
+
         for processed_sensor in sensorNames:
             
             print processed_sensor
@@ -66,11 +69,19 @@ def produceResults():
                 
                 graph[processed_sensor][temperature] = dict()
                 sensor_data[temperature] = dict()
+
                 
+                if processed_sensor == "W4-S204_6e14" and doOnce:
+                    graph["W4-S204_6e14"]["22"] = dict()
+                    graph["W4-S204_6e14"]["22"]["7_0"] = ROOT.TGraphErrors()
+                    r_plot.setMarkerType(graph["W4-S204_6e14"]["22"]["7_0"], DUT_pos, temperature)
+                    doOnce = False
+
+
                 for DUT_pos in availableDUTPositions(processed_sensor):
                     graph[processed_sensor][temperature][DUT_pos] = ROOT.TGraphErrors()
                     sensor_data[temperature][DUT_pos] = []
-                    
+                
                     # Change each marker type and color
                     r_plot.setMarkerType(graph[processed_sensor][temperature][DUT_pos], DUT_pos, temperature)
 
@@ -94,7 +105,7 @@ def importResultsValues(sensor_data, category_subcategory):
     
 
     # here are imported all files, that is for each pad, temperature and bias voltage
-    for batchNumber in md.batchNumbers:
+    for batchNumber in md.getAllBatchNumbers():
         for chan in md.getAllChannelsForSensor(batchNumber, processed_sensor):
     
             if batchNumber not in md.getAllBatchNumberForSensor(processed_sensor) or omitBadData(batchNumber, category_subcategory):
@@ -110,11 +121,12 @@ def importResultsValues(sensor_data, category_subcategory):
  
 
 
-            # for noise, pedestal, rise time and timing resolution graphs
+            # Define the name for the histogram, depending on type
             if category_subcategory.find("pulse_amplitude") == -1 and category_subcategory.find("charge") == -1:
                 
                 group = "timing"
                 chan2 = ""
+                parameter_number = 2
                 
                 if category_subcategory.find("system") != -1:
                     if md.chan_name not in ["chan0", "chan1", "chan2", "chan3"]:
@@ -140,23 +152,24 @@ def importResultsValues(sensor_data, category_subcategory):
                     subcategory = ""
                     chan2 = ""
 
-            
+                # Here, import the histogram which contain the results
                 histogram = dm.exportImportROOTHistogram(group, category, subcategory, chan2)
+                
                 if histogram:
                     fit_function = histogram.GetFunction("gaus")
                     
-                    if category_subcategory.find("noise") != -1:
-                        
+                    if category_subcategory.find("noise") != -1 or category_subcategory.find("rise_time") != -1:
                         parameter_number = 1
-                    else:
-                        parameter_number = 2
 
                     results = [fit_function.GetParameter(parameter_number), fit_function.GetParError(parameter_number)]
+                    
+                        
                 else:
                     continue
             
             # pulse and gain
             else:
+                
                 histogram = dm.exportImportROOTHistogram("pulse", category_subcategory)
                 if histogram:
                     th_name = "_"+str(md.getBatchNumber())+"_"+md.chan_name
@@ -170,6 +183,10 @@ def importResultsValues(sensor_data, category_subcategory):
                 else:
                     continue
         
+        
+            if category_subcategory.find("normal") != -1 or category_subcategory.find("system") != -1:
+            
+                results[0] = np.sqrt(np.power(results[0], 2) - np.power(md.getSigmaSiPM(),2))
         
             value_error = [results[0], results[1]]
             voltage = md.getBiasVoltage()

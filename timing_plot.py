@@ -11,36 +11,44 @@ ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
 # TCanvas object for all TH1 objects
 canvas = ROOT.TCanvas("Timing", "timing")
 
-# Range and bins for the window for TH1 objects
-xbins = 2000 # default 2000
-bin_range = 15000
-window_range = 1000 # default 1000
+xbins = 2400                # Number of bins for the whole TH1 object
+fill_range = 15000          # Max/min range for a time difference value
+window_range = 1000         # Window to show the majority of the distribution
 
-# Between each combination of LGADs, require to have at least 200 entries
-min_entries_per_run = 200
+width_selection = 2         # Range of the standard deviation of the distribution (for system of equations)
+percentage = 0.9            # Height percentage of selecting the fit for time difference between DUT and SiPM
+
+min_entries_per_run = 200   # Between each combination of LGADs, require to have at least 200 entries
 
 def timingPlots():
+    
+    dm.setFunctionAnalysis("timing_analysis")
 
-    print "\nStart producing TIMING RESOLUTION plots, batches:", md.batchNumbers
+    print "\nStart producing TIMING RESOLUTION plots, batches:", md.batchNumbers, "\n"
 
     global var_names
     
     for batchNumber in md.batchNumbers:
 
         runNumbers = md.getAllRunNumbers(batchNumber)
+        
         # Create numpy arrays for linear time difference (one element per "channel")
         numpy_arrays = [np.empty(0, dtype = dm.getDTYPE(batchNumber)) for _ in range(2)]
 
         # Create numpy arrays for system of equations (three elements per "channel")
-        numpy_arrays.append(np.empty(0, dtype = t_calc.getDTYPESysEq()))
-        numpy_arrays.append(np.empty(0, dtype = t_calc.getDTYPESysEq()))
+        numpy_arrays.append(np.empty(0, dtype = dm.getDTYPESysEq()))
+        numpy_arrays.append(np.empty(0, dtype = dm.getDTYPESysEq()))
 
         var_names = ["normal_peak", "normal_cfd", "system_peak", "system_cfd"]
-    
+       
         for runNumber in runNumbers:
         
             md.defineRunInfo(md.getRowForRunNumber(runNumber))
             
+            if not dm.timingBatchFileExists():
+                t_calc.createTimingFiles(batchNumber)
+            
+            # Skip runs which are not in synch
             if runNumber not in md.getRunsWithSensor() or runNumber in [3697, 3698, 3701]:
                 continue
         
@@ -68,7 +76,7 @@ def timingPlots():
     print "\nDone with producing TIMING RESOLUTION plots.\n"
 
 
-############## LINEAR TIME DIFFERENCE ###############
+############## TIME DIFFERENCE SiPM AND DUT ###############
 
 
 def produceTimingDistributionPlots(time_difference, category):
@@ -81,7 +89,7 @@ def produceTimingDistributionPlots(time_difference, category):
         produceTimingDistributionPlotsSysEq(time_difference, category)
         return 0
 
-    text = "\nLINEAR PEAK PLOTS BATCH " + str(md.getBatchNumber()) + "\n"
+    text = "\nSiPM-DUT TIME DIFFERENCE (PEAK) BATCH " + str(md.getBatchNumber()) + "\n"
 
     if category.find("cfd") != -1:
         text = text.replace("PEAK", "CFD")
@@ -99,17 +107,18 @@ def produceTimingDistributionPlots(time_difference, category):
             continue
         
         print md.getSensor(), "\n"
+
         th_name = "_" + str(md.getBatchNumber()) + "_" + md.chan_name
-        time_diff_TH1F[chan] = ROOT.TH1F(category+th_name, category, xbins, -bin_range, bin_range)
+        time_diff_TH1F[chan] = ROOT.TH1F(category + th_name, category, xbins, -fill_range, fill_range)
      
-        # Fill the objects, without cuts on the SiPM
+        # Fill the objects
         for entry in range(0, len(time_difference[chan])):
             
             if time_difference[chan][entry] != 0:
                 time_diff_TH1F[chan].Fill(time_difference[chan][entry])
 
         # Get fit function with width of the distributions
-        # Check if the filled object have at least 200 entries per run
+        # Check if the filled object have at a minimum of required entries
         
         if time_diff_TH1F[chan].GetEntries() < min_entries_per_run * len(md.getAllRunNumbers(md.getBatchNumber())):
             
@@ -123,7 +132,7 @@ def produceTimingDistributionPlots(time_difference, category):
             
             continue
             
-        sigma_DUT, sigma_fit_error = t_calc.getSigmasFromFit(time_diff_TH1F[chan], window_range, chan)
+        sigma_DUT, sigma_fit_error = t_calc.getSigmasFromFit(time_diff_TH1F[chan], window_range, percentage)
 
         exportTHPlot(time_diff_TH1F[chan], [sigma_DUT, sigma_fit_error], category)
 
@@ -135,7 +144,7 @@ def produceTimingDistributionPlots(time_difference, category):
 # If one of the functions have less than 1000 entries, remove it from the calculation!
 def produceTimingDistributionPlotsSysEq(time_difference, category):
     
-    text = "\nSYS. OF. EQS. PEAK PLOTS BATCH " + str(md.getBatchNumber()) + "\n"
+    text = "\nSYS. OF. EQS. TIME DIFFERENCE (PEAK) BATCH " + str(md.getBatchNumber()) + "\n"
   
     if category.find("cfd") != -1:
         text = text.replace("PEAK", "CFD")
@@ -167,8 +176,8 @@ def produceTimingDistributionPlotsSysEq(time_difference, category):
         # Create TH1 object
         time_diff_TH1F[chan] = dict()
         for chan2 in chan2_list:
-            th_name = "_" + str(md.getBatchNumber()) + "_" + md.chan_name+chan2
-            time_diff_TH1F[chan][chan2] = ROOT.TH1F(category+th_name, category, xbins, -bin_range, bin_range)
+            th_name = "_" + str(md.getBatchNumber()) + "_" + md.chan_name + "_" + chan2
+            time_diff_TH1F[chan][chan2] = ROOT.TH1F(category + th_name, category, xbins, -fill_range, fill_range)
         
         # Fill TH1 object between channels in first oscilloscope
         for entry in range(0, len(time_difference[chan])):
@@ -178,7 +187,6 @@ def produceTimingDistributionPlotsSysEq(time_difference, category):
                 if time_difference[chan][entry][0][index] != 0:
                     time_diff_TH1F[chan][chan2].Fill(time_difference[chan][entry][0][index])
     
-    
 
         # Get sigma and adapt distribution curve
         for chan2 in chan2_list:
@@ -187,17 +195,15 @@ def produceTimingDistributionPlotsSysEq(time_difference, category):
             MPV_bin = time_diff_TH1F[chan][chan2].GetMaximumBin()
             MPV_time_diff = int(time_diff_TH1F[chan][chan2].GetXaxis().GetBinCenter(MPV_bin))
 
-            
             xMin = MPV_time_diff - window_range
             xMax = MPV_time_diff + window_range
             time_diff_TH1F[chan][chan2].SetAxisRange(xMin, xMax)
 
             # Redefine range for the fit
-            N = 3
             sigma_window = time_diff_TH1F[chan][chan2].GetStdDev()
             mean_window = time_diff_TH1F[chan][chan2].GetMean()
-            xMin = mean_window - N * sigma_window
-            xMax = mean_window + N * sigma_window
+            xMin = mean_window - width_selection * sigma_window
+            xMax = mean_window + width_selection * sigma_window
           
             # Obtain the parameters
             time_diff_TH1F[chan][chan2].Fit("gaus", "Q", "", xMin, xMax)
@@ -223,9 +229,6 @@ def produceTimingDistributionPlotsSysEq(time_difference, category):
     
         md.setChannelName(chan)
         
-        if omit_batch:
-            break
-        
         # Do not consider the same channel when comparing two
         chan2_list = list(channels_1st_oscilloscope)
         chan2_list.remove(chan)
@@ -233,42 +236,42 @@ def produceTimingDistributionPlotsSysEq(time_difference, category):
         for chan2 in chan2_list:
 
             if time_diff_TH1F[chan][chan2].GetEntries() < min_entries_per_run * len(md.getAllRunNumbers(md.getBatchNumber())):
-            
+                
+                type = "peak reference"
+                
                 if category.find("cfd") != -1:
                     type = "cfd reference"
-                else:
-                    type = "peak reference"
                 
                 print "Omitting batch", md.getBatchNumber(), "for", type, "time difference system plot for", md.getSensor(), "and", md.getSensor(chan2), "due to low statistics \n"
-                omit_batch = True
-                break
                 
+                omit_batch = True
+                
+                break
 
-    # Solve the system
+        if omit_batch:
+            break
+
+    # Solve the system in case the condition of requiring at least 1000 entries for each plots is not fulfilled
     if not omit_batch:
         sigmas_chan, sigmas_error = t_calc.solveSystemOfEqs(sigma_convoluted, sigma_convoluted_error)
 
-    # Third loop, print the graphs together with the solutions
-    for chan in channels_1st_oscilloscope:
-    
-        md.setChannelName(chan)
+        # Third loop, print the graphs together with the solutions
+        for chan in channels_1st_oscilloscope:
         
-        # This is in case the condition of requiring at least 1000 entries for each plots is not fulfilled
-        if omit_batch:
-            break
-    
-        chan2_list = list(channels_1st_oscilloscope)
-        chan2_list.remove(chan)
+            md.setChannelName(chan)
+   
+            chan2_list = list(channels_1st_oscilloscope)
+            chan2_list.remove(chan)
 
 
-        # Loop through the combinations
-        for chan2 in chan2_list:
+            # Loop through the combinations
+            for chan2 in chan2_list:
 
-            index = int(chan[-1]) % 4
-            sigma_DUT = sigmas_chan[index]
-            sigma_DUT_error = sigmas_error[index]
+                index = int(chan[-1]) % 4
+                sigma_DUT = sigmas_chan[index]
+                sigma_DUT_error = sigmas_error[index]
 
-            exportTHPlot(time_diff_TH1F[chan][chan2], [sigma_DUT, sigma_DUT_error], category, chan2)
+                exportTHPlot(time_diff_TH1F[chan][chan2], [sigma_DUT, sigma_DUT_error], category, chan2)
 
 
 ############## EXPORT PLOT ###############

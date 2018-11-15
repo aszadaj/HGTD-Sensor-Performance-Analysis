@@ -17,7 +17,6 @@ def fillTHObjects(numpy_arrays, TH2_pulse, TH2_timing, tracking, th1_limits):
     time_difference_peak_TH2D   = ROOT.TProfile2D("timing_peak"+th_name+"temp", "timing_peak", xbin_timing, -distance_x, distance_x, ybin_timing, -distance_y, distance_y, "s")
     time_difference_cfd_TH2D    = ROOT.TProfile2D("timing_cfd"+th_name+"temp", "timing_cfd", xbin_timing, -distance_x, distance_x, ybin_timing, -distance_y, distance_y, "s")
     
-    
     # Remove large values
     stripNumpyArrays(numpy_arrays, TH2_pulse, TH2_timing)
     TH2_objects_fill = [i for i in TH2_pulse]
@@ -55,7 +54,7 @@ def fillTHObjects(numpy_arrays, TH2_pulse, TH2_timing, tracking, th1_limits):
 
 
     del time_difference_peak_TH2D, time_difference_cfd_TH2D
-    
+
     return entries_timing_resolution
 
 
@@ -568,7 +567,7 @@ def removeBin(bin, time_diff, minEntries=0):
 def fillTimeResBin(bin, time_diff, time_res):
 
     if time_diff.GetBinEntries(bin) > t_plot.bin_entries_timing:
-
+        
         sigma_DUT = np.sqrt(np.power(time_diff.GetBinError(bin), 2) - np.power(md.getSigmaSiPM(), 2))
         time_res.SetBinContent(bin, sigma_DUT)
 

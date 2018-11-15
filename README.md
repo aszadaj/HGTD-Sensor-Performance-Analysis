@@ -26,7 +26,7 @@ The latter three packages can be found in ```pip2``` by installing those
 
 When the code is ready to run, folders with subfolders are created in ```../folder_sensor_perfomance_tb_sep17/```. The code needs files of the type ```data_'timestamp'.tree.root```-format placed in ```../folder_sensor_perfomance_tb_sep17/oscilloscope_data_hgtd_tb_sep17/```. The ```.root```files are converted with  ```convertOscRawToRootTree.C``` which is in the folder  ```/supplements/```. 
 
-For the ```trackingAnalysis()```, tracking files are needed of the format ```tracking'timestamp'.root```. They need to be placed in the folder 
+For the ```trackingPlots()```, tracking files are needed of the format ```tracking'timestamp'.root```. They need to be placed in the folder 
 
 ```../folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/tracking/tracking/```
 
@@ -57,18 +57,16 @@ The examples of choosing batches are
 
 ```batches_exclude = [501] ``` is used when multiple matches are used which can exclude the listed batch.
 
-```number_of_runs = "all" ``` considers all files within a batch to be calculated or a specific number. "all" is a default value selecting all runs. This only applies to ```pulseAnalysis()``` which can take shorter time to analyze.
-
 
 One can also choose which sensor to run with, 
 
 ```sensor = "W9-LGA35" ``` just one sensor
 ```sensor = "" ``` all sensors 
 
-which produces plots for selected sensor. This is ignored (where all sensors are considered) for functions which produces data files, that is  ```pulseAnalysis()``` and  ```timingAnalysis()```.
+which produces plots for selected sensor. This is ignored (where all sensors are considered) for functions which produces data files, that is  ```pulseAnalysis()```.
 
-Generally functions ```pulseAnalysis()``` and  ```createTimingFiles()``` exports data files which are used by plot functions and ```trackingAnalysis()```. Therefore to save time, one does not need to run them again.
-One run file (MacBook Pro 2.8 GHz-i7 dual core 2013 four threads) takes approximatelly 5 mins and all 117 files about 10 hours. The time can be shortened in pulseAnalysis by increasing the variable ```threads = 4``` in ```pulse_main.py```.
+The function ```pulseAnalysis()```  exports data files which are used by plot functions. Therefore to save time, one does not need to run them again.
+One run file (MacBook Pro 2.8 GHz-i7 dual core 2013 four threads) takes approximatelly 8 mins and all 117 files about 14 hours. The time can be shortened in pulseAnalysis by increasing the variable ```threads = 4``` in ```pulse_main.py```.
 
 
 # pulseAnalysis() and pulsePlots()
@@ -94,28 +92,27 @@ Time dimension = [ns], voltage dimension = [-V]
  
 The function receives produced files from the   ```pulseAnalysis()``` and concatenates all runs within a batch and plots all the different properties. These are placed in ```folder_sensor_perfomance_tb_sep17/plots_sensors``` which are subdivided into each sensor. Additionally ROOT files with histograms are produced with same folder structure in ```folder_sensor_perfomance_tb_sep17/data_ROOT/histograms_data```. 
 
-NOTE: If the code gives error when calculating the pulses, that is ```results = Pool.map(lambda part: signalAnalysis(part, part + step), ranges)``` L.64 in ```pulse_main.py``` it is an error related to memory allocation (appears on macOS 10.13 High Sierra). It disappears when running the code again (or after multiple times).
+NOTE: If the code gives error when calculating the pulses, that is ```results = Pool.map(lambda part: signalAnalysis(part, part + step), ranges)``` L.64 in ```pulse_main.py``` it is an error related to memory allocation when creating a Numpy-object for polynomial fit (appears on macOS 10.13 High Sierra). It disappears when running the code again (or after multiple times).
 
 
 
-# createTimingFiles() and timingPlots()
-
-  ```createTimingFiles() - method```
+# timingPlots()
   
-This file imports ROOT files created with ```pulseAnalysis()``` with time location information. So both 'CFD' and 'peak time' are imported and then the time difference is calculated. There are two method of obtaining it,
-  1. Linear - which is the time difference between the DUT and the SiPM
-  2. System - which are time differences between each of the combinations within the first oscilloscope.
+  The function produces timing resolution plots of two kinds, using two different location of the pulses.
+  It creates a timing resolution file, if there is no such produced already. The function produces plots with
+  1. Timing resolution for time differences of SiPM and DUT, using location of the peak and using CFD (fraction 0.5) method
+  2. Timing resolution for time differences between a combination of four connected sensors and solve a system of equations. Uses both location 
+  of the peak and using CFD (fraction 0.5) method.
   
-Additionally this is done for both 'CFD' and 'peak time'. The files are exported to ```folder_sensor_perfomance_tb_sep17/data_ROOT/timing``` having the same kind of structure as ```pulseAnalysis()```.
-
-  ```timingPlots() - method```
 
 
 
-# trackingAnalysis()
+# trackingPlots()
 
 The function imports the exported files from the previous analyses together with provided tracking files placed in 
- ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/tracking/tracking```. There is a method
+ ```folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/tracking/tracking```. 
+ 
+ There is a method
  
  ```calculateCenterOfSensorPerBatch()``` 
  
@@ -133,7 +130,7 @@ The function imports the exported files from the previous analyses together with
  
 # resultsAnalysis()
 
-From the previously exported files, this collectes all of them and plots them into  ```folder_sensor_perfomance_tb_sep17/plots_sensors/results```
+From the previously exported files, this collectes all of them and plots them into  ```folder_sensor_perfomance_tb_sep17/plots_sensors/results```.
 
 
 
@@ -141,7 +138,7 @@ From the previously exported files, this collectes all of them and plots them in
 
 The code is suited to be adapted for other test beam campaigns. Some notes should be noted:
 
-Timing resolution Analysis:
+Timing resolution analysis:
 1. The code handles only one SiPM named "SiPM-AFP".
 2. The system of equations is restricted to the first oscilloscope.
 
@@ -158,3 +155,4 @@ Other
 2. ```resultsAnalysis()``` contains hard-coded functions which could be improved. 
 3. Remove the dependence using time location at the peak of the pulse.
 4. Implement ```convertOscRawToRootTree.C``` to automatically convert missing files which imports it from lxplus.
+5. Create one file, NTuples, which have the information for each event with a pulse (passing the threshold) with the charactertics of the signal.

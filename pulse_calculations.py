@@ -1,8 +1,10 @@
 import numpy as np
 
-timeScope = 0.1
-threshold_noise = 20 * 0.001
-data_point_correction = 3
+
+timeScope = 0.1                 # The time separation between two data samples
+threshold_noise = 20 * 0.001    # Threshold for selecting data samples for noise and pedestal
+data_point_correction = 3       # Reduction of data samples to avoid signal contamination (noise and pedestal)
+N = 4.27                        # Level exceeding the noise, based on 1% probability of a data sample exceeding this level
 
 
 # Input is in negative values, but the calculation is in positive values!
@@ -13,9 +15,7 @@ def getPulseCharacteristics(data, signal_limit, threshold_points):
     data = -data
     signal_limit = -signal_limit
     
-    # Define threshold and sigma level, this gives a 1% prob for a noise data sample to exceed the
-    # noise level, see report
-    N = 4.27
+    # Define threshold and sigma level
     noise, pedestal = calculateNoiseAndPedestal(data)
     threshold = N * noise + pedestal
     
@@ -26,9 +26,9 @@ def getPulseCharacteristics(data, signal_limit, threshold_points):
 
     if points >= threshold_points:
         
-        pulse_amplitude, peak_time = calculatePeakValue(data, pedestal, signal_limit)
-        rise_time, cfd  = calculateRiseTime(data, pedestal)
-        charge = calculateCharge(data, pedestal)
+        pulse_amplitude, peak_time  = calculatePulseAmplitude(data, pedestal, signal_limit)
+        rise_time, cfd              = calculateRiseTime(data, pedestal)
+        charge                      = calculateCharge(data, pedestal)
         
 
         # Condition: if the time locations are not in synch, disregard those
@@ -77,7 +77,7 @@ def calculateNoiseAndPedestal(data):
 
 
 # Calculate the pulse amplitude value
-def calculatePeakValue(data, pedestal, signal_limit, graph=False):
+def calculatePulseAmplitude(data, pedestal, signal_limit, graph=False):
 
     # Default values
     pulse_amplitude = 0

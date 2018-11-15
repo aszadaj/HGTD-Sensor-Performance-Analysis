@@ -50,12 +50,12 @@ def producePulsePlots(numpy_variables):
 
     [noise, pedestal, pulse_amplitude, rise_time, charge, cfd, peak_time, points, max_sample] = [i for i in numpy_variables]
     
-    dm.changeIndexNumpyArray(noise, 1000)
-    dm.changeIndexNumpyArray(pedestal, -1000)
-    dm.changeIndexNumpyArray(pulse_amplitude, -1000)
-    dm.changeIndexNumpyArray(rise_time, 1000)
+    dm.changeIndexNumpyArray(noise, 1000.0)
+    dm.changeIndexNumpyArray(pedestal, -1000.0)
+    dm.changeIndexNumpyArray(pulse_amplitude, -1000.0)
+    dm.changeIndexNumpyArray(rise_time, 1000.0)
     dm.changeIndexNumpyArray(charge, 10**15)
-    dm.changeIndexNumpyArray(max_sample, -1000)
+    dm.changeIndexNumpyArray(max_sample, -1000.0)
     
     print "\nBATCH", md.getBatchNumber(), "\n"
    
@@ -67,10 +67,13 @@ def producePulsePlots(numpy_variables):
         if md.sensor != "" and md.getSensor() != md.sensor:
             continue
 
+        # if a fit fails, slightly change the bin number
+        pulse_amplitude_bins = 120
         point_count_limit = 50
         charge_pulse_bins = 140
         rise_time_bins = 300
         charge_max = 150
+        
         
         # This is a limit for the point count, to increase it
         if md.getSensor() == "SiPM-AFP" or md.getSensor() == "W4-RD01":
@@ -93,7 +96,7 @@ def producePulsePlots(numpy_variables):
         noise_TH1F                          = ROOT.TH1F("noise"+th_name, "noise", 300, noise_ranges[0], noise_ranges[1])
         pedestal_TH1F                       = ROOT.TH1F("pedestal"+th_name, "pedestal", 300, pedestal_ranges[0], pedestal_ranges[1])
         
-        pulse_amplitude_TH1F                = ROOT.TH1F("pulse_amplitude"+th_name, "pulse_amplitude", 200, 0, 500)
+        pulse_amplitude_TH1F                = ROOT.TH1F("pulse_amplitude"+th_name, "pulse_amplitude", pulse_amplitude_bins, 0, 500)
         rise_time_TH1F                      = ROOT.TH1F("rise_time"+th_name, "rise_time", rise_time_bins, 0, 4000)
         charge_TH1F                         = ROOT.TH1F("charge"+th_name, "charge", charge_pulse_bins, 0, charge_max)
         
@@ -222,24 +225,33 @@ def exportHistogram(th1_object):
         th1_object.SetLineColor(1)
         drawOpt = ""
     
-    th1_object.SetTitle(titles[0])
-    th1_object.GetXaxis().SetTitle(titles[1])
-    th1_object.GetYaxis().SetTitle(titles[2])
+    
+    # Move the margins to make place for legend on left axis
+    canvas.SetLeftMargin(0.11)
+
+    th1_object.SetTitle(titles[0]+";"+titles[1]+";"+titles[2])
 
     th1_object.Draw(drawOpt)
     canvas.Update()
     
     if category == "max_sample_vs_point_count":
+        # Move the margins to make place for legend on right axis
+        canvas.SetRightMargin(0.14)
     
         th1_object.SetAxisRange(0, 500, "Z")
     
         # Redefine the stats box
         stats_box = th1_object.GetListOfFunctions().FindObject("stats")
         stats_box.SetX1NDC(0.65)
-        stats_box.SetX2NDC(0.9)
+        stats_box.SetX2NDC(0.85)
         stats_box.SetY1NDC(0.93)
         stats_box.SetY2NDC(0.83)
         stats_box.SetOptStat(1000000011)
+
+        headTitle = titles[0]+";"+titles[1]+";"+titles[2]+";Entries"
+        th1_object.SetTitle(headTitle)
+
+        canvas.Update()
 
 
     canvas.Print(titles[3])
@@ -291,20 +303,20 @@ def getPlotAttributes(category):
 
     elif category.find("max_sample_vs_point_count") != -1:
 
-        head_title_type = "Max sample point vs number of points over threshold"
-        xAxisTitle = "Number points > threshold"
-        yAxisTitle = "Max sample point [mV]"
+        head_title_type = "Maximum sample value vs number of samples above the threshold"
+        xAxisTitle = "Number of samples [N]"
+        yAxisTitle = "Maximum sample value [mV]"
 
     elif category.find("max_sample") != -1:
 
-        head_title_type = "Max sample in event over threshold"
-        xAxisTitle = "Max sample in event [mV]"
+        head_title_type = "Maximum sample value above the threshold"
+        xAxisTitle = "Maximum sample value [mV]"
 
 
     elif category.find("point_count") != -1:
 
-        head_title_type = "Point count over threshold"
-        xAxisTitle = "Point count over threshold [N]"
+        head_title_type = "Samples above the threshold"
+        xAxisTitle = "Number of samples [N]"
 
     
     headTitle = head_title_type + " - " + md.getSensor()+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage()) + " V"

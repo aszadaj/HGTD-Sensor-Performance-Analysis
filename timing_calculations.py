@@ -5,56 +5,51 @@ import itertools as it
 import data_management as dm
 import run_log_metadata as md
 
+ROOT.gROOT.SetBatch(True)
+
 # The function imports pulse files and creates timing resolution files with
 # time differences used for timingPlots and trackingAnalysis.
-def createTimingFiles():
-    
-    ROOT.gROOT.SetBatch(True)
-    
-    dm.setFunctionAnalysis("timing_analysis")
-    
-    runLog_batch = md.getRunLogBatches(md.batchNumbers)
-    print "\nStart TIMING RESOLUTION analysis, batches:", md.batchNumbers
-    
-    for runLog in runLog_batch:
-        
-        print "Batch:", runLog[0][5], len(runLog), "run files.\n"
-        
-        for index in range(0, len(runLog)):
-            
-            md.defineRunInfo(runLog[index])
-            
-            if not dm.checkIfFileAvailable():
-                continue
-        
-            print "Run", md.getRunNumber()
-            
-            # Import files per run
-            peak_time = dm.exportImportROOTData("pulse", "peak_time")
-            cfd = dm.exportImportROOTData("pulse", "cfd")
-            
-            # Perform linear calculations
-            time_diff_peak = getTimeDifferencePerRun(peak_time)
-            time_diff_cfd = getTimeDifferencePerRun(cfd)
-            
-            # Export per run number linear
-            dm.exportImportROOTData("timing", "normal_peak", time_diff_peak)
-            dm.exportImportROOTData("timing", "normal_cfd", time_diff_cfd)
-            
-            if md.getBatchNumber()/100 != 6:
-                # Perform calculations sys eq
-                time_diff_peak_sys_eq = getTimeDifferencePerRunSysEq(peak_time)
-                time_diff_cfd_sys_eq = getTimeDifferencePerRunSysEq(cfd)
+def createTimingFiles(batchNumber):
 
-                # Export per run number sys eq
-                dm.exportImportROOTData("timing", "system_peak", time_diff_peak_sys_eq)
-                dm.exportImportROOTData("timing", "system_cfd", time_diff_cfd_sys_eq)
+    runNumbers = md.getAllRunNumbers(batchNumber)
 
-                print "Done with run", md.getRunNumber(), "\n"
-                        
-        print "Done with batch", runLog[0][5], "\n"
+    startTimeBatch = dm.getTime()
 
-    print "Done with TIMING RESOLUTION analysis\n"
+    print "\nBatch:", batchNumber, len(runNumbers), "run files.\n"
+    
+    for runNumber in runNumbers:
+        
+        md.defineRunInfo(md.getRowForRunNumber(runNumber))
+        
+        if not dm.checkIfFileAvailable():
+            continue
+    
+        print "Run", runNumber, "\n"
+        
+        # Import files per run
+        peak_time = dm.exportImportROOTData("pulse", "peak_time")
+        cfd = dm.exportImportROOTData("pulse", "cfd")
+        
+        # Perform linear calculations
+        time_diff_peak = getTimeDifferencePerRun(peak_time)
+        time_diff_cfd = getTimeDifferencePerRun(cfd)
+        
+        # Export per run number linear
+        dm.exportImportROOTData("timing", "normal_peak", time_diff_peak)
+        dm.exportImportROOTData("timing", "normal_cfd", time_diff_cfd)
+        
+        if batchNumber/100 != 6:
+            # Perform calculations sys eq
+            time_diff_peak_sys_eq = getTimeDifferencePerRunSysEq(peak_time)
+            time_diff_cfd_sys_eq = getTimeDifferencePerRunSysEq(cfd)
+
+            # Export per run number sys eq
+            dm.exportImportROOTData("timing", "system_peak", time_diff_peak_sys_eq)
+            dm.exportImportROOTData("timing", "system_cfd", time_diff_cfd_sys_eq)
+
+        print "Done with run", runNumber, "\n"
+    
+    print "Done with batch", batchNumber, "Time analysing: "+str(dm.getTime()-startTimeBatch)+"\n"
 
 
 # This takes the time difference between a DUT and the SiPM.
@@ -84,7 +79,7 @@ def getTimeDifferencePerRun(time_location):
 # Reason: the first oscilloscope contains different sensors.
 def getTimeDifferencePerRunSysEq(time_location):
     
-    dt = getDTYPESysEq()
+    dt = dm.getDTYPESysEq()
     
     time_difference = np.zeros(len(time_location), dtype = dt)
     
@@ -149,41 +144,54 @@ def solveSystemOfEqs(sigma_convoluted_matrix, error_convoluted_matrix):
 
 
 
-def getSigmasFromFit(TH1F_list, window_range, chan):
+def getSigmasFromFit(TH1F_histogram, window_range, percentage):
 
-    # Find the maximal value
-    MPV_bin = TH1F_list.GetMaximumBin()
-    MPV_time_diff = int(TH1F_list.GetXaxis().GetBinCenter(MPV_bin))
-    MPV_entries = TH1F_list.GetMaximum()
-    
     # Change the window
-    xMin = MPV_time_diff - window_range
-    xMax = MPV_time_diff + window_range
-    TH1F_list.SetAxisRange(xMin, xMax)
+    xMin = TH1F_histogram.GetXaxis().GetBinCenter(TH1F_histogram.GetMaximumBin()) - window_range
+    xMax = TH1F_histogram.GetXaxis().GetBinCenter(TH1F_histogram.GetMaximumBin()) + window_range
+    TH1F_histogram.SetAxisRange(xMin, xMax)
     
-    # Fit using normal gaussian
-    N = 3
-    mean_window = TH1F_list.GetMean()
-    sigma_window = TH1F_list.GetStdDev()
-    xMin = mean_window - N * sigma_window
-    xMax = mean_window + N * sigma_window
+    # Set ranges to be at the positions of defined height
+    value_limit = TH1F_histogram.GetMaximum() * (1.0 - percentage)
+    xMin = TH1F_histogram.GetXaxis().GetBinCenter(TH1F_histogram.FindFirstBinAbove(value_limit))
+    xMax = TH1F_histogram.GetXaxis().GetBinCenter(TH1F_histogram.FindLastBinAbove(value_limit))
     
-    # Within the same oscilloscope
-    if md.checkIfSameOscAsSiPM(chan):
+    # Create fit function if the same oscilloscope
+    if md.checkIfSameOscAsSiPM():
         
         fit_function = ROOT.TF1("gaus", "gaus", xMin, xMax)
 
-    # Else in different oscilloscopes
+    # Create fit function if different oscilloscope
     else:
-        fit_function = ROOT.TF1("gaus", "[0]*exp(-0.5*((x-[1] )/[2])^2) + [3]*exp(-0.5*((x-([1]+100))/[2])^2)", xMin, xMax)
-        fit_function.SetParameters(MPV_entries, mean_window, sigma_window, MPV_entries)
-        fit_function.SetParNames("Constant1", "Mean1", "Sigma-tot", "Constant2")
+        
+        # For some double-peak distributions the highest peak have to be set for the fit
+        # to function correctly. Change the bool accordingly!
+        high_peak_at_left = True
+        
+        if high_peak_at_left:
+            
+            # In the case when the highest peak is at left
+            amplitude_1 = TH1F_histogram.GetMaximum()
+            bin_second_peak = TH1F_histogram.GetBinCenter(TH1F_histogram.GetMaximumBin())+100
+            position_second_peak = TH1F_histogram.FindBin(bin_second_peak)
+            amplitude_2 = TH1F_histogram.GetBinContent(position_second_peak)
+        
+        else:
+            # In the case when the highest peak is at right
+            bin_first_peak = TH1F_histogram.GetBinCenter(TH1F_histogram.GetMaximumBin())-100
+            position_first_peak = TH1F_histogram.FindBin(bin_second_peak)
+            amplitude_1 = TH1F_histogram.GetBinContent(position_second_peak)
+            amplitude_2 = TH1F_histogram.GetMaximum()
+
+        fit_function = ROOT.TF1("gaus", "[0]*exp(-0.5*((x-[1])/[2])^2) + [3]*exp(-0.5*((x-([1]+100))/[2])^2)", xMin, xMax)
+        fit_function.SetParameters(amplitude_1, TH1F_histogram.GetMean(), TH1F_histogram.GetStdDev(), amplitude_2)
+        fit_function.SetParNames("Constant1", "Mean1", "Sigma", "Constant2")
 
     try:
 
         # Create fit and calculate the width
-        TH1F_list.Fit("gaus", "Q", "", xMin, xMax)
-        th1_function = TH1F_list.GetFunction("gaus")
+        TH1F_histogram.Fit("gaus", "Q", "", xMin, xMax)
+        th1_function = TH1F_histogram.GetFunction("gaus")
 
         sigma_fit       = th1_function.GetParameter(2)
         sigma_fit_error = th1_function.GetParError(2)
@@ -206,11 +214,7 @@ def getSigmasFromFit(TH1F_list, window_range, chan):
     return sigma_DUT, sigma_fit_error
 
 
-def getDTYPESysEq():
-    
-    return (  [('chan0',  '<f8', (1,3)), ('chan1',  '<f8', (1,3)) ,('chan2',  '<f8', (1,3)) ,('chan3',  '<f8', (1,3))] )
-
-
+# Calculate all 4x4 matrices which have diagonal elements
 def possibleMatrices():
     
     # The arrays indicate the possible ways to extract the width between sensor i and j.

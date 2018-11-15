@@ -10,18 +10,13 @@ ROOT.gROOT.SetBatch(True)
 distance_x = 800 # Width from the center of the canvas in x default 800
 distance_y = 600 # Width from the center of the canvas in y default 600
 
-n_div = 10                  # Number of ticks on Z-axis
-percentage_efficiency = 80  # Limit the lower percentage
-timing_res_max = 200        # Z-axis limit for timing resolution graph
-pulse_amplitude_max = 400        # Z-axis limit for pulse amplitude graph
-gain_max = 500              # Z-axis limit for gain graph
-rise_time_max = 1500        # Z-axis limit for rise time graph
+n_div = 10                      # Number of ticks on Z-axis
+percentage_efficiency = 80      # Limit the lower percentage
 
-    
-min_entries_bin = 5 # Minimum entries per bin
-min_entries_bin_timing = 50 # Required entries for timing resolution graphs
-pixel_size = 18.4 # Pixel size for the MIMOSA
-bin_size_increase_timing = 2.5 # Bin size increase to adapt for timing resolution plots
+min_entries_bin = 5             # Minimum entries per bin
+min_entries_bin_timing = 50     # Required entries for timing resolution graphs
+pixel_size = 18.4               # Pixel size for the MIMOSA
+bin_size_increase_timing = 2.5  # Bin size increase to adapt for timing resolution plots
 
 
 ROOT.gStyle.SetPalette(1)
@@ -30,7 +25,7 @@ ROOT.gStyle.SetNumberContours(10*n_div)
 
 # Function appends tracking files and oscilloscope files and
 # matches the sizes of them
-def trackingAnalysis():
+def trackingPlots():
     
     global var_names
     
@@ -61,6 +56,10 @@ def trackingAnalysis():
             
             md.defineRunInfo(md.getRowForRunNumber(runNumber))
             
+            # Produce timing resolution files if they not exist
+            if not dm.timingBatchFileExists():
+                t_calc.createTimingFiles(batchNumber)
+            
             if not dm.checkIfFileAvailable():
                 continue
         
@@ -72,34 +71,29 @@ def trackingAnalysis():
 
             numpy_arrays[-1] = np.concatenate((numpy_arrays[-1], tracking_run), axis=0)
     
-        # This checks if the position file exists, otherwise it will create it for future reference. This is done once for whole batch 10X etc
+    
+        [pulse_amplitude, gain, rise_time, time_difference_peak, time_difference_cfd, tracking] = [i for i in numpy_arrays]
+        
+        # This checks if the position file exists, otherwise it will create it
         if not dm.positionFileExists():
-            t_calc.calculateCenterOfSensorPerBatch(numpy_arrays[0], numpy_arrays[-1])
-                        
-        trackingPlots(numpy_arrays)
-                        
+            t_calc.calculateCenterOfSensorPerBatch(pulse_amplitude, tracking)
+    
+        declareTCanvas()
+        defineBinSizes()
+
+        if md.getBatchNumber()/100 == 7:
+            updateBinSize(1.5)
+
+        t_calc.setArrayPadExportBool(False)
+
+        createSinglePadGraphs(numpy_arrays)
+        
+        createArrayPadGraphs(distance_x, distance_y)
+        
         print "\nDone with batch", batchNumber, "Time analysing: "+str(md.dm.getTime()-startTimeBatch)+"\n"
                                 
                                 
     print "\nDone with TRACKING analysis. Time analysing: "+str(md.dm.getTime()-startTime)+"\n"
-
-
-
-def trackingPlots(numpy_arrays):
-   
-    [pulse_amplitude, gain, rise_time, time_difference_peak, time_difference_cfd, tracking] = [i for i in numpy_arrays]
-   
-    declareTCanvas()
-    defineBinSizes()
-    
-    if md.getBatchNumber()/100 == 7:
-        updateBinSize(1.5)
-    
-    t_calc.setArrayPadExportBool(False)
-    
-    createSinglePadGraphs(pulse_amplitude, gain, rise_time, time_difference_peak, time_difference_cfd, tracking)
-
-    createArrayPadGraphs(distance_x, distance_y)
 
 
 ###########################################
@@ -110,12 +104,14 @@ def trackingPlots(numpy_arrays):
 
 
 
-def createSinglePadGraphs(pulse_amplitude, gain, rise_time, time_difference_peak, time_difference_cfd, tracking):
+def createSinglePadGraphs(numpy_arrays):
+    
+    [pulse_amplitude, gain, rise_time, time_difference_peak, time_difference_cfd, tracking] = [i for i in numpy_arrays]
     
     # Convert pulse amplitude values from [-V] to [+mV], charge from [C] to gain, rise time from [ns] to [ps]
-    dm.changeIndexNumpyArray(pulse_amplitude, -1000)
+    dm.changeIndexNumpyArray(pulse_amplitude, -1000.0)
     dm.changeIndexNumpyArray(gain, 1./(md.getChargeWithoutGainLayer()*10**-15))
-    dm.changeIndexNumpyArray(rise_time, 1000)
+    dm.changeIndexNumpyArray(rise_time, 1000.0)
     
     # Produce single pad plots
     for chan in pulse_amplitude.dtype.names:
@@ -171,7 +167,7 @@ def produceTProfilePlots(numpy_arrays, tracking, distance_x, distance_y):
     TH2_pulse = [pulse_amplitude_TH2D, gain_TH2D, rise_time_TH2D]
     TH2_timing = [timing_peak_TH2D, timing_cfd_TH2D]
     entries_timing_resolution = t_calc.fillTHObjects(numpy_arrays, TH2_pulse, TH2_timing, tracking, [xbin, ybin, xbin_timing, ybin_timing, distance_x, distance_y])
-
+  
     # Print pulse amplitude mean value 2D plot
     TH2D_objects = [pulse_amplitude_TH2D, gain_TH2D, rise_time_TH2D, timing_peak_TH2D, timing_cfd_TH2D, 0, 0]
     setPlotLimitsAndPrint(TH2D_objects, entries_timing_resolution)
@@ -296,6 +292,7 @@ def createArrayPadGraphs(distance_x, distance_y):
 
     setPlotLimitsAndPrint(TH2D_objects_list)
 
+
 ###########################################
 #                                         #
 #          PROJECTION FUNCTIONS           #
@@ -307,7 +304,7 @@ def produceProjectionPlots(projectionX_th1d, projectionY_th1d):
     
     distance_projection, center_positions = t_calc.findSelectionRange()
 
-    headTitle = "Projection of X-axis of efficiency 2D plot - "+md.getSensor()+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage()) + " V"+ "; X [\mum] ; Efficiency (%)"
+    headTitle = "Projection on X-axis of efficiency 2D plot - "+md.getSensor()+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage()) + " V"+ "; X [\mum] ; Efficiency (%)"
     
     category = projectionX_th1d.GetTitle()
     fileName = dm.getFileNameForHistogram("tracking", category)
@@ -365,12 +362,22 @@ def createProjectionFit(projection_th1d, center_position):
 
 
 def setPlotLimitsAndPrint(TH2D_objects, timing_entries=[0,0]):
+        
+    th_name = "_"+str(md.getBatchNumber())+"_"+md.chan_name
+    
+    pulse_amplitude_mean =  dm.exportImportROOTHistogram("pulse", "pulse_amplitude").GetFunction("Fitfcn_pulse_amplitude"+th_name).GetParameter(1)
+    gain_mean =             dm.exportImportROOTHistogram("pulse", "charge").GetFunction("Fitfcn_charge"+th_name).GetParameter(1)/md.getChargeWithoutGainLayer()
 
-    limits_graph = [pulse_amplitude_max, gain_max, rise_time_max, timing_res_max, timing_res_max]
+    rise_time_mean = dm.exportImportROOTHistogram("pulse", "rise_time").GetFunction("gaus").GetParameter(1)
+    timing_res_peak_mean = np.sqrt(np.power(dm.exportImportROOTHistogram("timing", "normal", "peak").GetFunction("gaus").GetParameter(2),2) - np.power(md.getSigmaSiPM(),2))
+    timing_res_cfd_mean = np.sqrt(np.power(dm.exportImportROOTHistogram("timing", "normal", "cfd").GetFunction("gaus").GetParameter(2), 2) - np.power(md.getSigmaSiPM(), 2))
+    
+    limits_graph = [[max(pulse_amplitude_mean-50,0), pulse_amplitude_mean+50], [max(gain_mean-30, 0), gain_mean+30], [max(rise_time_mean-30, 0), rise_time_mean+30], [max(timing_res_peak_mean-50, 0), timing_res_peak_mean+50], [max(timing_res_cfd_mean-50, 0), timing_res_cfd_mean+50]]
+    
     entries = [0, 0, 0, timing_entries[0], timing_entries[1]]
     
     for index in range(0, len(limits_graph)):
-        TH2D_objects[index].SetAxisRange(0, limits_graph[index], "Z")
+        TH2D_objects[index].SetAxisRange(limits_graph[index][0], limits_graph[index][1], "Z")
         TH2D_objects[index].SetNdivisions(n_div, "Z")
         printTHPlot(TH2D_objects[index], entries[index])
 
@@ -399,7 +406,7 @@ def printTHPlot(graphList, entries=0):
     category = graphList.GetTitle()
     headTitle = getTitles(category)
 
-    # Move the right margin to fit the Z axis
+    # Move the margins to fit the Z axis
     canvas.SetRightMargin(0.14)
     canvas.SetLeftMargin(0.11)
 
@@ -499,8 +506,16 @@ def printProjectionPlot(th1_projection, headTitle, fileName, sigmas):
     stats_box.SetX2NDC(.98)
     stats_box.SetY1NDC(.9)
     stats_box.SetY2NDC(.73)
-    stats_box.AddText("\sigma_{left} = "+str(sigmas[0])[0:5] + " \pm " + str(sigmas[1])[0:4])
-    stats_box.AddText("\sigma_{right} = "+str(sigmas[2])[0:5] + " \pm " + str(sigmas[3])[0:4])
+    
+    text_left = "left"
+    text_right = "right"
+    if th1_projection.GetTitle().find("y") != -1:
+        text_left = "top"
+        text_right = "bottom"
+    
+    
+    stats_box.AddText("\sigma_{"+text_left+"} = "+str(sigmas[0])[0:5] + " \pm " + str(sigmas[1])[0:4])
+    stats_box.AddText("\sigma_{"+text_right+"} = "+str(sigmas[2])[0:5] + " \pm " + str(sigmas[3])[0:4])
     canvas_projection.Modified()
     canvas_projection.Update()
     

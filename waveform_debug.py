@@ -69,7 +69,7 @@ def printWaveform(batchNumber, sensor, event = 0):
     signal_limit_DUT = 0.3547959
     point_difference = 2
     
-    peak_value, peak_time, poly_fit = p_calc.calculatePeakValue(data, pedestal, signal_limit_DUT, True)
+    peak_value, peak_time, poly_fit = p_calc.calculatePulseAmplitude(data, pedestal, signal_limit_DUT, True)
     rise_time, cfd, linear_fit, linear_fit_indices = p_calc.calculateRiseTime(data, pedestal, True)
     charge = p_calc.calculateCharge(data, pedestal)
     point_count = p_calc.calculatePoints(data, threshold)
@@ -208,7 +208,7 @@ def printWaveform(batchNumber, sensor, event = 0):
     multi_graph.Add(graph_cfd)
     multi_graph.Add(graph_peak_time)
     multi_graph.Add(graph_pedestal)
-    #multi_graph.Add(charge_fill, "f")
+    multi_graph.Add(charge_fill, "f")
 
     
     # Add the information to a legend box
@@ -219,10 +219,10 @@ def printWaveform(batchNumber, sensor, event = 0):
     #legend.AddEntry(graph_max_sample, "Max sample: "+str(max_sample*1000)[:5]+" mV", "l")
     #legend.AddEntry(graph_waveform, "Points above threshold: "+str(point_count), "l")
     legend.AddEntry(graph_peak_value, "Pulse amplitude: "+str(peak_value[0]*1000)[:5]+" mV", "l")
-    legend.AddEntry(graph_peak_time, "Time at peak: " + str(peak_time[0])[0:4] + " ns", "l")
+    legend.AddEntry(graph_peak_time, "Time at peak: " + str(peak_time[0])[0:5] + " ns", "l")
     legend.AddEntry(graph_linear_fit, "Rise time: "+str(rise_time*1000)[:5]+" ps", "l")
     #legend.AddEntry(graph_90, "10% and 90% limit", "l")
-    legend.AddEntry(graph_cfd, "CFD0.5: " + str(cfd)[0:4] + " ns", "l")
+    legend.AddEntry(graph_cfd, "CFD0.5: " + str(cfd)[0:5] + " ns", "l")
     legend.AddEntry(charge_fill, "Charge: "+str(charge*10**15)[:5]+" fC", "f")
 
 

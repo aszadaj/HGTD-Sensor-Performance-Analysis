@@ -8,13 +8,15 @@ import results_calculations as r_calc
 def addValuesToGraph(variables):
     
     [sensor_data, category, legend_graph, graph, category_graph] = [i for i in variables]
+
+    doOnce = True
     
     for DUT_pos in r_calc.availableDUTPositions(r_calc.processed_sensor):
         
         if DUT_pos in ["3_0", "3_1", "3_3", "8_1", "7_2", "7_3"]:
             continue
     
-        
+    
         for temperature in md.getAvailableTemperatures():
 
             sensor_data[temperature][DUT_pos].sort()
@@ -25,10 +27,12 @@ def addValuesToGraph(variables):
                 constant = 1
                 if category == "charge":
                     constant = 1./md.getChargeWithoutGainLayer()
-                
+
+            
             
                 graph[r_calc.processed_sensor][temperature][DUT_pos].SetPoint(i, data[0], data[1][0] * constant)
                 graph[r_calc.processed_sensor][temperature][DUT_pos].SetPointError(i, 0, data[1][1] * constant)
+             
                 
                 i += 1
             
@@ -36,7 +40,11 @@ def addValuesToGraph(variables):
                 category_graph.Add(graph[r_calc.processed_sensor][temperature][DUT_pos])
 
                 if r_calc.oneSensorInLegend:
-                    legend_graph.AddEntry(graph[r_calc.processed_sensor][temperature][DUT_pos], r_calc.processed_sensor, "p")
+                    if r_calc.processed_sensor == "W4-S204_6e14" and doOnce:
+                        legend_graph.AddEntry(graph["W4-S204_6e14"]["22"]["7_0"], "W4-S204_6e14", "p")
+                        doOnce = False
+                    else:
+                        legend_graph.AddEntry(graph[r_calc.processed_sensor][temperature][DUT_pos], r_calc.processed_sensor, "p")
                 
                 r_calc.oneSensorInLegend = False
 
@@ -75,7 +83,7 @@ def drawAndExportResults(category, category_graph, legend_graph, zoom):
     legend_text = ROOT.TLatex()
     legend_text.SetTextSize(0.035)
     legend_text.SetNDC(True)
-    legend_text.DrawLatex(positions_latex[0][0], positions_latex[0][1] , "Marker color")
+    legend_text.DrawLatex(positions_latex[0][0], positions_latex[0][1], "Marker color")
     legend_text.DrawLatex(positions_latex[1][0], positions_latex[1][1], "#color[3]{Green}  = 22 \circC")
     legend_text.DrawLatex(positions_latex[2][0], positions_latex[2][1], "#color[4]{Blue}    = -30 \circC")
     legend_text.DrawLatex(positions_latex[3][0], positions_latex[3][1], "#color[6]{Purple} = -40 \circC")
@@ -165,7 +173,7 @@ def setGraphAttributes(category_graph, category, zoom):
     
     elif category == "normal_cfd_gain":
     
-        titleGraph = "Timing resolution per gain (cfd)"
+        titleGraph = "Timing resolution per gain (CFD)"
         xTitle = "Gain"
         yTitle = "Timing resolution [ps]"
 
@@ -177,7 +185,7 @@ def setGraphAttributes(category_graph, category, zoom):
 
     elif category == "system_cfd_gain":
    
-        titleGraph = "Timing resolution per gain (system, cfd)"
+        titleGraph = "Timing resolution per gain (system, CFD)"
         xTitle = "Gain"
         yTitle = "Timing resolution [ps]"
         
@@ -205,7 +213,8 @@ def setGraphAttributes(category_graph, category, zoom):
     else:
         positions_latex = [[.7, .55], [.7, .5], [.7, .45], [.7, .4]]
 
-
+    if zoom:
+        positions_latex = [[.7, .3], [.7, .25], [.7, .2], [.7, .15]]
 
     category_graph.SetTitle(titleGraph)
     category_graph.GetXaxis().SetTitle(xTitle)
@@ -263,10 +272,8 @@ def setMarkerType(graph, pos, temperature):
     elif sensor == "W9-LGA35":
         marker = 32
 
-    # the omitted sensor
     elif sensor == "W4-S204_6e14":
         marker = 20
-
 
 
     graph.SetMarkerColor(color)

@@ -78,15 +78,6 @@ def defineDataFolderPath():
     print "\nFolders with subfolders created. Placed at '../folder_sensor_perfomance_tb_sep17/' \n"
 
 
-# Export pulse data
-def exportPulseData(variable_array):
-    
-    [noise, pedestal, pulse_amplitude, rise_times, charge, cfd, peak_times, points, max_sample] = [i for i in variable_array]
-    
-    for index in range(0, len(var_names)):
-        exportImportROOTData("pulse", var_names[index], variable_array[index])
-
-
 # Export or import ROOT file
 def exportImportROOTData(group, category, data=np.empty(0)):
     
@@ -100,7 +91,7 @@ def exportImportROOTData(group, category, data=np.empty(0)):
     if group == "tracking":
         
         if category == "tracking":
-            fileName = category + md.getTimeStamp()
+            fileName = category + str(md.getTimeStamp())
         
         elif category == "efficiency":
             fileName = category + "_" + str(md.getBatchNumber()) + "_" + md.getSensor() + "_" + md.chan_name
@@ -137,6 +128,8 @@ def exportImportROOTData(group, category, data=np.empty(0)):
             print "\nFile", fileName+".root", "not found!\n"
             return np.zeros(1)
 
+
+
     # export the file
     else:
         rnm.array2root(data, dataPath, mode="recreate")
@@ -156,11 +149,14 @@ def exportImportROOTHistogram(group, category, subcategory="", chan2="", graphLi
         fileObject.Close()
         
     else:
-        th_name = "_"+str(md.getBatchNumber())+"_"+md.chan_name+chan2
+        th_name = "_" + str(md.getBatchNumber()) + "_" + md.chan_name
         objectName = category + th_name
         
         if subcategory != "":
             objectName = category + "_" + subcategory + th_name
+        
+        if chan2 != "":
+            objectName += "_" + chan2
     
     
         exists = os.path.isfile(fileName)
@@ -168,6 +164,7 @@ def exportImportROOTHistogram(group, category, subcategory="", chan2="", graphLi
         if exists:
             fileObject = ROOT.TFile(fileName)
             histogram = fileObject.Get(objectName)
+
             histogram.SetDirectory(0) # This is to disconnect the ownership of the TFile object from the imported TH-object
             fileObject.Close()
             return histogram
@@ -185,10 +182,17 @@ def getFileNameForHistogram(group, category, subcategory="", chan2=""):
     ending = "_"+md.getSensor()+".pdf"
     
     if subcategory != "":
+     
+        if md.checkIfSameOscAsSiPM():
+            
+            getOscText = "same_osc"
+
+        else:
+            getOscText = "diff_osc"
         
         # timing normal and tracking
         fileName = fileName.replace(category + "/", category + "/" + subcategory + "/", 1)
-        ending = "_" + md.getSensor() + "_" + md.getOscText() + "_" + subcategory + ".pdf"
+        ending = "_" + md.getSensor() + "_" + getOscText + "_" + subcategory + ".pdf"
         
         # sys eq
         if chan2 != "":
@@ -228,7 +232,7 @@ def checkIfFileAvailable():
     
         files = readFileNames("oscilloscope")
         
-        if int(md.getTimeStamp()) in files:
+        if md.getTimeStamp() in files:
             found = True
 
     elif functionAnalysis == "timing_analysis":
@@ -245,7 +249,7 @@ def checkIfFileAvailable():
         files_pulse_amplitude = readFileNames("pulse", "pulse_amplitude")
         files_tracking = readFileNames("tracking", "tracking")
 
-        if int(md.getTimeStamp()) in files_tracking and int(md.getRunNumber()) in files_pulse_amplitude:
+        if md.getTimeStamp() in files_tracking and int(md.getRunNumber()) in files_pulse_amplitude:
 
             found = True
 
@@ -304,6 +308,12 @@ def getDTYPE(batchNumber = 0):
     return dtype
 
 
+# This is a dtype for a numpy array, set for a name for each channel
+# and a three dimensional array for each channel.
+def getDTYPESysEq():
+    
+    return ([('chan0','<f8',(1,3)), ('chan1','<f8',(1,3)) ,('chan2','<f8',(1,3)) ,('chan3','<f8',(1,3))])
+
 def getDTYPETracking():
     
     return np.dtype( [('X', '<f4'), ('Y', '<f4')] )
@@ -318,10 +328,22 @@ def positionFileExists():
     
     check = exportImportROOTData("tracking", "position")
 
-    if check.size == 1:
-        return False
-    else:
-        return True
+    if np.count_nonzero(check) > 0:
+        check = True
+
+    return check
+
+
+def timingBatchFileExists():
+
+    check = exportImportROOTData("timing", "normal_peak")
+
+    if np.count_nonzero(check) > 0:
+        
+        check = True
+    
+    return check
+
 
 
 # Get actual time

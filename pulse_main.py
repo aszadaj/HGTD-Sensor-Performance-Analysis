@@ -29,10 +29,6 @@ def pulseAnalysis():
         
         runNumbers = md.getAllRunNumbers(batchNumber)
         
-        # Restrict to some run numbers
-        if md.limitRunNumbers != "all":
-            runNumbers = runNumbers[0:md.limitRunNumbers]
-        
         startTimeBatch = dm.getTime()
     
         print "Batch:", batchNumber, len(runNumbers), "run files.\n"
@@ -129,19 +125,25 @@ def getThresholdSamples(chan):
     sensor = md.getSensor(chan)
     
     if sensor == "50D-GBGR2" or sensor == "W9-LGA35":
-        number_samples = 5
+        samples_limit = 5
     
-    elif sensor == "SiPM-AFP" or sensor == "W4-RD01":
-        number_samples = 50
+    elif sensor == "SiPM-AFP":
+        samples_limit = 36
+
+    elif sensor == "W4-RD01":
+        samples_limit = 32
+
+    elif sensor == "W4-S1022":
+        samples_limit = 7
     
-    elif sensor == "W4-LG12" or sensor == "W4-S203" or sensor == "W4-S215" or sensor == "W4-S1061":
-        number_samples = 10
+    elif sensor == "W4-LG12" or sensor == "W4-S1061" or sensor == "W4-S203" or sensor == "W4-S215":
+        samples_limit = 8
     
     elif sensor == "W4-S204_6e14":
-        number_samples = 3
+        samples_limit = 3
+
+    else:
+        samples_limit = 0
+
     
-    elif sensor == "W4-S1022":
-        number_samples = 7
-    
-    
-    return number_samples
+    return samples_limit
