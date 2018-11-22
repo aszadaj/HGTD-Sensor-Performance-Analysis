@@ -49,7 +49,7 @@ placed in the folder
 
 The code can be run in the terminal/console by providing
 
-    ```python2 main.py```
+    $ python2 main.py
 
 which creates all folder and subfolders from the file ```supplements/folderPaths.csv``` before the code can run. 
 
@@ -57,7 +57,7 @@ which creates all folder and subfolders from the file ```supplements/folderPaths
 The code can be modified to choose which batches which each contain at least one run or multiple depending on batch. 
 The information on the structure of which batches and runs is listed in
 
-    ```run_list_tb_sep_2017.csv```.  
+    run_list_tb_sep_2017.csv  
 
 
 One can then select which methods to run by commenting out the functions in  ```main.py```.
@@ -111,7 +111,7 @@ Time dimension = [ns], voltage dimension = [-V]
 
 The produced ROOT files are located in
 
-    ```folder_sensor_perfomance_tb_sep17/data_ROOT/pulse```
+    folder_sensor_perfomance_tb_sep17/data_ROOT/pulse
 
 
  ```pulsePlots() - method```
@@ -119,11 +119,11 @@ The produced ROOT files are located in
 The function receives produced files from the   ```pulseAnalysis()``` and concatenates all runs within a batch and plots 
 all the different properties. These are placed in
 
-    ```folder_sensor_perfomance_tb_sep17/plots_sensors``` 
+    folder_sensor_perfomance_tb_sep17/plots_sensors
 
 which are subdivided into each sensor. Additionally ROOT files with histograms are produced with same folder structure in 
 
-    ```folder_sensor_perfomance_tb_sep17/data_ROOT/histograms_data```. 
+    folder_sensor_perfomance_tb_sep17/data_ROOT/histograms_data
 
 
 ```NOTE```: If the code gives error when calculating the pulses, that is
@@ -143,11 +143,11 @@ High Sierra). It disappears when running the code again (or after multiple times
   
   The produced ROOT files are located in
   
-    ```folder_sensor_perfomance_tb_sep17/data_ROOT/pulse```
+    folder_sensor_perfomance_tb_sep17/data_ROOT/pulse
   
   and the produced plots for each sensor are in
   
-      ```folder_sensor_perfomance_tb_sep17/plots_sensors``` 
+    folder_sensor_perfomance_tb_sep17/plots_sensors
   
 
 
@@ -166,7 +166,7 @@ produces plots for
 
 and exports them into each sensor folder in 
 
-      ```folder_sensor_perfomance_tb_sep17/plots_sensors``` 
+      folder_sensor_perfomance_tb_sep17/plots_sensors
 
 
  There is a method ```calculateCenterOfSensorPerBatch()``` of calculating the center of the sensors which is 
@@ -178,7 +178,7 @@ and exports them into each sensor folder in
 
 From the previously exported files, this collectes all of them and plots them into
 
-    ```folder_sensor_perfomance_tb_sep17/plots_sensors/results```.
+    folder_sensor_perfomance_tb_sep17/plots_sensors/results
 
 
 
