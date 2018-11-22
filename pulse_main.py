@@ -7,11 +7,8 @@ import pulse_calculations as p_calc
 import run_log_metadata as md
 import data_management as dm
 
-# Number of threads for multiprocesing
-threads = 4
-
-# number of events per iteration and thread
-step = 10000
+threads = 4     # Number of threads for multiprocesing
+step = 10000    # Number of events per iteration and thread
 
 ROOT.gROOT.SetBatch(True)
 
@@ -19,7 +16,6 @@ ROOT.gROOT.SetBatch(True)
 # Start analysis of selected run numbers
 def pulseAnalysis():
 
-    dm.setFunctionAnalysis("pulse_analysis")
     defineNameOfProperties()
     startTime = dm.getTime()
     
@@ -37,7 +33,7 @@ def pulseAnalysis():
             
             md.defineRunInfo(md.getRowForRunNumber(runNumber))
             
-            if not dm.checkIfFileAvailable():
+            if not dm.checkIfFileAvailable("pulse"):
                 continue
             
             pulseAnalysisPerRun()
@@ -47,7 +43,7 @@ def pulseAnalysis():
     print "Done with PULSE analysis. Time analysing: "+str(dm.getTime()-startTime)+"\n"
 
 
-# Subdivide the file (has 4GB) to analyze by parts. Start pool.
+# Subdivide the file (which has 4GB) to analyze by parts. Start pool.
 def pulseAnalysisPerRun():
     
     print "Run", md.getRunNumber()
@@ -76,9 +72,9 @@ def pulseAnalysisPerRun():
 
 # Data input is in negative voltage values, but the methods handles them in "positive values"
 # The output is the listed characteristics below
-def signalAnalysis(start, stop):
+def signalAnalysis(first, last):
     
-    data = rnm.root2array(dm.getOscilloscopeFilePath(), start=start, stop=stop)
+    data = dm.getOscilloscopeData(first, last)
 
     properties = [np.zeros(len(data), dtype = data.dtype) for _ in range(len(var_names))]
 
@@ -99,12 +95,6 @@ def signalAnalysis(start, stop):
     return properties
 
 
-def defineNameOfProperties():
-
-    global var_names
-    
-    var_names = ["noise", "pedestal", "pulse_amplitude", "rise_time", "charge", "cfd", "peak_time", "points", "max_sample"]
-
 
 # Get maximum values for given channel and oscilloscope
 def getSignalLimit(data):
@@ -115,6 +105,13 @@ def getSignalLimit(data):
         signal_limit[chan] = np.amin(np.concatenate(data[chan]))
     
     return signal_limit
+
+# Define names of the pulse characteristitcs
+def defineNameOfProperties():
+    
+    global var_names
+    
+    var_names = ["noise", "pedestal", "pulse_amplitude", "rise_time", "charge", "cfd", "peak_time", "points", "max_sample"]
 
 
 # These are set values for each sensor. These values are determined between a plot for:

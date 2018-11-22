@@ -1,15 +1,15 @@
 #   HGTD TEST BEAM SEPTEMBER 2017 SENSOR PERFOMANCE ANALYSIS (v.1.0.0)
-#   (c) Antek Szadaj (antek@kth.se)
+#   (c) Antek Szadaj (antek@kth.se) 2018
 #   KTH Royal Institute of Technology, Stockholm
 #
 #   SHORT INFO:
-#   Software for analyzing sensor perfomance for data taken during HGTD test beam
+#   Software for analyzing sensor perfomance for data taken during HGTD Test Beam
 #   measurement September 2017 in North Area at CERN.
 #
 #   The software reconstructs the data and analyzes:
 #
 # - Pulse characteristics: noise, pedestal, pulse amplitude, charge/gain, rise time,
-#   and additional methods to determine threshold levels.
+#   and additional methods to determine other signal characteristics.
 #
 # - Timing resolution: using two different types of time locations and cfd0.5, i.e. 50%
 #   of the rising edge, (cfd0.5, recommended method) for two different types of methods.
@@ -24,9 +24,34 @@
 #   plots them for different types among different temperatures and bias voltages.
 #   Also gain dependence is included.
 #
-# - Generally one can choose which functions to run from the pulse, timing resolution,
-#   tracking and results sections.
-
+#
+#
+#   HOW TO START:
+#
+#   * Update the run log accordingly to the current test beam campaign. The run log is at
+#
+#       supplements/run_list_tb_sep_2017.csv
+#
+#   * Run the code without any functions ($ python2 main.py), to create the main folder.
+#
+#   * Place the oscilloscope files in
+#
+#      ../folder_sensor_perfomance_tb_sep17/oscilloscope_data_hgtd_tb_sep17/
+#
+#   * Place the tracking files in
+#
+#      ../folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/tracking/tracking/
+#
+#   * Select batch
+#
+#       batches = [102]
+#
+#   * Choose sensor
+#
+#       sensor = "W9-LGA35"
+#
+#   * Choose which function to run by changing from 0 to 1.
+#
 
 
 ##########################################################################
@@ -38,55 +63,29 @@
 ##########################################################################
 
 
-import pulse_main as pulse
-import pulse_plot
-import timing_calculations as timing
-import timing_plot
-import tracking_plot as tracking
-import results_calculations as results
 import run_log_metadata as md
-import data_management as dm
 
 
 def main():
     
-    # Choose batches to run, "all" or e.g. [101, 102].
-    batches = [101]
+    # Choose batches to run, by [101] or multiple [203, 304] or all batches with "all"
+    batches = "all"
     batches_exclude = []
     
     # Choose which sensor to produce plots for, e.g. "W9-LGA35"
-    sensor = ""
+    sensor = "W9-LGA35"
     
-    # Define settings and create folder, if needed.
-    md.defineSettings(batches, batches_exclude, sensor)
-    
-    
-    ########### PULSE ################
-    
-
-    pulse.pulseAnalysis()   # Takes ~8 min for each run file.
-    pulse_plot.pulsePlots()
-
-    
-    ####### TIMING RESOLUTION ########
-    
-
-    timing_plot.timingPlots()
-
-    
-    ######### TRACKING ###############
+    # Choose which function to run (0 or 1)
+    pulseAnalysis   = 0
+    pulsePlots      = 0
+    timingPlots     = 0
+    trackingPlots   = 0
+    produceResults  = 0
     
     
-    tracking.trackingPlots() # Considers batches with > 4 runs.
+    functions = [pulseAnalysis, pulsePlots, timingPlots, trackingPlots, produceResults]
     
-
-    ########### RESULTS ##############
-    
-    
-    results.produceResults()
-
-
-    dm.printTime()
+    md.runAnalysis(batches, batches_exclude, sensor, functions)
 
 
 main()

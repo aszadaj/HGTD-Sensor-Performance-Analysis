@@ -1,13 +1,21 @@
-# This is a debugging function aimed to draw the waveform of a selected event, and note the pulse characteristics
-# It plots the event, with the methods from pulse_calculations.py.
+#
+#   WAVEFORM DEBUG
+#
+# This is a debugging function aimed to draw the waveform of a selected event with calculated pulse characteristics.
+# It plots the event for a chosen run with lines marking the different characteristics.
 
-# Way to use:
-# 1. Define the batch, sensor and event. The relevance would be to select an event which has a signal
+#   How to use:
+#
+# 0. Make sure that the oscilloscope file exists for chosen run
+# 1. Define the run, sensor and event. The point is to select one which has a signal from a MIP.
 # 2. Run the code by
 #
-# > python2 graph.py
+# $ python2 graph.py
 #
-# Prerequisities: The oscilloscope file in question, the run log (the .csv file) and the other files 
+# The exported graph is then at
+#
+#   ../folder_sensor_perfomance_tb_sep17/plots_sensors/waveforms/
+#
 
 
 import ROOT
@@ -20,17 +28,16 @@ import pulse_calculations as p_calc
 
 ROOT.gROOT.SetBatch(True)
 
-# Define batch, sensor and the event
-batch = 102
+# Define batch, sensor and event number
+runNumber = 3650
 sensor = "W9-LGA35"
 event = 84866
 
 
 # Print selected event for sensor and batch
-def printWaveform(batchNumber, sensor, event = 0):
+def printWaveform(runNumber, sensor, event = 0):
     
     # Define global variables
-    runNumber = md.getAllRunNumbers(batchNumber)[0]
     md.defineRunInfo(md.getRowForRunNumber(runNumber))
     dm.defineDataFolderPath()
     chan = md.getChannelNameForSensor(sensor)
@@ -42,7 +49,7 @@ def printWaveform(batchNumber, sensor, event = 0):
     legend = ROOT.TLegend(0.65, 0.9, 0.9, 0.6)
 
     # Import the event from the oscilloscope file
-    data_import = rnm.root2array(dm.getOscilloscopeFilePath(), start=event, stop=event+1)
+    data_import = dm.getOscilloscopeData(event, event+1)
     data = -data_import[chan][0]
     
     # Set find noise and pedestal and define the threshold of finding signals

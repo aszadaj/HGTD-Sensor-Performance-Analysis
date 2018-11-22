@@ -70,8 +70,8 @@ def producePulsePlots(numpy_variables):
         # if a fit fails, slightly change the bin number
         pulse_amplitude_bins = 120
         point_count_limit = 50
-        charge_pulse_bins = 140
-        rise_time_bins = 300
+        charge_pulse_bins = 100
+        rise_time_bins = 150
         charge_max = 150
         
         
@@ -262,61 +262,58 @@ def getPlotAttributes(category):
 
     yAxisTitle = "Entries"
     
-    if category.find("noise") != -1:
+    
+    if category == "max_sample_vs_point_count":
+        
+        head_title_type = "Maximum sample value vs number of samples above the threshold"
+        xAxisTitle = "Number of samples [N]"
+        yAxisTitle = "Maximum sample value [mV]"
+    
+    elif category == "noise":
 
         head_title_type = "Noise"
         xAxisTitle = "Standard deviation [mV]"
  
-    elif category.find("pedestal") != -1:
+    elif category == "pedestal":
 
         head_title_type = "Pedestal"
         xAxisTitle = "Average value [mV]"
     
-    elif category.find("pulse_amplitude") != -1:
+    elif category == "pulse_amplitude":
 
         head_title_type = "Pulse amplitude"
         xAxisTitle = "Pulse amplitude [mV]"
- 
-    elif category.find("rise_time") != -1:
 
-        head_title_type = "Rise time"
-        xAxisTitle = "Rise time [ps]"
-
-
-    elif category.find("cfd") != -1:
+    elif category == "cfd":
 
         head_title_type = "CFD time location"
         xAxisTitle = "Time location [ns]"
 
-
-    elif category.find("peak_time") != -1:
+    elif category == "peak_time":
 
         head_title_type = "Peak time location"
         xAxisTitle = "Time location [ns]"
 
-
-    elif category.find("charge") != -1:
+    elif category == "charge":
 
         head_title_type = "Charge distribution"
         xAxisTitle = "Charge [fC]"
 
-
-    elif category.find("max_sample_vs_point_count") != -1:
-
-        head_title_type = "Maximum sample value vs number of samples above the threshold"
-        xAxisTitle = "Number of samples [N]"
-        yAxisTitle = "Maximum sample value [mV]"
-
-    elif category.find("max_sample") != -1:
+    elif category == "max_sample":
 
         head_title_type = "Maximum sample value above the threshold"
         xAxisTitle = "Maximum sample value [mV]"
 
-
-    elif category.find("point_count") != -1:
+    elif category == "rise_time":
+        
+        head_title_type = "Rise time"
+        xAxisTitle = "Rise time [ps]"
+    
+    elif category == "point_count":
 
         head_title_type = "Samples above the threshold"
         xAxisTitle = "Number of samples [N]"
+
 
     
     headTitle = head_title_type + " - " + md.getSensor()+", T = "+str(md.getTemperature()) + " \circ"+"C, " + "U = "+str(md.getBiasVoltage()) + " V"

@@ -1,9 +1,14 @@
 # This file handles information from the run log.
 
 import data_management as dm
+import pulse_main
+import pulse_plot
+import timing_plot
+import tracking_plot
+import results_calculations
 
 
-def defineSettings(batches, batches_exclude, sensor_name):
+def runAnalysis(batches, batches_exclude, sensor_name, functions):
     
     dm.printTime()
     
@@ -14,6 +19,24 @@ def defineSettings(batches, batches_exclude, sensor_name):
     setBatchNumbers(batches, batches_exclude)
 
     dm.defineDataFolderPath()
+
+    if functions[0] == 1:
+        pulse_main.pulseAnalysis()
+    
+    if functions[1] == 1:
+        pulse_plot.pulsePlots()
+
+    if functions[2] == 1:
+        timing_plot.timingPlots()
+
+    if functions[3] == 1:
+        tracking_plot.trackingPlots()
+
+    if functions[4] == 1:
+        results_calculations.produceResults()
+
+
+    dm.printTime()
 
 
 # For main.py

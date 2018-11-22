@@ -21,7 +21,7 @@ def createTimingFiles(batchNumber):
         
         md.defineRunInfo(md.getRowForRunNumber(runNumber))
         
-        if not dm.checkIfFileAvailable():
+        if not dm.checkIfFileAvailable("timing"):
             continue
     
         print "Run", runNumber, "\n"
@@ -105,10 +105,9 @@ def getTimeDifferencePerRunSysEq(time_location):
     return time_difference
 
 
-# The input is two matrices, one with widths (\sigma_{ij}) of time difference graphs between sensor i and j and
+# The input are two matrices, one with widths (\sigma_{ij}) of time difference graphs between sensor i and j and
 # corresponding errors from the fits (\Delta\sigma_{ij}).
 # The output is the width of sensor i (\sigma_i) and corresponding error (\Delta\sigma{i}). All values in [ps].
-# The function solves the equation according to (4.3) in report.
 def solveSystemOfEqs(sigma_convoluted_matrix, error_convoluted_matrix):
     
     matrices, inverses = possibleMatrices()

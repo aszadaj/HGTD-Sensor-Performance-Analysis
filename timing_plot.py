@@ -16,13 +16,11 @@ fill_range = 15000          # Max/min range for a time difference value
 window_range = 1000         # Window to show the majority of the distribution
 
 width_selection = 2         # Range of the standard deviation of the distribution (for system of equations)
-percentage = 0.9            # Height percentage of selecting the fit for time difference between DUT and SiPM
+percentage = 0.8            # Height percentage of selecting the fit for time difference between DUT and SiPM
 
 min_entries_per_run = 200   # Between each combination of LGADs, require to have at least 200 entries
 
 def timingPlots():
-    
-    dm.setFunctionAnalysis("timing_analysis")
 
     print "\nStart producing TIMING RESOLUTION plots, batches:", md.batchNumbers, "\n"
 
@@ -45,7 +43,7 @@ def timingPlots():
         
             md.defineRunInfo(md.getRowForRunNumber(runNumber))
             
-            if not dm.timingBatchFileExists():
+            if not dm.checkIfROOTDataFileExists("timing", "normal_peak"):
                 t_calc.createTimingFiles(batchNumber)
             
             # Skip runs which are not in synch

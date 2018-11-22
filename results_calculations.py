@@ -186,11 +186,12 @@ def importResultsValues(sensor_data, category_subcategory):
         
             if category_subcategory.find("normal") != -1 or category_subcategory.find("system") != -1:
             
-                results[0] = np.sqrt(np.power(results[0], 2) - np.power(md.getSigmaSiPM(),2))
+                results[0] = np.sqrt(np.power(results[0], 2) - np.power(md.getSigmaSiPM(), 2))
         
             value_error = [results[0], results[1]]
             voltage = md.getBiasVoltage()
             
+            # For the timing resolution vs gain, replace the bias voltage with gain
             if (category_subcategory.find("system") != -1 or category_subcategory.find("normal") != -1) and gain_category:
                 
                 histogram = dm.exportImportROOTHistogram("pulse", "charge")

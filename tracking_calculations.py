@@ -42,7 +42,7 @@ def fillTHObjects(numpy_arrays, TH2_pulse, TH2_timing, tracking, th1_limits):
     for index in range(0, len(TH2_pulse)):
         TH2_pulse[index].ResetStats()
 
-    
+    # Save the number of entries, to restore for the new TH1D object showing the timing resolution
     entries_timing_resolution = [time_difference_peak_TH2D.GetEntries(), time_difference_cfd_TH2D.GetEntries()]
     
     # Fill timing resolution bins
@@ -275,13 +275,14 @@ def rotateSensor(tracking):
 
     
     if theta != 0.0:
+        
         # Use the rotation matrix around z
         theta *= np.pi/180.0
         tracking["X"] = np.multiply(tracking["X"], np.cos(theta)) - np.multiply(tracking["Y"], np.sin(theta))
         tracking["Y"] = np.multiply(tracking["X"], np.sin(theta)) + np.multiply(tracking["Y"], np.cos(theta))
 
 
-
+# This function gets the distance from origo to the center of each pad (for array-pad sensors)
 def getDistanceFromCenterArrayPad(position):
 
     arrayPadChannels = getArrayPadChannels()
@@ -347,7 +348,7 @@ def calculateCenterOfSensorPerBatch(pulse_amplitude, tracking):
 
 def getCenterOfSensor(pulse_amplitude, tracking):
     
-    bin_size = 18.5
+    bin_size = 18.4
     
     # This has to be changed to match the MIMOSA! These are ranges in um.
     [xmin, xmax, ymin, ymax, minEntries] = [-7000, 8000, 9000, 16000, 5]
@@ -436,6 +437,7 @@ def getCenterOfSensor(pulse_amplitude, tracking):
     return position_temp
 
 
+# Hard-coded channel names for the array-pad sensors for Sep TB17
 def getArrayPadChannels():
 
     batchCategory = md.getBatchNumber()/100
@@ -490,7 +492,7 @@ def importAndAddHistogram(TH2_object, index):
     TH2_object.Add(THistogram)
 
 
-def drawLines(line_extension=0):
+def definelines(line_extension=0):
 
     ranges, center_positions = findSelectionRange()
 
@@ -532,8 +534,8 @@ def findSelectionRange():
     # Distance from the center of the pad and 350 um from the center
     projection_cut = 350
 
-    # This is a correction for the irradiated array pad to center the selection of the bulk for efficiency calculation
-    if md.getSensor() == "W4-S204_6e14": # check for batch 707
+    # This is a manual correction for the irradiated array pad to center the selection of the bulk for efficiency calculation
+    if md.getSensor() == "W4-S204_6e14":
 
         if md.chan_name == "chan5":
             center_position = [-540, -550]

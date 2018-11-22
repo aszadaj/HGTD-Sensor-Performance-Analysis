@@ -43,7 +43,7 @@ def getPulseCharacteristics(data, signal_limit, threshold_points):
         return noise, -pedestal, 0, 0, 0, 0, 0, points, -max_sample
 
 
-
+# Get the noise (standard deviation) and pedestal (average value)
 def calculateNoiseAndPedestal(data):
 
     # Select samples above threshold
@@ -76,7 +76,7 @@ def calculateNoiseAndPedestal(data):
     return std, avg
 
 
-# Calculate the pulse amplitude value
+# Calculate the pulse amplitude
 def calculatePulseAmplitude(data, pedestal, signal_limit, graph=False):
 
     # Default values
@@ -102,7 +102,7 @@ def calculatePulseAmplitude(data, pedestal, signal_limit, graph=False):
 
 
     # If the signal reaches the oscilloscope limit, take the maximum value instead and ignore the
-    # time location, since it cannot be extracted with great precision
+    # time location, since the precision is not sufficient
 
     if np.abs(np.amax(data) - signal_limit) < 0.005:
 
@@ -206,7 +206,7 @@ def group_consecutives(data, stepsize=1):
     return np.split(data, np.where(np.diff(data) != stepsize)[0]+1)
 
 
-# related to multiprocessing
+# Concatenate results from the multiprocessing function
 def concatenateResults(results):
 
     variable_array = []
