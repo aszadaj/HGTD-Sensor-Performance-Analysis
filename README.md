@@ -166,7 +166,7 @@ produces plots for
 
 and exports them into each sensor folder in 
 
-      folder_sensor_perfomance_tb_sep17/plots_sensors
+    folder_sensor_perfomance_tb_sep17/plots_sensors
 
 
  There is a method ```calculateCenterOfSensorPerBatch()``` of calculating the center of the sensors which is 
