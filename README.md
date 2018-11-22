@@ -21,9 +21,9 @@ Furthermore the code needs packages to run with. These are
 
 the latter three packages can be found in ```pip2``` by installing those
 
-    ```pip2 install numpy```
-    ```pip2 install root_numpy```
-    ```pip2 install pathos```
+    pip2 install numpy
+    pip2 install root_numpy
+    pip2 install pathos
 
 
 When the code is ready to run, run the code without any function. Then, folders with subfolders will be created in 
@@ -32,7 +32,7 @@ When the code is ready to run, run the code without any function. Then, folders 
 
 The code needs oscilloscope files of the type ```data_'timestamp'.tree.root```-format placed in
 
-    ```../folder_sensor_perfomance_tb_sep17/oscilloscope_data_hgtd_tb_sep17/```. 
+    ../folder_sensor_perfomance_tb_sep17/oscilloscope_data_hgtd_tb_sep17/
 
 The ```.root```files are converted with ```/supplements/convertOscRawToRootTree.C```. 
 
@@ -40,7 +40,7 @@ The ```.root```files are converted with ```/supplements/convertOscRawToRootTree.
 For the ```trackingPlots()```, tracking files are needed of the format ```tracking'timestamp'.root```. They need to be 
 placed in the folder 
 
-    ```../folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/tracking/tracking/```
+    ../folder_sensor_perfomance_tb_sep17/data_hgtd_tb_sep17/tracking/tracking/
 
 
 
