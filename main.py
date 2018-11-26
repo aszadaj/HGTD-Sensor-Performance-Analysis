@@ -52,6 +52,10 @@
 #
 #   * Choose which function to run by changing from 0 to 1.
 #
+#   * Run the code in the console
+#
+#       $ python2 main.py
+#
 
 
 ##########################################################################
@@ -72,8 +76,8 @@ def main():
     batches = "all"
     batches_exclude = []
     
-    # Choose which sensor to produce plots for, e.g. "W9-LGA35"
-    sensor = "W9-LGA35"
+    # Choose which sensor to produce plots for, e.g. "W9-LGA35", or all with ""
+    sensor = ""
     
     # Choose which function to run (0 or 1)
     pulseAnalysis   = 0

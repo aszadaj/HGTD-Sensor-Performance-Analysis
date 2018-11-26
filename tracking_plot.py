@@ -672,7 +672,7 @@ def getLimitsForEachSensorAndBatch():
         
         gain_limits = [20, 36]
         pulse_amplitude_limits = [30, 75]
-        rise_time_limits = [620, 690]
+        rise_time_limits = [610, 690]
         
         timing_res_peak_limits = [90, 160]
         timing_res_cfd_limits = [30, 80]
@@ -681,7 +681,7 @@ def getLimitsForEachSensorAndBatch():
         
         gain_limits = [40, 90]
         pulse_amplitude_limits = [80, 170]
-        rise_time_limits = [510, 550]
+        rise_time_limits = [500, 550]
         
         timing_res_peak_limits = [90, 160]
         timing_res_cfd_limits = [30, 80]
@@ -744,7 +744,7 @@ def getLimitsForEachSensorAndBatch():
         
         gain_limits = [40, 90]
         pulse_amplitude_limits = [50, 120]
-        rise_time_limits = [750, 830]
+        rise_time_limits = [730, 830]
         
         timing_res_cfd_limits = [30, 80]
         timing_res_peak_limits = [90, 160]
