@@ -13,7 +13,7 @@ distance_y = 600 # Width from the center of the canvas in y default 600
 n_div = 10                      # Number of ticks on Z-axis
 percentage_efficiency = 80      # Limit the lower percentage
 
-min_entries_bin = 5             # Minimum entries per bin
+min_entries_bin = 20             # Minimum entries per bin
 min_entries_bin_timing = 50     # Required entries for timing resolution graphs
 pixel_size = 18.4               # Pixel size for the MIMOSA
 bin_size_increase_timing = 2.5  # Bin size increase to adapt for timing resolution plots
@@ -415,17 +415,17 @@ def printTHPlot(graphList, entries=0):
     canvas.SetRightMargin(0.14)
     canvas.SetLeftMargin(0.11)
 
-    # Draw graph to move and recreate the stats box
-    graphList.SetStats(1)
-    graphList.Draw("COLZ0")
-    canvas.Update()
-    stats_box = graphList.GetListOfFunctions().FindObject("stats")
-    stats_box.SetX1NDC(.11)
-    stats_box.SetX2NDC(.25)
-    stats_box.SetY1NDC(.93)
-    stats_box.SetY2NDC(.83)
-    stats_box.SetOptStat(1000000010)
-    graphList.SetEntries(entries)
+#    # Draw graph to move and recreate the stats box
+#    graphList.SetStats(1)
+#    graphList.Draw("COLZ0")
+#    canvas.Update()
+#    stats_box = graphList.GetListOfFunctions().FindObject("stats")
+#    stats_box.SetX1NDC(.11)
+#    stats_box.SetX2NDC(.25)
+#    stats_box.SetY1NDC(.93)
+#    stats_box.SetY2NDC(.83)
+#    stats_box.SetOptStat(1000000010)
+#    graphList.SetEntries(entries)
 
 
     # Draw again to update the canvas
@@ -463,17 +463,17 @@ def printTHPlot(graphList, entries=0):
                 efficiency_text[chan_2].SetTextSize(0.02)
             else:
                 efficiency_text[chan_2].SetTextSize(0.04)
-            efficiency_text[chan_2].Draw()
+            #efficiency_text[chan_2].Draw()
 
             # Draw lines which marks the bulk
             
             # Y-lines
-            lines[chan_2][0].Draw()
-            lines[chan_2][1].Draw()
+            #lines[chan_2][0].Draw()
+            #lines[chan_2][1].Draw()
             
             # X-lines
-            lines[chan_2][2].Draw()
-            lines[chan_2][3].Draw()
+            #lines[chan_2][2].Draw()
+            #lines[chan_2][3].Draw()
             
             canvas.Update()
 

@@ -73,17 +73,17 @@ import run_log_metadata as md
 def main():
     
     # Choose batches to run, by [101] or multiple [203, 304] or all batches with "all"
-    batches = "all"
+    batches = [306]
     batches_exclude = []
     
     # Choose which sensor to produce plots for, e.g. "W9-LGA35", or all with ""
-    sensor = ""
+    sensor = "W9-LGA35"
     
     # Choose which function to run (0 or 1)
     pulseAnalysis   = 0
     pulsePlots      = 0
     timingPlots     = 0
-    trackingPlots   = 0
+    trackingPlots   = 1
     produceResults  = 0
     
     
