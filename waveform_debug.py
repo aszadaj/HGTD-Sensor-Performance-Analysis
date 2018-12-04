@@ -130,8 +130,8 @@ def printWaveform(runNumber, sensor, event = 0):
     graph_threshold.SetPoint(0,0, threshold*1000)
     graph_threshold.SetPoint(1,1002, threshold*1000)
 
-    graph_noise.SetPoint(0,0, noise*1000)
-    graph_noise.SetPoint(1,1002, noise*1000)
+    graph_noise.SetPoint(0,0, (noise+pedestal)*1000)
+    graph_noise.SetPoint(1,1002, (noise+pedestal)*1000)
 
     graph_pedestal.SetPoint(0,0, pedestal*1000)
     graph_pedestal.SetPoint(1,1002, pedestal*1000)
@@ -160,11 +160,11 @@ def printWaveform(runNumber, sensor, event = 0):
     graph_waveform.SetLineColor(2)
 
     graph_linear_fit.SetLineWidth(3)
-    graph_linear_fit.SetLineColor(1)
+    graph_linear_fit.SetLineColorAlpha(1, 0.75)
     graph_linear_fit.SetMarkerColorAlpha(1, 0.0)
     
     graph_2nd_deg_fit.SetLineWidth(3)
-    graph_2nd_deg_fit.SetLineColor(3)
+    graph_2nd_deg_fit.SetLineColorAlpha(3, 0.75)
     graph_2nd_deg_fit.SetMarkerColorAlpha(1, 0.0)
 
     graph_cfd.SetLineStyle(7)
@@ -226,8 +226,7 @@ def printWaveform(runNumber, sensor, event = 0):
 
     # Set ranges on axes
     multi_graph.GetYaxis().SetRangeUser(-30,350)
-    multi_graph.GetXaxis().SetRangeUser(cfd-5,cfd+5) # This centers the canvas around the cfd time location point
-    #multi_graph.GetXaxis().SetRangeUser(0,100)
+    multi_graph.GetXaxis().SetRangeUser(cfd-5,cfd+5)
 
 
     # Export the PDF file
@@ -239,4 +238,4 @@ def printWaveform(runNumber, sensor, event = 0):
 
 
 
-printWaveform(batch, sensor, event)
+printWaveform(runNumber, sensor, event)
