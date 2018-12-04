@@ -29,9 +29,9 @@ import pulse_calculations as p_calc
 ROOT.gROOT.SetBatch(True)
 
 # Define batch, sensor and event number
-runNumber = 3650
+runNumber = 3661
 sensor = "W9-LGA35"
-event = 84866
+event = 151999
 
 
 # Print selected event for sensor and batch
@@ -130,8 +130,8 @@ def printWaveform(runNumber, sensor, event = 0):
     graph_threshold.SetPoint(0,0, threshold*1000)
     graph_threshold.SetPoint(1,1002, threshold*1000)
 
-    graph_noise.SetPoint(0,0, noise*1000)
-    graph_noise.SetPoint(1,1002, noise*1000)
+    graph_noise.SetPoint(0,0, (noise+pedestal)*1000)
+    graph_noise.SetPoint(1,1002, (noise+pedestal)*1000)
 
     graph_pedestal.SetPoint(0,0, pedestal*1000)
     graph_pedestal.SetPoint(1,1002, pedestal*1000)
@@ -160,11 +160,11 @@ def printWaveform(runNumber, sensor, event = 0):
     graph_waveform.SetLineColor(2)
 
     graph_linear_fit.SetLineWidth(3)
-    graph_linear_fit.SetLineColor(1)
+    graph_linear_fit.SetLineColorAlpha(1, 0.75)
     graph_linear_fit.SetMarkerColorAlpha(1, 0.0)
     
     graph_2nd_deg_fit.SetLineWidth(3)
-    graph_2nd_deg_fit.SetLineColor(3)
+    graph_2nd_deg_fit.SetLineColorAlpha(3, 0.75)
     graph_2nd_deg_fit.SetMarkerColorAlpha(1, 0.0)
 
     graph_cfd.SetLineStyle(7)
@@ -210,7 +210,7 @@ def printWaveform(runNumber, sensor, event = 0):
     legend.AddEntry(graph_peak_time, "Time at peak: " + str(peak_time[0])[0:5] + " ns", "l")
     legend.AddEntry(graph_linear_fit, "Rise time: "+str(rise_time*1000)[:5]+" ps", "l")
     legend.AddEntry(graph_90, "10% and 90% limit", "l")
-    legend.AddEntry(graph_cfd, "CFD0.5: " + str(cfd)[0:5] + " ns", "l")
+    legend.AddEntry(graph_cfd, "CFD 0.5: " + str(cfd)[0:5] + " ns", "l")
     legend.AddEntry(charge_fill, "Charge: "+str(charge*10**15)[:5]+" fC", "f")
 
 
@@ -226,8 +226,7 @@ def printWaveform(runNumber, sensor, event = 0):
 
     # Set ranges on axes
     multi_graph.GetYaxis().SetRangeUser(-30,350)
-    multi_graph.GetXaxis().SetRangeUser(cfd-5,cfd+5) # This centers the canvas around the cfd time location point
-    #multi_graph.GetXaxis().SetRangeUser(0,100)
+    multi_graph.GetXaxis().SetRangeUser(cfd-5,cfd+5)
 
 
     # Export the PDF file
@@ -235,8 +234,8 @@ def printWaveform(runNumber, sensor, event = 0):
 
     canvas.Print(fileName)
 
-    print "PDF Produced at", fileName+"."
+    print "PDF produced at", fileName+"."
 
 
 
-printWaveform(batch, sensor, event)
+printWaveform(runNumber, sensor, event)
