@@ -1,4 +1,4 @@
-#   HGTD TEST BEAM SEPTEMBER 2017 SENSOR PERFOMANCE ANALYSIS (v.1.0.0)
+#   HGTD TEST BEAM SEPTEMBER 2017 SENSOR PERFORMANCE ANALYSIS (v.1.0.0)
 #   (c) Antek Szadaj (antek@kth.se) 2018
 #   KTH Royal Institute of Technology, Stockholm
 #
@@ -61,7 +61,7 @@
 ##########################################################################
 #                                                                        #
 #                                                                        #
-#         HGTD TEST BEAM SEPTEMBER 2017 SENSOR PERFOMANCE ANALYSIS       #
+#         HGTD TEST BEAM SEPTEMBER 2017 SENSOR PERFORMANCE ANALYSIS      #
 #                                                                        #
 #                                                                        #
 ##########################################################################
