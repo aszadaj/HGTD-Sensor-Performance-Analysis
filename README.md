@@ -1,4 +1,4 @@
-# HGTD Test Beam September 2017 Sensor Perfomance Analysis
+# HGTD Test Beam September 2017 Sensor Performance Analysis
 
 
 # Overall info
