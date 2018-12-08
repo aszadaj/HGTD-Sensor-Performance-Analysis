@@ -61,7 +61,7 @@
 ##########################################################################
 #                                                                        #
 #                                                                        #
-#         HGTD TEST BEAM SEPTEMBER 2017 SENSOR PERFOMANCE ANALYSIS       #
+#         HGTD TEST BEAM SEPTEMBER 2017 SENSOR PERFORMANCE ANALYSIS      #
 #                                                                        #
 #                                                                        #
 ##########################################################################
