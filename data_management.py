@@ -344,7 +344,7 @@ def getTime():
     return dt.datetime.now().replace(microsecond=0)
 
 
-# Print time stamp
+# Print timestamp
 def printTime():
 
     time = str(dt.datetime.now().time())

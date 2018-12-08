@@ -13,7 +13,7 @@ distance_y = 600 # Width from the center of the canvas in y default 600
 n_div = 10                      # Number of ticks on Z-axis
 percentage_efficiency = 80      # Limit the lower percentage
 
-min_entries_bin = 20             # Minimum entries per bin
+min_entries_bin = 5             # Minimum entries per bin
 min_entries_bin_timing = 50     # Required entries for timing resolution graphs
 pixel_size = 18.4               # Pixel size for the MIMOSA
 bin_size_increase_timing = 2.5  # Bin size increase to adapt for timing resolution plots
@@ -51,6 +51,8 @@ def trackingPlots():
         numpy_arrays = [np.empty(0, dtype = dm.getDTYPE(batchNumber)) for _ in range(len(var_names))]
         numpy_arrays.append(np.empty(0, dtype = dm.getDTYPETracking()))
         
+        max_sample = np.empty(0, dtype = dm.getDTYPE(batchNumber))
+        
         for runNumber in runNumbers:
             
             md.defineRunInfo(md.getRowForRunNumber(runNumber))
@@ -67,7 +69,10 @@ def trackingPlots():
             # This strips the event number to match the ones with the tracking. It assumes that the tracking have fewer number of events than the oscilloscope events.
             for index in range(0, len(var_names)):
                 numpy_arrays[index] = np.concatenate((numpy_arrays[index], np.take(dm.exportImportROOTData(var_names[index][0], var_names[index][1]), np.arange(0, len(tracking_run)))), axis=0)
-
+            
+            max_sample = np.concatenate((max_sample, np.take(dm.exportImportROOTData("pulse", "max_sample"), np.arange(0, len(tracking_run)))), axis=0)
+            
+            
             # Concatenate tracking arrays
             numpy_arrays[-1] = np.concatenate((numpy_arrays[-1], tracking_run), axis=0)
     
@@ -86,7 +91,7 @@ def trackingPlots():
 
         t_calc.setArrayPadExportBool(False)
 
-        createSinglePadGraphs(numpy_arrays)
+        createSinglePadGraphs(numpy_arrays, max_sample)
         
         createArrayPadGraphs(distance_x, distance_y)
         
@@ -104,12 +109,13 @@ def trackingPlots():
 
 
 
-def createSinglePadGraphs(numpy_arrays):
+def createSinglePadGraphs(numpy_arrays, max_sample):
     
     [pulse_amplitude, gain, rise_time, time_difference_peak, time_difference_cfd, tracking] = [i for i in numpy_arrays]
     
     # Convert pulse amplitude values from [-V] to [+mV], charge from [C] to gain, rise time from [ns] to [ps]
     dm.changeIndexNumpyArray(pulse_amplitude, -1000.0)
+    dm.changeIndexNumpyArray(max_sample, -1000.0)
     dm.changeIndexNumpyArray(gain, 1./(md.getChargeWithoutGainLayer()*10**-15))
     dm.changeIndexNumpyArray(rise_time, 1000.0)
     
@@ -126,7 +132,7 @@ def createSinglePadGraphs(numpy_arrays):
         # This function requires a ROOT file which have the center positions for each pad
         tracking_chan = t_calc.changeCenterPositionSensor(np.copy(tracking))
         
-        produceTProfilePlots([pulse_amplitude[chan], gain[chan], rise_time[chan], time_difference_peak[chan], time_difference_cfd[chan]], tracking_chan, distance_x, distance_y)
+        produceTProfilePlots([np.copy(pulse_amplitude[chan]), gain[chan], rise_time[chan], time_difference_peak[chan], time_difference_cfd[chan]], max_sample[chan], tracking_chan, distance_x, distance_y)
         produceEfficiencyPlot(pulse_amplitude[chan], tracking_chan, distance_x, distance_y)
 
 
@@ -139,7 +145,7 @@ def createSinglePadGraphs(numpy_arrays):
 
 
 # Produce mean value and time resolution plots
-def produceTProfilePlots(numpy_arrays, tracking, distance_x, distance_y):
+def produceTProfilePlots(numpy_arrays, max_sample, tracking, distance_x, distance_y):
     
     if md.checkIfArrayPad():
         
@@ -166,7 +172,7 @@ def produceTProfilePlots(numpy_arrays, tracking, distance_x, distance_y):
     
     TH2_pulse = [pulse_amplitude_TH2D, gain_TH2D, rise_time_TH2D]
     TH2_timing = [timing_peak_TH2D, timing_cfd_TH2D]
-    entries_timing_resolution = t_calc.fillTHObjects(numpy_arrays, TH2_pulse, TH2_timing, tracking, [xbin, ybin, xbin_timing, ybin_timing, distance_x, distance_y])
+    entries_timing_resolution = t_calc.fillTHObjects(numpy_arrays, max_sample, TH2_pulse, TH2_timing, tracking, [xbin, ybin, xbin_timing, ybin_timing, distance_x, distance_y])
   
     # Print pulse amplitude mean value 2D plot
     TH2D_objects = [pulse_amplitude_TH2D, gain_TH2D, rise_time_TH2D, timing_peak_TH2D, timing_cfd_TH2D, 0, 0]
@@ -415,17 +421,17 @@ def printTHPlot(graphList, entries=0):
     canvas.SetRightMargin(0.14)
     canvas.SetLeftMargin(0.11)
 
-#    # Draw graph to move and recreate the stats box
-#    graphList.SetStats(1)
-#    graphList.Draw("COLZ0")
-#    canvas.Update()
-#    stats_box = graphList.GetListOfFunctions().FindObject("stats")
-#    stats_box.SetX1NDC(.11)
-#    stats_box.SetX2NDC(.25)
-#    stats_box.SetY1NDC(.93)
-#    stats_box.SetY2NDC(.83)
-#    stats_box.SetOptStat(1000000010)
-#    graphList.SetEntries(entries)
+    # Draw graph to move and recreate the stats box
+    graphList.SetStats(1)
+    graphList.Draw("COLZ0")
+    canvas.Update()
+    stats_box = graphList.GetListOfFunctions().FindObject("stats")
+    stats_box.SetX1NDC(.11)
+    stats_box.SetX2NDC(.25)
+    stats_box.SetY1NDC(.93)
+    stats_box.SetY2NDC(.83)
+    stats_box.SetOptStat(1000000010)
+    graphList.SetEntries(entries)
 
 
     # Draw again to update the canvas
@@ -433,7 +439,7 @@ def printTHPlot(graphList, entries=0):
     graphList.Draw("COLZ0")
 
     # Draw lines which selects the projection limits
-    efficiency_bool = False if category.find("efficiency") == -1 else True
+    efficiency_bool = True if category.find("efficiency") != -1 and category.find("inefficiency") == -1 else False
 
     if efficiency_bool:
     
@@ -463,17 +469,17 @@ def printTHPlot(graphList, entries=0):
                 efficiency_text[chan_2].SetTextSize(0.02)
             else:
                 efficiency_text[chan_2].SetTextSize(0.04)
-            #efficiency_text[chan_2].Draw()
+            efficiency_text[chan_2].Draw()
 
             # Draw lines which marks the bulk
             
             # Y-lines
-            #lines[chan_2][0].Draw()
-            #lines[chan_2][1].Draw()
+            lines[chan_2][0].Draw()
+            lines[chan_2][1].Draw()
             
             # X-lines
-            #lines[chan_2][2].Draw()
-            #lines[chan_2][3].Draw()
+            lines[chan_2][2].Draw()
+            lines[chan_2][3].Draw()
             
             canvas.Update()
 
@@ -616,18 +622,18 @@ def getLimitsForEachSensorAndBatch():
         pulse_amplitude_limits = [100, 160]
         rise_time_limits = [400, 460]
         
-        timing_res_cfd_limits = [20, 50]
-        timing_res_peak_limits = [25, 55]
+        timing_res_cfd_limits = [22, 40]
+        timing_res_peak_limits = [27, 47]
     
     
     elif md.getSensor() == "50D-GBGR2" and md.getBatchNumber() == 207:
         
-        gain_limits = [20, 70]
-        pulse_amplitude_limits = [100, 160]
-        rise_time_limits = [400, 460]
+        gain_limits = [20, 55]
+        pulse_amplitude_limits = [80, 150]
+        rise_time_limits = [415, 450]
         
         # not used
-        timing_res_cfd_limits = [20, 60]
+        timing_res_cfd_limits = [22, 60]
         timing_res_peak_limits = [25, 65]
     
     elif md.getSensor() == "W4-LG12" and md.getBatchNumber() == 108:
@@ -637,14 +643,14 @@ def getLimitsForEachSensorAndBatch():
         pulse_amplitude_limits = [60, 160]
         rise_time_limits = [520, 560]
         
-        timing_res_cfd_limits = [20, 55]
-        timing_res_peak_limits = [25, 65]
+        timing_res_cfd_limits = [18, 32]
+        timing_res_peak_limits = [30, 46]
     
     elif md.getSensor() == "W4-LG12" and md.getBatchNumber() == 207:
         
-        gain_limits = [20, 90]
-        pulse_amplitude_limits = [60, 160]
-        rise_time_limits = [520, 560]
+        gain_limits = [30, 90]
+        pulse_amplitude_limits = [60, 155]
+        rise_time_limits = [520, 565]
         
         # not used
         timing_res_cfd_limits = [20, 70]
@@ -652,145 +658,147 @@ def getLimitsForEachSensorAndBatch():
     
     elif md.getSensor() == "W4-RD01" and md.getBatchNumber() == 306:
         
-        gain_limits = [350, 550]
-        pulse_amplitude_limits = [150, 320]
-        rise_time_limits = [800, 850]
+        gain_limits = [340, 500]
+        pulse_amplitude_limits = [160, 310]
+        rise_time_limits = [820, 870]
         
-        timing_res_peak_limits = [70, 120]
-        timing_res_cfd_limits = [30, 50]
+        timing_res_peak_limits = [58, 80]
+        timing_res_cfd_limits = [20, 40]
     
     elif md.getSensor() == "W4-RD01" and md.getBatchNumber() == 601:
         
-        gain_limits = [350, 550]
-        pulse_amplitude_limits = [150, 250]
-        rise_time_limits = [1210, 1290]
+        gain_limits = [330, 440]
+        pulse_amplitude_limits = [140, 240]
+        rise_time_limits = [1220, 1300]
         
-        timing_res_peak_limits = [90, 160]
-        timing_res_cfd_limits = [30, 80]
+        timing_res_peak_limits = [70, 130]
+        timing_res_cfd_limits = [30, 75]
     
     elif md.getSensor() == "W4-S1022" and md.getBatchNumber() == 306:
         
-        gain_limits = [20, 36]
-        pulse_amplitude_limits = [30, 75]
-        rise_time_limits = [610, 690]
+        gain_limits = [20, 38]
+        pulse_amplitude_limits = [35, 75]
+        rise_time_limits = [600, 680]
         
         timing_res_peak_limits = [90, 160]
         timing_res_cfd_limits = [30, 80]
     
     elif md.getSensor() == "W4-S1022" and md.getBatchNumber() == 507:
         
-        gain_limits = [40, 90]
-        pulse_amplitude_limits = [80, 170]
-        rise_time_limits = [500, 550]
+        gain_limits = [40, 85]
+        pulse_amplitude_limits = [80, 160]
+        rise_time_limits = [505, 545]
         
         timing_res_peak_limits = [90, 160]
         timing_res_cfd_limits = [30, 80]
     
     elif md.getSensor() == "W4-S1022" and md.getBatchNumber() == 707:
         
-        gain_limits = [35, 90]
-        pulse_amplitude_limits = [80, 170]
-        rise_time_limits = [520, 570]
+        gain_limits = [35, 85]
+        pulse_amplitude_limits = [80, 160]
+        rise_time_limits = [525, 565]
         
         timing_res_cfd_limits = [30, 80]
         timing_res_peak_limits = [90, 160]
     
     elif md.getSensor() == "W4-S1061" and md.getBatchNumber() == 306:
         
-        gain_limits = [40, 70]
-        pulse_amplitude_limits = [90, 150]
-        rise_time_limits = [490, 520]
+        gain_limits = [35, 65]
+        pulse_amplitude_limits = [85, 145]
+        rise_time_limits = [490, 530]
         
         timing_res_cfd_limits = [30, 80]
         timing_res_peak_limits = [90, 160]
     
     elif md.getSensor() == "W4-S1061" and md.getBatchNumber() == 507:
         
-        gain_limits = [40, 85]
-        pulse_amplitude_limits = [90, 160]
-        rise_time_limits = [530, 580]
+        gain_limits = [35, 65]
+        pulse_amplitude_limits = [80, 140]
+        rise_time_limits = [535, 570]
         
         timing_res_cfd_limits = [30, 80]
         timing_res_peak_limits = [90, 160]
     
     elif md.getSensor() == "W4-S1061" and md.getBatchNumber() == 707:
         
-        gain_limits = [35, 90]
-        pulse_amplitude_limits = [70, 165]
-        rise_time_limits = [540, 570]
+        gain_limits = [30, 80]
+        pulse_amplitude_limits = [70, 150]
+        rise_time_limits = [540, 575]
         
         timing_res_cfd_limits = [30, 80]
         timing_res_peak_limits = [90, 160]
     
     elif md.getSensor() == "W4-S203" and md.getBatchNumber() == 306:
         
-        gain_limits = [50, 80]
-        pulse_amplitude_limits = [100, 160]
-        rise_time_limits = [510, 540]
+        gain_limits = [40, 70]
+        pulse_amplitude_limits = [90, 150]
+        rise_time_limits = [515, 540]
         
         timing_res_cfd_limits = [30, 80]
         timing_res_peak_limits = [90, 160]
     
     elif md.getSensor() == "W4-S203" and md.getBatchNumber() == 507:
         
-        gain_limits = [40, 80]
-        pulse_amplitude_limits = [50, 120]
-        rise_time_limits = [690, 770]
+        gain_limits = [35, 70]
+        pulse_amplitude_limits = [50, 100]
+        rise_time_limits = [680, 780]
         
         timing_res_cfd_limits = [30, 80]
         timing_res_peak_limits = [90, 160]
     
     elif md.getSensor() == "W4-S203" and md.getBatchNumber() == 707:
         
-        gain_limits = [40, 90]
-        pulse_amplitude_limits = [50, 120]
-        rise_time_limits = [730, 830]
+        gain_limits = [40, 80]
+        pulse_amplitude_limits = [50, 110]
+        rise_time_limits = [725, 830]
         
         timing_res_cfd_limits = [30, 80]
         timing_res_peak_limits = [90, 160]
     
     elif md.getSensor() == "W4-S204_6e14" and md.getBatchNumber() == 507:
         
-        gain_limits = [5, 35]
-        pulse_amplitude_limits = [40, 90]
-        rise_time_limits = [340, 500]
+        gain_limits = [5, 26]
+        pulse_amplitude_limits = [40, 80]
+        rise_time_limits = [315, 390]
         
-        timing_res_cfd_limits = [38, 64]
-        timing_res_peak_limits = [45, 80]
+        timing_res_cfd_limits = [36, 60]
+        timing_res_peak_limits = [44, 65]
     
     elif md.getSensor() == "W4-S204_6e14" and md.getBatchNumber() == 707:
         
-        gain_limits = [5, 40]
-        pulse_amplitude_limits = [40, 100]
-        rise_time_limits = [350, 460]
+        gain_limits = [8, 28]
+        pulse_amplitude_limits = [40, 90]
+        rise_time_limits = [315, 390]
         
-        timing_res_cfd_limits = [30, 65]
-        timing_res_peak_limits = [40, 75]
+        timing_res_cfd_limits = [34, 48]
+        timing_res_peak_limits = [40, 60]
     
     elif md.getSensor() == "W4-S215" and md.getBatchNumber() == 207:
         
-        gain_limits = [85, 150]
-        pulse_amplitude_limits = [180, 280]
-        rise_time_limits = [490, 530]
+        gain_limits = [70, 130]
+        pulse_amplitude_limits = [160, 260]
+        rise_time_limits = [490, 540]
         
-        timing_res_cfd_limits = [20, 70]
-        timing_res_peak_limits = [30, 80]
+        timing_res_cfd_limits = [25, 45]
+        timing_res_peak_limits = [25, 50]
     
     elif md.getSensor() == "W4-S215" and md.getBatchNumber() == 507:
         
-        gain_limits = [140, 230]
-        pulse_amplitude_limits = [240, 350]
-        rise_time_limits = [500, 580]
+        gain_limits = [110, 210]
+        pulse_amplitude_limits = [200, 330]
+        rise_time_limits = [520, 590]
         
+        # not used
         timing_res_cfd_limits = [20, 70]
         timing_res_peak_limits = [30, 80]
     
     elif md.getSensor() == "W4-S215" and md.getBatchNumber() == 707:
         
-        gain_limits = [110, 200]
-        pulse_amplitude_limits = [150, 250]
-        rise_time_limits = [720, 820]
+        gain_limits = [100, 190]
+        pulse_amplitude_limits = [140, 240]
+        rise_time_limits = [700, 825]
         
+        # not used
         timing_res_cfd_limits = [20, 70]
         timing_res_peak_limits = [30, 80]
     
@@ -801,20 +809,20 @@ def getLimitsForEachSensorAndBatch():
         pulse_amplitude_limits = [60, 110]
         rise_time_limits = [415, 455]
         
-        timing_res_cfd_limits = [20, 70]
-        timing_res_peak_limits = [25, 75]
+        timing_res_cfd_limits = [20, 40]
+        timing_res_peak_limits = [24, 46]
     
     elif md.getSensor() == "W9-LGA35" and md.getBatchNumber() == 207:
         
-        gain_limits = [30, 50]
-        pulse_amplitude_limits = [60, 120]
+        gain_limits = [20, 45]
+        pulse_amplitude_limits = [50, 115]
         rise_time_limits = [415, 455]
         
         # not used
         timing_res_cfd_limits = [20, 70]
         timing_res_peak_limits = [25, 75]
 
-    # This method is modular to adapt for other sensors
+    # This method is modular to adapt for other batches
     else:
         
         th_name = "_"+str(md.getBatchNumber())+"_"+md.chan_name

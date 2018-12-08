@@ -1,4 +1,4 @@
-#   HGTD TEST BEAM SEPTEMBER 2017 SENSOR PERFOMANCE ANALYSIS (v.1.0.0)
+#   HGTD TEST BEAM SEPTEMBER 2017 SENSOR PERFORMANCE ANALYSIS (v.1.0.0)
 #   (c) Antek Szadaj (antek@kth.se) 2018
 #   KTH Royal Institute of Technology, Stockholm
 #
@@ -73,7 +73,7 @@ import run_log_metadata as md
 def main():
     
     # Choose batches to run, by [101] or multiple [203, 304] or all batches with "all"
-    batches = [306]
+    batches = [102]
     batches_exclude = []
     
     # Choose which sensor to produce plots for, e.g. "W9-LGA35", or all with ""
@@ -83,7 +83,7 @@ def main():
     pulseAnalysis   = 0
     pulsePlots      = 0
     timingPlots     = 0
-    trackingPlots   = 1
+    trackingPlots   = 0
     produceResults  = 0
     
     

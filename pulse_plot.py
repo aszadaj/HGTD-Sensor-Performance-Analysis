@@ -67,10 +67,11 @@ def producePulsePlots(numpy_variables):
         if md.sensor != "" and md.getSensor() != md.sensor:
             continue
 
+
         # if a fit fails, slightly change the bin number
-        pulse_amplitude_bins = 120
+        pulse_amplitude_bins = 150
         point_count_limit = 50
-        charge_pulse_bins = 100
+        charge_pulse_bins = 110
         rise_time_bins = 150
         charge_max = 150
         

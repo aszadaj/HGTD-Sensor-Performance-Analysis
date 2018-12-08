@@ -106,86 +106,86 @@ def setGraphAttributes(category_graph, category, zoom):
     
     # Define titles, head and axes
     if category == "noise":
-        titleGraph = "Noise per bias voltage"
+        titleGraph = "Noise as a function of bias voltage"
         xTitle = "Bias voltage [V]"
         yTitle = "Noise [mV]"
         y_lim = [0, 6]
     
     elif category == "pedestal":
-        titleGraph = "Pedestal per bias voltage"
+        titleGraph = "Pedestal as a function of bias voltage"
         xTitle = "Bias voltage [V]"
         yTitle = "Pedestal [mV]"
         y_lim = [-3, 3]
 
     elif category == "pulse_amplitude":
     
-        titleGraph = "Pulse amplitude per bias voltage"
+        titleGraph = "Pulse amplitude as a function of bias voltage"
         xTitle = "Bias voltage [V]"
         yTitle = "Pulse amplitude [mV]"
         y_lim = [0, 300]
 
     elif category == "charge":
     
-        titleGraph = "Gain/charge per bias voltage"
+        titleGraph = "Gain/charge as a function of bias voltage"
         xTitle = "Bias voltage [V]"
         yTitle = "Gain"
         y_lim = [0, 500]
 
     elif category == "rise_time":
         
-        titleGraph = "Rise time per bias voltage"
+        titleGraph = "Rise time as a function of bias voltage"
         xTitle = "Bias voltage [V]"
         yTitle = "Rise time [ps]"
         y_lim = [0, 2000]
 
     elif category == "normal_peak":
     
-        titleGraph = "Timing resolution per bias voltage (peak)"
+        titleGraph = "Timing resolution as a function of bias voltage (peak)"
         xTitle = "Bias voltage [V]"
         yTitle = "Timing resolution [ps]"
 
 
     elif category == "normal_cfd":
     
-        titleGraph = "Timing resolution per bias voltage (CFD)"
+        titleGraph = "Timing resolution as a function of bias voltage (CFD)"
         xTitle = "Bias voltage [V]"
         yTitle = "Timing resolution [ps]"
 
     elif category == "system_peak":
     
-        titleGraph = "Timing resolution per bias voltage (sys of eqs, peak)"
+        titleGraph = "Timing resolution as a function of bias voltage (sys of eqs, peak)"
         xTitle = "Bias voltage [V]"
         yTitle = "Timing resolution [ps]"
 
     elif category == "system_cfd":
     
-        titleGraph = "Timing resolution per bias voltage (sys of eqs, CFD)"
+        titleGraph = "Timing resolution as a function of bias voltage (sys of eqs, CFD)"
         xTitle = "Bias voltage [V]"
         yTitle = "Timing resolution [ps]"
     
     
     if category == "normal_peak_gain":
         
-        titleGraph = "Timing resolution per gain (peak)"
+        titleGraph = "Timing resolution as a function of gain (peak)"
         xTitle = "Gain"
         yTitle = "Timing resolution [ps]"
     
     
     elif category == "normal_cfd_gain":
     
-        titleGraph = "Timing resolution per gain (CFD)"
+        titleGraph = "Timing resolution as a function of gain (CFD)"
         xTitle = "Gain"
         yTitle = "Timing resolution [ps]"
 
     elif category == "system_peak_gain":
     
-        titleGraph = "Timing resolution per gain (system, peak)"
+        titleGraph = "Timing resolution as a function of gain (system, peak)"
         xTitle = "Gain"
         yTitle = "Timing resolution [ps]"
 
     elif category == "system_cfd_gain":
    
-        titleGraph = "Timing resolution per gain (system, CFD)"
+        titleGraph = "Timing resolution as a function of gain (system, CFD)"
         xTitle = "Gain"
         yTitle = "Timing resolution [ps]"
         

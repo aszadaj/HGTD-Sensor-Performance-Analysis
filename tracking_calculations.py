@@ -8,7 +8,7 @@ import pulse_plot as p_plot
 import timing_plot as tim_plot
 
 
-def fillTHObjects(numpy_arrays, TH2_pulse, TH2_timing, tracking, th1_limits):
+def fillTHObjects(numpy_arrays, max_sample, TH2_pulse, TH2_timing, tracking, th1_limits):
     
     [xbin, ybin, xbin_timing, ybin_timing, distance_x, distance_y] = [i for i in th1_limits]
     
@@ -18,7 +18,7 @@ def fillTHObjects(numpy_arrays, TH2_pulse, TH2_timing, tracking, th1_limits):
     time_difference_cfd_TH2D    = ROOT.TProfile2D("timing_cfd"+th_name+"temp", "timing_cfd", xbin_timing, -distance_x, distance_x, ybin_timing, -distance_y, distance_y, "s")
     
     # Remove large values
-    stripNumpyArrays(numpy_arrays, TH2_pulse, TH2_timing)
+    stripNumpyArrays(numpy_arrays, max_sample, TH2_pulse, TH2_timing)
     TH2_objects_fill = [i for i in TH2_pulse]
     TH2_objects_fill.append(time_difference_peak_TH2D)
     TH2_objects_fill.append(time_difference_cfd_TH2D)
@@ -139,11 +139,11 @@ def fillInefficiencyAndProjectionObjects(efficiency_TH2F, inefficiency_TH2F, pro
 
 
 # Import results from already exported histograms to strip extreme values. Set a 5 sigma level on the standard deviation from the histogram.
-def stripNumpyArrays(numpy_arrays, TH2_pulse, TH2_timing):
+def stripNumpyArrays2(numpy_arrays, max_sample, TH2_pulse, TH2_timing):
     
     TH_titles = [i.GetTitle() for i in TH2_pulse]
-    TH_titles.append(TH2_timing[-2].GetTitle())
-    TH_titles.append(TH2_timing[-1].GetTitle())
+    TH_titles.append(TH2_timing[0].GetTitle())
+    TH_titles.append(TH2_timing[1].GetTitle())
     
     # the 5 sigma limit ensures with large limit than relevant values are filled and that extreme values are omitted.
     # It should be noted that the GetStdDev() refers to histogram deviation, not the fit. The histogram have larger std values.
@@ -177,6 +177,63 @@ def stripNumpyArrays(numpy_arrays, TH2_pulse, TH2_timing):
         numpy_arrays[index][mean + N * sigma < numpy_arrays[index]] = 0
 
 
+def stripNumpyArrays(numpy_arrays, max_sample, TH2_pulse, TH2_timing):
+    
+    TH_titles = [i.GetTitle() for i in TH2_pulse]
+    TH_titles.append(TH2_timing[0].GetTitle())
+    TH_titles.append(TH2_timing[1].GetTitle())
+    
+    # the 5 sigma limit ensures with large limit than relevant values are filled and that extreme values are omitted.
+    # It should be noted that the GetStdDev() refers to histogram deviation, not the fit. The histogram have larger std values.
+    N = 3
+    
+    # Import the max_sample data, and the histogram
+    THistogram_max_sample = dm.exportImportROOTHistogram("pulse", "max_sample")
+
+    
+    # Determine the largest bin and take the value next to this bin
+    max_bin = THistogram_max_sample.FindLastBinAbove(20)
+    saturation_limit = THistogram_max_sample.GetXaxis().GetBinCenter(max_bin-1)
+    
+    
+    numpy_arrays[0][max_sample > saturation_limit] = 0
+    
+    # Gain
+    
+    numpy_arrays[1][max_sample > saturation_limit] = 0
+
+    
+    # For other types, strip with a 5 sigma width from the histograms
+    # Strip gain, rise time and
+    
+    for index in range(2, len(numpy_arrays)):
+
+        category = TH_titles[index]
+        subcategory = ""
+        
+        if category.find("rise_time") != -1:
+            group = "pulse"
+        
+        else:
+        
+            group, subcategory = category.split("_")
+            category = "normal"
+
+        TF1 = dm.exportImportROOTHistogram(group, category, subcategory).GetFunction("gaus")
+        
+        # Remove events with saturated signals
+        numpy_arrays[index][max_sample > saturation_limit] = 0
+        
+        # Determine mean and standard deviation
+        mean = TF1.GetParameter(1)
+        sigma = TF1.GetParameter(2)
+        
+        # Strip to use
+        numpy_arrays[index][mean - N * sigma > numpy_arrays[index]] = 0
+        numpy_arrays[index][mean + N * sigma < numpy_arrays[index]] = 0
+
+
+        
 
 # Change tracking information
 def changeCenterPositionSensor(tracking):

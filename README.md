@@ -1,4 +1,4 @@
-# HGTD Test Beam September 2017 Sensor Perfomance Analysis
+# HGTD Test Beam September 2017 Sensor Performance Analysis
 
 
 # Overall info
@@ -184,8 +184,12 @@ From the previously exported files, this collectes all of them and plots them in
 
 # waveform_debug.py
 
-There is an additional function aimed to analyze chosen event for a sensor. This file needs a specific oscilloscope
-file and 
+There is an additional function aimed to analyze chosen event for a sensor. It requires an oscilloscope for a given run.
+It is run independently of ```main.py``` in the console
+
+    $ python2 waveform_debug.py
+    
+
 
 
 
