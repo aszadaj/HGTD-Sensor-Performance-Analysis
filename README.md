@@ -3,6 +3,8 @@
 
 # Overall info
 
+The software package is a part of M.Sc. thesis done at KTH Royal Institute of Technology and CERN.
+
 The code analyzes properties of the sensors from data provided from the test beam measurement done in September 2017. 
 Main focus are timing resolution of the sensors, efficiency, which is a ratio between a signal from the sensor with a recorded 
 hit on the MIMOSA, that is the telescope.
